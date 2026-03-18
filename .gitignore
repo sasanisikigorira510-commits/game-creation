@@ -1,0 +1,22 @@
+# Top-level logs
+unity_create.log
+
+# Backup of nested git repo
+WitchTowerGame/.git_backup_witchtower/
+
+# Unity generated folders inside the project
+WitchTowerGame/[Ll]ibrary/
+WitchTowerGame/[Tt]emp/
+WitchTowerGame/[Ll]ogs/
+WitchTowerGame/[Uu]ser[Ss]ettings/
+WitchTowerGame/[Oo]bj/
+WitchTowerGame/[Bb]uild/
+WitchTowerGame/[Bb]uilds/
+WitchTowerGame/[Mm]emoryCaptures/
+WitchTowerGame/[Rr]ecordings/
+
+# IDE / OS noise
+.DS_Store
+Thumbs.db
+.vs/
+.vscode/
