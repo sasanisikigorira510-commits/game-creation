@@ -1,0 +1,172 @@
+﻿{
+    "ok":  false,
+    "scenario":  "standard",
+    "generatedAt":  "2026-03-22T00:38:52.6444531+09:00",
+    "baseUrl":  "http://127.0.0.1:8765",
+    "steps":  [
+                  {
+                      "name":  "initial_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "ping",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Assets refreshed."
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_after_refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "clear_console",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Console log buffer cleared."
+                               }
+                  },
+                  {
+                      "name":  "rebuild_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Menu item executed."
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_after_home_rebuild",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "rebuild_battle",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Menu item executed."
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_after_battle_rebuild",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "open_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "home_ready",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "finally_open_boot",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "bridge_status",
+                      "data":  {
+                                   "ok":  true,
+                                   "bridgeStatePath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\unity_bridge_state.json",
+                                   "state":  {
+                                                 "exists":  false
+                                             },
+                                   "resolvedBaseUrl":  "http://127.0.0.1:8765",
+                                   "ping":  {
+                                                "ok":  true,
+                                                "response":  {
+                                                                 "ok":  true,
+                                                                 "message":  "Unity MCP bridge is running.",
+                                                                 "unityVersion":  "2022.3.32f1",
+                                                                 "baseUrl":  "http://127.0.0.1:8765"
+                                                             }
+                                            },
+                                   "portStatus":  {
+                                                      "ok":  true,
+                                                      "lineCount":  3,
+                                                      "listeningCount":  1,
+                                                      "closeWaitCount":  0,
+                                                      "lines":  [
+                                                                    "TCP    127.0.0.1:8765         0.0.0.0:0              LISTENING       1684",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:61683        ESTABLISHED     1684",
+                                                                    "TCP    127.0.0.1:61683        127.0.0.1:8765         ESTABLISHED     28488"
+                                                                ]
+                                                  },
+                                   "portOwner":  {
+                                                     "ok":  true,
+                                                     "pid":  1684,
+                                                     "processName":  "Unity",
+                                                     "responding":  true,
+                                                     "startTime":  "\/Date(1774105772573)\/",
+                                                     "mainWindowTitle":  ""
+                                                 },
+                                   "compileStatus":  {
+                                                         "ok":  true,
+                                                         "bridgeScriptPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Assets\\Editor\\UnityMcp\\UnityMcpBridge.cs",
+                                                         "bridgeScriptExists":  true,
+                                                         "bridgeScriptLastWriteTime":  "\/Date(1774107526828)\/",
+                                                         "bridgeScriptLength":  42484,
+                                                         "editorAssemblyPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Library\\ScriptAssemblies\\Assembly-CSharp-Editor.dll",
+                                                         "editorAssemblyExists":  true,
+                                                         "editorAssemblyLastWriteTime":  "\/Date(1774107440745)\/",
+                                                         "editorAssemblyLength":  77824,
+                                                         "scriptAheadSeconds":  86.1,
+                                                         "stale":  true
+                                                     }
+                               }
+                  }
+              ],
+    "error":  "Timed out waiting for isPlaying=True",
+    "bridgeStatusPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\reports\\unity-bridge-status-standard-latest.json"
+}

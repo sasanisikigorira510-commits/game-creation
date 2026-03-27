@@ -6,6 +6,7 @@ namespace WitchTower.MasterData
     public sealed class MasterDataRoot : ScriptableObject
     {
         public PlayerBaseDataSO playerBaseData;
+        public MonsterDataSO[] monsterDataList;
         public EnemyDataSO[] enemyDataList;
         public SkillDataSO[] skillDataList;
         public EquipmentDataSO[] equipmentDataList;

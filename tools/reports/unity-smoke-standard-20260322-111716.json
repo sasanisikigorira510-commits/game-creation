@@ -1,0 +1,81 @@
+﻿{
+    "ok":  false,
+    "scenario":  "standard",
+    "generatedAt":  "2026-03-22T11:16:15.9952153+09:00",
+    "baseUrl":  "http://127.0.0.1:8765",
+    "steps":  [
+                  {
+                      "name":  "pre_cleanup_warning",
+                      "data":  "The operation has timed out."
+                  },
+                  {
+                      "name":  "ping",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "6000.3.11f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "finally_warning",
+                      "data":  "The operation has timed out."
+                  },
+                  {
+                      "name":  "bridge_status",
+                      "data":  {
+                                   "ok":  true,
+                                   "bridgeStatePath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\unity_bridge_state.json",
+                                   "state":  {
+                                                 "exists":  false
+                                             },
+                                   "resolvedBaseUrl":  "http://127.0.0.1:8765",
+                                   "ping":  {
+                                                "ok":  true,
+                                                "response":  {
+                                                                 "ok":  true,
+                                                                 "message":  "Unity MCP bridge is running.",
+                                                                 "unityVersion":  "6000.3.11f1",
+                                                                 "baseUrl":  "http://127.0.0.1:8765"
+                                                             }
+                                            },
+                                   "portStatus":  {
+                                                      "ok":  true,
+                                                      "lineCount":  5,
+                                                      "listeningCount":  1,
+                                                      "closeWaitCount":  2,
+                                                      "lines":  [
+                                                                    "TCP    127.0.0.1:8765         0.0.0.0:0              LISTENING       3444",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:49303        CLOSE_WAIT      3444",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:49326        CLOSE_WAIT      3444",
+                                                                    "TCP    127.0.0.1:49303        127.0.0.1:8765         FIN_WAIT_2      15484",
+                                                                    "TCP    127.0.0.1:49326        127.0.0.1:8765         FIN_WAIT_2      15484"
+                                                                ]
+                                                  },
+                                   "portOwner":  {
+                                                     "ok":  true,
+                                                     "pid":  3444,
+                                                     "processName":  "Unity",
+                                                     "responding":  true,
+                                                     "startTime":  "\/Date(1774144910979)\/",
+                                                     "mainWindowTitle":  ""
+                                                 },
+                                   "compileStatus":  {
+                                                         "ok":  true,
+                                                         "bridgeScriptPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Assets\\Editor\\UnityMcp\\UnityMcpBridge.cs",
+                                                         "bridgeScriptExists":  true,
+                                                         "bridgeScriptLastWriteTime":  "\/Date(1774115004682)\/",
+                                                         "bridgeScriptLength":  43582,
+                                                         "editorAssemblyPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Library\\ScriptAssemblies\\Assembly-CSharp-Editor.dll",
+                                                         "editorAssemblyExists":  true,
+                                                         "editorAssemblyLastWriteTime":  "\/Date(1774145673224)\/",
+                                                         "editorAssemblyLength":  90624,
+                                                         "scriptAheadSeconds":  -30668.5,
+                                                         "stale":  false
+                                                     }
+                               }
+                  }
+              ],
+    "error":  "The request was aborted: The operation has timed out.",
+    "bridgeStatusPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\reports\\unity-bridge-status-standard-latest.json"
+}

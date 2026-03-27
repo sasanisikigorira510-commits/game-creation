@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using WitchTower.Managers;
 using WitchTower.UI;
+using TMPro;
 
 namespace WitchTower.Home
 {
@@ -11,6 +12,8 @@ namespace WitchTower.Home
         [SerializeField] private DailyRewardView dailyRewardView;
         [SerializeField] private MissionItemView missionItemView1;
         [SerializeField] private MissionItemView missionItemView2;
+        [SerializeField] private TMP_Text ctaText;
+        [SerializeField] private TMP_Text rewardSummaryText;
 
         private const int DailyRewardGold = 50;
 
@@ -29,6 +32,7 @@ namespace WitchTower.Home
             }
 
             Refresh();
+            UnityEngine.Object.FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
         }
 
         public void ClaimMissionClear1()
@@ -43,14 +47,31 @@ namespace WitchTower.Home
 
         public void Refresh()
         {
-            var profile = GameManager.Instance.PlayerProfile;
-            resourceView.Bind(profile);
+            var gameManager = GameManager.Instance;
+            var profile = gameManager != null ? gameManager.PlayerProfile : null;
+            if (resourceView != null)
+            {
+                resourceView.Bind(profile);
+            }
 
             var canClaimDaily = profile != null && profile.CanClaimDailyReward(DateTime.Now.ToString("yyyy-MM-dd"));
-            dailyRewardView.Bind(canClaimDaily, DailyRewardGold);
+            if (dailyRewardView != null)
+            {
+                dailyRewardView.Bind(canClaimDaily, DailyRewardGold);
+            }
 
             BindMission(missionItemView1, profile, "mission_clear_1");
             BindMission(missionItemView2, profile, "mission_reach_floor_3");
+
+            if (ctaText != null)
+            {
+                ctaText.text = HomeActionAdvisor.BuildMissionHeadline(profile, DateTime.Now);
+            }
+
+            if (rewardSummaryText != null)
+            {
+                rewardSummaryText.text = HomeActionAdvisor.BuildMissionRewardSummary(profile, DateTime.Now);
+            }
         }
 
         private void ClaimMission(string missionId)
@@ -63,6 +84,7 @@ namespace WitchTower.Home
             }
 
             Refresh();
+            UnityEngine.Object.FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
         }
 
         private static void BindMission(MissionItemView itemView, Data.PlayerProfile profile, string missionId)
@@ -86,5 +108,6 @@ namespace WitchTower.Home
                 definition.Value.RewardGold,
                 progress.IsClaimed);
         }
+
     }
 }

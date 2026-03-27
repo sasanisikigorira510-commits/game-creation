@@ -1,0 +1,12 @@
+﻿{
+    "ok":  true,
+    "bridgeStatePath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\unity_bridge_state.json",
+    "state":  {
+                  "exists":  false
+              },
+    "resolvedBaseUrl":  "http://127.0.0.1:8765",
+    "ping":  {
+                 "ok":  false,
+                 "error":  "The operation has timed out."
+             }
+}

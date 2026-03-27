@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_naga_mage
+  m_EditorClassIdentifier: 
+  monsterId: monster_naga_mage
+  monsterName: "\u30ca\u30fc\u30ac\u30e1\u30a4\u30b8"
+  encyclopediaNumber: 13
+  rarity: 3
+  element: 2
+  rangeType: 1
+  damageType: 1
+  baseStats:
+    maxHp: 52
+    attack: 8
+    magicAttack: 20
+    defense: 8
+    magicDefense: 13
+    attackSpeed: 0.98
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 1
+    attackPerPlus: 0
+    magicAttackPerPlus: 2
+    defensePerPlus: 0
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  fusionExclusive: 0
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FormationMonsters/NagaMage
+  illustrationResourcePath: 
+  battleIdleResourcePath: 
+  battleAttackResourcePath: 
+  description: A water-aligned caster that controls the field with serpent sorcery.

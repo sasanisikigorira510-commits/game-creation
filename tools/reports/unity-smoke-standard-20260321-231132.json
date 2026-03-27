@@ -1,0 +1,1932 @@
+﻿{
+    "ok":  false,
+    "scenario":  "standard",
+    "generatedAt":  "2026-03-21T23:11:19.5297727+09:00",
+    "baseUrl":  "http://127.0.0.1:8765",
+    "steps":  [
+                  {
+                      "name":  "initial_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "ping",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Assets refreshed."
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_after_refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "clear_console",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Console log buffer cleared."
+                               }
+                  },
+                  {
+                      "name":  "rebuild_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Menu item executed."
+                               }
+                  },
+                  {
+                      "name":  "open_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "home_ready",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "enter_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Play mode action applied.",
+                                   "isPlaying":  false
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_in_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "play_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  true,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "home_active_texts",
+                      "data":  {
+                                   "Yourcurrentclimb,gold,andpassiverewards.Subtitle":  {
+                                                                                            "gameObjectName":  "Yourcurrentclimb,gold,andpassiverewards.Subtitle",
+                                                                                            "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                                                            "active":  true,
+                                                                                            "text":  "Your current climb, gold, and passive rewards."
+                                                                                        },
+                                   "RewardForecastText":  {
+                                                              "gameObjectName":  "RewardForecastText",
+                                                              "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                              "active":  true,
+                                                              "text":  "Reward Forecast: floor 21 should pay about 10 Gold and 5 EXP."
+                                                          },
+                                   "ProgressText":  {
+                                                        "gameObjectName":  "ProgressText",
+                                                        "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                        "active":  true,
+                                                        "text":  "Progress: cleared floor 20, targeting floor 21."
+                                                    },
+                                   "Label":  {
+                                                 "gameObjectName":  "Label",
+                                                 "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                 "active":  true,
+                                                 "text":  "ClaimIdleReward"
+                                             },
+                                   "SummaryText":  {
+                                                       "gameObjectName":  "SummaryText",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Run State: floor 21 is next, upgrades A0/D0/HP0."
+                                                   },
+                                   "ScreenTitle":  {
+                                                       "gameObjectName":  "ScreenTitle",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Witch Tower"
+                                                   },
+                                   "EquipmentNavBadge":  {
+                                                             "gameObjectName":  "EquipmentNavBadge",
+                                                             "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                             "active":  true,
+                                                             "text":  "3"
+                                                         },
+                                   "EnhanceNavBadge":  {
+                                                           "gameObjectName":  "EnhanceNavBadge",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "text":  "3"
+                                                       },
+                                   "HomeCtaText":  {
+                                                       "gameObjectName":  "HomeCtaText",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Next Step: enter Battle and challenge floor 21."
+                                                   },
+                                   "MissionNavBadge":  {
+                                                           "gameObjectName":  "MissionNavBadge",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "text":  "2"
+                                                       },
+                                   "StatusText":  {
+                                                      "gameObjectName":  "StatusText",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Idle Reward: No stored gold right now"
+                                                  },
+                                   "ExpText":  {
+                                                   "gameObjectName":  "ExpText",
+                                                   "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                   "active":  true,
+                                                   "text":  "EXP 17/40"
+                                               },
+                                   "GoldText":  {
+                                                    "gameObjectName":  "GoldText",
+                                                    "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                    "active":  true,
+                                                    "text":  "Gold Reserve 723"
+                                                },
+                                   "FloorText":  {
+                                                     "gameObjectName":  "FloorText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Highest Floor 20"
+                                                 },
+                                   "ActionText":  {
+                                                      "gameObjectName":  "ActionText",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Action Cue: 2 mission rewards ready to claim."
+                                                  },
+                                   "ScreenSubtitle":  {
+                                                          "gameObjectName":  "ScreenSubtitle",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Climb floors, tune your build, and keep the run alive."
+                                                      },
+                                   "LevelText":  {
+                                                     "gameObjectName":  "LevelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Lv. 7"
+                                                 },
+                                   "RunOverviewHeader":  {
+                                                             "gameObjectName":  "RunOverviewHeader",
+                                                             "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                             "active":  true,
+                                                             "text":  "Run Overview"
+                                                         }
+                               }
+                  },
+                  {
+                      "name":  "home_active_buttons",
+                      "data":  {
+                                   "EquipmentButton":  {
+                                                           "gameObjectName":  "EquipmentButton",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "interactable":  true,
+                                                           "label":  "Equipment",
+                                                           "backgroundColor":  "33596BFF"
+                                                       },
+                                   "ClaimIdleRewardButton":  {
+                                                                 "gameObjectName":  "ClaimIdleRewardButton",
+                                                                 "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                                 "active":  true,
+                                                                 "interactable":  true,
+                                                                 "label":  "ClaimIdleReward",
+                                                                 "backgroundColor":  "33596BFF"
+                                                             },
+                                   "HomeButton":  {
+                                                      "gameObjectName":  "HomeButton",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "interactable":  true,
+                                                      "label":  "Home",
+                                                      "backgroundColor":  "2E7AB0FF"
+                                                  },
+                                   "BattleButton":  {
+                                                        "gameObjectName":  "BattleButton",
+                                                        "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                        "active":  true,
+                                                        "interactable":  true,
+                                                        "label":  "Battle",
+                                                        "backgroundColor":  "33596BFF"
+                                                    },
+                                   "EnhanceButton":  {
+                                                         "gameObjectName":  "EnhanceButton",
+                                                         "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                         "active":  true,
+                                                         "interactable":  true,
+                                                         "label":  "Enhance",
+                                                         "backgroundColor":  "33596BFF"
+                                                     },
+                                   "MissionButton":  {
+                                                         "gameObjectName":  "MissionButton",
+                                                         "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                         "active":  true,
+                                                         "interactable":  true,
+                                                         "label":  "Mission",
+                                                         "backgroundColor":  "33596BFF"
+                                                     }
+                               }
+                  },
+                  {
+                      "name":  "home_debug_initial",
+                      "data":  {
+                                   "ok":  true,
+                                   "currentFloor":  21,
+                                   "level":  7,
+                                   "exp":  17,
+                                   "requiredExp":  40,
+                                   "gold":  723,
+                                   "highestFloor":  20,
+                                   "attackUpgradeLevel":  0,
+                                   "defenseUpgradeLevel":  0,
+                                   "hpUpgradeLevel":  0,
+                                   "pendingIdleRewardGold":  0,
+                                   "homeBadgeCount":  0,
+                                   "enhanceBadgeCount":  3,
+                                   "equipmentBadgeCount":  3,
+                                   "missionBadgeCount":  2,
+                                   "homeHeadline":  "Next Step: enter Battle and challenge floor 21.",
+                                   "enhanceHeadline":  "Upgrade Priority: Attack is affordable now for 10 Gold.",
+                                   "equipmentHeadline":  "Loadout Focus: all sample gear unlocked. Tune your build before the next push.",
+                                   "missionHeadline":  "Mission Focus: claim the first battle victory reward.",
+                                   "runProgressText":  "Progress: cleared floor 20, targeting floor 21.",
+                                   "rewardForecastText":  "Reward Forecast: floor 21 should pay about 10 Gold and 5 EXP.",
+                                   "runActionText":  "Action Cue: 2 mission rewards ready to claim.",
+                                   "lastDailyRewardDate":  "2026-03-21",
+                                   "equippedWeaponId":  "equip_bronze_blade",
+                                   "equippedArmorId":  "equip_guard_cloth",
+                                   "equippedAccessoryId":  "equip_ashen_ring",
+                                   "ownedEquipments":  [
+                                                           {
+                                                               "equipmentId":  "equip_bronze_blade",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_guard_cloth",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_ashen_ring",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_iron_sword",
+                                                               "isEquipped":  false
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_bone_mail",
+                                                               "isEquipped":  false
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_quick_charm",
+                                                               "isEquipped":  false
+                                                           }
+                                                       ],
+                                   "missions":  [
+                                                    {
+                                                        "missionId":  "mission_clear_1",
+                                                        "progress":  20,
+                                                        "isClaimed":  false
+                                                    },
+                                                    {
+                                                        "missionId":  "mission_reach_floor_3",
+                                                        "progress":  20,
+                                                        "isClaimed":  false
+                                                    }
+                                                ]
+                               }
+                  },
+                  {
+                      "name":  "show_enhance_initial",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Method invoked.",
+                                   "componentType":  "WitchTower.Home.PanelSwitcher",
+                                   "methodName":  "ShowEnhance"
+                               }
+                  },
+                  {
+                      "name":  "enhance_active_texts",
+                      "data":  {
+                                   "Label":  {
+                                                 "gameObjectName":  "Label",
+                                                 "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                 "active":  true,
+                                                 "text":  "UpgradeDefense"
+                                             },
+                                   "EnhancementsHeader":  {
+                                                              "gameObjectName":  "EnhancementsHeader",
+                                                              "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                              "active":  true,
+                                                              "text":  "Enhancements"
+                                                          },
+                                   "BonusText":  {
+                                                     "gameObjectName":  "BonusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "+0 guard"
+                                                 },
+                                   "ScreenTitle":  {
+                                                       "gameObjectName":  "ScreenTitle",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Witch Tower"
+                                                   },
+                                   "EnhanceCtaText":  {
+                                                          "gameObjectName":  "EnhanceCtaText",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Upgrade Priority: Attack is affordable now for 10 Gold."
+                                                      },
+                                   "EquipmentNavBadge":  {
+                                                             "gameObjectName":  "EquipmentNavBadge",
+                                                             "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                             "active":  true,
+                                                             "text":  "3"
+                                                         },
+                                   "EnhanceNavBadge":  {
+                                                           "gameObjectName":  "EnhanceNavBadge",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "text":  "3"
+                                                       },
+                                   "MissionNavBadge":  {
+                                                           "gameObjectName":  "MissionNavBadge",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "text":  "2"
+                                                       },
+                                   "Spendgoldonpermanentcombatgrowth.Subtitle":  {
+                                                                                     "gameObjectName":  "Spendgoldonpermanentcombatgrowth.Subtitle",
+                                                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                                                     "active":  true,
+                                                                                     "text":  "Spend gold on permanent combat growth."
+                                                                                 },
+                                   "GoldText":  {
+                                                    "gameObjectName":  "GoldText",
+                                                    "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                    "active":  true,
+                                                    "text":  "Gold Reserve 723"
+                                                },
+                                   "ScreenSubtitle":  {
+                                                          "gameObjectName":  "ScreenSubtitle",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Climb floors, tune your build, and keep the run alive."
+                                                      },
+                                   "LabelText":  {
+                                                     "gameObjectName":  "LabelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Defense Boost"
+                                                 },
+                                   "LevelText":  {
+                                                     "gameObjectName":  "LevelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Tier 0"
+                                                 },
+                                   "CostText":  {
+                                                    "gameObjectName":  "CostText",
+                                                    "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                    "active":  true,
+                                                    "text":  "Next upgrade costs 10 Gold"
+                                                }
+                               }
+                  },
+                  {
+                      "name":  "enhance_active_buttons",
+                      "data":  {
+                                   "EquipmentButton":  {
+                                                           "gameObjectName":  "EquipmentButton",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "interactable":  true,
+                                                           "label":  "Equipment",
+                                                           "backgroundColor":  "33596BFF"
+                                                       },
+                                   "HomeButton":  {
+                                                      "gameObjectName":  "HomeButton",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "interactable":  true,
+                                                      "label":  "Home",
+                                                      "backgroundColor":  "33596BFF"
+                                                  },
+                                   "UpgradeHpButton":  {
+                                                           "gameObjectName":  "UpgradeHpButton",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "interactable":  true,
+                                                           "label":  "UpgradeHp",
+                                                           "backgroundColor":  "33596BFF"
+                                                       },
+                                   "UpgradeAttackButton":  {
+                                                               "gameObjectName":  "UpgradeAttackButton",
+                                                               "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                               "active":  true,
+                                                               "interactable":  true,
+                                                               "label":  "UpgradeAttack",
+                                                               "backgroundColor":  "33596BFF"
+                                                           },
+                                   "BattleButton":  {
+                                                        "gameObjectName":  "BattleButton",
+                                                        "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                        "active":  true,
+                                                        "interactable":  true,
+                                                        "label":  "Battle",
+                                                        "backgroundColor":  "33596BFF"
+                                                    },
+                                   "EnhanceButton":  {
+                                                         "gameObjectName":  "EnhanceButton",
+                                                         "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                         "active":  true,
+                                                         "interactable":  true,
+                                                         "label":  "Enhance",
+                                                         "backgroundColor":  "2E7AB0FF"
+                                                     },
+                                   "UpgradeDefenseButton":  {
+                                                                "gameObjectName":  "UpgradeDefenseButton",
+                                                                "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                                "active":  true,
+                                                                "interactable":  true,
+                                                                "label":  "UpgradeDefense",
+                                                                "backgroundColor":  "33596BFF"
+                                                            },
+                                   "MissionButton":  {
+                                                         "gameObjectName":  "MissionButton",
+                                                         "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                         "active":  true,
+                                                         "interactable":  true,
+                                                         "label":  "Mission",
+                                                         "backgroundColor":  "33596BFF"
+                                                     }
+                               }
+                  },
+                  {
+                      "name":  "enhance_debug",
+                      "data":  {
+                                   "ok":  true,
+                                   "currentFloor":  21,
+                                   "level":  7,
+                                   "exp":  17,
+                                   "requiredExp":  40,
+                                   "gold":  723,
+                                   "highestFloor":  20,
+                                   "attackUpgradeLevel":  0,
+                                   "defenseUpgradeLevel":  0,
+                                   "hpUpgradeLevel":  0,
+                                   "pendingIdleRewardGold":  0,
+                                   "homeBadgeCount":  0,
+                                   "enhanceBadgeCount":  3,
+                                   "equipmentBadgeCount":  3,
+                                   "missionBadgeCount":  2,
+                                   "homeHeadline":  "Next Step: enter Battle and challenge floor 21.",
+                                   "enhanceHeadline":  "Upgrade Priority: Attack is affordable now for 10 Gold.",
+                                   "equipmentHeadline":  "Loadout Focus: all sample gear unlocked. Tune your build before the next push.",
+                                   "missionHeadline":  "Mission Focus: claim the first battle victory reward.",
+                                   "runProgressText":  "Progress: cleared floor 20, targeting floor 21.",
+                                   "rewardForecastText":  "Reward Forecast: floor 21 should pay about 10 Gold and 5 EXP.",
+                                   "runActionText":  "Action Cue: 2 mission rewards ready to claim.",
+                                   "lastDailyRewardDate":  "2026-03-21",
+                                   "equippedWeaponId":  "equip_bronze_blade",
+                                   "equippedArmorId":  "equip_guard_cloth",
+                                   "equippedAccessoryId":  "equip_ashen_ring",
+                                   "ownedEquipments":  [
+                                                           {
+                                                               "equipmentId":  "equip_bronze_blade",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_guard_cloth",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_ashen_ring",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_iron_sword",
+                                                               "isEquipped":  false
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_bone_mail",
+                                                               "isEquipped":  false
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_quick_charm",
+                                                               "isEquipped":  false
+                                                           }
+                                                       ],
+                                   "missions":  [
+                                                    {
+                                                        "missionId":  "mission_clear_1",
+                                                        "progress":  20,
+                                                        "isClaimed":  false
+                                                    },
+                                                    {
+                                                        "missionId":  "mission_reach_floor_3",
+                                                        "progress":  20,
+                                                        "isClaimed":  false
+                                                    }
+                                                ]
+                               }
+                  },
+                  {
+                      "name":  "show_equipment",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Method invoked.",
+                                   "componentType":  "WitchTower.Home.PanelSwitcher",
+                                   "methodName":  "ShowEquipment"
+                               }
+                  },
+                  {
+                      "name":  "equipment_texts",
+                      "data":  {
+                                   "ok":  true,
+                                   "texts":  [
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Enhance"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ProgressText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Progress 20/1"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "QuickCharm"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Battle"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "HomeNavBadge",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  ""
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Yourcurrentclimb,gold,andpassiverewards.Subtitle",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Your current climb, gold, and passive rewards."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ActionText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Action Cue: 2 mission rewards ready to claim."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "BronzeBladeStatusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Equipped"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "EquipmentSummaryText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Battle Build: HP 108  ATK 19  DEF 7  CRIT 8%  SPD 1.05\nBuild Grade: \u003ccolor=#63E6A8\u003eTower-ready\u003c/color\u003e"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "RewardText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Claim for 60 Gold"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "ClaimDaily"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "ClaimMission2"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "BronzeBlade"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "GuardCloth"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "RewardForecastText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Reward Forecast: floor 21 should pay about 10 Gold and 5 EXP."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ScreenSubtitle",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Climb floors, tune your build, and keep the run alive."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Swapunlockedgeartoshiftyourbattleprofile.Subtitle",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Swap unlocked gear to shift your battle profile."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "LevelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Tier 0"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "SummaryText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Run State: floor 21 is next, upgrades A0/D0/HP0."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ProgressText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Progress 20/3"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "CostText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Next upgrade costs 10 Gold"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "CostText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Next upgrade costs 10 Gold"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "TitleText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Win 1 Battle"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "MissionsHeader",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Missions"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "GoldText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Gold Reserve 723"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "HomeCtaText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Next Step: enter Battle and challenge floor 21."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ActionText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Action Cue: 2 mission rewards ready to claim."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "AshenRing"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "QuickCharmStatusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Owned"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "CostText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Next upgrade costs 10 Gold"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "EquipmentNavBadge",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "3"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "RunOverviewHeader",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Run Overview"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "ClaimMission1"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ProgressText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Progress: cleared floor 20, targeting floor 21."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "BoneMailStatusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Owned"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "MissionNavBadge",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "2"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "StatusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Daily Reward: already claimed for today"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "AshenRingStatusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Equipped"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "EnhanceNavBadge",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "3"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "WeaponText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Weapon: Bronze Blade"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ExpText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "EXP 17/40"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "IronSwordStatusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Owned"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "LabelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Attack Boost"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "GoldText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Gold Reserve 723"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "LoadoutHeader",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Loadout"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "LevelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Tier 0"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "EnhanceCtaText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Upgrade Priority: Attack is affordable now for 10 Gold."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ScreenTitle",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Witch Tower"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "BonusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "+0 power"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ExpText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "EXP 17/40"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ArmorText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Armor: Guard Cloth"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "GuardClothStatusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Equipped"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Home"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "FloorText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Highest Floor 20"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "GoldText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Gold Reserve 723"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "GoldText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Gold Reserve 723"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "BonusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "+0 vitality"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "BonusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "+0 guard"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "EnhancementsHeader",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Enhancements"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "FloorText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Highest Floor 20"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "EquipmentCtaText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Loadout Focus: all sample gear unlocked. Tune your build before the next push."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "LabelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "HP Boost"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "ProgressText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Progress: cleared floor 20, targeting floor 21."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Mission"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "UpgradeHp"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "SummaryText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Run State: floor 21 is next, upgrades A0/D0/HP0."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "LabelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Defense Boost"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "BoneMail"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "RewardForecastText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Reward Forecast: floor 21 should pay about 10 Gold and 5 EXP."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Equipment"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "TitleText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Reach Floor 3"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "UpgradeAttack"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "LevelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Lv. 7"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "RewardText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Claim for 30 Gold"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Spendgoldonpermanentcombatgrowth.Subtitle",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Spend gold on permanent combat growth."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "LevelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Tier 0"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "LevelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Lv. 7"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "StatusText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Idle Reward: No stored gold right now"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Claimdailyincomeandfloorprogressrewards.Subtitle",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Claim daily income and floor progress rewards."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "AccessoryText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Accessory: Ashen Ring"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "MissionCtaText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "Mission Focus: claim the first battle victory reward."
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "ClaimIdleReward"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  false,
+                                                     "text":  "UpgradeDefense"
+                                                 },
+                                                 {
+                                                     "gameObjectName":  "Label",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "IronSword"
+                                                 }
+                                             ]
+                               }
+                  },
+                  {
+                      "name":  "equipment_buttons",
+                      "data":  {
+                                   "ok":  true,
+                                   "buttons":  [
+                                                   {
+                                                       "gameObjectName":  "BoneMailButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "BoneMail",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "ClaimMission2Button",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  false,
+                                                       "interactable":  true,
+                                                       "label":  "ClaimMission2",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "UpgradeAttackButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  false,
+                                                       "interactable":  true,
+                                                       "label":  "UpgradeAttack",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "BronzeBladeButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "BronzeBlade",
+                                                       "backgroundColor":  "3D7A57FF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "ClaimMission1Button",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  false,
+                                                       "interactable":  true,
+                                                       "label":  "ClaimMission1",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "BattleButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "Battle",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "UpgradeHpButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  false,
+                                                       "interactable":  true,
+                                                       "label":  "UpgradeHp",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "EquipmentButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "Equipment",
+                                                       "backgroundColor":  "2E7AB0FF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "UpgradeDefenseButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  false,
+                                                       "interactable":  true,
+                                                       "label":  "UpgradeDefense",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "GuardClothButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "GuardCloth",
+                                                       "backgroundColor":  "3D7A57FF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "HomeButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "Home",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "IronSwordButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "IronSword",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "QuickCharmButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "QuickCharm",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "EnhanceButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "Enhance",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "MissionButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "Mission",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "ClaimDailyButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  false,
+                                                       "interactable":  true,
+                                                       "label":  "ClaimDaily",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "ClaimIdleRewardButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  false,
+                                                       "interactable":  true,
+                                                       "label":  "ClaimIdleReward",
+                                                       "backgroundColor":  "33596BFF"
+                                                   },
+                                                   {
+                                                       "gameObjectName":  "AshenRingButton",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "interactable":  true,
+                                                       "label":  "AshenRing",
+                                                       "backgroundColor":  "3D7A57FF"
+                                                   }
+                                               ]
+                               }
+                  },
+                  {
+                      "name":  "start_battle",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Method invoked.",
+                                   "componentType":  "WitchTower.Home.HomeSceneController",
+                                   "methodName":  "StartBattle"
+                               }
+                  },
+                  {
+                      "name":  "battle_scene",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/BattleScene.unity",
+                                   "isPlaying":  true,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "battle_fighting",
+                      "data":  {
+                                   "ok":  true,
+                                   "hasSceneController":  true,
+                                   "hasStateMachine":  true,
+                                   "hasSimulator":  true,
+                                   "hasHud":  true,
+                                   "editorPaused":  false,
+                                   "flowState":  "Fighting",
+                                   "simulatorRunning":  true,
+                                   "simulatorTickCount":  2,
+                                   "simulatorLastDeltaTime":  0.002,
+                                   "playerAttackTimer":  0.004,
+                                   "enemyAttackTimer":  0.004,
+                                   "guardRemainingTime":  0,
+                                   "playerStats":  {
+                                                       "maxHp":  108,
+                                                       "currentHp":  108,
+                                                       "attack":  19,
+                                                       "defense":  7,
+                                                       "attackSpeed":  1.05,
+                                                       "critRate":  0.08,
+                                                       "critDamage":  1.5
+                                                   },
+                                   "enemyStats":  {
+                                                      "maxHp":  40,
+                                                      "currentHp":  40,
+                                                      "attack":  8,
+                                                      "defense":  2,
+                                                      "attackSpeed":  0.8,
+                                                      "critRate":  0.03,
+                                                      "critDamage":  1.3
+                                                  },
+                                   "controllerUpdateCount":  2,
+                                   "controllerLastDeltaTime":  0.002,
+                                   "texts":  [
+                                                 {
+                                                     "name":  "EnemyFrameLabel",
+                                                     "active":  true,
+                                                     "text":  "Tower Spawn"
+                                                 },
+                                                 {
+                                                     "name":  "VersusText",
+                                                     "active":  true,
+                                                     "text":  "VS"
+                                                 },
+                                                 {
+                                                     "name":  "SkillBarHint",
+                                                     "active":  true,
+                                                     "text":  "Buttons dim during cooldown and light back up when ready."
+                                                 },
+                                                 {
+                                                     "name":  "PlayerDamageText",
+                                                     "active":  false,
+                                                     "text":  ""
+                                                 },
+                                                 {
+                                                     "name":  "RewardHintText",
+                                                     "active":  false,
+                                                     "text":  "Bank rewards, then choose your next move."
+                                                 },
+                                                 {
+                                                     "name":  "SkillBarTitle",
+                                                     "active":  true,
+                                                     "text":  "Active Skills"
+                                                 },
+                                                 {
+                                                     "name":  "Skill1Text",
+                                                     "active":  true,
+                                                     "text":  "Strike"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  true,
+                                                     "text":  "Guard"
+                                                 },
+                                                 {
+                                                     "name":  "BattleThreatText",
+                                                     "active":  true,
+                                                     "text":  "Threat: favorable push"
+                                                 },
+                                                 {
+                                                     "name":  "PlayerHpText",
+                                                     "active":  true,
+                                                     "text":  "Player HP 108/108"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  false,
+                                                     "text":  "Next Floor"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  false,
+                                                     "text":  "Victory"
+                                                 },
+                                                 {
+                                                     "name":  "PlayerFrameLabel",
+                                                     "active":  true,
+                                                     "text":  "Witch"
+                                                 },
+                                                 {
+                                                     "name":  "FloorText",
+                                                     "active":  true,
+                                                     "text":  "Floor 21"
+                                                 },
+                                                 {
+                                                     "name":  "TitleText",
+                                                     "active":  false,
+                                                     "text":  "Result"
+                                                 },
+                                                 {
+                                                     "name":  "EnemyHpText",
+                                                     "active":  true,
+                                                     "text":  "Enemy HP 40/40"
+                                                 },
+                                                 {
+                                                     "name":  "GoldText",
+                                                     "active":  false,
+                                                     "text":  "Gold +0"
+                                                 },
+                                                 {
+                                                     "name":  "ResultSummaryText",
+                                                     "active":  false,
+                                                     "text":  "Floor cleared."
+                                                 },
+                                                 {
+                                                     "name":  "EnemyFrameHint",
+                                                     "active":  true,
+                                                     "text":  "Higher floors push HP, damage, and reward values upward."
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  false,
+                                                     "text":  "Defeat"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  false,
+                                                     "text":  "Return Home"
+                                                 },
+                                                 {
+                                                     "name":  "BattleScreenSubtitle",
+                                                     "active":  true,
+                                                     "text":  "Read the floor, time your skills, and finish the duel."
+                                                 },
+                                                 {
+                                                     "name":  "ExpText",
+                                                     "active":  false,
+                                                     "text":  "EXP +0"
+                                                 },
+                                                 {
+                                                     "name":  "Skill3Text",
+                                                     "active":  true,
+                                                     "text":  "Guard"
+                                                 },
+                                                 {
+                                                     "name":  "NextActionText",
+                                                     "active":  false,
+                                                     "text":  "Next"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  true,
+                                                     "text":  "Drain"
+                                                 },
+                                                 {
+                                                     "name":  "BattleScreenTitle",
+                                                     "active":  true,
+                                                     "text":  "Tower Encounter"
+                                                 },
+                                                 {
+                                                     "name":  "BattleEncounterText",
+                                                     "active":  true,
+                                                     "text":  "Encounter: floor 21 enemy opens at 40 HP / 8 ATK. Your build enters with 108 HP / 19 ATK."
+                                                 },
+                                                 {
+                                                     "name":  "PlayerFrameHint",
+                                                     "active":  true,
+                                                     "text":  "Crit and drain thrive when your upgrades are online."
+                                                 },
+                                                 {
+                                                     "name":  "Skill2Text",
+                                                     "active":  true,
+                                                     "text":  "Drain"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  true,
+                                                     "text":  "Strike"
+                                                 },
+                                                 {
+                                                     "name":  "EnemyDamageText",
+                                                     "active":  false,
+                                                     "text":  ""
+                                                 }
+                                             ]
+                               }
+                  },
+                  {
+                      "name":  "battle_result",
+                      "data":  {
+                                   "ok":  true,
+                                   "hasSceneController":  true,
+                                   "hasStateMachine":  true,
+                                   "hasSimulator":  true,
+                                   "hasHud":  true,
+                                   "editorPaused":  false,
+                                   "flowState":  "Result",
+                                   "simulatorRunning":  false,
+                                   "simulatorTickCount":  2076,
+                                   "simulatorLastDeltaTime":  0.001,
+                                   "playerAttackTimer":  0.001,
+                                   "enemyAttackTimer":  -0.142,
+                                   "guardRemainingTime":  0,
+                                   "playerStats":  {
+                                                       "maxHp":  108,
+                                                       "currentHp":  106,
+                                                       "attack":  19,
+                                                       "defense":  7,
+                                                       "attackSpeed":  1.05,
+                                                       "critRate":  0.08,
+                                                       "critDamage":  1.5
+                                                   },
+                                   "enemyStats":  {
+                                                      "maxHp":  40,
+                                                      "currentHp":  0,
+                                                      "attack":  8,
+                                                      "defense":  2,
+                                                      "attackSpeed":  0.8,
+                                                      "critRate":  0.03,
+                                                      "critDamage":  1.3
+                                                  },
+                                   "controllerUpdateCount":  2195,
+                                   "controllerLastDeltaTime":  0.001,
+                                   "texts":  [
+                                                 {
+                                                     "name":  "EnemyFrameLabel",
+                                                     "active":  true,
+                                                     "text":  "Tower Spawn"
+                                                 },
+                                                 {
+                                                     "name":  "VersusText",
+                                                     "active":  true,
+                                                     "text":  "VS"
+                                                 },
+                                                 {
+                                                     "name":  "SkillBarHint",
+                                                     "active":  true,
+                                                     "text":  "Buttons dim during cooldown and light back up when ready."
+                                                 },
+                                                 {
+                                                     "name":  "PlayerDamageText",
+                                                     "active":  true,
+                                                     "text":  "1"
+                                                 },
+                                                 {
+                                                     "name":  "RewardHintText",
+                                                     "active":  true,
+                                                     "text":  "Bank the rewards, swap gear if needed, or keep the streak alive."
+                                                 },
+                                                 {
+                                                     "name":  "SkillBarTitle",
+                                                     "active":  true,
+                                                     "text":  "Active Skills"
+                                                 },
+                                                 {
+                                                     "name":  "Skill1Text",
+                                                     "active":  true,
+                                                     "text":  "Strike"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  true,
+                                                     "text":  "Guard"
+                                                 },
+                                                 {
+                                                     "name":  "BattleThreatText",
+                                                     "active":  true,
+                                                     "text":  "Threat: favorable push"
+                                                 },
+                                                 {
+                                                     "name":  "PlayerHpText",
+                                                     "active":  true,
+                                                     "text":  "Player HP 106/108"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  true,
+                                                     "text":  "Next Floor 22"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  true,
+                                                     "text":  "Victory"
+                                                 },
+                                                 {
+                                                     "name":  "PlayerFrameLabel",
+                                                     "active":  true,
+                                                     "text":  "Witch"
+                                                 },
+                                                 {
+                                                     "name":  "FloorText",
+                                                     "active":  true,
+                                                     "text":  "Floor 21"
+                                                 },
+                                                 {
+                                                     "name":  "TitleText",
+                                                     "active":  true,
+                                                     "text":  "Victory"
+                                                 },
+                                                 {
+                                                     "name":  "EnemyHpText",
+                                                     "active":  true,
+                                                     "text":  "Enemy HP 0/40"
+                                                 },
+                                                 {
+                                                     "name":  "GoldText",
+                                                     "active":  true,
+                                                     "text":  "Gold +10"
+                                                 },
+                                                 {
+                                                     "name":  "ResultSummaryText",
+                                                     "active":  true,
+                                                     "text":  "Floor 21 cleared. The tower opens floor 22."
+                                                 },
+                                                 {
+                                                     "name":  "EnemyFrameHint",
+                                                     "active":  true,
+                                                     "text":  "Higher floors push HP, damage, and reward values upward."
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  false,
+                                                     "text":  "Defeat"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  true,
+                                                     "text":  "Return Home"
+                                                 },
+                                                 {
+                                                     "name":  "BattleScreenSubtitle",
+                                                     "active":  true,
+                                                     "text":  "Read the floor, time your skills, and finish the duel."
+                                                 },
+                                                 {
+                                                     "name":  "ExpText",
+                                                     "active":  true,
+                                                     "text":  "EXP +5"
+                                                 },
+                                                 {
+                                                     "name":  "Skill3Text",
+                                                     "active":  true,
+                                                     "text":  "Guard"
+                                                 },
+                                                 {
+                                                     "name":  "NextActionText",
+                                                     "active":  true,
+                                                     "text":  "Next Floor 22"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  true,
+                                                     "text":  "Drain"
+                                                 },
+                                                 {
+                                                     "name":  "BattleScreenTitle",
+                                                     "active":  true,
+                                                     "text":  "Tower Encounter"
+                                                 },
+                                                 {
+                                                     "name":  "BattleEncounterText",
+                                                     "active":  true,
+                                                     "text":  "Encounter: floor 21 enemy opens at 40 HP / 8 ATK. Your build enters with 108 HP / 19 ATK."
+                                                 },
+                                                 {
+                                                     "name":  "PlayerFrameHint",
+                                                     "active":  true,
+                                                     "text":  "Crit and drain thrive when your upgrades are online."
+                                                 },
+                                                 {
+                                                     "name":  "Skill2Text",
+                                                     "active":  true,
+                                                     "text":  "Drain"
+                                                 },
+                                                 {
+                                                     "name":  "Label",
+                                                     "active":  true,
+                                                     "text":  "Strike"
+                                                 },
+                                                 {
+                                                     "name":  "EnemyDamageText",
+                                                     "active":  true,
+                                                     "text":  "17"
+                                                 }
+                                             ]
+                               }
+                  },
+                  {
+                      "name":  "battle_result_texts",
+                      "data":  {
+                                   "BattleEncounterText":  {
+                                                               "gameObjectName":  "BattleEncounterText",
+                                                               "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                               "active":  true,
+                                                               "text":  "Encounter: floor 21 enemy opens at 40 HP / 8 ATK. Your build enters with 108 HP / 19 ATK."
+                                                           },
+                                   "EnemyFrameHint":  {
+                                                          "gameObjectName":  "EnemyFrameHint",
+                                                          "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Higher floors push HP, damage, and reward values upward."
+                                                      },
+                                   "TitleText":  {
+                                                     "gameObjectName":  "TitleText",
+                                                     "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Victory"
+                                                 },
+                                   "PlayerFrameHint":  {
+                                                           "gameObjectName":  "PlayerFrameHint",
+                                                           "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                           "active":  true,
+                                                           "text":  "Crit and drain thrive when your upgrades are online."
+                                                       },
+                                   "Skill1Text":  {
+                                                      "gameObjectName":  "Skill1Text",
+                                                      "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Strike"
+                                                  },
+                                   "PlayerHpText":  {
+                                                        "gameObjectName":  "PlayerHpText",
+                                                        "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                        "active":  true,
+                                                        "text":  "Player HP 106/108"
+                                                    },
+                                   "Skill3Text":  {
+                                                      "gameObjectName":  "Skill3Text",
+                                                      "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Guard"
+                                                  },
+                                   "BattleThreatText":  {
+                                                            "gameObjectName":  "BattleThreatText",
+                                                            "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                            "active":  true,
+                                                            "text":  "Threat: favorable push"
+                                                        },
+                                   "SkillBarHint":  {
+                                                        "gameObjectName":  "SkillBarHint",
+                                                        "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                        "active":  true,
+                                                        "text":  "Buttons dim during cooldown and light back up when ready."
+                                                    },
+                                   "Label":  {
+                                                 "gameObjectName":  "Label",
+                                                 "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                 "active":  true,
+                                                 "text":  "Strike"
+                                             },
+                                   "EnemyHpText":  {
+                                                       "gameObjectName":  "EnemyHpText",
+                                                       "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Enemy HP 0/40"
+                                                   },
+                                   "PlayerDamageText":  {
+                                                            "gameObjectName":  "PlayerDamageText",
+                                                            "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                            "active":  true,
+                                                            "text":  "1"
+                                                        },
+                                   "FloorText":  {
+                                                     "gameObjectName":  "FloorText",
+                                                     "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Floor 21"
+                                                 },
+                                   "ResultSummaryText":  {
+                                                             "gameObjectName":  "ResultSummaryText",
+                                                             "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                             "active":  true,
+                                                             "text":  "Floor 21 cleared. The tower opens floor 22."
+                                                         },
+                                   "Skill2Text":  {
+                                                      "gameObjectName":  "Skill2Text",
+                                                      "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Drain"
+                                                  },
+                                   "PlayerFrameLabel":  {
+                                                            "gameObjectName":  "PlayerFrameLabel",
+                                                            "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                            "active":  true,
+                                                            "text":  "Witch"
+                                                        },
+                                   "ExpText":  {
+                                                   "gameObjectName":  "ExpText",
+                                                   "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                   "active":  true,
+                                                   "text":  "EXP +5"
+                                               },
+                                   "GoldText":  {
+                                                    "gameObjectName":  "GoldText",
+                                                    "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                    "active":  true,
+                                                    "text":  "Gold +10"
+                                                },
+                                   "BattleScreenTitle":  {
+                                                             "gameObjectName":  "BattleScreenTitle",
+                                                             "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                             "active":  true,
+                                                             "text":  "Tower Encounter"
+                                                         },
+                                   "NextActionText":  {
+                                                          "gameObjectName":  "NextActionText",
+                                                          "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Next Floor 22"
+                                                      },
+                                   "RewardHintText":  {
+                                                          "gameObjectName":  "RewardHintText",
+                                                          "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Bank the rewards, swap gear if needed, or keep the streak alive."
+                                                      },
+                                   "EnemyFrameLabel":  {
+                                                           "gameObjectName":  "EnemyFrameLabel",
+                                                           "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                           "active":  true,
+                                                           "text":  "Tower Spawn"
+                                                       },
+                                   "VersusText":  {
+                                                      "gameObjectName":  "VersusText",
+                                                      "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                      "active":  true,
+                                                      "text":  "VS"
+                                                  },
+                                   "EnemyDamageText":  {
+                                                           "gameObjectName":  "EnemyDamageText",
+                                                           "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                           "active":  true,
+                                                           "text":  "17"
+                                                       },
+                                   "SkillBarTitle":  {
+                                                         "gameObjectName":  "SkillBarTitle",
+                                                         "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                         "active":  true,
+                                                         "text":  "Active Skills"
+                                                     },
+                                   "BattleScreenSubtitle":  {
+                                                                "gameObjectName":  "BattleScreenSubtitle",
+                                                                "scenePath":  "Assets/Scenes/BattleScene.unity",
+                                                                "active":  true,
+                                                                "text":  "Read the floor, time your skills, and finish the duel."
+                                                            }
+                               }
+                  },
+                  {
+                      "name":  "finally_exit_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Play mode action applied.",
+                                   "isPlaying":  true
+                               }
+                  },
+                  {
+                      "name":  "finally_stopped",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "finally_open_boot",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "bridge_status",
+                      "data":  {
+                                   "ok":  true,
+                                   "bridgeStatePath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\unity_bridge_state.json",
+                                   "state":  {
+                                                 "exists":  false
+                                             },
+                                   "resolvedBaseUrl":  "http://127.0.0.1:8765",
+                                   "ping":  {
+                                                "ok":  true,
+                                                "response":  {
+                                                                 "ok":  true,
+                                                                 "message":  "Unity MCP bridge is running.",
+                                                                 "unityVersion":  "2022.3.32f1",
+                                                                 "baseUrl":  "http://127.0.0.1:8765"
+                                                             }
+                                            },
+                                   "portStatus":  {
+                                                      "ok":  true,
+                                                      "lineCount":  4,
+                                                      "listeningCount":  1,
+                                                      "closeWaitCount":  0,
+                                                      "lines":  [
+                                                                    "TCP    127.0.0.1:8765         0.0.0.0:0              LISTENING       13680",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:55866        TIME_WAIT       0",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:55907        ESTABLISHED     13680",
+                                                                    "TCP    127.0.0.1:55907        127.0.0.1:8765         ESTABLISHED     10536"
+                                                                ]
+                                                  },
+                                   "portOwner":  {
+                                                     "ok":  true,
+                                                     "pid":  13680,
+                                                     "processName":  "Unity",
+                                                     "responding":  true,
+                                                     "startTime":  "\/Date(1774100446067)\/",
+                                                     "mainWindowTitle":  ""
+                                                 },
+                                   "compileStatus":  {
+                                                         "ok":  true,
+                                                         "bridgeScriptPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Assets\\Editor\\UnityMcp\\UnityMcpBridge.cs",
+                                                         "bridgeScriptExists":  true,
+                                                         "bridgeScriptLastWriteTime":  "\/Date(1774102152167)\/",
+                                                         "bridgeScriptLength":  39859,
+                                                         "editorAssemblyPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Library\\ScriptAssemblies\\Assembly-CSharp-Editor.dll",
+                                                         "editorAssemblyExists":  true,
+                                                         "editorAssemblyLastWriteTime":  "\/Date(1774102280528)\/",
+                                                         "editorAssemblyLength":  69120,
+                                                         "scriptAheadSeconds":  -128.4,
+                                                         "stale":  false
+                                                     }
+                               }
+                  }
+              ],
+    "error":  "NextRewardForecastText missing from active texts",
+    "bridgeStatusPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\reports\\unity-bridge-status-standard-latest.json"
+}

@@ -1,0 +1,28 @@
+﻿{
+    "ok":  true,
+    "generatedAt":  "2026-03-21T21:55:18.9942754+09:00",
+    "bridgeReachable":  false,
+    "diagnosis":  "compile_stale",
+    "compileStatus":  {
+                          "ok":  true,
+                          "bridgeScriptPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Assets\\Editor\\UnityMcp\\UnityMcpBridge.cs",
+                          "bridgeScriptExists":  true,
+                          "bridgeScriptLastWriteTime":  "\/Date(1774097322881)\/",
+                          "bridgeScriptLength":  39387,
+                          "editorAssemblyPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Library\\ScriptAssemblies\\Assembly-CSharp-Editor.dll",
+                          "editorAssemblyExists":  true,
+                          "editorAssemblyLastWriteTime":  "\/Date(1774084521667)\/",
+                          "editorAssemblyLength":  62976,
+                          "scriptAheadSeconds":  12801.2,
+                          "stale":  true
+                      },
+    "portOwner":  {
+                      "ok":  true,
+                      "pid":  18548,
+                      "processName":  "Unity",
+                      "responding":  true,
+                      "startTime":  "\/Date(1774079786817)\/",
+                      "mainWindowTitle":  ""
+                  },
+    "resolvedBaseUrl":  "http://127.0.0.1:8765"
+}

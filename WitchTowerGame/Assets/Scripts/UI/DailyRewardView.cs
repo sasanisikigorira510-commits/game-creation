@@ -11,7 +11,9 @@ namespace WitchTower.UI
         {
             if (statusText != null)
             {
-                statusText.text = canClaim ? $"Daily Reward: {rewardGold} Gold" : "Daily Reward: Claimed";
+                statusText.text = canClaim
+                    ? $"Daily Reward Ready: collect {rewardGold} Gold now"
+                    : "Daily Reward: already claimed for today";
             }
         }
     }

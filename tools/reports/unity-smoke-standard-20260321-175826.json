@@ -1,0 +1,71 @@
+﻿{
+    "ok":  false,
+    "scenario":  "standard",
+    "generatedAt":  "2026-03-21T17:57:55.3881536+09:00",
+    "steps":  [
+                  {
+                      "name":  "initial_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "ping",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1"
+                               }
+                  },
+                  {
+                      "name":  "refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Assets refreshed."
+                               }
+                  },
+                  {
+                      "name":  "clear_console",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Console log buffer cleared."
+                               }
+                  },
+                  {
+                      "name":  "rebuild_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Menu item executed."
+                               }
+                  },
+                  {
+                      "name":  "open_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "enter_play",
+                      "data":  ""
+                  },
+                  {
+                      "name":  "finally_open_boot",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity"
+                               }
+                  }
+              ],
+    "error":  "Timed out waiting for isPlaying=True"
+}

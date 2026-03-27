@@ -9,12 +9,14 @@ namespace WitchTower.Battle
         [SerializeField] private BattleFeedbackController feedbackController;
 
         public BattleFlowState CurrentState { get; private set; }
+        public BattleSimulator Simulator => simulator;
 
         private void OnEnable()
         {
             if (simulator != null)
             {
                 simulator.HitResolved += HandleHitResolved;
+                simulator.EncounterChanged += HandleEncounterChanged;
             }
         }
 
@@ -23,6 +25,7 @@ namespace WitchTower.Battle
             if (simulator != null)
             {
                 simulator.HitResolved -= HandleHitResolved;
+                simulator.EncounterChanged -= HandleEncounterChanged;
             }
         }
 
@@ -31,6 +34,7 @@ namespace WitchTower.Battle
             SetState(BattleFlowState.Init);
             simulator.Setup(floor);
             hudController.ShowFloor(floor);
+            hudController.ShowEncounterReadout(floor, simulator.PlayerStats, simulator.EnemyStats);
             hudController.UpdateHp(simulator.PlayerStats, simulator.EnemyStats);
             RefreshSkillHud();
             hudController.HideResultPanel();
@@ -90,6 +94,18 @@ namespace WitchTower.Battle
                 feedbackController.ShowHit(hitInfo);
             }
 
+            hudController.UpdateHp(simulator.PlayerStats, simulator.EnemyStats);
+        }
+
+        private void HandleEncounterChanged()
+        {
+            if (hudController == null || simulator == null)
+            {
+                return;
+            }
+
+            hudController.ShowFloor(simulator.CurrentFloor);
+            hudController.ShowEncounterReadout(simulator.CurrentFloor, simulator.PlayerStats, simulator.EnemyStats);
             hudController.UpdateHp(simulator.PlayerStats, simulator.EnemyStats);
         }
 

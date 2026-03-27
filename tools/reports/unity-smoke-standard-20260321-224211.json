@@ -1,0 +1,195 @@
+﻿{
+    "ok":  false,
+    "scenario":  "standard",
+    "generatedAt":  "2026-03-21T22:42:06.0249218+09:00",
+    "baseUrl":  "http://127.0.0.1:8765",
+    "steps":  [
+                  {
+                      "name":  "initial_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "ping",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Assets refreshed."
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_after_refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "clear_console",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Console log buffer cleared."
+                               }
+                  },
+                  {
+                      "name":  "rebuild_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Menu item executed."
+                               }
+                  },
+                  {
+                      "name":  "open_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "home_ready",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "enter_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Play mode action applied.",
+                                   "isPlaying":  false
+                               }
+                  },
+                  {
+                      "name":  "play_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  true,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "finally_exit_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Play mode action applied.",
+                                   "isPlaying":  true
+                               }
+                  },
+                  {
+                      "name":  "finally_stopped",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "finally_open_boot",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "bridge_status",
+                      "data":  {
+                                   "ok":  true,
+                                   "bridgeStatePath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\unity_bridge_state.json",
+                                   "state":  {
+                                                 "exists":  false
+                                             },
+                                   "resolvedBaseUrl":  "http://127.0.0.1:8765",
+                                   "ping":  {
+                                                "ok":  true,
+                                                "response":  {
+                                                                 "ok":  true,
+                                                                 "message":  "Unity MCP bridge is running.",
+                                                                 "unityVersion":  "2022.3.32f1",
+                                                                 "baseUrl":  "http://127.0.0.1:8765"
+                                                             }
+                                            },
+                                   "portStatus":  {
+                                                      "ok":  true,
+                                                      "lineCount":  5,
+                                                      "listeningCount":  1,
+                                                      "closeWaitCount":  0,
+                                                      "lines":  [
+                                                                    "TCP    127.0.0.1:8765         0.0.0.0:0              LISTENING       13680",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:54797        TIME_WAIT       0",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:54830        TIME_WAIT       0",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:54845        ESTABLISHED     13680",
+                                                                    "TCP    127.0.0.1:54845        127.0.0.1:8765         ESTABLISHED     2520"
+                                                                ]
+                                                  },
+                                   "portOwner":  {
+                                                     "ok":  true,
+                                                     "pid":  13680,
+                                                     "processName":  "Unity",
+                                                     "responding":  true,
+                                                     "startTime":  "\/Date(1774100446067)\/",
+                                                     "mainWindowTitle":  ""
+                                                 },
+                                   "compileStatus":  {
+                                                         "ok":  true,
+                                                         "bridgeScriptPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Assets\\Editor\\UnityMcp\\UnityMcpBridge.cs",
+                                                         "bridgeScriptExists":  true,
+                                                         "bridgeScriptLastWriteTime":  "\/Date(1774097322881)\/",
+                                                         "bridgeScriptLength":  39387,
+                                                         "editorAssemblyPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Library\\ScriptAssemblies\\Assembly-CSharp-Editor.dll",
+                                                         "editorAssemblyExists":  true,
+                                                         "editorAssemblyLastWriteTime":  "\/Date(1774100455254)\/",
+                                                         "editorAssemblyLength":  67072,
+                                                         "scriptAheadSeconds":  -3132.4,
+                                                         "stale":  false
+                                                     }
+                               }
+                  }
+              ],
+    "error":  "Invalid object passed in, \u0027:\u0027 or \u0027}\u0027 expected. (587): {\"ok\":true,\"currentFloor\":8,\"level\":4,\"exp\":13,\"requiredExp\":25,\"gold\":470,\"highestFloor\":7,\"attackUpgradeLevel\":0,\"defenseUpgradeLevel\":0,\"hpUpgradeLevel\":0,\"pendingIdleRewardGold\":0,\"homeBadgeCount\":0,\"enhanceBadgeCount\":3,\"equipmentBadgeCount\":3,\"missionBadgeCount\":2,\"homeHeadline\":\"Next Step: enter Battle and challenge floor 8.\",\"enhanceHeadline\":\"Upgrade Priority: Attack is affordable now for 10 Gold.\",\"equipmentHeadline\":\"Loadout Focus: all sample gear unlocked. Tune your build before the next push.\",\"missionHeadline\":\"Mission Focus: claim the first battle victory reward.,\"lastDailyRewardDate\":\"2026-03-21\",\"equippedWeaponId\":\"equip_bronze_blade\",\"equippedArmorId\":\"equip_guard_cloth\",\"equippedAccessoryId\":\"equip_ashen_ring\",\"ownedEquipments\":[{\"equipmentId\":\"equip_bronze_blade\",\"isEquipped\":true},{\"equipmentId\":\"equip_guard_cloth\",\"isEquipped\":true},{\"equipmentId\":\"equip_ashen_ring\",\"isEquipped\":true},{\"equipmentId\":\"equip_iron_sword\",\"isEquipped\":false},{\"equipmentId\":\"equip_bone_mail\",\"isEquipped\":false},{\"equipmentId\":\"equip_quick_charm\",\"isEquipped\":false}],\"missions\":[{\"missionId\":\"mission_clear_1\",\"progress\":7,\"isClaimed\":false},{\"missionId\":\"mission_reach_floor_3\",\"progress\":7,\"isClaimed\":false}]}",
+    "bridgeStatusPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\reports\\unity-bridge-status-standard-latest.json"
+}

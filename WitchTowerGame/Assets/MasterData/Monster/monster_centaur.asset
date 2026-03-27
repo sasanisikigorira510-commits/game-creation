@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_centaur
+  m_EditorClassIdentifier: 
+  monsterId: monster_centaur
+  monsterName: "\u30b1\u30f3\u30bf\u30a6\u30ed\u30b9"
+  encyclopediaNumber: 7
+  rarity: 3
+  element: 1
+  rangeType: 1
+  damageType: 0
+  baseStats:
+    maxHp: 66
+    attack: 18
+    magicAttack: 6
+    defense: 12
+    magicDefense: 9
+    attackSpeed: 1.12
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 1
+    magicAttackPerPlus: 0
+    defensePerPlus: 1
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.003
+  fusionExclusive: 0
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FormationMonsters/Centaur
+  illustrationResourcePath: 
+  battleIdleResourcePath: 
+  battleAttackResourcePath: 
+  description: A swift archer that excels at steady damage.

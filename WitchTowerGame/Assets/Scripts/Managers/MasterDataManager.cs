@@ -11,6 +11,7 @@ namespace WitchTower.Managers
 
         [Header("Master Data")]
         [SerializeField] private PlayerBaseDataSO playerBaseData;
+        [SerializeField] private MonsterDataSO[] monsterDataList;
         [SerializeField] private EnemyDataSO[] enemyDataList;
         [SerializeField] private SkillDataSO[] skillDataList;
         [SerializeField] private EquipmentDataSO[] equipmentDataList;
@@ -53,6 +54,11 @@ namespace WitchTower.Managers
 
         public FloorDataSO GetFloorData(int floorNumber)
         {
+            if (floorDataList == null)
+            {
+                return null;
+            }
+
             foreach (var floorData in floorDataList)
             {
                 if (floorData != null && floorData.floorNumber == floorNumber)
@@ -66,6 +72,11 @@ namespace WitchTower.Managers
 
         public EnemyDataSO GetEnemyData(string enemyId)
         {
+            if (enemyDataList == null)
+            {
+                return null;
+            }
+
             foreach (var enemyData in enemyDataList)
             {
                 if (enemyData != null && enemyData.enemyId == enemyId)
@@ -77,8 +88,76 @@ namespace WitchTower.Managers
             return null;
         }
 
+        public MonsterDataSO GetMonsterData(string monsterId)
+        {
+            if (monsterDataList == null)
+            {
+                return null;
+            }
+
+            foreach (var monsterData in monsterDataList)
+            {
+                if (monsterData != null && monsterData.monsterId == monsterId)
+                {
+                    return monsterData;
+                }
+            }
+
+            return null;
+        }
+
+        public MonsterDataSO[] GetAllMonsterData()
+        {
+            return monsterDataList;
+        }
+
+        public MonsterDataSO GetFusionResult(string firstMonsterId, string secondMonsterId)
+        {
+            if (monsterDataList == null || string.IsNullOrEmpty(firstMonsterId) || string.IsNullOrEmpty(secondMonsterId))
+            {
+                return null;
+            }
+
+            foreach (var monsterData in monsterDataList)
+            {
+                if (monsterData == null || monsterData.fusionRecipes == null)
+                {
+                    continue;
+                }
+
+                foreach (var recipe in monsterData.fusionRecipes)
+                {
+                    if (recipe == null || string.IsNullOrEmpty(recipe.parentMonsterIdA) || string.IsNullOrEmpty(recipe.parentMonsterIdB))
+                    {
+                        continue;
+                    }
+
+                    bool directMatch =
+                        recipe.parentMonsterIdA == firstMonsterId &&
+                        recipe.parentMonsterIdB == secondMonsterId;
+
+                    bool reverseMatch =
+                        recipe.ignoreOrder &&
+                        recipe.parentMonsterIdA == secondMonsterId &&
+                        recipe.parentMonsterIdB == firstMonsterId;
+
+                    if (directMatch || reverseMatch)
+                    {
+                        return monsterData;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public SkillDataSO GetSkillData(string skillId)
         {
+            if (skillDataList == null)
+            {
+                return null;
+            }
+
             foreach (var skillData in skillDataList)
             {
                 if (skillData != null && skillData.skillId == skillId)
@@ -92,6 +171,11 @@ namespace WitchTower.Managers
 
         public EquipmentDataSO GetEquipmentData(string equipmentId)
         {
+            if (equipmentDataList == null)
+            {
+                return null;
+            }
+
             foreach (var equipmentData in equipmentDataList)
             {
                 if (equipmentData != null && equipmentData.equipmentId == equipmentId)
@@ -105,6 +189,11 @@ namespace WitchTower.Managers
 
         public DropTableDataSO GetDropTableData(string dropTableId)
         {
+            if (dropTableDataList == null)
+            {
+                return null;
+            }
+
             foreach (var dropTableData in dropTableDataList)
             {
                 if (dropTableData != null && dropTableData.dropTableId == dropTableId)
@@ -119,6 +208,7 @@ namespace WitchTower.Managers
         private void ApplyRoot(MasterDataRoot root)
         {
             playerBaseData = root.playerBaseData;
+            monsterDataList = root.monsterDataList;
             enemyDataList = root.enemyDataList;
             skillDataList = root.skillDataList;
             equipmentDataList = root.equipmentDataList;

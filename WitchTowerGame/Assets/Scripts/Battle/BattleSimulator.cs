@@ -11,35 +11,69 @@ namespace WitchTower.Battle
         [SerializeField] private float enemyAttackInterval = 1.2f;
         [SerializeField] private float guardDuration = 5.0f;
         [SerializeField] private int guardDefenseBonus = 5;
+        [SerializeField] private int normalWaveEnemyCount = 100;
+        [SerializeField] private int totalWaveCount = 10;
+        [SerializeField] private int bossWaveEnemyCount = 1;
+        [SerializeField] private float bossHpMultiplier = 5.0f;
+        [SerializeField] private float bossAttackMultiplier = 2.0f;
+        [SerializeField] private int bossDefenseBonus = 8;
 
         private BattleUnitStats playerStats;
         private BattleUnitStats enemyStats;
         private BattleSkillSet skillSet;
         private EnemyTraitRuntime enemyTraitRuntime;
+        private EnemyDataSO currentEnemyData;
         private float playerAttackTimer;
         private float enemyAttackTimer;
         private float guardRemainingTime;
         private bool isRunning;
+        private int tickCount;
+        private float lastDeltaTime;
+        private int currentFloor;
+        private int currentWave;
+        private int defeatedEnemiesInCurrentWave;
+        private int encounterSerial;
 
         public event System.Action<BattleHitInfo> HitResolved;
+        public event System.Action EncounterChanged;
 
         public BattleUnitStats PlayerStats => playerStats;
         public BattleUnitStats EnemyStats => enemyStats;
         public bool IsRunning => isRunning;
+        public int DebugTickCount => tickCount;
+        public float DebugLastDeltaTime => lastDeltaTime;
+        public float DebugPlayerAttackTimer => playerAttackTimer;
+        public float DebugEnemyAttackTimer => enemyAttackTimer;
+        public float DebugGuardRemainingTime => guardRemainingTime;
+        public int CurrentFloor => currentFloor;
+        public int CurrentWave => currentWave;
+        public int TotalWaveCount => Mathf.Max(1, totalWaveCount);
+        public bool IsBossWave => currentWave >= TotalWaveCount;
+        public int EncounterSerial => encounterSerial;
+        public EnemyDataSO CurrentEnemyData => currentEnemyData;
+        public int CurrentEnemyCountTarget => IsBossWave ? Mathf.Max(1, bossWaveEnemyCount) : Mathf.Max(1, normalWaveEnemyCount);
+        public int CurrentEnemyIndexInWave => Mathf.Clamp(defeatedEnemiesInCurrentWave + 1, 1, CurrentEnemyCountTarget);
 
         public void Setup(int floor)
         {
+            currentFloor = Mathf.Max(1, floor);
+            currentWave = 1;
+            defeatedEnemiesInCurrentWave = 0;
+            encounterSerial = 0;
             playerStats = CreatePlayerStats();
-            enemyStats = CreateEnemyStats(floor, out enemyTraitRuntime);
             skillSet = new BattleSkillSet();
             playerAttackTimer = 0f;
             enemyAttackTimer = 0f;
             guardRemainingTime = 0f;
+            SpawnEnemyForCurrentEncounter();
             isRunning = playerStats != null && enemyStats != null;
         }
 
         public BattleResult Tick(float deltaTime)
         {
+            tickCount += 1;
+            lastDeltaTime = deltaTime;
+
             if (!isRunning)
             {
                 return BattleResult.None;
@@ -58,11 +92,16 @@ namespace WitchTower.Battle
 
             if (enemyStats.IsDead())
             {
+                if (AdvanceEncounterAfterEnemyDefeat())
+                {
+                    return BattleResult.None;
+                }
+
                 isRunning = false;
                 return BattleResult.Win;
             }
 
-            if (enemyAttackTimer >= enemyAttackInterval)
+            if (enemyAttackTimer >= GetCurrentEnemyAttackInterval())
             {
                 enemyAttackTimer -= GetCurrentEnemyAttackInterval();
                 PerformAttackOnPlayer();
@@ -161,44 +200,63 @@ namespace WitchTower.Battle
 
         private static BattleUnitStats CreatePlayerStats()
         {
-            var masterDataManager = MasterDataManager.Instance;
-            var playerData = masterDataManager != null ? masterDataManager.GetPlayerBaseData() : null;
             var profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-
-            if (playerData == null)
-            {
-                return CreateFallbackPlayerStats(profile);
-            }
-
-            var equipmentBonus = GetEquipmentBonus(profile);
-            var maxHp = playerData.initialHp + GetHpBonus(profile) + equipmentBonus.Hp;
-            return new BattleUnitStats
-            {
-                MaxHp = maxHp,
-                CurrentHp = maxHp,
-                Attack = playerData.initialAttack + GetAttackBonus(profile) + equipmentBonus.Attack,
-                Defense = playerData.initialDefense + GetDefenseBonus(profile) + equipmentBonus.Defense,
-                AttackSpeed = playerData.initialAttackSpeed + equipmentBonus.AttackSpeed,
-                CritRate = playerData.initialCritRate + equipmentBonus.CritRate,
-                CritDamage = playerData.initialCritDamage
-            };
+            return PlayerBattleStatsFactory.CreatePreview(profile);
         }
 
-        private static BattleUnitStats CreateEnemyStats(int floor, out EnemyTraitRuntime runtime)
+        private void SpawnEnemyForCurrentEncounter()
+        {
+            enemyStats = CreateEnemyStats(currentFloor, IsBossWave, out enemyTraitRuntime, out currentEnemyData);
+            enemyAttackTimer = 0f;
+            encounterSerial += 1;
+            EncounterChanged?.Invoke();
+        }
+
+        private bool AdvanceEncounterAfterEnemyDefeat()
+        {
+            defeatedEnemiesInCurrentWave += 1;
+            if (defeatedEnemiesInCurrentWave < CurrentEnemyCountTarget)
+            {
+                SpawnEnemyForCurrentEncounter();
+                return true;
+            }
+
+            if (currentWave < TotalWaveCount)
+            {
+                currentWave += 1;
+                defeatedEnemiesInCurrentWave = 0;
+                SpawnEnemyForCurrentEncounter();
+                return true;
+            }
+
+            return false;
+        }
+
+        private BattleUnitStats CreateEnemyStats(int floor, bool isBossEncounter, out EnemyTraitRuntime runtime, out EnemyDataSO enemyData)
         {
             var masterDataManager = MasterDataManager.Instance;
             var floorData = masterDataManager != null ? masterDataManager.GetFloorData(floor) : null;
-            EnemyDataSO enemyData = floorData != null ? floorData.enemyData : null;
+            enemyData = floorData != null ? floorData.enemyData : null;
 
             if (enemyData == null)
             {
                 runtime = EnemyTraitResolver.Resolve(EnemyTrait.None);
+                int fallbackHp = 40;
+                int fallbackAttack = 8;
+                int fallbackDefense = 2;
+                if (isBossEncounter)
+                {
+                    fallbackHp = Mathf.RoundToInt(fallbackHp * bossHpMultiplier);
+                    fallbackAttack = Mathf.RoundToInt(fallbackAttack * bossAttackMultiplier);
+                    fallbackDefense += bossDefenseBonus;
+                }
+
                 return new BattleUnitStats
                 {
-                    MaxHp = 40,
-                    CurrentHp = 40,
-                    Attack = 8,
-                    Defense = 2,
+                    MaxHp = fallbackHp,
+                    CurrentHp = fallbackHp,
+                    Attack = fallbackAttack,
+                    Defense = fallbackDefense,
                     AttackSpeed = 0.8f,
                     CritRate = 0.03f,
                     CritDamage = 1.3f
@@ -206,90 +264,31 @@ namespace WitchTower.Battle
             }
 
             runtime = EnemyTraitResolver.Resolve(enemyData.enemyTrait);
-            return new BattleUnitStats
-            {
-                MaxHp = enemyData.maxHp,
-                CurrentHp = enemyData.maxHp,
-                Attack = Mathf.RoundToInt(enemyData.attack * runtime.AttackMultiplier),
-                Defense = enemyData.defense + runtime.DefenseBonus,
-                AttackSpeed = enemyData.attackSpeed * runtime.AttackSpeedMultiplier,
-                CritRate = enemyData.critRate + runtime.CritRateBonus,
-                CritDamage = enemyData.critDamage
-            };
-        }
+            int maxHp = enemyData.maxHp;
+            int attack = Mathf.RoundToInt(enemyData.attack * runtime.AttackMultiplier);
+            int defense = enemyData.defense + runtime.DefenseBonus;
+            float attackSpeed = enemyData.attackSpeed * runtime.AttackSpeedMultiplier;
+            float critRate = enemyData.critRate + runtime.CritRateBonus;
 
-        private static BattleUnitStats CreateFallbackPlayerStats(PlayerProfile profile)
-        {
-            var equipmentBonus = GetEquipmentBonus(profile);
-            var maxHp = 100 + GetHpBonus(profile) + equipmentBonus.Hp;
+            if (isBossEncounter)
+            {
+                maxHp = Mathf.Max(maxHp + 1, Mathf.RoundToInt(maxHp * bossHpMultiplier));
+                attack = Mathf.Max(attack + 1, Mathf.RoundToInt(attack * bossAttackMultiplier));
+                defense += bossDefenseBonus;
+                attackSpeed *= 1.1f;
+                critRate += 0.05f;
+            }
+
             return new BattleUnitStats
             {
                 MaxHp = maxHp,
                 CurrentHp = maxHp,
-                Attack = 15 + GetAttackBonus(profile) + equipmentBonus.Attack,
-                Defense = 5 + GetDefenseBonus(profile) + equipmentBonus.Defense,
-                AttackSpeed = 1.0f + equipmentBonus.AttackSpeed,
-                CritRate = 0.05f + equipmentBonus.CritRate,
-                CritDamage = 1.5f
+                Attack = attack,
+                Defense = defense,
+                AttackSpeed = attackSpeed,
+                CritRate = critRate,
+                CritDamage = enemyData.critDamage
             };
-        }
-
-        private static int GetAttackBonus(PlayerProfile profile)
-        {
-            return profile != null ? profile.GetAttackBonus() : 0;
-        }
-
-        private static int GetDefenseBonus(PlayerProfile profile)
-        {
-            return profile != null ? profile.GetDefenseBonus() : 0;
-        }
-
-        private static int GetHpBonus(PlayerProfile profile)
-        {
-            return profile != null ? profile.GetHpBonus() : 0;
-        }
-
-        private static EquipmentBonus GetEquipmentBonus(PlayerProfile profile)
-        {
-            var result = new EquipmentBonus();
-            if (profile == null || MasterDataManager.Instance == null)
-            {
-                return result;
-            }
-
-            AddEquipmentBonus(profile.EquippedWeaponId, ref result);
-            AddEquipmentBonus(profile.EquippedArmorId, ref result);
-            AddEquipmentBonus(profile.EquippedAccessoryId, ref result);
-            return result;
-        }
-
-        private static void AddEquipmentBonus(string equipmentId, ref EquipmentBonus bonus)
-        {
-            if (string.IsNullOrEmpty(equipmentId))
-            {
-                return;
-            }
-
-            var equipmentData = MasterDataManager.Instance.GetEquipmentData(equipmentId);
-            if (equipmentData == null)
-            {
-                return;
-            }
-
-            bonus.Attack += equipmentData.baseAttack;
-            bonus.Defense += equipmentData.baseDefense;
-            bonus.Hp += equipmentData.baseHp;
-            bonus.CritRate += equipmentData.bonusCritRate;
-            bonus.AttackSpeed += equipmentData.bonusAttackSpeed;
-        }
-
-        private struct EquipmentBonus
-        {
-            public int Attack;
-            public int Defense;
-            public int Hp;
-            public float CritRate;
-            public float AttackSpeed;
         }
 
         public int GetCurrentPlayerDefense()

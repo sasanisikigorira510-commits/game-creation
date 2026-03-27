@@ -9,5 +9,7 @@ namespace WitchTower.MasterData
         public EnemyDataSO enemyData;
         public int firstClearRewardGold;
         public string repeatRewardTableId;
+        [Range(0f, 1f)] public float monsterRecruitChance = 0.35f;
+        public string[] recruitableMonsterIds;
     }
 }

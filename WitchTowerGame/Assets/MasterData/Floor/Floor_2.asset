@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed5ff685e34e03843a1344420b8bd40f, type: 3}
+  m_Name: Floor_2
+  m_EditorClassIdentifier: 
+  floorNumber: 2
+  enemyData: {fileID: 11400000, guid: c84bd75f92d78dc4db72767294c83c05, type: 2}
+  firstClearRewardGold: 9
+  repeatRewardTableId: drop_common_floor
+  monsterRecruitChance: 0.45
+  recruitableMonsterIds:
+  - monster_goblin
+  - monster_bee
+  - monster_worm

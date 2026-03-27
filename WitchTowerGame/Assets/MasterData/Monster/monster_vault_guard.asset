@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_vault_guard
+  m_EditorClassIdentifier: 
+  monsterId: monster_vault_guard
+  monsterName: "\u30f4\u30a9\u30eb\u30c8\u30ac\u30fc\u30c9"
+  encyclopediaNumber: 16
+  rarity: 4
+  element: 4
+  rangeType: 0
+  damageType: 0
+  baseStats:
+    maxHp: 92
+    attack: 22
+    magicAttack: 6
+    defense: 20
+    magicDefense: 16
+    attackSpeed: 0.84
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 1
+    magicAttackPerPlus: 0
+    defensePerPlus: 2
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  fusionExclusive: 0
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FormationMonsters/VaultGuard
+  illustrationResourcePath: 
+  battleIdleResourcePath: 
+  battleAttackResourcePath: 
+  description: An elite guardian built to hold the front line under pressure.

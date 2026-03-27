@@ -17,7 +17,7 @@ namespace WitchTower.UI
 
             if (goldText != null)
             {
-                goldText.text = profile.Gold.ToString();
+                goldText.text = $"Gold Reserve {profile.Gold}";
             }
         }
     }

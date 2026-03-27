@@ -1,0 +1,444 @@
+﻿{
+    "ok":  false,
+    "scenario":  "standard",
+    "generatedAt":  "2026-03-21T23:20:10.6448086+09:00",
+    "baseUrl":  "http://127.0.0.1:8765",
+    "steps":  [
+                  {
+                      "name":  "initial_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "ping",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Assets refreshed."
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_after_refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "clear_console",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Console log buffer cleared."
+                               }
+                  },
+                  {
+                      "name":  "rebuild_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Menu item executed."
+                               }
+                  },
+                  {
+                      "name":  "rebuild_battle",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Menu item executed."
+                               }
+                  },
+                  {
+                      "name":  "open_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "home_ready",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "enter_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Play mode action applied.",
+                                   "isPlaying":  false
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_in_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "play_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  true,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "home_active_texts",
+                      "data":  {
+                                   "Yourcurrentclimb,gold,andpassiverewards.Subtitle":  {
+                                                                                            "gameObjectName":  "Yourcurrentclimb,gold,andpassiverewards.Subtitle",
+                                                                                            "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                                                            "active":  true,
+                                                                                            "text":  "Your current climb, gold, and passive rewards."
+                                                                                        },
+                                   "ProgressText":  {
+                                                        "gameObjectName":  "ProgressText",
+                                                        "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                        "active":  true,
+                                                        "text":  "Progress: cleared floor 24, targeting floor 25."
+                                                    },
+                                   "HomeCtaText":  {
+                                                       "gameObjectName":  "HomeCtaText",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Next Step: enter Battle and challenge floor 25."
+                                                   },
+                                   "EquipmentNavBadge":  {
+                                                             "gameObjectName":  "EquipmentNavBadge",
+                                                             "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                             "active":  true,
+                                                             "text":  "3"
+                                                         },
+                                   "RewardForecastText":  {
+                                                              "gameObjectName":  "RewardForecastText",
+                                                              "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                              "active":  true,
+                                                              "text":  "Reward Forecast: floor 25 should pay about 10 Gold and 5 EXP."
+                                                          },
+                                   "ScreenTitle":  {
+                                                       "gameObjectName":  "ScreenTitle",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Witch Tower"
+                                                   },
+                                   "EnhanceNavBadge":  {
+                                                           "gameObjectName":  "EnhanceNavBadge",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "text":  "3"
+                                                       },
+                                   "Label":  {
+                                                 "gameObjectName":  "Label",
+                                                 "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                 "active":  true,
+                                                 "text":  "ClaimIdleReward"
+                                             },
+                                   "FloorText":  {
+                                                     "gameObjectName":  "FloorText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Highest Floor 24"
+                                                 },
+                                   "SummaryText":  {
+                                                       "gameObjectName":  "SummaryText",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Run State: floor 25 is next, upgrades A0/D0/HP0."
+                                                   },
+                                   "MissionNavBadge":  {
+                                                           "gameObjectName":  "MissionNavBadge",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "text":  "2"
+                                                       },
+                                   "StatusText":  {
+                                                      "gameObjectName":  "StatusText",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Idle Reward: No stored gold right now"
+                                                  },
+                                   "ExpText":  {
+                                                   "gameObjectName":  "ExpText",
+                                                   "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                   "active":  true,
+                                                   "text":  "EXP 37/40"
+                                               },
+                                   "GoldText":  {
+                                                    "gameObjectName":  "GoldText",
+                                                    "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                    "active":  true,
+                                                    "text":  "Gold Reserve 763"
+                                                },
+                                   "ActionText":  {
+                                                      "gameObjectName":  "ActionText",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Action Cue: 2 mission rewards ready to claim."
+                                                  },
+                                   "ScreenSubtitle":  {
+                                                          "gameObjectName":  "ScreenSubtitle",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Climb floors, tune your build, and keep the run alive."
+                                                      },
+                                   "LevelText":  {
+                                                     "gameObjectName":  "LevelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Lv. 7"
+                                                 },
+                                   "RunOverviewHeader":  {
+                                                             "gameObjectName":  "RunOverviewHeader",
+                                                             "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                             "active":  true,
+                                                             "text":  "Run Overview"
+                                                         }
+                               }
+                  },
+                  {
+                      "name":  "home_active_buttons",
+                      "data":  {
+                                   "EquipmentButton":  {
+                                                           "gameObjectName":  "EquipmentButton",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "interactable":  true,
+                                                           "label":  "Equipment",
+                                                           "backgroundColor":  "33596BFF"
+                                                       },
+                                   "ClaimIdleRewardButton":  {
+                                                                 "gameObjectName":  "ClaimIdleRewardButton",
+                                                                 "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                                 "active":  true,
+                                                                 "interactable":  true,
+                                                                 "label":  "ClaimIdleReward",
+                                                                 "backgroundColor":  "33596BFF"
+                                                             },
+                                   "HomeButton":  {
+                                                      "gameObjectName":  "HomeButton",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "interactable":  true,
+                                                      "label":  "Home",
+                                                      "backgroundColor":  "2E7AB0FF"
+                                                  },
+                                   "BattleButton":  {
+                                                        "gameObjectName":  "BattleButton",
+                                                        "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                        "active":  true,
+                                                        "interactable":  true,
+                                                        "label":  "Battle",
+                                                        "backgroundColor":  "33596BFF"
+                                                    },
+                                   "EnhanceButton":  {
+                                                         "gameObjectName":  "EnhanceButton",
+                                                         "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                         "active":  true,
+                                                         "interactable":  true,
+                                                         "label":  "Enhance",
+                                                         "backgroundColor":  "33596BFF"
+                                                     },
+                                   "MissionButton":  {
+                                                         "gameObjectName":  "MissionButton",
+                                                         "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                         "active":  true,
+                                                         "interactable":  true,
+                                                         "label":  "Mission",
+                                                         "backgroundColor":  "33596BFF"
+                                                     }
+                               }
+                  },
+                  {
+                      "name":  "home_debug_initial",
+                      "data":  {
+                                   "ok":  true,
+                                   "currentFloor":  25,
+                                   "level":  7,
+                                   "exp":  37,
+                                   "requiredExp":  40,
+                                   "gold":  763,
+                                   "highestFloor":  24,
+                                   "attackUpgradeLevel":  0,
+                                   "defenseUpgradeLevel":  0,
+                                   "hpUpgradeLevel":  0,
+                                   "pendingIdleRewardGold":  0,
+                                   "homeBadgeCount":  0,
+                                   "enhanceBadgeCount":  3,
+                                   "equipmentBadgeCount":  3,
+                                   "missionBadgeCount":  2,
+                                   "homeHeadline":  "Next Step: enter Battle and challenge floor 25.",
+                                   "enhanceHeadline":  "Upgrade Priority: Attack is affordable now for 10 Gold.",
+                                   "equipmentHeadline":  "Loadout Focus: all sample gear unlocked. Tune your build before the next push.",
+                                   "missionHeadline":  "Mission Focus: claim the first battle victory reward.",
+                                   "runProgressText":  "Progress: cleared floor 24, targeting floor 25.",
+                                   "rewardForecastText":  "Reward Forecast: floor 25 should pay about 10 Gold and 5 EXP.",
+                                   "runActionText":  "Action Cue: 2 mission rewards ready to claim.",
+                                   "lastDailyRewardDate":  "2026-03-21",
+                                   "equippedWeaponId":  "equip_bronze_blade",
+                                   "equippedArmorId":  "equip_guard_cloth",
+                                   "equippedAccessoryId":  "equip_ashen_ring",
+                                   "ownedEquipments":  [
+                                                           {
+                                                               "equipmentId":  "equip_bronze_blade",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_guard_cloth",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_ashen_ring",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_iron_sword",
+                                                               "isEquipped":  false
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_bone_mail",
+                                                               "isEquipped":  false
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_quick_charm",
+                                                               "isEquipped":  false
+                                                           }
+                                                       ],
+                                   "missions":  [
+                                                    {
+                                                        "missionId":  "mission_clear_1",
+                                                        "progress":  24,
+                                                        "isClaimed":  false
+                                                    },
+                                                    {
+                                                        "missionId":  "mission_reach_floor_3",
+                                                        "progress":  24,
+                                                        "isClaimed":  false
+                                                    }
+                                                ]
+                               }
+                  },
+                  {
+                      "name":  "finally_exit_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Play mode action applied.",
+                                   "isPlaying":  true
+                               }
+                  },
+                  {
+                      "name":  "finally_stopped",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "finally_open_boot",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "bridge_status",
+                      "data":  {
+                                   "ok":  true,
+                                   "bridgeStatePath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\unity_bridge_state.json",
+                                   "state":  {
+                                                 "exists":  false
+                                             },
+                                   "resolvedBaseUrl":  "http://127.0.0.1:8765",
+                                   "ping":  {
+                                                "ok":  true,
+                                                "response":  {
+                                                                 "ok":  true,
+                                                                 "message":  "Unity MCP bridge is running.",
+                                                                 "unityVersion":  "2022.3.32f1",
+                                                                 "baseUrl":  "http://127.0.0.1:8765"
+                                                             }
+                                            },
+                                   "portStatus":  {
+                                                      "ok":  true,
+                                                      "lineCount":  3,
+                                                      "listeningCount":  1,
+                                                      "closeWaitCount":  0,
+                                                      "lines":  [
+                                                                    "TCP    127.0.0.1:8765         0.0.0.0:0              LISTENING       13680",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:55269        ESTABLISHED     13680",
+                                                                    "TCP    127.0.0.1:55269        127.0.0.1:8765         ESTABLISHED     2008"
+                                                                ]
+                                                  },
+                                   "portOwner":  {
+                                                     "ok":  true,
+                                                     "pid":  13680,
+                                                     "processName":  "Unity",
+                                                     "responding":  true,
+                                                     "startTime":  "\/Date(1774100446067)\/",
+                                                     "mainWindowTitle":  ""
+                                                 },
+                                   "compileStatus":  {
+                                                         "ok":  true,
+                                                         "bridgeScriptPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Assets\\Editor\\UnityMcp\\UnityMcpBridge.cs",
+                                                         "bridgeScriptExists":  true,
+                                                         "bridgeScriptLastWriteTime":  "\/Date(1774102152167)\/",
+                                                         "bridgeScriptLength":  39859,
+                                                         "editorAssemblyPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Library\\ScriptAssemblies\\Assembly-CSharp-Editor.dll",
+                                                         "editorAssemblyExists":  true,
+                                                         "editorAssemblyLastWriteTime":  "\/Date(1774102811766)\/",
+                                                         "editorAssemblyLength":  70656,
+                                                         "scriptAheadSeconds":  -659.6,
+                                                         "stale":  false
+                                                     }
+                               }
+                  }
+              ],
+    "error":  "Home reward summary text missing from home panel",
+    "bridgeStatusPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\reports\\unity-bridge-status-standard-latest.json"
+}

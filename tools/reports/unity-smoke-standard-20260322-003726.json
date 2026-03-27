@@ -1,0 +1,593 @@
+﻿{
+    "ok":  false,
+    "scenario":  "standard",
+    "generatedAt":  "2026-03-22T00:37:19.5287291+09:00",
+    "baseUrl":  "http://127.0.0.1:8765",
+    "steps":  [
+                  {
+                      "name":  "initial_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "ping",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Assets refreshed."
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_after_refresh",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "clear_console",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Console log buffer cleared."
+                               }
+                  },
+                  {
+                      "name":  "rebuild_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Menu item executed."
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_after_home_rebuild",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "rebuild_battle",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Menu item executed."
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_after_battle_rebuild",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "open_home",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "home_ready",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "enter_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Play mode action applied.",
+                                   "isPlaying":  false
+                               }
+                  },
+                  {
+                      "name":  "bridge_ready_in_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Unity MCP bridge is running.",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "baseUrl":  "http://127.0.0.1:8765"
+                               }
+                  },
+                  {
+                      "name":  "play_info",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  true,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "play_enter_attempt",
+                      "data":  {
+                                   "attempt":  1
+                               }
+                  },
+                  {
+                      "name":  "home_active_texts",
+                      "data":  {
+                                   "PushWindowText":  {
+                                                          "gameObjectName":  "PushWindowText",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Push Window: hold for a moment, cash out 140 Gold, then reassess the climb."
+                                                      },
+                                   "StatusText":  {
+                                                      "gameObjectName":  "StatusText",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Idle Reward: No stored gold right now"
+                                                  },
+                                   "CommandStackText":  {
+                                                            "gameObjectName":  "CommandStackText",
+                                                            "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                            "active":  true,
+                                                            "text":  "Command Stack: 1. Claim 3 reward steps for 140 Gold  2. Lock in Equip Bone Mail (+10 HP and +3 DEF)  3. Push floor 51 now."
+                                                        },
+                                   "RoiReadText":  {
+                                                       "gameObjectName":  "RoiReadText",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "ROI Read: one clear covers the next upgrade outright with 10 Gold."
+                                                   },
+                                   "Yourcurrentclimb,gold,andpassiverewards.Subtitle":  {
+                                                                                            "gameObjectName":  "Yourcurrentclimb,gold,andpassiverewards.Subtitle",
+                                                                                            "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                                                            "active":  true,
+                                                                                            "text":  "Your current climb, gold, and passive rewards."
+                                                                                        },
+                                   "PrepAdviceText":  {
+                                                          "gameObjectName":  "PrepAdviceText",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Prep Advice: Equip Bone Mail keeps floor 51 at favorable push while adding HP +10, ATK +0, DEF +3."
+                                                      },
+                                   "RiskBufferText":  {
+                                                          "gameObjectName":  "RiskBufferText",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Risk Buffer: sturdy; your build carries a 84 HP cushion into floor 51."
+                                                      },
+                                   "ThreatText":  {
+                                                      "gameObjectName":  "ThreatText",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Threat Read: floor 51 looks favorable push."
+                                                  },
+                                   "RunOverviewHeader":  {
+                                                             "gameObjectName":  "RunOverviewHeader",
+                                                             "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                             "active":  true,
+                                                             "text":  "Run Overview"
+                                                         },
+                                   "LevelText":  {
+                                                     "gameObjectName":  "LevelText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Lv. 10"
+                                                 },
+                                   "FloorText":  {
+                                                     "gameObjectName":  "FloorText",
+                                                     "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                     "active":  true,
+                                                     "text":  "Highest Floor 50"
+                                                 },
+                                   "ProgressText":  {
+                                                        "gameObjectName":  "ProgressText",
+                                                        "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                        "active":  true,
+                                                        "text":  "Progress: cleared floor 50, targeting floor 51."
+                                                    },
+                                   "HomeCtaText":  {
+                                                       "gameObjectName":  "HomeCtaText",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Next Step: enter Battle and challenge floor 51."
+                                                   },
+                                   "HomeRewardSummaryText":  {
+                                                                 "gameObjectName":  "HomeRewardSummaryText",
+                                                                 "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                                 "active":  true,
+                                                                 "text":  "Ready Gold: 140 waiting across idle and mission claims (3 ready)."
+                                                             },
+                                   "GoldText":  {
+                                                    "gameObjectName":  "GoldText",
+                                                    "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                    "active":  true,
+                                                    "text":  "Gold Reserve 1023"
+                                                },
+                                   "MissionNavBadge":  {
+                                                           "gameObjectName":  "MissionNavBadge",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "text":  "3"
+                                                       },
+                                   "EnhanceNavBadge":  {
+                                                           "gameObjectName":  "EnhanceNavBadge",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "text":  "3"
+                                                       },
+                                   "EquipmentNavBadge":  {
+                                                             "gameObjectName":  "EquipmentNavBadge",
+                                                             "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                             "active":  true,
+                                                             "text":  "3"
+                                                         },
+                                   "UpgradeRouteText":  {
+                                                            "gameObjectName":  "UpgradeRouteText",
+                                                            "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                            "active":  true,
+                                                            "text":  "Upgrade Route: Attack is the fastest spend at 10 Gold for a cleaner push."
+                                                        },
+                                   "ScreenTitle":  {
+                                                       "gameObjectName":  "ScreenTitle",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Witch Tower"
+                                                   },
+                                   "MomentumReadText":  {
+                                                            "gameObjectName":  "MomentumReadText",
+                                                            "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                            "active":  true,
+                                                            "text":  "Momentum Read: paused; 140 Gold is on the table before floor 51."
+                                                        },
+                                   "ExpText":  {
+                                                   "gameObjectName":  "ExpText",
+                                                   "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                   "active":  true,
+                                                   "text":  "EXP 32/55"
+                                               },
+                                   "RewardForecastText":  {
+                                                              "gameObjectName":  "RewardForecastText",
+                                                              "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                              "active":  true,
+                                                              "text":  "Reward Forecast: floor 51 should pay about 10 Gold and 5 EXP."
+                                                          },
+                                   "PriorityText":  {
+                                                        "gameObjectName":  "PriorityText",
+                                                        "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                        "active":  true,
+                                                        "text":  "Priority Tab: Mission first, 3 reward claims ready."
+                                                    },
+                                   "RewardRouteText":  {
+                                                           "gameObjectName":  "RewardRouteText",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "text":  "Reward Route: daily reward first for 50 Gold before anything else."
+                                                       },
+                                   "LoadoutAlertText":  {
+                                                            "gameObjectName":  "LoadoutAlertText",
+                                                            "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                            "active":  true,
+                                                            "text":  "Loadout Alert: Iron Sword, Bone Mail, and Quick Charm are all ready now for a full upgrade pass."
+                                                        },
+                                   "ScreenSubtitle":  {
+                                                          "gameObjectName":  "ScreenSubtitle",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Climb floors, tune your build, and keep the run alive."
+                                                      },
+                                   "SummaryText":  {
+                                                       "gameObjectName":  "SummaryText",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Run State: floor 51 is next, upgrades A0/D0/HP0. Priority Tab: Mission first, 3 reward claims ready."
+                                                   },
+                                   "ActionText":  {
+                                                      "gameObjectName":  "ActionText",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "text":  "Action Cue: 3 mission rewards ready to claim."
+                                                  },
+                                   "DecisionBadgeText":  {
+                                                             "gameObjectName":  "DecisionBadgeText",
+                                                             "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                             "active":  true,
+                                                             "text":  "Decision: Cash Out"
+                                                         },
+                                   "ConfidenceText":  {
+                                                          "gameObjectName":  "ConfidenceText",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Confidence: high on floor 51; this matchup favors an aggressive push."
+                                                      },
+                                   "RunCallText":  {
+                                                       "gameObjectName":  "RunCallText",
+                                                       "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                       "active":  true,
+                                                       "text":  "Run Call: cash out first, then make the floor 51 call."
+                                                   },
+                                   "Label":  {
+                                                 "gameObjectName":  "Label",
+                                                 "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                 "active":  true,
+                                                 "text":  "Equipment"
+                                             },
+                                   "GoldRouteText":  {
+                                                         "gameObjectName":  "GoldRouteText",
+                                                         "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                         "active":  true,
+                                                         "text":  "Gold Route: collect 140 Gold first, then decide whether to bank it or buy into floor 51."
+                                                     },
+                                   "BattlePlanText":  {
+                                                          "gameObjectName":  "BattlePlanText",
+                                                          "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                          "active":  true,
+                                                          "text":  "Battle Plan: claim 3 reward steps, Equip Bone Mail for +10 HP and +3 DEF, then challenge floor 51."
+                                                      },
+                                   "DecisionLineText":  {
+                                                            "gameObjectName":  "DecisionLineText",
+                                                            "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                            "active":  true,
+                                                            "text":  "Decision Line: cash out first, then revisit the floor with a stronger budget."
+                                                        }
+                               }
+                  },
+                  {
+                      "name":  "home_active_buttons",
+                      "data":  {
+                                   "EquipmentButton":  {
+                                                           "gameObjectName":  "EquipmentButton",
+                                                           "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                           "active":  true,
+                                                           "interactable":  true,
+                                                           "label":  "Equipment",
+                                                           "backgroundColor":  "33596BFF"
+                                                       },
+                                   "ClaimIdleRewardButton":  {
+                                                                 "gameObjectName":  "ClaimIdleRewardButton",
+                                                                 "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                                 "active":  true,
+                                                                 "interactable":  true,
+                                                                 "label":  "ClaimIdleReward",
+                                                                 "backgroundColor":  "33596BFF"
+                                                             },
+                                   "HomeButton":  {
+                                                      "gameObjectName":  "HomeButton",
+                                                      "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                      "active":  true,
+                                                      "interactable":  true,
+                                                      "label":  "Home",
+                                                      "backgroundColor":  "2E7AB0FF"
+                                                  },
+                                   "BattleButton":  {
+                                                        "gameObjectName":  "BattleButton",
+                                                        "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                        "active":  true,
+                                                        "interactable":  true,
+                                                        "label":  "Battle",
+                                                        "backgroundColor":  "33596BFF"
+                                                    },
+                                   "EnhanceButton":  {
+                                                         "gameObjectName":  "EnhanceButton",
+                                                         "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                         "active":  true,
+                                                         "interactable":  true,
+                                                         "label":  "Enhance",
+                                                         "backgroundColor":  "33596BFF"
+                                                     },
+                                   "MissionButton":  {
+                                                         "gameObjectName":  "MissionButton",
+                                                         "scenePath":  "Assets/Scenes/HomeScene.unity",
+                                                         "active":  true,
+                                                         "interactable":  true,
+                                                         "label":  "Mission",
+                                                         "backgroundColor":  "33596BFF"
+                                                     }
+                               }
+                  },
+                  {
+                      "name":  "home_debug_initial",
+                      "data":  {
+                                   "ok":  true,
+                                   "currentFloor":  51,
+                                   "level":  10,
+                                   "exp":  32,
+                                   "requiredExp":  55,
+                                   "gold":  1023,
+                                   "highestFloor":  50,
+                                   "attackUpgradeLevel":  0,
+                                   "defenseUpgradeLevel":  0,
+                                   "hpUpgradeLevel":  0,
+                                   "pendingIdleRewardGold":  0,
+                                   "homeBadgeCount":  0,
+                                   "enhanceBadgeCount":  3,
+                                   "equipmentBadgeCount":  3,
+                                   "missionBadgeCount":  3,
+                                   "homeHeadline":  "Next Step: enter Battle and challenge floor 51.",
+                                   "enhanceHeadline":  "Upgrade Priority: Attack is affordable now for 10 Gold.",
+                                   "equipmentHeadline":  "Loadout Focus: all sample gear unlocked. Tune your build before the next push.",
+                                   "missionHeadline":  "Mission Focus: claim today\u0027s 50 Gold daily reward.",
+                                   "runProgressText":  "Progress: cleared floor 50, targeting floor 51.",
+                                   "rewardForecastText":  "Reward Forecast: floor 51 should pay about 10 Gold and 5 EXP.",
+                                   "threatReadText":  "Threat Read: floor 51 looks favorable push.",
+                                   "runConfidenceText":  "Confidence: high on floor 51; this matchup favors an aggressive push.",
+                                   "loadoutAlertText":  "Loadout Alert: Iron Sword, Bone Mail, and Quick Charm are all ready now for a full upgrade pass.",
+                                   "goldRouteText":  "Gold Route: collect 140 Gold first, then decide whether to bank it or buy into floor 51.",
+                                   "upgradeRouteText":  "Upgrade Route: Attack is the fastest spend at 10 Gold for a cleaner push.",
+                                   "rewardRouteText":  "Reward Route: daily reward first for 50 Gold before anything else.",
+                                   "pushWindowText":  "Push Window: hold for a moment, cash out 140 Gold, then reassess the climb.",
+                                   "roiReadText":  "ROI Read: one clear covers the next upgrade outright with 10 Gold.",
+                                   "decisionLineText":  "Decision Line: cash out first, then revisit the floor with a stronger budget.",
+                                   "decisionBadgeText":  "Decision: Cash Out",
+                                   "commandStackText":  "Command Stack: 1. Claim 3 reward steps for 140 Gold  2. Lock in Equip Bone Mail (+10 HP and +3 DEF)  3. Push floor 51 now.",
+                                   "momentumReadText":  "Momentum Read: paused; 140 Gold is on the table before floor 51.",
+                                   "runCallText":  "Run Call: cash out first, then make the floor 51 call.",
+                                   "riskBufferText":  "Risk Buffer: sturdy; your build carries a 84 HP cushion into floor 51.",
+                                   "enemyTempoText":  "Enemy Tempo: floor 51 swings every 1.25s for 8 damage pressure.",
+                                   "runActionText":  "Action Cue: 3 mission rewards ready to claim.",
+                                   "battlePlanText":  "Battle Plan: claim 3 reward steps, Equip Bone Mail for +10 HP and +3 DEF, then challenge floor 51.",
+                                   "lastDailyRewardDate":  "2026-03-21",
+                                   "equippedWeaponId":  "equip_bronze_blade",
+                                   "equippedArmorId":  "equip_guard_cloth",
+                                   "equippedAccessoryId":  "equip_ashen_ring",
+                                   "ownedEquipments":  [
+                                                           {
+                                                               "equipmentId":  "equip_bronze_blade",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_guard_cloth",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_ashen_ring",
+                                                               "isEquipped":  true
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_iron_sword",
+                                                               "isEquipped":  false
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_bone_mail",
+                                                               "isEquipped":  false
+                                                           },
+                                                           {
+                                                               "equipmentId":  "equip_quick_charm",
+                                                               "isEquipped":  false
+                                                           }
+                                                       ],
+                                   "missions":  [
+                                                    {
+                                                        "missionId":  "mission_clear_1",
+                                                        "progress":  50,
+                                                        "isClaimed":  false
+                                                    },
+                                                    {
+                                                        "missionId":  "mission_reach_floor_3",
+                                                        "progress":  50,
+                                                        "isClaimed":  false
+                                                    }
+                                                ]
+                               }
+                  },
+                  {
+                      "name":  "finally_exit_play",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Play mode action applied.",
+                                   "isPlaying":  true
+                               }
+                  },
+                  {
+                      "name":  "finally_stopped",
+                      "data":  {
+                                   "ok":  true,
+                                   "productName":  "WitchTowerGame",
+                                   "companyName":  "DefaultCompany",
+                                   "unityVersion":  "2022.3.32f1",
+                                   "projectPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame",
+                                   "baseUrl":  "http://127.0.0.1:8765",
+                                   "assetsPath":  "C:/Users/sasan/OneDrive/デスクトップ/ゲーム作成/WitchTowerGame/Assets",
+                                   "activeScenePath":  "Assets/Scenes/HomeScene.unity",
+                                   "isPlaying":  false,
+                                   "isPaused":  false
+                               }
+                  },
+                  {
+                      "name":  "finally_open_boot",
+                      "data":  {
+                                   "ok":  true,
+                                   "message":  "Scene opened.",
+                                   "activeScenePath":  "Assets/Scenes/BootScene.unity"
+                               }
+                  },
+                  {
+                      "name":  "bridge_status",
+                      "data":  {
+                                   "ok":  true,
+                                   "bridgeStatePath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\unity_bridge_state.json",
+                                   "state":  {
+                                                 "exists":  false
+                                             },
+                                   "resolvedBaseUrl":  "http://127.0.0.1:8765",
+                                   "ping":  {
+                                                "ok":  true,
+                                                "response":  {
+                                                                 "ok":  true,
+                                                                 "message":  "Unity MCP bridge is running.",
+                                                                 "unityVersion":  "2022.3.32f1",
+                                                                 "baseUrl":  "http://127.0.0.1:8765"
+                                                             }
+                                            },
+                                   "portStatus":  {
+                                                      "ok":  true,
+                                                      "lineCount":  4,
+                                                      "listeningCount":  1,
+                                                      "closeWaitCount":  0,
+                                                      "lines":  [
+                                                                    "TCP    127.0.0.1:8765         0.0.0.0:0              LISTENING       1684",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:61582        TIME_WAIT       0",
+                                                                    "TCP    127.0.0.1:8765         127.0.0.1:61627        ESTABLISHED     1684",
+                                                                    "TCP    127.0.0.1:61627        127.0.0.1:8765         ESTABLISHED     18992"
+                                                                ]
+                                                  },
+                                   "portOwner":  {
+                                                     "ok":  true,
+                                                     "pid":  1684,
+                                                     "processName":  "Unity",
+                                                     "responding":  true,
+                                                     "startTime":  "\/Date(1774105772573)\/",
+                                                     "mainWindowTitle":  ""
+                                                 },
+                                   "compileStatus":  {
+                                                         "ok":  true,
+                                                         "bridgeScriptPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Assets\\Editor\\UnityMcp\\UnityMcpBridge.cs",
+                                                         "bridgeScriptExists":  true,
+                                                         "bridgeScriptLastWriteTime":  "\/Date(1774107433274)\/",
+                                                         "bridgeScriptLength":  42348,
+                                                         "editorAssemblyPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Library\\ScriptAssemblies\\Assembly-CSharp-Editor.dll",
+                                                         "editorAssemblyExists":  true,
+                                                         "editorAssemblyLastWriteTime":  "\/Date(1774107440745)\/",
+                                                         "editorAssemblyLength":  77824,
+                                                         "scriptAheadSeconds":  -7.5,
+                                                         "stale":  false
+                                                     }
+                               }
+                  }
+              ],
+    "error":  "EnemyTempoText missing from home panel",
+    "bridgeStatusPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\reports\\unity-bridge-status-standard-latest.json"
+}

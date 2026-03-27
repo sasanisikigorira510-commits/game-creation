@@ -7,10 +7,11 @@ namespace WitchTower.Core
 {
     public sealed class Bootstrapper : MonoBehaviour
     {
-        [SerializeField] private string nextSceneName = "TitleScene";
+        [SerializeField] private string nextSceneName = "HomeScene";
 
         private void Awake()
         {
+            Application.runInBackground = true;
             DontDestroyOnLoad(gameObject);
             EnsureManagers();
             InitializeGame();

@@ -9,27 +9,40 @@ namespace WitchTower.UI
         [SerializeField] private TMP_Text levelText;
         [SerializeField] private TMP_Text costText;
         [SerializeField] private TMP_Text bonusText;
+        [SerializeField] private TMP_Text impactText;
 
-        public void Bind(string label, int level, int cost, int totalBonus)
+        public void Bind(string label, int level, int cost, int totalBonus, string impact)
         {
             if (labelText != null)
             {
-                labelText.text = label;
+                labelText.text = $"{label} Boost";
             }
 
             if (levelText != null)
             {
-                levelText.text = $"Lv. {level}";
+                levelText.text = $"Tier {level}";
             }
 
             if (costText != null)
             {
-                costText.text = $"Cost {cost}";
+                costText.text = $"Next upgrade costs {cost} Gold";
             }
 
             if (bonusText != null)
             {
-                bonusText.text = $"+{totalBonus}";
+                string bonusLabel = label switch
+                {
+                    "Attack" => "power",
+                    "Defense" => "guard",
+                    "HP" => "vitality",
+                    _ => "bonus"
+                };
+                bonusText.text = $"+{totalBonus} {bonusLabel}";
+            }
+
+            if (impactText != null)
+            {
+                impactText.text = impact;
             }
         }
     }

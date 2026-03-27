@@ -23,6 +23,10 @@ namespace WitchTower.Save
         public string EquippedAccessoryId;
         public List<OwnedMaterialData> OwnedMaterials;
         public List<OwnedEquipmentData> OwnedEquipments;
+        public int MonsterStorageLimit;
+        public List<OwnedMonsterData> OwnedMonsters;
+        public List<MonsterDexEntryData> MonsterDexEntries;
+        public List<string> PartyMonsterInstanceIds;
         public List<SkillLevelData> SkillLevels;
 
         public static PlayerSaveData CreateDefault()
@@ -78,26 +82,12 @@ namespace WitchTower.Save
                         EquipmentId = "equip_ashen_ring",
                         UpgradeLevel = 0,
                         IsEquipped = true
-                    },
-                    new OwnedEquipmentData
-                    {
-                        EquipmentId = "equip_iron_sword",
-                        UpgradeLevel = 0,
-                        IsEquipped = false
-                    },
-                    new OwnedEquipmentData
-                    {
-                        EquipmentId = "equip_bone_mail",
-                        UpgradeLevel = 0,
-                        IsEquipped = false
-                    },
-                    new OwnedEquipmentData
-                    {
-                        EquipmentId = "equip_quick_charm",
-                        UpgradeLevel = 0,
-                        IsEquipped = false
                     }
                 },
+                MonsterStorageLimit = 100,
+                OwnedMonsters = new List<OwnedMonsterData>(),
+                MonsterDexEntries = new List<MonsterDexEntryData>(),
+                PartyMonsterInstanceIds = new List<string>(),
                 SkillLevels = new List<SkillLevelData>()
             };
         }
@@ -116,6 +106,26 @@ namespace WitchTower.Save
         public string EquipmentId;
         public int UpgradeLevel;
         public bool IsEquipped;
+    }
+
+    [Serializable]
+    public sealed class OwnedMonsterData
+    {
+        public string InstanceId;
+        public string MonsterId;
+        public int Level;
+        public int Exp;
+        public int PlusValue;
+        public bool IsFavorite;
+        public int AcquiredOrder;
+    }
+
+    [Serializable]
+    public sealed class MonsterDexEntryData
+    {
+        public string MonsterId;
+        public bool IsUnlocked;
+        public int OwnedCount;
     }
 
     [Serializable]

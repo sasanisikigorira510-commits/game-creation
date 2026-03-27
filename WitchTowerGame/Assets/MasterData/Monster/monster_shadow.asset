@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_shadow
+  m_EditorClassIdentifier: 
+  monsterId: monster_shadow
+  monsterName: "\u30b7\u30e3\u30c9\u30a6"
+  encyclopediaNumber: 10
+  rarity: 2
+  element: 5
+  rangeType: 0
+  damageType: 0
+  baseStats:
+    maxHp: 40
+    attack: 14
+    magicAttack: 10
+    defense: 7
+    magicDefense: 11
+    attackSpeed: 1.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 1
+    attackPerPlus: 1
+    magicAttackPerPlus: 1
+    defensePerPlus: 0
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.003
+  fusionExclusive: 0
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FormationMonsters/Shadow
+  illustrationResourcePath: 
+  battleIdleResourcePath: 
+  battleAttackResourcePath: 
+  description: A swift dark attacker that slips through gaps.

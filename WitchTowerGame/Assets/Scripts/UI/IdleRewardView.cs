@@ -15,8 +15,8 @@ namespace WitchTower.UI
             }
 
             statusText.text = rewardGold > 0
-                ? $"Idle Reward: {rewardGold} Gold"
-                : "Idle Reward: None";
+                ? $"Idle Reward Ready: {rewardGold} Gold waiting to collect"
+                : "Idle Reward: No stored gold right now";
         }
     }
 }

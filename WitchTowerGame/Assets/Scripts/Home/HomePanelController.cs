@@ -1,6 +1,7 @@
 using UnityEngine;
 using WitchTower.Managers;
 using WitchTower.UI;
+using TMPro;
 
 namespace WitchTower.Home
 {
@@ -9,6 +10,10 @@ namespace WitchTower.Home
         [SerializeField] private PlayerStatusView playerStatusView;
         [SerializeField] private ResourceView resourceView;
         [SerializeField] private IdleRewardView idleRewardView;
+        [SerializeField] private TMP_Text ctaText;
+        [SerializeField] private TMP_Text rewardSummaryText;
+        [SerializeField] private TMP_Text prepAdviceText;
+        [SerializeField] private TMP_Text battlePlanText;
 
         private void OnEnable()
         {
@@ -17,12 +22,42 @@ namespace WitchTower.Home
 
         public void Refresh()
         {
-            var profile = GameManager.Instance.PlayerProfile;
-            playerStatusView.Bind(profile);
-            resourceView.Bind(profile);
+            var gameManager = GameManager.Instance;
+            var profile = gameManager != null ? gameManager.PlayerProfile : null;
+
+            if (playerStatusView != null)
+            {
+                playerStatusView.Bind(profile);
+            }
+
+            if (resourceView != null)
+            {
+                resourceView.Bind(profile);
+            }
+
             if (idleRewardView != null)
             {
                 idleRewardView.Bind(profile != null ? profile.PendingIdleRewardGold : 0);
+            }
+
+            if (ctaText != null)
+            {
+                ctaText.text = HomeActionAdvisor.BuildHomeHeadline(profile);
+            }
+
+            if (rewardSummaryText != null)
+            {
+                rewardSummaryText.text = HomeActionAdvisor.BuildHomeRewardSummary(profile, System.DateTime.Now);
+            }
+
+            if (prepAdviceText != null)
+            {
+                prepAdviceText.text = HomeActionAdvisor.BuildPrepAdviceText(profile, 10);
+            }
+
+            if (battlePlanText != null)
+            {
+                battlePlanText.text = HomeActionAdvisor.BuildBattlePlanText(profile, 10, System.DateTime.Now);
             }
         }
 
@@ -36,6 +71,7 @@ namespace WitchTower.Home
             }
 
             Refresh();
+            Object.FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
         }
     }
 }

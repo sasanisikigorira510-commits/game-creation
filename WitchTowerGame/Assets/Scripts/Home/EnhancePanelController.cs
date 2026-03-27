@@ -1,6 +1,8 @@
 using UnityEngine;
 using WitchTower.Managers;
 using WitchTower.UI;
+using TMPro;
+using WitchTower.Battle;
 
 namespace WitchTower.Home
 {
@@ -11,6 +13,9 @@ namespace WitchTower.Home
         [SerializeField] private UpgradeStatusView defenseUpgradeView;
         [SerializeField] private UpgradeStatusView hpUpgradeView;
         [SerializeField] private int baseUpgradeCost = 10;
+        [SerializeField] private TMP_Text ctaText;
+
+        public int BaseUpgradeCost => baseUpgradeCost;
 
         private void OnEnable()
         {
@@ -34,17 +39,52 @@ namespace WitchTower.Home
 
         public void Refresh()
         {
-            var profile = GameManager.Instance.PlayerProfile;
-            resourceView.Bind(profile);
+            var gameManager = GameManager.Instance;
+            var profile = gameManager != null ? gameManager.PlayerProfile : null;
+            if (resourceView != null)
+            {
+                resourceView.Bind(profile);
+            }
 
             if (profile == null)
             {
                 return;
             }
 
-            attackUpgradeView.Bind("Attack", profile.AttackUpgradeLevel, GetUpgradeCost(profile.AttackUpgradeLevel), profile.GetAttackBonus());
-            defenseUpgradeView.Bind("Defense", profile.DefenseUpgradeLevel, GetUpgradeCost(profile.DefenseUpgradeLevel), profile.GetDefenseBonus());
-            hpUpgradeView.Bind("HP", profile.HpUpgradeLevel, GetUpgradeCost(profile.HpUpgradeLevel), profile.GetHpBonus());
+            if (attackUpgradeView != null)
+            {
+                attackUpgradeView.Bind(
+                    "Attack",
+                    profile.AttackUpgradeLevel,
+                    GetUpgradeCost(profile.AttackUpgradeLevel),
+                    profile.GetAttackBonus(),
+                    BuildUpgradeImpact(profile, UpgradeType.Attack));
+            }
+
+            if (defenseUpgradeView != null)
+            {
+                defenseUpgradeView.Bind(
+                    "Defense",
+                    profile.DefenseUpgradeLevel,
+                    GetUpgradeCost(profile.DefenseUpgradeLevel),
+                    profile.GetDefenseBonus(),
+                    BuildUpgradeImpact(profile, UpgradeType.Defense));
+            }
+
+            if (hpUpgradeView != null)
+            {
+                hpUpgradeView.Bind(
+                    "HP",
+                    profile.HpUpgradeLevel,
+                    GetUpgradeCost(profile.HpUpgradeLevel),
+                    profile.GetHpBonus(),
+                    BuildUpgradeImpact(profile, UpgradeType.Hp));
+            }
+
+            if (ctaText != null)
+            {
+                ctaText.text = HomeActionAdvisor.BuildEnhanceHeadline(profile, baseUpgradeCost);
+            }
         }
 
         private bool TryUpgrade(UpgradeType upgradeType)
@@ -66,12 +106,43 @@ namespace WitchTower.Home
             ApplyUpgrade(profile, upgradeType);
             SaveManager.Instance.SaveCurrentGame();
             Refresh();
+            Object.FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
             return true;
         }
 
         private int GetUpgradeCost(int currentLevel)
         {
             return baseUpgradeCost + currentLevel * 5;
+        }
+
+        private static string BuildUpgradeImpact(Data.PlayerProfile profile, UpgradeType upgradeType)
+        {
+            if (profile == null)
+            {
+                return "Impact: profile unavailable.";
+            }
+
+            int nextFloor = profile.HighestFloor + 1;
+            BattleUnitStats currentStats = PlayerBattleStatsFactory.CreatePreview(profile);
+            BattleUnitStats upgradedStats = PlayerBattleStatsFactory.CreatePreviewAfterUpgrade(profile, upgradeType);
+            BattleUnitStats enemyStats = BattleEncounterAdvisor.CreateEnemyPreview(nextFloor);
+            string currentThreat = BattleEncounterAdvisor.BuildThreatText(currentStats, enemyStats);
+            string upgradedThreat = BattleEncounterAdvisor.BuildThreatText(upgradedStats, enemyStats);
+
+            return upgradeType switch
+            {
+                UpgradeType.Attack => $"Impact: +3 ATK for floor {nextFloor}, threat {TrimThreat(currentThreat)} -> {TrimThreat(upgradedThreat)}.",
+                UpgradeType.Defense => $"Impact: +2 DEF for floor {nextFloor}, threat {TrimThreat(currentThreat)} -> {TrimThreat(upgradedThreat)}.",
+                UpgradeType.Hp => $"Impact: +10 HP for floor {nextFloor}, threat {TrimThreat(currentThreat)} -> {TrimThreat(upgradedThreat)}.",
+                _ => "Impact: unavailable."
+            };
+        }
+
+        private static string TrimThreat(string threatLabel)
+        {
+            return string.IsNullOrEmpty(threatLabel)
+                ? "unknown"
+                : threatLabel.Replace("Threat: ", string.Empty).Trim().ToLowerInvariant();
         }
 
         private static int GetCurrentLevel(Data.PlayerProfile profile, UpgradeType upgradeType)

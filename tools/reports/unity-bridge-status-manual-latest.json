@@ -1,0 +1,46 @@
+﻿{
+    "ok":  true,
+    "bridgeStatePath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\tools\\unity_bridge_state.json",
+    "state":  {
+                  "exists":  false
+              },
+    "resolvedBaseUrl":  "http://127.0.0.1:8765",
+    "ping":  {
+                 "ok":  false,
+                 "error":  "The operation has timed out."
+             },
+    "portStatus":  {
+                       "ok":  true,
+                       "lineCount":  5,
+                       "listeningCount":  1,
+                       "closeWaitCount":  2,
+                       "lines":  [
+                                     "TCP    127.0.0.1:8765         0.0.0.0:0              LISTENING       18548",
+                                     "TCP    127.0.0.1:8765         127.0.0.1:54738        CLOSE_WAIT      18548",
+                                     "TCP    127.0.0.1:8765         127.0.0.1:54828        CLOSE_WAIT      18548",
+                                     "TCP    127.0.0.1:54738        127.0.0.1:8765         FIN_WAIT_2      20772",
+                                     "TCP    127.0.0.1:54828        127.0.0.1:8765         FIN_WAIT_2      21172"
+                                 ]
+                   },
+    "portOwner":  {
+                      "ok":  true,
+                      "pid":  18548,
+                      "processName":  "Unity",
+                      "responding":  true,
+                      "startTime":  "\/Date(1774079786817)\/",
+                      "mainWindowTitle":  ""
+                  },
+    "compileStatus":  {
+                          "ok":  true,
+                          "bridgeScriptPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Assets\\Editor\\UnityMcp\\UnityMcpBridge.cs",
+                          "bridgeScriptExists":  true,
+                          "bridgeScriptLastWriteTime":  "\/Date(1774097322881)\/",
+                          "bridgeScriptLength":  39387,
+                          "editorAssemblyPath":  "C:\\Users\\sasan\\OneDrive\\デスクトップ\\ゲーム作成\\WitchTowerGame\\Library\\ScriptAssemblies\\Assembly-CSharp-Editor.dll",
+                          "editorAssemblyExists":  true,
+                          "editorAssemblyLastWriteTime":  "\/Date(1774084521667)\/",
+                          "editorAssemblyLength":  62976,
+                          "scriptAheadSeconds":  12801.2,
+                          "stale":  true
+                      }
+}
