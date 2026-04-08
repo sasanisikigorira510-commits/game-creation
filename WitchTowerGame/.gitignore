@@ -33,6 +33,7 @@ Assets/TextMesh Pro/Examples & Extras/
 !/[Aa]ssets/**/*.meta
 !/[Pp]ackages/**/*.meta
 !/[Pp]roject[Ss]ettings/**/*.asset
+Assets/_Recovery.meta
 
 # OS/editor noise
 .DS_Store

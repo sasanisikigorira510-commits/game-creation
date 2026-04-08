@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WitchTower.MasterData;
 using WitchTower.Save;
 
 namespace WitchTower.Data
 {
-    public sealed class PlayerProfile
+    public sealed partial class PlayerProfile
     {
         public int Level { get; set; }
         public int Exp { get; set; }
@@ -18,11 +17,9 @@ namespace WitchTower.Data
         public string LastDailyRewardDate { get; set; }
         public string LastActiveAt { get; set; }
         public int PendingIdleRewardGold { get; set; }
-        public string EquippedWeaponId { get; set; }
-        public string EquippedArmorId { get; set; }
-        public string EquippedAccessoryId { get; set; }
         public List<OwnedMaterialData> OwnedMaterials { get; }
         public List<OwnedEquipmentData> OwnedEquipments { get; }
+        public List<OwnedEnhancementRelicData> OwnedEnhancementRelics { get; }
         public int MonsterStorageLimit { get; set; }
         public List<OwnedMonsterData> OwnedMonsters { get; }
         public List<MonsterDexEntryData> MonsterDexEntries { get; }
@@ -41,17 +38,16 @@ namespace WitchTower.Data
             LastDailyRewardDate = saveData.LastDailyRewardDate ?? string.Empty;
             LastActiveAt = saveData.LastActiveAt ?? string.Empty;
             PendingIdleRewardGold = saveData.PendingIdleRewardGold;
-            EquippedWeaponId = string.IsNullOrEmpty(saveData.EquippedWeaponId) ? "equip_bronze_blade" : saveData.EquippedWeaponId;
-            EquippedArmorId = string.IsNullOrEmpty(saveData.EquippedArmorId) ? "equip_guard_cloth" : saveData.EquippedArmorId;
-            EquippedAccessoryId = string.IsNullOrEmpty(saveData.EquippedAccessoryId) ? "equip_ashen_ring" : saveData.EquippedAccessoryId;
             OwnedMaterials = saveData.OwnedMaterials ?? new List<OwnedMaterialData>();
             OwnedEquipments = saveData.OwnedEquipments ?? new List<OwnedEquipmentData>();
+            OwnedEnhancementRelics = saveData.OwnedEnhancementRelics ?? new List<OwnedEnhancementRelicData>();
             MonsterStorageLimit = saveData.MonsterStorageLimit > 0 ? saveData.MonsterStorageLimit : 100;
             OwnedMonsters = saveData.OwnedMonsters ?? new List<OwnedMonsterData>();
             MonsterDexEntries = saveData.MonsterDexEntries ?? new List<MonsterDexEntryData>();
             PartyMonsterInstanceIds = saveData.PartyMonsterInstanceIds ?? new List<string>();
             MissionProgressList = saveData.MissionProgressList ?? new List<MissionProgressData>();
-            SyncEquippedFlags();
+            NormalizeMonsterPlusValues();
+            InitializeEquipmentState(saveData);
         }
 
         public void AddGold(int amount)
@@ -100,61 +96,6 @@ namespace WitchTower.Data
             LastDailyRewardDate = currentDate;
         }
 
-        public OwnedEquipmentData GetEquippedWeapon()
-        {
-            return OwnedEquipments.FirstOrDefault(x => x.EquipmentId == EquippedWeaponId);
-        }
-
-        public OwnedEquipmentData GetEquippedArmor()
-        {
-            return OwnedEquipments.FirstOrDefault(x => x.EquipmentId == EquippedArmorId);
-        }
-
-        public OwnedEquipmentData GetEquippedAccessory()
-        {
-            return OwnedEquipments.FirstOrDefault(x => x.EquipmentId == EquippedAccessoryId);
-        }
-
-        public void EquipWeapon(string equipmentId)
-        {
-            EquippedWeaponId = equipmentId;
-            SyncEquippedFlags();
-        }
-
-        public void EquipArmor(string equipmentId)
-        {
-            EquippedArmorId = equipmentId;
-            SyncEquippedFlags();
-        }
-
-        public void EquipAccessory(string equipmentId)
-        {
-            EquippedAccessoryId = equipmentId;
-            SyncEquippedFlags();
-        }
-
-        public bool HasEquipment(string equipmentId)
-        {
-            return OwnedEquipments.Any(x => x != null && x.EquipmentId == equipmentId);
-        }
-
-        public bool AddOwnedEquipment(string equipmentId)
-        {
-            if (string.IsNullOrEmpty(equipmentId) || HasEquipment(equipmentId))
-            {
-                return false;
-            }
-
-            OwnedEquipments.Add(new OwnedEquipmentData
-            {
-                EquipmentId = equipmentId,
-                UpgradeLevel = 0,
-                IsEquipped = false
-            });
-            SyncEquippedFlags();
-            return true;
-        }
-
         public bool HasMonsterStorageSpace()
         {
             return OwnedMonsters.Count < MonsterStorageLimit;
@@ -183,7 +124,7 @@ namespace WitchTower.Data
             }
 
             int acquiredOrder = 1;
-            foreach (var ownedMonster in OwnedMonsters)
+            foreach (OwnedMonsterData ownedMonster in OwnedMonsters)
             {
                 if (ownedMonster == null)
                 {
@@ -200,13 +141,91 @@ namespace WitchTower.Data
                 Level = Math.Max(1, level),
                 Exp = 0,
                 PlusValue = Math.Max(0, plusValue),
+                PlusHp = Math.Max(0, plusValue),
+                PlusAttack = Math.Max(0, plusValue),
+                PlusWisdom = Math.Max(0, plusValue),
+                PlusDefense = Math.Max(0, plusValue),
+                PlusMagicDefense = Math.Max(0, plusValue),
                 IsFavorite = isFavorite,
-                AcquiredOrder = acquiredOrder
+                AcquiredOrder = acquiredOrder,
+                EquippedWeaponInstanceId = string.Empty,
+                EquippedArmorInstanceId = string.Empty,
+                EquippedAccessoryInstanceId = string.Empty
             };
 
             OwnedMonsters.Add(newMonster);
             MarkMonsterDexOwned(monsterId);
+            SyncLegacyRepresentativeEquipmentIds();
             return newMonster;
+        }
+
+        public bool TryApplyMonsterPlus(string monsterInstanceId, MonsterPlusStatType statType, int amount = 1)
+        {
+            OwnedMonsterData monster = GetOwnedMonster(monsterInstanceId);
+            if (monster == null || amount <= 0)
+            {
+                return false;
+            }
+
+            switch (statType)
+            {
+                case MonsterPlusStatType.Hp:
+                    monster.PlusHp += amount;
+                    break;
+                case MonsterPlusStatType.Attack:
+                    monster.PlusAttack += amount;
+                    break;
+                case MonsterPlusStatType.Wisdom:
+                    monster.PlusWisdom += amount;
+                    break;
+                case MonsterPlusStatType.Defense:
+                    monster.PlusDefense += amount;
+                    break;
+                case MonsterPlusStatType.MagicDefense:
+                    monster.PlusMagicDefense += amount;
+                    break;
+                default:
+                    return false;
+            }
+
+            monster.PlusValue = monster.TotalPlusValue;
+            return true;
+        }
+
+        private void NormalizeMonsterPlusValues()
+        {
+            foreach (OwnedMonsterData monster in OwnedMonsters)
+            {
+                if (monster == null)
+                {
+                    continue;
+                }
+
+                monster.PlusHp = Math.Max(0, monster.PlusHp);
+                monster.PlusAttack = Math.Max(0, monster.PlusAttack);
+                monster.PlusWisdom = Math.Max(0, monster.PlusWisdom);
+                monster.PlusDefense = Math.Max(0, monster.PlusDefense);
+                monster.PlusMagicDefense = Math.Max(0, monster.PlusMagicDefense);
+                monster.PlusValue = Math.Max(0, monster.PlusValue);
+
+                bool hasItemizedPlus =
+                    monster.PlusHp > 0 ||
+                    monster.PlusAttack > 0 ||
+                    monster.PlusWisdom > 0 ||
+                    monster.PlusDefense > 0 ||
+                    monster.PlusMagicDefense > 0;
+
+                if (!hasItemizedPlus && monster.PlusValue > 0)
+                {
+                    // Legacy migration: old single plus value affected multiple combat stats at once,
+                    // so copy it across the new per-stat fields to preserve relative strength.
+                    monster.PlusHp = monster.PlusValue;
+                    monster.PlusAttack = monster.PlusValue;
+                    monster.PlusWisdom = monster.PlusValue;
+                    monster.PlusDefense = monster.PlusValue;
+                    monster.PlusMagicDefense = monster.PlusValue;
+                }
+            }
         }
 
         public void MarkMonsterDexOwned(string monsterId)
@@ -241,10 +260,12 @@ namespace WitchTower.Data
                 return;
             }
 
-            foreach (var instanceId in monsterInstanceIds.Where(x => !string.IsNullOrEmpty(x)).Take(5))
+            foreach (string instanceId in monsterInstanceIds.Where(x => !string.IsNullOrEmpty(x)).Take(5))
             {
                 PartyMonsterInstanceIds.Add(instanceId);
             }
+
+            SyncLegacyRepresentativeEquipmentIds();
         }
 
         public MissionProgressData GetMissionProgress(string missionId)
@@ -264,7 +285,7 @@ namespace WitchTower.Data
 
         public int ClaimPendingIdleReward()
         {
-            var reward = PendingIdleRewardGold;
+            int reward = PendingIdleRewardGold;
             if (reward > 0)
             {
                 AddGold(reward);
@@ -274,19 +295,11 @@ namespace WitchTower.Data
             return reward;
         }
 
-        private void ProcessLevelUp()
-        {
-            var requiredExp = GetRequiredExpForNextLevel();
-            while (Exp >= requiredExp)
-            {
-                Exp -= requiredExp;
-                Level += 1;
-                requiredExp = GetRequiredExpForNextLevel();
-            }
-        }
-
         public PlayerSaveData ToSaveData(int currentFloor)
         {
+            SyncLegacyRepresentativeEquipmentIds();
+            SyncEquippedFlags();
+
             return new PlayerSaveData
             {
                 PlayerLevel = Level,
@@ -301,11 +314,12 @@ namespace WitchTower.Data
                 LastActiveAt = LastActiveAt,
                 PendingIdleRewardGold = PendingIdleRewardGold,
                 MissionProgressList = new List<MissionProgressData>(MissionProgressList),
-                EquippedWeaponId = EquippedWeaponId,
-                EquippedArmorId = EquippedArmorId,
-                EquippedAccessoryId = EquippedAccessoryId,
+                EquippedWeaponId = legacyEquippedWeaponId,
+                EquippedArmorId = legacyEquippedArmorId,
+                EquippedAccessoryId = legacyEquippedAccessoryId,
                 OwnedMaterials = new List<OwnedMaterialData>(OwnedMaterials),
                 OwnedEquipments = new List<OwnedEquipmentData>(OwnedEquipments),
+                OwnedEnhancementRelics = new List<OwnedEnhancementRelicData>(OwnedEnhancementRelics),
                 MonsterStorageLimit = MonsterStorageLimit,
                 OwnedMonsters = new List<OwnedMonsterData>(OwnedMonsters),
                 MonsterDexEntries = new List<MonsterDexEntryData>(MonsterDexEntries),
@@ -314,20 +328,19 @@ namespace WitchTower.Data
             };
         }
 
-        private void SyncEquippedFlags()
+        private void ProcessLevelUp()
         {
-            foreach (var equipment in OwnedEquipments)
+            int requiredExp = GetRequiredExpForNextLevel();
+            while (Exp >= requiredExp)
             {
-                if (equipment == null)
-                {
-                    continue;
-                }
-
-                equipment.IsEquipped =
-                    equipment.EquipmentId == EquippedWeaponId ||
-                    equipment.EquipmentId == EquippedArmorId ||
-                    equipment.EquipmentId == EquippedAccessoryId;
+                Exp -= requiredExp;
+                Level += 1;
+                requiredExp = GetRequiredExpForNextLevel();
             }
         }
+
+        partial void InitializeEquipmentState(PlayerSaveData saveData);
+        partial void SyncLegacyRepresentativeEquipmentIds();
+        partial void SyncEquippedFlags();
     }
 }

@@ -62,6 +62,28 @@ namespace WitchTower.Battle
             return result;
         }
 
+        public void TickPreparation(float deltaTime)
+        {
+            if (CurrentState != BattleFlowState.Fighting || simulator == null)
+            {
+                return;
+            }
+
+            simulator.TickPreparation(deltaTime);
+            hudController.UpdateHp(simulator.PlayerStats, simulator.EnemyStats);
+            RefreshSkillHud();
+        }
+
+        public void SetEngagedEnemyCount(int count)
+        {
+            if (simulator == null)
+            {
+                return;
+            }
+
+            simulator.SetEngagedEnemyCount(count);
+        }
+
         public void UseSkill(BattleSkillType skillType)
         {
             if (CurrentState != BattleFlowState.Fighting)

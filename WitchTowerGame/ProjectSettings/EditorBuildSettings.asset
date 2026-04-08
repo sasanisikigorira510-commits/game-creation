@@ -15,6 +15,9 @@ EditorBuildSettings:
     path: Assets/Scenes/FormationScene.unity
     guid: 0e6e4b9c2f0142b08e70e274ce92aefd
   - enabled: 1
+    path: Assets/Scenes/EquipmentScene.unity
+    guid: 9c878967c29b4101a39afabd5fab328f
+  - enabled: 1
     path: Assets/Scenes/BattleScene.unity
     guid: ddfe9a190b4a17d47bbdcfd25c011429
   m_configObjects: {}

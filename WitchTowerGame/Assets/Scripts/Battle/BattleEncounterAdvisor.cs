@@ -19,7 +19,9 @@ namespace WitchTower.Battle
                     MaxHp = 40,
                     CurrentHp = 40,
                     Attack = 8,
+                    Wisdom = 8,
                     Defense = 2,
+                    MagicDefense = 2,
                     AttackSpeed = 0.8f,
                     CritRate = 0.03f,
                     CritDamage = 1.3f
@@ -32,7 +34,9 @@ namespace WitchTower.Battle
                 MaxHp = enemyData.maxHp,
                 CurrentHp = enemyData.maxHp,
                 Attack = Mathf.RoundToInt(enemyData.attack * runtime.AttackMultiplier),
+                Wisdom = Mathf.RoundToInt(Mathf.Max(enemyData.magicAttack, enemyData.attack) * runtime.AttackMultiplier),
                 Defense = enemyData.defense + runtime.DefenseBonus,
+                MagicDefense = enemyData.magicDefense + runtime.DefenseBonus,
                 AttackSpeed = enemyData.attackSpeed * runtime.AttackSpeedMultiplier,
                 CritRate = enemyData.critRate + runtime.CritRateBonus,
                 CritDamage = enemyData.critDamage

@@ -1,5 +1,14 @@
 # Top-level logs
 unity_create.log
+gcm-diagnose.log
+
+# Local caches and temporary work files
+.dotnet_cli_home/
+temp/
+tmp_*.png
+
+# External source materials kept outside the Unity project
+画像置き場/
 
 # Backup of nested git repo
 WitchTowerGame/.git_backup_witchtower/
@@ -14,6 +23,8 @@ WitchTowerGame/[Bb]uild/
 WitchTowerGame/[Bb]uilds/
 WitchTowerGame/[Mm]emoryCaptures/
 WitchTowerGame/[Rr]ecordings/
+WitchTowerGame/Assets/_Recovery/
+WitchTowerGame/Assets/_Recovery.meta
 
 # IDE / OS noise
 .DS_Store

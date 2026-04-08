@@ -34,6 +34,12 @@ namespace WitchTower.MasterData
         Diamond = 6
     }
 
+    public enum BattleFacingDirection
+    {
+        Left = 0,
+        Right = 1
+    }
+
     [System.Serializable]
     public struct MonsterBaseStats
     {
@@ -81,6 +87,10 @@ namespace WitchTower.MasterData
 
         [Header("Battle")]
         public MonsterBaseStats baseStats;
+        [Min(0.1f)] public float attackRange = 0f;
+        [Min(1)] public int normalAttackTargetCount = 1;
+        public bool normalAttackAppliesKnockback;
+        [Min(0f)] public float normalAttackKnockbackDuration = 0.18f;
         public int plusValueCap = 99;
         public MonsterPlusGrowth plusGrowth;
 
@@ -94,7 +104,11 @@ namespace WitchTower.MasterData
         public string portraitResourcePath;
         public string illustrationResourcePath;
         public string battleIdleResourcePath;
+        public BattleFacingDirection battleIdleFacing = BattleFacingDirection.Left;
+        public string battleMoveResourcePath;
+        public BattleFacingDirection battleMoveFacing = BattleFacingDirection.Left;
         public string battleAttackResourcePath;
+        public BattleFacingDirection battleAttackFacing = BattleFacingDirection.Left;
 
         [Header("Compendium")]
         [TextArea] public string description;

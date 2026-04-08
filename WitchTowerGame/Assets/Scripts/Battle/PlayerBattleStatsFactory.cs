@@ -33,7 +33,9 @@ namespace WitchTower.Battle
                 MaxHp = maxHp,
                 CurrentHp = maxHp,
                 Attack = playerData.initialAttack + GetAttackBonus(profile, attackLevelOffset) + equipmentBonus.Attack,
+                Wisdom = playerData.initialAttack + GetAttackBonus(profile, attackLevelOffset) + equipmentBonus.Wisdom,
                 Defense = playerData.initialDefense + GetDefenseBonus(profile, defenseLevelOffset) + equipmentBonus.Defense,
+                MagicDefense = playerData.initialDefense + GetDefenseBonus(profile, defenseLevelOffset) + equipmentBonus.MagicDefense,
                 AttackSpeed = playerData.initialAttackSpeed + equipmentBonus.AttackSpeed,
                 CritRate = playerData.initialCritRate + equipmentBonus.CritRate,
                 CritDamage = playerData.initialCritDamage
@@ -65,7 +67,9 @@ namespace WitchTower.Battle
                 MaxHp = maxHp,
                 CurrentHp = maxHp,
                 Attack = 15 + GetAttackBonus(profile, attackLevelOffset) + equipmentBonus.Attack,
+                Wisdom = 15 + GetAttackBonus(profile, attackLevelOffset) + equipmentBonus.Wisdom,
                 Defense = 5 + GetDefenseBonus(profile, defenseLevelOffset) + equipmentBonus.Defense,
+                MagicDefense = 5 + GetDefenseBonus(profile, defenseLevelOffset) + equipmentBonus.MagicDefense,
                 AttackSpeed = 1.0f + equipmentBonus.AttackSpeed,
                 CritRate = 0.05f + equipmentBonus.CritRate,
                 CritDamage = 1.5f
@@ -115,7 +119,9 @@ namespace WitchTower.Battle
             }
 
             bonus.Attack += equipmentData.baseAttack;
+            bonus.Wisdom += equipmentData.baseWisdom;
             bonus.Defense += equipmentData.baseDefense;
+            bonus.MagicDefense += equipmentData.baseMagicDefense;
             bonus.Hp += equipmentData.baseHp;
             bonus.CritRate += equipmentData.bonusCritRate;
             bonus.AttackSpeed += equipmentData.bonusAttackSpeed;
@@ -124,7 +130,9 @@ namespace WitchTower.Battle
         private struct EquipmentBonus
         {
             public int Attack;
+            public int Wisdom;
             public int Defense;
+            public int MagicDefense;
             public int Hp;
             public float CritRate;
             public float AttackSpeed;

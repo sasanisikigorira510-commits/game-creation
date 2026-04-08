@@ -36,12 +36,12 @@ namespace WitchTower.UI
 
             if (matchupText != null)
             {
-                matchupText.text = matchup ?? "Next Floor Read: unavailable";
+                matchupText.text = matchup ?? "装備方針: モンスター個別装備";
             }
 
             if (loadoutImpactText != null)
             {
-                loadoutImpactText.text = loadoutImpact ?? "Loadout Impact: unavailable";
+                loadoutImpactText.text = loadoutImpact ?? "強化情報: 強化遺物で装備を育成";
             }
         }
 

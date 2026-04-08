@@ -40,6 +40,7 @@ MonoBehaviour:
   illustrationSprite: {fileID: 0}
   portraitResourcePath: FormationMonsters/Dragoon
   illustrationResourcePath: 
-  battleIdleResourcePath: 
-  battleAttackResourcePath: 
+  battleIdleResourcePath: MonsterBattle/mon_dragoon_idle
+  battleMoveResourcePath: MonsterBattle/mon_dragoon_move
+  battleAttackResourcePath: MonsterBattle/mon_dragoon_attack
   description: A lancer that balances offense and durability.

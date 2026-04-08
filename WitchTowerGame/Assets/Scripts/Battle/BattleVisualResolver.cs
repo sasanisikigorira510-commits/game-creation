@@ -8,6 +8,13 @@ using UnityEngine;
 
 namespace WitchTower.Battle
 {
+    public enum BattleVisualPose
+    {
+        Idle = 0,
+        Move = 1,
+        Attack = 2
+    }
+
     public static class BattleVisualResolver
     {
         private static readonly string[] FallbackPartySpritePaths =
@@ -29,6 +36,7 @@ namespace WitchTower.Battle
         };
 
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
+        private static readonly Dictionary<string, List<Sprite>> SpriteFramesCache = new Dictionary<string, List<Sprite>>();
 
         public static OwnedMonsterData ResolveLeadOwnedMonster(PlayerProfile profile)
         {
@@ -124,7 +132,7 @@ namespace WitchTower.Battle
         public static Sprite ResolvePlayerSprite(PlayerProfile profile)
         {
             MonsterDataSO monsterData = ResolvePlayerMonsterData(profile);
-            return ResolveMonsterSprite(monsterData);
+            return ResolveMonsterIdleSprite(monsterData);
         }
 
         public static List<Sprite> ResolvePartySprites(PlayerProfile profile, int maxCount = 5)
@@ -136,7 +144,7 @@ namespace WitchTower.Battle
             foreach (OwnedMonsterData ownedMonster in ownedMonsters)
             {
                 MonsterDataSO monsterData = MasterDataManager.Instance?.GetMonsterData(ownedMonster.MonsterId);
-                result.Add(ResolveMonsterSprite(monsterData));
+                result.Add(ResolveMonsterIdleSprite(monsterData));
             }
 
             int fallbackIndex = 0;
@@ -159,6 +167,11 @@ namespace WitchTower.Battle
 
         public static Sprite ResolveEnemySprite(EnemyDataSO enemyData)
         {
+            return ResolveEnemyIdleSprite(enemyData);
+        }
+
+        public static Sprite ResolveEnemyIdleSprite(EnemyDataSO enemyData)
+        {
             if (enemyData == null)
             {
                 return LoadSprite("FormationMonsters/HellKnight");
@@ -172,7 +185,22 @@ namespace WitchTower.Battle
             return LoadSprite("FormationMonsters/HellKnight");
         }
 
+        public static Sprite ResolveEnemyMoveSprite(EnemyDataSO enemyData)
+        {
+            return ResolveEnemyIdleSprite(enemyData);
+        }
+
+        public static Sprite ResolveEnemyAttackSprite(EnemyDataSO enemyData)
+        {
+            return ResolveEnemyIdleSprite(enemyData);
+        }
+
         public static Sprite ResolveMonsterSprite(MonsterDataSO monsterData)
+        {
+            return ResolveMonsterIdleSprite(monsterData);
+        }
+
+        public static Sprite ResolveMonsterIdleSprite(MonsterDataSO monsterData)
         {
             if (monsterData == null)
             {
@@ -190,6 +218,147 @@ namespace WitchTower.Battle
             }
 
             return monsterData.portraitSprite != null ? monsterData.portraitSprite : monsterData.illustrationSprite;
+        }
+
+        public static Sprite ResolveMonsterMoveSprite(MonsterDataSO monsterData)
+        {
+            if (monsterData == null)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.battleMoveResourcePath))
+            {
+                return LoadSprite(monsterData.battleMoveResourcePath);
+            }
+
+            return ResolveMonsterIdleSprite(monsterData);
+        }
+
+        public static Sprite ResolveMonsterAttackSprite(MonsterDataSO monsterData)
+        {
+            if (monsterData == null)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.battleAttackResourcePath))
+            {
+                return LoadSprite(monsterData.battleAttackResourcePath);
+            }
+
+            return ResolveMonsterIdleSprite(monsterData);
+        }
+
+        public static List<Sprite> ResolveEnemyIdleSprites(EnemyDataSO enemyData)
+        {
+            return BuildSingleSpriteList(ResolveEnemyIdleSprite(enemyData));
+        }
+
+        public static List<Sprite> ResolveEnemyMoveSprites(EnemyDataSO enemyData)
+        {
+            return BuildSingleSpriteList(ResolveEnemyMoveSprite(enemyData));
+        }
+
+        public static List<Sprite> ResolveEnemyAttackSprites(EnemyDataSO enemyData)
+        {
+            return BuildSingleSpriteList(ResolveEnemyAttackSprite(enemyData));
+        }
+
+        public static BattleFacingDirection ResolveMonsterFacing(MonsterDataSO monsterData, BattleVisualPose pose)
+        {
+            if (monsterData == null)
+            {
+                return BattleFacingDirection.Left;
+            }
+
+            switch (pose)
+            {
+                case BattleVisualPose.Move:
+                    return monsterData.battleMoveFacing;
+                case BattleVisualPose.Attack:
+                    return monsterData.battleAttackFacing;
+                case BattleVisualPose.Idle:
+                default:
+                    return monsterData.battleIdleFacing;
+            }
+        }
+
+        public static BattleFacingDirection ResolveEnemyFacing(EnemyDataSO enemyData, BattleVisualPose pose)
+        {
+            if (enemyData == null)
+            {
+                return BattleFacingDirection.Left;
+            }
+
+            switch (pose)
+            {
+                case BattleVisualPose.Move:
+                    return enemyData.battleMoveFacing;
+                case BattleVisualPose.Attack:
+                    return enemyData.battleAttackFacing;
+                case BattleVisualPose.Idle:
+                default:
+                    return enemyData.battleIdleFacing;
+            }
+        }
+
+        public static List<Sprite> ResolveMonsterIdleSprites(MonsterDataSO monsterData)
+        {
+            if (monsterData == null)
+            {
+                return new List<Sprite>();
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.battleIdleResourcePath))
+            {
+                return LoadSpriteFrames(monsterData.battleIdleResourcePath);
+            }
+
+            return BuildSingleSpriteList(ResolveMonsterIdleSprite(monsterData));
+        }
+
+        public static List<Sprite> ResolveMonsterMoveSprites(MonsterDataSO monsterData)
+        {
+            if (monsterData == null)
+            {
+                return new List<Sprite>();
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.battleMoveResourcePath))
+            {
+                List<Sprite> frames = LoadSpriteFrames(monsterData.battleMoveResourcePath);
+                if (frames.Count > 0)
+                {
+                    return frames;
+                }
+            }
+
+            return ResolveMonsterIdleSprites(monsterData);
+        }
+
+        public static List<Sprite> ResolveMonsterAttackSprites(MonsterDataSO monsterData)
+        {
+            if (monsterData == null)
+            {
+                return new List<Sprite>();
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.battleAttackResourcePath))
+            {
+                List<Sprite> frames = LoadSpriteFrames(monsterData.battleAttackResourcePath);
+                if (frames.Count > 0)
+                {
+                    return frames;
+                }
+            }
+
+            return ResolveMonsterIdleSprites(monsterData);
+        }
+
+        public static List<Sprite> ResolveSpriteFramesFromResourcePath(string resourcePath)
+        {
+            return LoadSpriteFrames(resourcePath);
         }
 
         public static string BuildMonsterRoleText(MonsterDataSO monsterData)
@@ -253,6 +422,53 @@ namespace WitchTower.Battle
             }
 
             return loadedSprite;
+        }
+
+        public static List<Sprite> LoadSpriteFrames(string resourcePath)
+        {
+            if (string.IsNullOrEmpty(resourcePath))
+            {
+                return new List<Sprite>();
+            }
+
+            if (SpriteFramesCache.TryGetValue(resourcePath, out List<Sprite> cachedFrames))
+            {
+                return cachedFrames;
+            }
+
+            var frames = new List<Sprite>();
+            for (int i = 0; i < 16; i += 1)
+            {
+                Sprite frame = LoadSprite($"{resourcePath}_{i}");
+                if (frame == null)
+                {
+                    break;
+                }
+
+                frames.Add(frame);
+            }
+
+            if (frames.Count == 0)
+            {
+                Sprite singleSprite = LoadSprite(resourcePath);
+                if (singleSprite != null)
+                {
+                    frames.Add(singleSprite);
+                }
+            }
+
+            SpriteFramesCache[resourcePath] = frames;
+            return frames;
+        }
+
+        private static List<Sprite> BuildSingleSpriteList(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return new List<Sprite>();
+            }
+
+            return new List<Sprite> { sprite };
         }
 
         private static string ToElementLabel(MonsterElement element)

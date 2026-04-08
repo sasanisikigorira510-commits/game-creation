@@ -8,7 +8,9 @@ namespace WitchTower.Battle
         public int MaxHp;
         public int CurrentHp;
         public int Attack;
+        public int Wisdom;
         public int Defense;
+        public int MagicDefense;
         public float AttackSpeed;
         public float CritRate;
         public float CritDamage;

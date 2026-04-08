@@ -23,6 +23,7 @@ namespace WitchTower.Save
         public string EquippedAccessoryId;
         public List<OwnedMaterialData> OwnedMaterials;
         public List<OwnedEquipmentData> OwnedEquipments;
+        public List<OwnedEnhancementRelicData> OwnedEnhancementRelics;
         public int MonsterStorageLimit;
         public List<OwnedMonsterData> OwnedMonsters;
         public List<MonsterDexEntryData> MonsterDexEntries;
@@ -67,21 +68,54 @@ namespace WitchTower.Save
                 {
                     new OwnedEquipmentData
                     {
+                        InstanceId = "equipinst_bronze_blade_001",
                         EquipmentId = "equip_bronze_blade",
                         UpgradeLevel = 0,
-                        IsEquipped = true
+                        EnhancementBonusRate = 0f,
+                        RemainingEnhanceAttempts = 5,
+                        IsEquipped = false,
+                        IsLocked = false,
+                        EquippedMonsterInstanceId = string.Empty
                     },
                     new OwnedEquipmentData
                     {
+                        InstanceId = "equipinst_guard_cloth_001",
                         EquipmentId = "equip_guard_cloth",
                         UpgradeLevel = 0,
-                        IsEquipped = true
+                        EnhancementBonusRate = 0f,
+                        RemainingEnhanceAttempts = 5,
+                        IsEquipped = false,
+                        IsLocked = false,
+                        EquippedMonsterInstanceId = string.Empty
                     },
                     new OwnedEquipmentData
                     {
+                        InstanceId = "equipinst_ashen_ring_001",
                         EquipmentId = "equip_ashen_ring",
                         UpgradeLevel = 0,
-                        IsEquipped = true
+                        EnhancementBonusRate = 0f,
+                        RemainingEnhanceAttempts = 5,
+                        IsEquipped = false,
+                        IsLocked = false,
+                        EquippedMonsterInstanceId = string.Empty
+                    }
+                },
+                OwnedEnhancementRelics = new List<OwnedEnhancementRelicData>
+                {
+                    new OwnedEnhancementRelicData
+                    {
+                        RelicId = "relic_safe_ember",
+                        Amount = 24
+                    },
+                    new OwnedEnhancementRelicData
+                    {
+                        RelicId = "relic_risky_ember",
+                        Amount = 12
+                    },
+                    new OwnedEnhancementRelicData
+                    {
+                        RelicId = "relic_volatile_ember",
+                        Amount = 6
                     }
                 },
                 MonsterStorageLimit = 100,
@@ -103,9 +137,35 @@ namespace WitchTower.Save
     [Serializable]
     public sealed class OwnedEquipmentData
     {
+        public string InstanceId;
         public string EquipmentId;
         public int UpgradeLevel;
+        public float EnhancementBonusRate;
+        public int RemainingEnhanceAttempts;
         public bool IsEquipped;
+        public bool IsLocked;
+        public string EquippedMonsterInstanceId;
+        public bool HasRolledStats;
+        public int RolledAttack;
+        public int RolledWisdom;
+        public int RolledDefense;
+        public int RolledMagicDefense;
+        public int RolledHp;
+        public float RolledCritRate;
+        public float RolledAttackSpeed;
+        public int EnhancementAttackFlat;
+        public int EnhancementWisdomFlat;
+        public int EnhancementDefenseFlat;
+        public int EnhancementMagicDefenseFlat;
+        public int EnhancementHpFlat;
+        public float EnhancementAttackSpeedFlat;
+    }
+
+    [Serializable]
+    public sealed class OwnedEnhancementRelicData
+    {
+        public string RelicId;
+        public int Amount;
     }
 
     [Serializable]
@@ -116,8 +176,23 @@ namespace WitchTower.Save
         public int Level;
         public int Exp;
         public int PlusValue;
+        public int PlusHp;
+        public int PlusAttack;
+        public int PlusWisdom;
+        public int PlusDefense;
+        public int PlusMagicDefense;
         public bool IsFavorite;
         public int AcquiredOrder;
+        public string EquippedWeaponInstanceId;
+        public string EquippedArmorInstanceId;
+        public string EquippedAccessoryInstanceId;
+
+        public int TotalPlusValue =>
+            System.Math.Max(0, PlusHp) +
+            System.Math.Max(0, PlusAttack) +
+            System.Math.Max(0, PlusWisdom) +
+            System.Math.Max(0, PlusDefense) +
+            System.Math.Max(0, PlusMagicDefense);
     }
 
     [Serializable]

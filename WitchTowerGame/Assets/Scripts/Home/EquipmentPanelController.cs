@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using WitchTower.Battle;
+using WitchTower.Data;
 using WitchTower.MasterData;
 using WitchTower.Managers;
 using WitchTower.Save;
@@ -44,6 +45,7 @@ namespace WitchTower.Home
         {
             var gameManager = GameManager.Instance;
             var profile = gameManager != null ? gameManager.PlayerProfile : null;
+            var selectedMonster = ResolveRepresentativeMonster(profile);
             if (playerStatusView != null)
             {
                 playerStatusView.Bind(profile);
@@ -56,26 +58,26 @@ namespace WitchTower.Home
 
             if (equipmentStatusView != null)
             {
-                var previewStats = PlayerBattleStatsFactory.CreatePreview(profile);
+                var previewStats = CreateRepresentativeMonsterPreview(profile, selectedMonster);
                 equipmentStatusView.Bind(
-                    GetEquipmentName(profile?.EquippedWeaponId),
-                    GetEquipmentName(profile?.EquippedArmorId),
-                    GetEquipmentName(profile?.EquippedAccessoryId),
-                    BuildSummary(previewStats),
-                    BuildNextFloorRead(profile, previewStats),
-                    BuildLoadoutImpact(profile));
+                    GetEquipmentName(profile, selectedMonster, EquipmentSlotType.Weapon),
+                    GetEquipmentName(profile, selectedMonster, EquipmentSlotType.Armor),
+                    GetEquipmentName(profile, selectedMonster, EquipmentSlotType.Accessory),
+                    BuildSummary(selectedMonster, previewStats),
+                    BuildEquipmentPolicyText(selectedMonster),
+                    BuildLoadoutImpact(profile, selectedMonster));
             }
 
-            BindEquipmentOption(bronzeBladeButton, bronzeBladeStatusText, profile, "equip_bronze_blade", "Starter");
-            BindEquipmentOption(ironSwordButton, ironSwordStatusText, profile, "equip_iron_sword", "Unlock at Floor 2");
-            BindEquipmentOption(guardClothButton, guardClothStatusText, profile, "equip_guard_cloth", "Starter");
-            BindEquipmentOption(boneMailButton, boneMailStatusText, profile, "equip_bone_mail", "Unlock at Floor 4");
-            BindEquipmentOption(ashenRingButton, ashenRingStatusText, profile, "equip_ashen_ring", "Starter");
-            BindEquipmentOption(quickCharmButton, quickCharmStatusText, profile, "equip_quick_charm", "Unlock at Floor 6");
+            BindEquipmentOption(bronzeBladeButton, bronzeBladeStatusText, profile, "equip_bronze_blade", "未所持");
+            BindEquipmentOption(ironSwordButton, ironSwordStatusText, profile, "equip_iron_sword", "未所持");
+            BindEquipmentOption(guardClothButton, guardClothStatusText, profile, "equip_guard_cloth", "未所持");
+            BindEquipmentOption(boneMailButton, boneMailStatusText, profile, "equip_bone_mail", "未所持");
+            BindEquipmentOption(ashenRingButton, ashenRingStatusText, profile, "equip_ashen_ring", "未所持");
+            BindEquipmentOption(quickCharmButton, quickCharmStatusText, profile, "equip_quick_charm", "未所持");
 
             if (ctaText != null)
             {
-                ctaText.text = HomeActionAdvisor.BuildEquipmentHeadline(profile);
+                ctaText.text = BuildEquipmentHeadline(selectedMonster);
             }
         }
 
@@ -179,7 +181,7 @@ namespace WitchTower.Home
 
             if (statusText != null)
             {
-                statusText.text = isEquipped ? "Equipped" : (isOwned ? "Owned" : lockedLabel);
+                statusText.text = isEquipped ? "装備中" : (isOwned ? "所持" : lockedLabel);
                 statusText.color = isEquipped ? EquippedStatusColor : (isOwned ? OwnedStatusColor : LockedStatusColor);
             }
         }
@@ -192,8 +194,15 @@ namespace WitchTower.Home
                  profile.EquippedAccessoryId == equipmentId);
         }
 
-        private static string GetEquipmentName(string equipmentId)
+        private static string GetEquipmentName(Data.PlayerProfile profile, Save.OwnedMonsterData monster, EquipmentSlotType slotType)
         {
+            if (profile == null || monster == null)
+            {
+                return "-";
+            }
+
+            var equipped = profile.GetMonsterEquippedEquipment(monster.InstanceId, slotType);
+            string equipmentId = equipped != null ? equipped.EquipmentId : string.Empty;
             if (string.IsNullOrEmpty(equipmentId))
             {
                 return "-";
@@ -205,84 +214,87 @@ namespace WitchTower.Home
             return equipmentData != null ? equipmentData.equipmentName : equipmentId;
         }
 
-        private static string BuildSummary(BattleUnitStats stats)
+        private static string BuildSummary(Save.OwnedMonsterData monster, BattleUnitStats stats)
         {
             if (stats == null)
             {
-                return "Battle Build: preview unavailable";
+                return "戦力プレビューを取得できません";
             }
 
-            return $"Battle Build: HP {stats.MaxHp}  ATK {stats.Attack}  DEF {stats.Defense}  CRIT {(stats.CritRate * 100f):0}%  SPD {stats.AttackSpeed:0.##}\nBuild Grade: {BuildGrade(stats)}";
+            string monsterLabel = ResolveMonsterName(monster);
+            return $"{monsterLabel}  HP {stats.MaxHp}  ATK {stats.Attack}  DEF {stats.Defense}  CRIT {(stats.CritRate * 100f):0.#}%  SPD {stats.AttackSpeed:0.##}\n評価: {BuildGrade(stats)}";
         }
 
-        private static string BuildNextFloorRead(Data.PlayerProfile profile, BattleUnitStats stats)
+        private static string BuildEquipmentPolicyText(Save.OwnedMonsterData monster)
         {
-            if (profile == null || stats == null)
+            if (monster == null)
             {
-                return "Next Floor Read: unavailable";
+                return "装備方針: 装備対象モンスターを選択してください";
             }
 
-            int nextFloor = profile.HighestFloor + 1;
-            BattleUnitStats enemyStats = BattleEncounterAdvisor.CreateEnemyPreview(nextFloor);
-            string threat = BattleEncounterAdvisor.BuildThreatText(stats, enemyStats).Replace("Threat: ", string.Empty);
-            return $"Next Floor Read: {threat} on floor {nextFloor} against {enemyStats.MaxHp} HP / {enemyStats.Attack} ATK.";
+            return "装備方針: 武器 / 防具 / 装飾をモンスター個別に装備します";
         }
 
-        private static string BuildLoadoutImpact(Data.PlayerProfile profile)
+        private static string BuildLoadoutImpact(Data.PlayerProfile profile, Save.OwnedMonsterData monster)
         {
-            if (profile == null)
+            if (profile == null || monster == null)
             {
-                return "Loadout Impact: unavailable";
+                return "強化情報: 選択中モンスターの装備情報を表示します";
             }
 
-            string weaponImpact = BuildEquipmentImpact(profile.EquippedWeaponId, "weapon");
-            string armorImpact = BuildEquipmentImpact(profile.EquippedArmorId, "armor");
-            string accessoryImpact = BuildEquipmentImpact(profile.EquippedAccessoryId, "accessory");
-            return $"Loadout Impact: {weaponImpact}; {armorImpact}; {accessoryImpact}.";
+            return $"強化情報: {BuildEquipmentImpact(profile, monster, EquipmentSlotType.Weapon, "武器")} / {BuildEquipmentImpact(profile, monster, EquipmentSlotType.Armor, "防具")} / {BuildEquipmentImpact(profile, monster, EquipmentSlotType.Accessory, "装飾")}\n遺物: 安定={profile.GetEnhancementRelicAmount("relic_safe_ember")} 挑戦={profile.GetEnhancementRelicAmount("relic_risky_ember")} 破滅={profile.GetEnhancementRelicAmount("relic_volatile_ember")}";
         }
 
-        private static string BuildEquipmentImpact(string equipmentId, string slotLabel)
+        private static string BuildEquipmentImpact(Data.PlayerProfile profile, Save.OwnedMonsterData monster, EquipmentSlotType slotType, string slotLabel)
         {
-            if (string.IsNullOrEmpty(equipmentId) || MasterDataManager.Instance == null)
+            if (profile == null || monster == null || MasterDataManager.Instance == null)
             {
-                return $"{slotLabel} none";
+                return $"{slotLabel} なし";
+            }
+
+            var equipped = profile.GetMonsterEquippedEquipment(monster.InstanceId, slotType);
+            string equipmentId = equipped != null ? equipped.EquipmentId : string.Empty;
+            if (string.IsNullOrEmpty(equipmentId))
+            {
+                return $"{slotLabel} なし";
             }
 
             var equipmentData = MasterDataManager.Instance.GetEquipmentData(equipmentId);
             if (equipmentData == null)
             {
-                return $"{slotLabel} unknown";
+                return $"{slotLabel} 不明";
             }
 
             System.Collections.Generic.List<string> parts = new System.Collections.Generic.List<string>();
-            if (equipmentData.baseAttack != 0)
+            var resolvedBonus = EquipmentEnhancementCatalog.ResolveEquipmentBonus(equipmentData, equipped);
+            if (resolvedBonus.Attack != 0)
             {
-                parts.Add($"+{equipmentData.baseAttack} ATK");
+                parts.Add($"攻+{resolvedBonus.Attack}");
             }
 
-            if (equipmentData.baseDefense != 0)
+            if (resolvedBonus.Defense != 0)
             {
-                parts.Add($"+{equipmentData.baseDefense} DEF");
+                parts.Add($"防+{resolvedBonus.Defense}");
             }
 
-            if (equipmentData.baseHp != 0)
+            if (resolvedBonus.Hp != 0)
             {
-                parts.Add($"+{equipmentData.baseHp} HP");
+                parts.Add($"HP+{resolvedBonus.Hp}");
             }
 
-            if (equipmentData.bonusCritRate != 0f)
+            if (resolvedBonus.CritRate != 0f)
             {
-                parts.Add($"+{equipmentData.bonusCritRate * 100f:0}% crit");
+                parts.Add($"会心+{resolvedBonus.CritRate * 100f:0.#}%");
             }
 
-            if (equipmentData.bonusAttackSpeed != 0f)
+            if (resolvedBonus.AttackSpeed != 0f)
             {
-                parts.Add($"+{equipmentData.bonusAttackSpeed:0.##} spd");
+                parts.Add($"速+{resolvedBonus.AttackSpeed:0.##}");
             }
 
             if (parts.Count == 0)
             {
-                parts.Add("no stat bonus");
+                parts.Add("補正なし");
             }
 
             return $"{slotLabel} {equipmentData.equipmentName} ({string.Join(", ", parts)})";
@@ -293,20 +305,83 @@ namespace WitchTower.Home
             float score = stats.MaxHp * 0.12f + stats.Attack * 1.5f + stats.Defense * 1.2f + stats.CritRate * 60f + stats.AttackSpeed * 8f;
             if (score >= 60f)
             {
-                return "Tower-ready";
+                return "最前線";
             }
 
             if (score >= 42f)
             {
-                return "Stable";
+                return "安定";
             }
 
             if (score >= 32f)
             {
-                return "Scrappy";
+                return "発展途上";
             }
 
-            return "Fragile";
+            return "脆い";
+        }
+
+        private static Save.OwnedMonsterData ResolveRepresentativeMonster(Data.PlayerProfile profile)
+        {
+            if (profile == null)
+            {
+                return null;
+            }
+
+            foreach (string instanceId in profile.PartyMonsterInstanceIds)
+            {
+                var partyMonster = profile.GetOwnedMonster(instanceId);
+                if (partyMonster != null)
+                {
+                    return partyMonster;
+                }
+            }
+
+            for (int i = 0; i < profile.OwnedMonsters.Count; i += 1)
+            {
+                if (profile.OwnedMonsters[i] != null)
+                {
+                    return profile.OwnedMonsters[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static BattleUnitStats CreateRepresentativeMonsterPreview(Data.PlayerProfile profile, Save.OwnedMonsterData monster)
+        {
+            if (profile == null || monster == null)
+            {
+                return null;
+            }
+
+            var monsterData = MasterDataManager.Instance != null
+                ? MasterDataManager.Instance.GetMonsterData(monster.MonsterId)
+                : null;
+            return MonsterBattleStatsFactory.Create(profile, monster, monsterData);
+        }
+
+        private static string BuildEquipmentHeadline(Save.OwnedMonsterData monster)
+        {
+            if (monster == null)
+            {
+                return "装備管理: 所持モンスターを入手すると個別装備を確認できます。";
+            }
+
+            return $"{ResolveMonsterName(monster)} の個別装備を確認中。ロックと強化遺物で装備を管理できます。";
+        }
+
+        private static string ResolveMonsterName(Save.OwnedMonsterData monster)
+        {
+            if (monster == null)
+            {
+                return "モンスター";
+            }
+
+            var monsterData = MasterDataManager.Instance != null
+                ? MasterDataManager.Instance.GetMonsterData(monster.MonsterId)
+                : null;
+            return monsterData != null ? monsterData.monsterName : monster.MonsterId;
         }
     }
 }
