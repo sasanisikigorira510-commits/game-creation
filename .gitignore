@@ -8,7 +8,9 @@ temp/
 tmp_*.png
 
 # External source materials kept outside the Unity project
-画像置き場/
+画像置き場/*
+!画像置き場/モンスター画像/
+!画像置き場/モンスター画像/**
 
 # Backup of nested git repo
 WitchTowerGame/.git_backup_witchtower/
