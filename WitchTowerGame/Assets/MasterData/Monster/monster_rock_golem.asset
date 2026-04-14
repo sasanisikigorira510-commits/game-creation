@@ -36,10 +36,14 @@ MonoBehaviour:
     attackSpeedPerPlus: 0.003
   fusionExclusive: 0
   fusionRecipes: []
-  portraitSprite: {fileID: 21300000, guid: 0851e4907bd3417da02b104f122e673d, type: 3}
-  illustrationSprite: {fileID: 21300000, guid: 0851e4907bd3417da02b104f122e673d, type: 3}
-  portraitResourcePath: MonsterPortraits/mon_rock_golem_portrait
-  illustrationResourcePath: MonsterPortraits/mon_rock_golem_portrait
-  battleIdleResourcePath: MonsterBattle/mon_rock_golem_idle
-  battleAttackResourcePath: MonsterBattle/mon_rock_golem_attack
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsters/Robot/Robot1
+  illustrationResourcePath: 
+  battleIdleResourcePath: MonsterBattle/mon_family_robot_1
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_family_robot_1
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_family_robot_1
+  battleAttackFacing: 0
   description: "\u53e4\u3044\u77f3\u6750\u306b\u82d4\u304c\u5bbf\u3063\u305f\u5b88\u8b77\u8005\u3002\u977e\u304f\u4e00\u6483\u306f\u91cd\u3044\u304c\u3001\u9806\u5fdc\u3059\u308b\u3068\u9ad8\u3044\u8010\u4e45\u529b\u3067\u524d\u7dda\u3092\u652f\u3048\u308b\u3002"

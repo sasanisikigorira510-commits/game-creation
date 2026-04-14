@@ -80,6 +80,10 @@ namespace WitchTower.Battle
             {
                 playerHpText.text = $"Player HP {playerStats.CurrentHp}/{playerStats.MaxHp}";
             }
+            else if (playerHpText != null)
+            {
+                playerHpText.text = "Player HP --/--";
+            }
 
             UpdateHealthBar(playerHpFillImage, playerStats, new Color(0.22f, 0.74f, 0.65f, 1f), new Color(0.95f, 0.67f, 0.23f, 1f), new Color(0.88f, 0.24f, 0.31f, 1f));
 
@@ -87,8 +91,29 @@ namespace WitchTower.Battle
             {
                 enemyHpText.text = $"Enemy HP {enemyStats.CurrentHp}/{enemyStats.MaxHp}";
             }
+            else if (enemyHpText != null)
+            {
+                enemyHpText.text = "Enemy HP --/--";
+            }
 
             UpdateHealthBar(enemyHpFillImage, enemyStats, new Color(0.93f, 0.42f, 0.49f, 1f), new Color(0.96f, 0.67f, 0.29f, 1f), new Color(0.80f, 0.21f, 0.27f, 1f));
+        }
+
+        public void UpdateHp(int playerCurrentHp, int playerMaxHp, int enemyCurrentHp, int enemyMaxHp)
+        {
+            if (playerHpText != null && playerMaxHp > 0)
+            {
+                playerHpText.text = $"Player HP {Mathf.Clamp(playerCurrentHp, 0, playerMaxHp)}/{playerMaxHp}";
+            }
+
+            UpdateHealthBar(playerHpFillImage, playerCurrentHp, playerMaxHp, new Color(0.22f, 0.74f, 0.65f, 1f), new Color(0.95f, 0.67f, 0.23f, 1f), new Color(0.88f, 0.24f, 0.31f, 1f));
+
+            if (enemyHpText != null && enemyMaxHp > 0)
+            {
+                enemyHpText.text = $"Enemy HP {Mathf.Clamp(enemyCurrentHp, 0, enemyMaxHp)}/{enemyMaxHp}";
+            }
+
+            UpdateHealthBar(enemyHpFillImage, enemyCurrentHp, enemyMaxHp, new Color(0.93f, 0.42f, 0.49f, 1f), new Color(0.96f, 0.67f, 0.29f, 1f), new Color(0.80f, 0.21f, 0.27f, 1f));
         }
 
         public void SetSkillButtonsInteractable(bool interactable)
@@ -135,12 +160,42 @@ namespace WitchTower.Battle
 
         private static void UpdateHealthBar(Image fillImage, BattleUnitStats stats, Color highColor, Color midColor, Color lowColor)
         {
-            if (fillImage == null || stats == null || stats.MaxHp <= 0)
+            if (fillImage == null)
             {
                 return;
             }
 
+            fillImage.enabled = true;
+
+            if (stats == null || stats.MaxHp <= 0)
+            {
+                fillImage.fillAmount = 0f;
+                fillImage.color = lowColor;
+                return;
+            }
+
             float ratio = Mathf.Clamp01((float)stats.CurrentHp / stats.MaxHp);
+            fillImage.fillAmount = ratio;
+            fillImage.color = ratio > 0.6f ? highColor : (ratio > 0.3f ? midColor : lowColor);
+        }
+
+        private static void UpdateHealthBar(Image fillImage, int currentHp, int maxHp, Color highColor, Color midColor, Color lowColor)
+        {
+            if (fillImage == null)
+            {
+                return;
+            }
+
+            fillImage.enabled = true;
+
+            if (maxHp <= 0)
+            {
+                fillImage.fillAmount = 0f;
+                fillImage.color = lowColor;
+                return;
+            }
+
+            float ratio = Mathf.Clamp01((float)Mathf.Clamp(currentHp, 0, maxHp) / maxHp);
             fillImage.fillAmount = ratio;
             fillImage.color = ratio > 0.6f ? highColor : (ratio > 0.3f ? midColor : lowColor);
         }

@@ -729,6 +729,73 @@ using WitchTower.Managers;
             AppendStats(builder, simulator.PlayerStats);
             builder.Append(",\"enemyStats\":");
             AppendStats(builder, simulator.EnemyStats);
+            builder.Append(",\"aliveAllyCount\":");
+            builder.Append(simulator.CurrentAliveAllyCount);
+            builder.Append(",\"allyRuntimeCount\":");
+            builder.Append(simulator.CurrentAllyRuntimeCount);
+            builder.Append(",\"spawnedEnemyCount\":");
+            builder.Append(simulator.CurrentSpawnedEnemyCount);
+            builder.Append(",\"activeEnemyCount\":");
+            builder.Append(simulator.CurrentActiveEnemyCount);
+            builder.Append(",\"remainingEnemyCount\":");
+            builder.Append(simulator.CurrentRemainingEnemyCount);
+            builder.Append(",\"engagedEnemyCount\":");
+            builder.Append(simulator.CurrentEngagedEnemyCount);
+            builder.Append(",\"allies\":[");
+            for (int i = 0; i < simulator.CurrentAllyRuntimeCount; i += 1)
+            {
+                if (i > 0)
+                {
+                    builder.Append(",");
+                }
+
+                builder.Append("{\"index\":");
+                builder.Append(i);
+                builder.Append(",\"hasRuntime\":");
+                builder.Append(simulator.HasAllyRuntime(i) ? "true" : "false");
+                builder.Append(",\"alive\":");
+                builder.Append(simulator.IsAllyAlive(i) ? "true" : "false");
+                builder.Append(",\"moving\":");
+                builder.Append(simulator.IsAllyMoving(i) ? "true" : "false");
+                builder.Append(",\"targetEnemyIndex\":");
+                builder.Append(simulator.GetAllyTargetEnemyIndex(i));
+                builder.Append(",\"currentHp\":");
+                builder.Append(simulator.GetAllyCurrentHp(i));
+                builder.Append(",\"maxHp\":");
+                builder.Append(simulator.GetAllyMaxHp(i));
+                AppendVector2(builder, ",\"position\":", simulator.GetAllyPositionAnchor(i));
+                builder.Append("}");
+            }
+
+            builder.Append("],\"enemies\":[");
+            for (int i = 0; i < simulator.CurrentActiveEnemyCount; i += 1)
+            {
+                if (i > 0)
+                {
+                    builder.Append(",");
+                }
+
+                int enemyCurrentHp = simulator.GetEnemyCurrentHp(i);
+                int enemyMaxHp = simulator.GetEnemyMaxHp(i);
+                builder.Append("{\"index\":");
+                builder.Append(i);
+                builder.Append(",\"hasRuntime\":");
+                builder.Append(simulator.HasEnemyRuntime(i) ? "true" : "false");
+                builder.Append(",\"alive\":");
+                builder.Append(enemyCurrentHp > 0 && enemyMaxHp > 0 ? "true" : "false");
+                builder.Append(",\"moving\":");
+                builder.Append(simulator.IsEnemyMoving(i) ? "true" : "false");
+                builder.Append(",\"targetAllyIndex\":");
+                builder.Append(simulator.GetEnemyTargetAllyIndex(i));
+                builder.Append(",\"currentHp\":");
+                builder.Append(enemyCurrentHp);
+                builder.Append(",\"maxHp\":");
+                builder.Append(enemyMaxHp);
+                AppendVector2(builder, ",\"position\":", simulator.GetEnemyPositionAnchor(i));
+                builder.Append("}");
+            }
+
+            builder.Append("]");
         }
 
         if (sceneController != null)
@@ -765,6 +832,16 @@ using WitchTower.Managers;
 
         builder.Append("]}");
         return builder.ToString();
+    }
+
+    private static void AppendVector2(StringBuilder builder, string propertyName, Vector2 value)
+    {
+        builder.Append(propertyName);
+        builder.Append("{\"x\":");
+        builder.Append(value.x.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
+        builder.Append(",\"y\":");
+        builder.Append(value.y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
+        builder.Append("}");
     }
 
     private static string BuildHomeDebugResponse()

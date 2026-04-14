@@ -38,8 +38,12 @@ MonoBehaviour:
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FormationMonsters/Wraith
+  portraitResourcePath: FamilyMonsters/Mage/Mage3
   illustrationResourcePath: 
-  battleIdleResourcePath: 
-  battleAttackResourcePath: 
+  battleIdleResourcePath: MonsterBattle/mon_family_mage_3
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_family_mage_3
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_family_mage_3
+  battleAttackFacing: 0
   description: A dark spirit that favors magic strikes.

@@ -38,8 +38,12 @@ MonoBehaviour:
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FormationMonsters/NagaMage
+  portraitResourcePath: FamilyMonsters/Mage/Mage2
   illustrationResourcePath: 
-  battleIdleResourcePath: 
-  battleAttackResourcePath: 
+  battleIdleResourcePath: MonsterBattle/mon_family_mage_2
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_family_mage_2
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_family_mage_2
+  battleAttackFacing: 0
   description: A water-aligned caster that controls the field with serpent sorcery.

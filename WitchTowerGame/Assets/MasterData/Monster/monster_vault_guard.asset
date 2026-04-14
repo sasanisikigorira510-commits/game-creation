@@ -38,8 +38,12 @@ MonoBehaviour:
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FormationMonsters/VaultGuard
+  portraitResourcePath: FamilyMonsters/Robot/Robot2
   illustrationResourcePath: 
-  battleIdleResourcePath: 
-  battleAttackResourcePath: 
+  battleIdleResourcePath: MonsterBattle/mon_family_robot_2
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_family_robot_2
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_family_robot_2
+  battleAttackFacing: 0
   description: An elite guardian built to hold the front line under pressure.

@@ -28,7 +28,7 @@ namespace WitchTower.Battle
 
         private static readonly Dictionary<string, string> EnemyPortraitPaths = new Dictionary<string, string>
         {
-            { "enemy_slime", "FormationMonsters/Worm" },
+            { "enemy_slime", "FamilyMonsters/Slime/Slime1" },
             { "enemy_guard", "FormationMonsters/VaultGuard" },
             { "enemy_harpy", "FormationMonsters/Bat" },
             { "enemy_knight", "FormationMonsters/HellKnight" },
@@ -68,6 +68,11 @@ namespace WitchTower.Battle
             if (profile == null || maxCount <= 0)
             {
                 return result;
+            }
+
+            if (PrototypePartyBootstrapService.EnsureParty(profile, maxCount))
+            {
+                SaveManager.Instance?.SaveCurrentGame();
             }
 
             var seenInstanceIds = new HashSet<string>();

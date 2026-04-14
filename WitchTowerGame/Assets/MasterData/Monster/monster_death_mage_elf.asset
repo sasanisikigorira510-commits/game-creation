@@ -38,8 +38,12 @@ MonoBehaviour:
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FormationMonsters/DeathMageElf
+  portraitResourcePath: FamilyMonsters/Mage/Mage1
   illustrationResourcePath: 
-  battleIdleResourcePath: 
-  battleAttackResourcePath: 
+  battleIdleResourcePath: MonsterBattle/mon_family_mage_1
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_family_mage_1
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_family_mage_1
+  battleAttackFacing: 0
   description: A fragile caster with high dark magic power.

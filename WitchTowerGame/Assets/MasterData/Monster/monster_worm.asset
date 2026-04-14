@@ -38,8 +38,12 @@ MonoBehaviour:
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FormationMonsters/Worm
+  portraitResourcePath: FamilyMonsters/Slime/Slime1
   illustrationResourcePath: 
-  battleIdleResourcePath: 
-  battleAttackResourcePath: 
+  battleIdleResourcePath: MonsterBattle/mon_family_slime_1
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_family_slime_1
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_family_slime_1
+  battleAttackFacing: 0
   description: A simple creeping monster with sturdy early-game stats.

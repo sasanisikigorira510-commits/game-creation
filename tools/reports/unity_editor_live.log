@@ -1,0 +1,12 @@
+Unity Editor version:    6000.3.11f1 (3000ef702840)
+Branch:                  6000.3/staging
+Build type:              Release
+Batch mode:              NO
+macOS version:           Version 26.4 (Build 25E246)
+Darwin version:          25.4.0
+Architecture:            arm64
+Running under Rosetta:   NO
+Available memory:        32768 MB
+Date:                    2026-04-13T14:09:50Z
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-W3lWIW1J_NQb_AaQJSHIb" at "2026-04-13T14:09:50.942196Z"

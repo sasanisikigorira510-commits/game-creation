@@ -269,7 +269,7 @@ namespace WitchTower.Formation
 
             if (selectedMonsters.Count == 0)
             {
-                for (int i = 0; i < roster.Count && i < 3; i++)
+                for (int i = 0; i < roster.Count && i < MaxPartySize; i++)
                 {
                     selectedMonsters.Add(roster[i]);
                 }
@@ -280,117 +280,15 @@ namespace WitchTower.Formation
 
         private void BootstrapPrototypeOwnedMonsters(PlayerProfile profile, MasterDataManager masterDataManager)
         {
-            MonsterDataSO[] allMonsterData = masterDataManager.GetAllMonsterData();
-            if (allMonsterData == null || allMonsterData.Length == 0)
+            if (profile == null || masterDataManager == null)
             {
                 return;
             }
 
-            var ownedMonsterIdSet = new HashSet<string>();
-            int nextAcquiredOrder = 1;
-            foreach (var ownedMonster in profile.OwnedMonsters)
-            {
-                if (ownedMonster == null || string.IsNullOrEmpty(ownedMonster.MonsterId))
-                {
-                    continue;
-                }
-
-                ownedMonsterIdSet.Add(ownedMonster.MonsterId);
-                nextAcquiredOrder = Mathf.Max(nextAcquiredOrder, ownedMonster.AcquiredOrder + 1);
-            }
-
-            var dexLookup = new Dictionary<string, MonsterDexEntryData>();
-            foreach (var dexEntry in profile.MonsterDexEntries)
-            {
-                if (dexEntry == null || string.IsNullOrEmpty(dexEntry.MonsterId) || dexLookup.ContainsKey(dexEntry.MonsterId))
-                {
-                    continue;
-                }
-
-                dexLookup.Add(dexEntry.MonsterId, dexEntry);
-            }
-
-            bool hasChanges = false;
-            foreach (var monsterData in allMonsterData)
-            {
-                if (monsterData == null || string.IsNullOrEmpty(monsterData.monsterId))
-                {
-                    continue;
-                }
-
-                if (!ownedMonsterIdSet.Contains(monsterData.monsterId))
-                {
-                    string instanceId = monsterData.monsterId + "_owned_01";
-                    profile.OwnedMonsters.Add(new OwnedMonsterData
-                    {
-                        InstanceId = instanceId,
-                        MonsterId = monsterData.monsterId,
-                        Level = GetPrototypeLevel(monsterData),
-                        Exp = 0,
-                        PlusValue = 0,
-                        IsFavorite = monsterData.rarity >= MonsterRarity.Silver,
-                        AcquiredOrder = nextAcquiredOrder++
-                    });
-                    ownedMonsterIdSet.Add(monsterData.monsterId);
-                    hasChanges = true;
-                }
-
-                if (!dexLookup.TryGetValue(monsterData.monsterId, out MonsterDexEntryData dexEntry))
-                {
-                    dexEntry = new MonsterDexEntryData
-                    {
-                        MonsterId = monsterData.monsterId,
-                        IsUnlocked = true,
-                        OwnedCount = 1
-                    };
-                    profile.MonsterDexEntries.Add(dexEntry);
-                    dexLookup.Add(monsterData.monsterId, dexEntry);
-                    hasChanges = true;
-                }
-                else
-                {
-                    if (!dexEntry.IsUnlocked)
-                    {
-                        dexEntry.IsUnlocked = true;
-                        hasChanges = true;
-                    }
-
-                    if (dexEntry.OwnedCount < 1)
-                    {
-                        dexEntry.OwnedCount = 1;
-                        hasChanges = true;
-                    }
-                }
-            }
-
-            if (profile.PartyMonsterInstanceIds.Count == 0 && profile.OwnedMonsters.Count > 0)
-            {
-                var sortedOwnedMonsters = new List<OwnedMonsterData>(profile.OwnedMonsters);
-                sortedOwnedMonsters.Sort((left, right) => right.AcquiredOrder.CompareTo(left.AcquiredOrder));
-
-                var partyIds = new List<string>();
-                for (int i = 0; i < sortedOwnedMonsters.Count && i < 3; i++)
-                {
-                    if (sortedOwnedMonsters[i] != null && !string.IsNullOrEmpty(sortedOwnedMonsters[i].InstanceId))
-                    {
-                        partyIds.Add(sortedOwnedMonsters[i].InstanceId);
-                    }
-                }
-
-                profile.SetPartyMonsterIds(partyIds);
-                hasChanges = true;
-            }
-
-            if (hasChanges)
+            if (PrototypePartyBootstrapService.EnsureParty(profile, MaxPartySize))
             {
                 SaveManager.Instance?.SaveCurrentGame();
             }
-        }
-
-        private static int GetPrototypeLevel(MonsterDataSO monsterData)
-        {
-            int baseLevel = (int)monsterData.rarity * 5;
-            return Mathf.Max(1, baseLevel + monsterData.encyclopediaNumber);
         }
 
         private static string GetPortraitResourcePath(MonsterDataSO monsterData)
@@ -415,14 +313,14 @@ namespace WitchTower.Formation
 
         private void SeedFallbackRoster()
         {
-            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "MonsterPortraits/mon_rock_golem_portrait", 14, 2, 9, false));
+            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "FamilyMonsters/Robot/Robot1", 14, 2, 9, false));
             roster.Add(new MonsterEntry("bat_a", "バット", "FormationMonsters/Bat", 12, 1, 8, false));
             roster.Add(new MonsterEntry("goblin_a", "ゴブリン", "FormationMonsters/Goblin", 18, 1, 7, false));
-            roster.Add(new MonsterEntry("wraith_a", "レイス", "FormationMonsters/Wraith", 20, 2, 6, true));
+            roster.Add(new MonsterEntry("wraith_a", "レイス", "FamilyMonsters/Mage/Mage3", 20, 2, 6, true));
             roster.Add(new MonsterEntry("bee_a", "ビー", "FormationMonsters/Bee", 9, 1, 5, false));
             roster.Add(new MonsterEntry("naga_a", "ナーガ", "FormationMonsters/Naga", 24, 2, 4, false));
             roster.Add(new MonsterEntry("centaur_a", "ケンタウロス", "FormationMonsters/Centaur", 27, 3, 3, true));
-            roster.Add(new MonsterEntry("deathmage_a", "デスメイジ", "FormationMonsters/DeathMageElf", 31, 3, 2, true));
+            roster.Add(new MonsterEntry("deathmage_a", "デスメイジ", "FamilyMonsters/Mage/Mage1", 31, 3, 2, true));
             roster.Add(new MonsterEntry("hellknight_a", "ヘルナイト", "FormationMonsters/HellKnight", 33, 4, 1, true));
 
             selectedMonsters.Add(roster[8]);

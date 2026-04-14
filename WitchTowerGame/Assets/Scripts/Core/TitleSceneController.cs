@@ -86,20 +86,20 @@ namespace WitchTower.Core
         {
             new FormationMonsterEntry("bat", "バット", "先制", "FormationMonsters/Bat", new Color(0.62f, 0.87f, 0.53f)),
             new FormationMonsterEntry("goblin", "ゴブリン", "前衛", "FormationMonsters/Goblin", new Color(0.74f, 0.42f, 0.36f)),
-            new FormationMonsterEntry("wraith", "レイス", "妨害", "FormationMonsters/Wraith", new Color(0.52f, 0.74f, 0.9f)),
+            new FormationMonsterEntry("wraith", "レイス", "妨害", "FamilyMonsters/Mage/Mage3", new Color(0.52f, 0.74f, 0.9f)),
             new FormationMonsterEntry("bee", "ビー", "速攻", "FormationMonsters/Bee", new Color(0.86f, 0.75f, 0.34f)),
             new FormationMonsterEntry("naga", "ナーガ", "後衛", "FormationMonsters/Naga", new Color(0.34f, 0.75f, 0.64f)),
-            new FormationMonsterEntry("worm", "ワーム", "盾役", "FormationMonsters/Worm", new Color(0.69f, 0.55f, 0.3f)),
+            new FormationMonsterEntry("worm", "ワーム", "盾役", "FamilyMonsters/Slime/Slime1", new Color(0.69f, 0.55f, 0.3f)),
             new FormationMonsterEntry("centaur", "ケンタウロス", "物理", "FormationMonsters/Centaur", new Color(0.78f, 0.47f, 0.31f)),
             new FormationMonsterEntry("ghost", "ゴースト", "支援", "FormationMonsters/Ghost", new Color(0.56f, 0.84f, 0.93f)),
-            new FormationMonsterEntry("death_mage_elf", "デスメイジ", "呪術", "FormationMonsters/DeathMageElf", new Color(0.74f, 0.48f, 0.86f)),
-            new FormationMonsterEntry("dragoon", "ドラグーン", "突撃", "FormationMonsters/Dragoon", new Color(0.88f, 0.5f, 0.34f)),
+            new FormationMonsterEntry("death_mage_elf", "デスメイジ", "呪術", "FamilyMonsters/Mage/Mage1", new Color(0.74f, 0.48f, 0.86f)),
+            new FormationMonsterEntry("dragoon", "ドラグーン", "突撃", "FamilyMonsters/Dragon/Dragon1", new Color(0.88f, 0.5f, 0.34f)),
             new FormationMonsterEntry("hell_knight", "ヘルナイト", "重装", "FormationMonsters/HellKnight", new Color(0.82f, 0.35f, 0.28f)),
-            new FormationMonsterEntry("naga_mage", "ナーガメイジ", "魔法", "FormationMonsters/NagaMage", new Color(0.38f, 0.78f, 0.82f)),
+            new FormationMonsterEntry("naga_mage", "ナーガメイジ", "魔法", "FamilyMonsters/Mage/Mage2", new Color(0.38f, 0.78f, 0.82f)),
             new FormationMonsterEntry("shadow", "シャドウ", "奇襲", "FormationMonsters/Shadow", new Color(0.45f, 0.5f, 0.68f)),
             new FormationMonsterEntry("soul_eater", "ソウルイーター", "吸収", "FormationMonsters/SoulEater", new Color(0.5f, 0.92f, 0.76f)),
-            new FormationMonsterEntry("spectral_warrior", "スペクトル", "霊騎", "FormationMonsters/SpectralWarrior", new Color(0.42f, 0.72f, 0.96f)),
-            new FormationMonsterEntry("vault_guard", "ヴォルトガード", "守護", "FormationMonsters/VaultGuard", new Color(0.9f, 0.76f, 0.4f))
+            new FormationMonsterEntry("spectral_warrior", "スペクトル", "霊騎", "FamilyMonsters/Robot/Robot3", new Color(0.42f, 0.72f, 0.96f)),
+            new FormationMonsterEntry("vault_guard", "ヴォルトガード", "守護", "FamilyMonsters/Robot/Robot2", new Color(0.9f, 0.76f, 0.4f))
         };
 
         private const string FormationScreenTexturePath = "FormationUI/FormationScreen";

@@ -28,6 +28,10 @@ namespace WitchTower.Managers
         {
             PlayerProfile = new PlayerProfile(saveData);
             CurrentFloor = Mathf.Max(1, saveData.CurrentFloor);
+            if (PrototypePartyBootstrapService.EnsureParty(PlayerProfile))
+            {
+                SaveManager.Instance?.SaveCurrentGame();
+            }
         }
 
         public void SetCurrentFloor(int floor)

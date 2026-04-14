@@ -38,7 +38,7 @@ MonoBehaviour:
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FormationMonsters/Dragoon
+  portraitResourcePath: FamilyMonsters/Dragon/Dragon1
   illustrationResourcePath: 
   battleIdleResourcePath: MonsterBattle/mon_dragoon_idle
   battleMoveResourcePath: MonsterBattle/mon_dragoon_move

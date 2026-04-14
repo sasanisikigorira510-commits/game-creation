@@ -9,22 +9,84 @@ namespace WitchTower.Battle
 {
     public sealed class BattleSimulator : MonoBehaviour
     {
+        private static readonly string[] DevPartyOverrideMonsterIds =
+        {
+            "monster_death_mage_elf",
+            "monster_worm",
+            "monster_rock_golem"
+        };
+        private static readonly float[] EnemyAttackSlotAngles =
+        {
+            0f,
+            24f,
+            -24f,
+            48f,
+            -48f
+        };
+        private static readonly float[] SingleLaneSpawnOffsets =
+        {
+            0f,
+            0.075f,
+            -0.075f,
+            0.14f,
+            -0.14f,
+            0.04f,
+            -0.04f
+        };
+        private const float EnemySpawnX = 1.04f;
+        private const float AllyMoveSpeed = 0.26f;
+        private const float EnemyMoveSpeed = 0.42f;
+        private const float AllyReturnSpeed = 0.34f;
+        private const float EnemyReturnSpeed = 0.26f;
+        private const float DefaultAllyCombatRadius = 0.035f;
+        private const float DefaultEnemyCombatRadius = 0.037f;
+        private const float RangeOffsetPadding = 0.012f;
+        private const float PositionEpsilon = 0.0025f;
+        private const float ReferenceSpawnInterval = 0.20f;
+        private const int ReferenceEncounterEnemyCount = 5;
+        private const int ReferenceOpeningSpawnBurst = 3;
+        private const int MaxEncounterEnemyCount = 240;
+        private const int MinEncounterEnemyCount = 3;
+        private const int LargeEncounterEnemyCount = 40;
+        private const int MassiveEncounterEnemyCount = 100;
+        private const int MaxConcurrentEnemyAttackersPerAlly = 5;
+        private const float EnemyQueueSpacing = 0.12f;
+        private const float EnemyQueueLaneBlend = 0.34f;
+        private const float SparsePartySpawnInterval = 0.26f;
+        private const float DuoPartySpawnInterval = 0.22f;
+
         private sealed class AllyRuntime
         {
+            public int RuntimeId;
             public BattleUnitStats Stats;
             public MonsterDataSO Data;
             public OwnedMonsterData OwnedMonster;
             public float AttackTimer;
             public float AttackLockRemaining;
+            public Vector2 HomeAnchor;
+            public Vector2 PositionAnchor;
+            public int TargetEnemyRuntimeId = -1;
+            public float CombatRadius;
+            public float AttackReachAnchor;
+            public float MoveSpeed;
+            public bool IsMoving;
         }
 
         private sealed class EnemyRuntime
         {
+            public int RuntimeId;
             public BattleUnitStats Stats;
             public EnemyDataSO Data;
             public EnemyTraitRuntime Trait;
             public float AttackTimer;
             public float AttackLockRemaining;
+            public Vector2 HomeAnchor;
+            public Vector2 PositionAnchor;
+            public int TargetAllyRuntimeId = -1;
+            public float CombatRadius;
+            public float AttackReachAnchor;
+            public float MoveSpeed;
+            public bool IsMoving;
         }
 
         [SerializeField] private float playerAttackInterval = 1.0f;
@@ -57,11 +119,19 @@ namespace WitchTower.Battle
         private int defeatedEnemiesInCurrentWave;
         private int spawnedEnemiesInCurrentWave;
         private int activeEnemiesInCurrentWave;
+        private int encounterEnemyCountTarget;
         private int encounterSerial;
         private float enemySpawnTimer;
         private int engagedEnemyCount;
+        private bool isBossEncounter;
+        private bool openingBurstSpawned;
+        private int nextAllyRuntimeId = 1;
+        private int nextEnemyRuntimeId = 1;
         private readonly List<AllyRuntime> activeAllyRuntimes = new List<AllyRuntime>();
         private readonly List<EnemyRuntime> activeEnemyRuntimes = new List<EnemyRuntime>();
+        private const float MagicPresentationDelay = 0.60f;
+        private const float MeleePresentationDelay = 0.18f;
+        private const float RangedAttackThreshold = 1.35f;
 
         public event System.Action<BattleHitInfo> HitResolved;
         public event System.Action EncounterChanged;
@@ -78,11 +148,11 @@ namespace WitchTower.Battle
         public float DebugGuardRemainingTime => guardRemainingTime;
         public int CurrentFloor => currentFloor;
         public int CurrentWave => currentWave;
-        public int TotalWaveCount => Mathf.Max(1, totalWaveCount);
-        public bool IsBossWave => currentWave >= TotalWaveCount;
+        public int TotalWaveCount => 1;
+        public bool IsBossWave => isBossEncounter;
         public int EncounterSerial => encounterSerial;
         public EnemyDataSO CurrentEnemyData => currentEnemyData;
-        public int CurrentEnemyCountTarget => IsBossWave ? Mathf.Max(1, bossWaveEnemyCount) : Mathf.Max(1, normalWaveEnemyCount);
+        public int CurrentEnemyCountTarget => Mathf.Max(1, encounterEnemyCountTarget);
         public int CurrentEnemyIndexInWave => Mathf.Clamp(defeatedEnemiesInCurrentWave + 1, 1, CurrentEnemyCountTarget);
         public int CurrentRemainingEnemyCount => Mathf.Max(0, CurrentEnemyCountTarget - defeatedEnemiesInCurrentWave);
         public int CurrentSpawnedEnemyCount => Mathf.Max(0, spawnedEnemiesInCurrentWave);
@@ -90,16 +160,24 @@ namespace WitchTower.Battle
         public int CurrentEngagedEnemyCount => Mathf.Max(0, engagedEnemyCount);
         public int CurrentAliveAllyCount => CountAliveAllies();
         public int CurrentAllyRuntimeCount => activeAllyRuntimes.Count;
+        public int CurrentPreferredEnemyTargetIndex => activeEnemyRuntimes.Count > 0
+            ? ResolveEnemyAttackTargetIndex(activeEnemyRuntimes[0], 0)
+            : -1;
 
         public void Setup(int floor)
         {
             currentFloor = Mathf.Max(1, floor);
             currentWave = 1;
+            isBossEncounter = ResolveBossEncounter(currentFloor);
+            encounterEnemyCountTarget = ResolveEncounterEnemyCount();
             defeatedEnemiesInCurrentWave = 0;
             spawnedEnemiesInCurrentWave = 0;
             activeEnemiesInCurrentWave = 0;
             encounterSerial = 0;
             enemySpawnTimer = 0f;
+            openingBurstSpawned = false;
+            nextAllyRuntimeId = 1;
+            nextEnemyRuntimeId = 1;
             activeAllyRuntimes.Clear();
             CreatePlayerPartyRuntimes();
             SyncPlayerAggregateState();
@@ -110,7 +188,7 @@ namespace WitchTower.Battle
             currentEnemyData = null;
             enemyTraitRuntime = default;
             activeEnemyRuntimes.Clear();
-            enemySpawnTimer = Mathf.Max(0f, normalEnemySpawnInterval + 0.001f);
+            enemySpawnTimer = ResolveEnemySpawnInterval();
             engagedEnemyCount = 0;
             isRunning = activeAllyRuntimes.Count > 0 && playerStats != null;
         }
@@ -126,10 +204,10 @@ namespace WitchTower.Battle
             }
 
             TickAttackLocks(deltaTime);
-
+            TickEnemySpawns(deltaTime);
+            TickUnitMovement(deltaTime);
             skillSet.Tick(deltaTime);
             TickGuard(deltaTime);
-            TickEnemySpawns(deltaTime);
             TickAllyAttackers(deltaTime);
             TickEnemyAttackers(deltaTime);
 
@@ -163,12 +241,12 @@ namespace WitchTower.Battle
             }
 
             TickEnemySpawns(deltaTime);
+            TickUnitMovement(deltaTime);
         }
 
         public void SetEngagedEnemyCount(int count)
         {
-            int clamped = Mathf.Clamp(count, 0, activeEnemiesInCurrentWave);
-            engagedEnemyCount = clamped;
+            engagedEnemyCount = CountActuallyEngagedEnemies();
             enemyAttackTimer = activeEnemyRuntimes.Count > 0 ? activeEnemyRuntimes[0].AttackTimer : 0f;
         }
 
@@ -216,7 +294,7 @@ namespace WitchTower.Battle
                 return;
             }
 
-            int targetIndex = ResolvePlayerAttackTargetIndex();
+            int targetIndex = ResolvePlayerAttackTargetIndex(attacker.Data);
             if (targetIndex < 0)
             {
                 return;
@@ -232,7 +310,15 @@ namespace WitchTower.Battle
                 SyncLeadEnemyState();
             }
 
-            RaiseHitResolved(new BattleHitInfo(false, damage, false, true, false, targetIndex, attackerIndex));
+            RaiseHitResolved(new BattleHitInfo(
+                false,
+                damage,
+                false,
+                true,
+                false,
+                targetIndex,
+                attackerIndex,
+                ResolvePlayerPresentationDelay(attacker.Data)));
         }
 
         private void UseSkillDrain()
@@ -243,7 +329,7 @@ namespace WitchTower.Battle
                 return;
             }
 
-            int targetIndex = ResolvePlayerAttackTargetIndex();
+            int targetIndex = ResolvePlayerAttackTargetIndex(attacker.Data);
             if (targetIndex < 0)
             {
                 return;
@@ -262,7 +348,15 @@ namespace WitchTower.Battle
             var healAmount = Mathf.Max(1, Mathf.RoundToInt(damage * 0.5f));
             attacker.Stats.CurrentHp = Mathf.Min(attacker.Stats.MaxHp, attacker.Stats.CurrentHp + healAmount);
             SyncPlayerAggregateState();
-            RaiseHitResolved(new BattleHitInfo(false, damage, false, true, false, targetIndex, attackerIndex));
+            RaiseHitResolved(new BattleHitInfo(
+                false,
+                damage,
+                false,
+                true,
+                false,
+                targetIndex,
+                attackerIndex,
+                ResolvePlayerPresentationDelay(attacker.Data)));
         }
 
         private void UseSkillGuard()
@@ -277,7 +371,7 @@ namespace WitchTower.Battle
                 return;
             }
 
-            int targetIndex = ResolveEnemyAttackTargetIndex();
+            int targetIndex = ResolveEnemyAttackTargetIndex(attacker, attackerIndex);
             if (targetIndex < 0)
             {
                 return;
@@ -315,7 +409,15 @@ namespace WitchTower.Battle
             ApplyEnemyLifeSteal(attacker, totalDamage);
             SyncPlayerAggregateState();
             NotifyAllyDefeatedIfNeeded(targetIndex, wasAlive);
-            RaiseHitResolved(new BattleHitInfo(true, totalDamage, result.IsCritical, false, causesKnockback, targetIndex, attackerIndex));
+            RaiseHitResolved(new BattleHitInfo(
+                true,
+                totalDamage,
+                result.IsCritical,
+                false,
+                causesKnockback,
+                targetIndex,
+                attackerIndex,
+                ResolveEnemyPresentationDelay(attacker.Data)));
         }
 
         private void PerformAttackOnEnemy(AllyRuntime attacker, bool isSkill, int attackerIndex)
@@ -328,7 +430,7 @@ namespace WitchTower.Battle
             int targetCount = isSkill
                 ? 1
                 : Mathf.Max(1, ResolvePlayerNormalAttackTargetCount(attacker.Data));
-            List<int> targetIndices = CollectEnemyTargetIndices(targetCount);
+            List<int> targetIndices = CollectEnemyTargetIndices(targetCount, attacker, attackerIndex);
             if (targetIndices.Count <= 0)
             {
                 return;
@@ -374,7 +476,15 @@ namespace WitchTower.Battle
                 ApplyEnemyAttackKnockbackLock(primaryTargetIndex, ResolvePlayerKnockbackDuration(attacker.Data));
             }
 
-            RaiseHitResolved(new BattleHitInfo(false, totalDamage, anyCritical, isSkill, causesKnockback, primaryTargetIndex, attackerIndex));
+            RaiseHitResolved(new BattleHitInfo(
+                false,
+                totalDamage,
+                anyCritical,
+                isSkill,
+                causesKnockback,
+                primaryTargetIndex,
+                attackerIndex,
+                ResolvePlayerPresentationDelay(attacker.Data)));
         }
 
         private void TickGuard(float deltaTime)
@@ -434,6 +544,13 @@ namespace WitchTower.Battle
                     continue;
                 }
 
+                int targetIndex = ResolveAllyTargetEnemyIndex(attacker, i);
+                if (!CanAllyAttackTarget(attacker, targetIndex))
+                {
+                    attacker.AttackTimer = 0f;
+                    continue;
+                }
+
                 float interval = GetCurrentPlayerAttackInterval(attacker.Stats);
                 attacker.AttackTimer += deltaTime;
                 while (attacker.AttackTimer >= interval)
@@ -450,33 +567,195 @@ namespace WitchTower.Battle
             SyncPlayerAggregateState();
         }
 
+        private void TickUnitMovement(float deltaTime)
+        {
+            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
+            {
+                AllyRuntime ally = activeAllyRuntimes[i];
+                if (ally == null)
+                {
+                    continue;
+                }
+
+                if (ally.Stats == null || ally.Stats.IsDead())
+                {
+                    ally.TargetEnemyRuntimeId = -1;
+                    ally.IsMoving = false;
+                    ally.PositionAnchor = Vector2.MoveTowards(ally.PositionAnchor, ally.HomeAnchor, AllyReturnSpeed * deltaTime);
+                    continue;
+                }
+
+                int targetEnemyIndex = ResolveAllyTargetEnemyIndex(ally, i);
+                if (targetEnemyIndex < 0)
+                {
+                    ally.PositionAnchor = MoveRuntimeTowards(ally.PositionAnchor, ally.HomeAnchor, ally.MoveSpeed, deltaTime, out bool allyReturning);
+                    ally.IsMoving = allyReturning;
+                    continue;
+                }
+
+                EnemyRuntime targetEnemy = activeEnemyRuntimes[targetEnemyIndex];
+                Vector2 targetAnchor = ResolveDesiredCombatAnchor(
+                    ally.PositionAnchor,
+                    targetEnemy.PositionAnchor,
+                    true,
+                    ally.CombatRadius + targetEnemy.CombatRadius + ally.AttackReachAnchor);
+                targetAnchor = BattleFormationLayout.ClampAllyCombatAnchor(i, ally.Data, targetAnchor);
+                ally.PositionAnchor = MoveRuntimeTowards(ally.PositionAnchor, targetAnchor, ally.MoveSpeed, deltaTime, out bool allyMoving);
+                ally.IsMoving = allyMoving;
+            }
+
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                EnemyRuntime enemy = activeEnemyRuntimes[i];
+                if (enemy == null)
+                {
+                    continue;
+                }
+
+                if (enemy.Stats == null || enemy.Stats.IsDead())
+                {
+                    enemy.TargetAllyRuntimeId = -1;
+                    enemy.IsMoving = false;
+                    enemy.PositionAnchor = Vector2.MoveTowards(enemy.PositionAnchor, enemy.HomeAnchor, EnemyReturnSpeed * deltaTime);
+                    continue;
+                }
+
+                int targetAllyIndex = ResolveEnemyAttackTargetIndex(enemy, i);
+                if (targetAllyIndex < 0)
+                {
+                    enemy.PositionAnchor = MoveRuntimeTowards(enemy.PositionAnchor, enemy.HomeAnchor, enemy.MoveSpeed, deltaTime, out bool enemyReturning);
+                    enemy.IsMoving = enemyReturning;
+                    continue;
+                }
+
+                AllyRuntime targetAlly = activeAllyRuntimes[targetAllyIndex];
+                int queueIndex = ResolveEnemyQueueIndex(enemy, i, targetAllyIndex);
+                Vector2 targetAnchor = ResolveEnemyCombatAnchor(enemy, targetAlly, queueIndex);
+                enemy.PositionAnchor = MoveRuntimeTowards(enemy.PositionAnchor, targetAnchor, enemy.MoveSpeed, deltaTime, out bool enemyMoving);
+                enemy.IsMoving = enemyMoving;
+            }
+
+            engagedEnemyCount = CountActuallyEngagedEnemies();
+        }
+
+        private int ResolveEnemyQueueIndex(EnemyRuntime attacker, int attackerIndex, int targetAllyIndex)
+        {
+            if (attacker == null || targetAllyIndex < 0 || targetAllyIndex >= activeAllyRuntimes.Count)
+            {
+                return 0;
+            }
+
+            AllyRuntime targetAlly = activeAllyRuntimes[targetAllyIndex];
+            if (targetAlly == null)
+            {
+                return 0;
+            }
+
+            float attackerDistance = Vector2.SqrMagnitude(attacker.PositionAnchor - targetAlly.PositionAnchor);
+            int queueIndex = 0;
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                if (i == attackerIndex)
+                {
+                    continue;
+                }
+
+                EnemyRuntime other = activeEnemyRuntimes[i];
+                if (other == null || other.Stats == null || other.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                int otherTargetAllyIndex = ResolveEnemyAttackTargetIndex(other, i);
+                if (otherTargetAllyIndex != targetAllyIndex)
+                {
+                    continue;
+                }
+
+                float otherDistance = Vector2.SqrMagnitude(other.PositionAnchor - targetAlly.PositionAnchor);
+                bool isAhead = otherDistance < attackerDistance - 0.0001f;
+                if (!isAhead && Mathf.Abs(otherDistance - attackerDistance) <= 0.0001f)
+                {
+                    isAhead =
+                        other.PositionAnchor.x < attacker.PositionAnchor.x - PositionEpsilon ||
+                        (Mathf.Abs(other.PositionAnchor.x - attacker.PositionAnchor.x) <= PositionEpsilon &&
+                         other.RuntimeId < attacker.RuntimeId);
+                }
+
+                if (isAhead)
+                {
+                    queueIndex += 1;
+                }
+            }
+
+            return queueIndex;
+        }
+
+        private Vector2 ResolveEnemyCombatAnchor(EnemyRuntime enemy, AllyRuntime targetAlly, int queueIndex)
+        {
+            float baseSeparation = enemy.CombatRadius + targetAlly.CombatRadius + enemy.AttackReachAnchor;
+            int slotCount = Mathf.Max(1, Mathf.Min(MaxConcurrentEnemyAttackersPerAlly, EnemyAttackSlotAngles.Length));
+            int pressureIndex = Mathf.Max(0, queueIndex);
+            int ringIndex = pressureIndex / slotCount;
+            int slotIndex = pressureIndex % slotCount;
+            float angle = EnemyAttackSlotAngles[Mathf.Clamp(slotIndex, 0, EnemyAttackSlotAngles.Length - 1)] * Mathf.Deg2Rad;
+            float separation = baseSeparation + (ringIndex * EnemyQueueSpacing);
+            Vector2 direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+            Vector2 combatAnchor = targetAlly.PositionAnchor + (direction * separation);
+            if (ringIndex <= 0)
+            {
+                return combatAnchor;
+            }
+
+            float queueLaneY = Mathf.Lerp(enemy.HomeAnchor.y, targetAlly.HomeAnchor.y, EnemyQueueLaneBlend);
+            float ringBlend = Mathf.Clamp01(ringIndex * 0.22f);
+            combatAnchor.y = Mathf.Lerp(combatAnchor.y, queueLaneY, ringBlend);
+            combatAnchor.x = Mathf.Max(combatAnchor.x, targetAlly.PositionAnchor.x + baseSeparation);
+            return combatAnchor;
+        }
+
         private void CreatePlayerPartyRuntimes()
         {
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             MasterDataManager.Instance?.Initialize();
 
             List<OwnedMonsterData> partyMonsters = BattleVisualResolver.ResolvePartyOwnedMonsters(profile, 5);
-            for (int i = 0; i < partyMonsters.Count; i += 1)
+            bool useDebugParty = partyMonsters.Count <= 0;
+            int desiredCount = useDebugParty
+                ? DevPartyOverrideMonsterIds.Length
+                : Mathf.Min(partyMonsters.Count, BattleFormationLayout.AllyHomeAnchors.Length);
+            for (int i = 0; i < desiredCount; i += 1)
             {
-                OwnedMonsterData ownedMonster = partyMonsters[i];
-                if (ownedMonster == null || string.IsNullOrEmpty(ownedMonster.MonsterId))
+                OwnedMonsterData ownedMonster = !useDebugParty && i < partyMonsters.Count ? partyMonsters[i] : null;
+                string monsterId = !useDebugParty && ownedMonster != null && !string.IsNullOrEmpty(ownedMonster.MonsterId)
+                    ? ownedMonster.MonsterId
+                    : (i < DevPartyOverrideMonsterIds.Length ? DevPartyOverrideMonsterIds[i] : null);
+
+                if (string.IsNullOrEmpty(monsterId))
                 {
                     continue;
                 }
 
-                MonsterDataSO monsterData = MasterDataManager.Instance?.GetMonsterData(ownedMonster.MonsterId);
+                MonsterDataSO monsterData = MasterDataManager.Instance?.GetMonsterData(monsterId);
                 if (monsterData == null)
                 {
                     continue;
                 }
 
+                Vector2 homeAnchor = ResolveAllyHomeAnchor(activeAllyRuntimes.Count);
                 activeAllyRuntimes.Add(new AllyRuntime
                 {
+                    RuntimeId = nextAllyRuntimeId++,
                     Stats = MonsterBattleStatsFactory.Create(profile, ownedMonster, monsterData),
                     Data = monsterData,
                     OwnedMonster = ownedMonster,
                     AttackTimer = 0f,
-                    AttackLockRemaining = 0f
+                    AttackLockRemaining = 0f,
+                    HomeAnchor = homeAnchor,
+                    PositionAnchor = homeAnchor,
+                    CombatRadius = ResolveAllyCombatRadius(monsterData),
+                    AttackReachAnchor = ResolveAllyAttackReach(monsterData),
+                    MoveSpeed = AllyMoveSpeed
                 });
             }
 
@@ -488,15 +767,311 @@ namespace WitchTower.Battle
             BattleUnitStats fallbackStats = PlayerBattleStatsFactory.CreatePreview(profile);
             if (fallbackStats != null)
             {
+                Vector2 homeAnchor = ResolveAllyHomeAnchor(activeAllyRuntimes.Count);
                 activeAllyRuntimes.Add(new AllyRuntime
                 {
+                    RuntimeId = nextAllyRuntimeId++,
                     Stats = fallbackStats,
                     Data = null,
                     OwnedMonster = null,
                     AttackTimer = 0f,
-                    AttackLockRemaining = 0f
+                    AttackLockRemaining = 0f,
+                    HomeAnchor = homeAnchor,
+                    PositionAnchor = homeAnchor,
+                    CombatRadius = ResolveAllyCombatRadius(null),
+                    AttackReachAnchor = ResolveAllyAttackReach(null),
+                    MoveSpeed = AllyMoveSpeed
                 });
             }
+        }
+
+        private int ResolveAllyTargetEnemyIndex(AllyRuntime ally, int allyIndex)
+        {
+            if (ally == null || ally.Stats == null || ally.Stats.IsDead())
+            {
+                return -1;
+            }
+
+            int lockedIndex = ResolveEnemyRuntimeIndexById(ally.TargetEnemyRuntimeId);
+            if (lockedIndex >= 0)
+            {
+                EnemyRuntime lockedEnemy = activeEnemyRuntimes[lockedIndex];
+                if (lockedEnemy != null && lockedEnemy.Stats != null && !lockedEnemy.Stats.IsDead())
+                {
+                    return lockedIndex;
+                }
+            }
+
+            int resolvedIndex = ResolvePreferredEnemyTargetIndex(ally, allyIndex);
+            ally.TargetEnemyRuntimeId = resolvedIndex >= 0 ? activeEnemyRuntimes[resolvedIndex].RuntimeId : -1;
+            return resolvedIndex;
+        }
+
+        private int ResolvePreferredEnemyTargetIndex(AllyRuntime ally, int allyIndex)
+        {
+            Vector2 referenceAnchor = ally != null ? ally.HomeAnchor : ResolveAllyHomeAnchor(allyIndex);
+            int bestIndex = -1;
+            float bestScore = float.MaxValue;
+
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                EnemyRuntime enemy = activeEnemyRuntimes[i];
+                if (enemy == null || enemy.Stats == null || enemy.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                float xPressure = Mathf.Max(0f, enemy.PositionAnchor.x - referenceAnchor.x);
+                float yDistance = Mathf.Abs(enemy.PositionAnchor.y - referenceAnchor.y);
+                float score = (xPressure * 1.15f) + (yDistance * 1.70f);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestIndex = i;
+                }
+            }
+
+            return bestIndex;
+        }
+
+        private int ResolveNearestAliveEnemyIndex(Vector2 referenceAnchor)
+        {
+            int bestIndex = -1;
+            float bestDistance = float.MaxValue;
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                EnemyRuntime enemy = activeEnemyRuntimes[i];
+                if (enemy == null || enemy.Stats == null || enemy.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                float distance = Vector2.SqrMagnitude(enemy.PositionAnchor - referenceAnchor);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestIndex = i;
+                }
+            }
+
+            return bestIndex;
+        }
+
+        private int ResolveNearestAliveAllyIndex(Vector2 referenceAnchor)
+        {
+            int bestIndex = -1;
+            float bestDistance = float.MaxValue;
+            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
+            {
+                AllyRuntime ally = activeAllyRuntimes[i];
+                if (ally == null || ally.Stats == null || ally.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                float distance = Vector2.SqrMagnitude(ally.PositionAnchor - referenceAnchor);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestIndex = i;
+                }
+            }
+
+            return bestIndex;
+        }
+
+        private int ResolveNearestAliveAllyRuntimeId(Vector2 referenceAnchor)
+        {
+            int index = ResolvePreferredAllyTargetIndex(referenceAnchor);
+            return index >= 0 && index < activeAllyRuntimes.Count ? activeAllyRuntimes[index].RuntimeId : -1;
+        }
+
+        private int ResolveEnemyRuntimeIndexById(int runtimeId)
+        {
+            if (runtimeId < 0)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                EnemyRuntime enemy = activeEnemyRuntimes[i];
+                if (enemy != null && enemy.RuntimeId == runtimeId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private int ResolveAllyRuntimeIndexById(int runtimeId)
+        {
+            if (runtimeId < 0)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
+            {
+                AllyRuntime ally = activeAllyRuntimes[i];
+                if (ally != null && ally.RuntimeId == runtimeId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static float ResolveAllyCombatRadius(MonsterDataSO monsterData)
+        {
+            return monsterData != null && monsterData.rangeType == MonsterRangeType.Ranged
+                ? DefaultAllyCombatRadius * 0.90f
+                : DefaultAllyCombatRadius;
+        }
+
+        private static float ResolveEnemyCombatRadius(EnemyDataSO enemyData)
+        {
+            float attackRange = BattleAttackRangeResolver.ResolveEnemyAttackRange(enemyData);
+            return attackRange >= RangedAttackThreshold
+                ? DefaultEnemyCombatRadius * 0.92f
+                : DefaultEnemyCombatRadius;
+        }
+
+        private static float ResolveAllyAttackReach(MonsterDataSO monsterData)
+        {
+            float attackRange = BattleAttackRangeResolver.ResolveMonsterAttackRange(monsterData);
+            return Mathf.Max(0f, BattleAttackRangeResolver.ToAllyHoldOffset(attackRange) + RangeOffsetPadding);
+        }
+
+        private static float ResolveEnemyAttackReach(EnemyDataSO enemyData)
+        {
+            float attackRange = BattleAttackRangeResolver.ResolveEnemyAttackRange(enemyData);
+            return Mathf.Max(0f, BattleAttackRangeResolver.ToEnemyHoldOffset(attackRange) + RangeOffsetPadding);
+        }
+
+        private static Vector2 ResolveAllyHomeAnchor(int allyIndex) => BattleFormationLayout.ResolveAllyHomeAnchor(allyIndex);
+
+        private static Vector2 ResolveDesiredCombatAnchor(Vector2 origin, Vector2 target, bool keepOnLeftSide, float desiredSeparation)
+        {
+            Vector2 away = origin - target;
+            if (away.sqrMagnitude <= 0.0001f)
+            {
+                away = keepOnLeftSide ? Vector2.left : Vector2.right;
+            }
+
+            if (keepOnLeftSide && away.x >= -0.001f)
+            {
+                away.x = -Mathf.Max(0.001f, Mathf.Abs(away.x));
+            }
+            else if (!keepOnLeftSide && away.x <= 0.001f)
+            {
+                away.x = Mathf.Max(0.001f, Mathf.Abs(away.x));
+            }
+
+            Vector2 direction = away.normalized;
+            return target + (direction * Mathf.Max(0.01f, desiredSeparation));
+        }
+
+        private static Vector2 MoveRuntimeTowards(Vector2 current, Vector2 destination, float speed, float deltaTime, out bool isMoving)
+        {
+            Vector2 next = Vector2.MoveTowards(current, destination, Mathf.Max(0f, speed) * deltaTime);
+            isMoving = Vector2.Distance(next, destination) > PositionEpsilon;
+            return next;
+        }
+
+        private bool CanAllyAttackTarget(AllyRuntime attacker, int targetEnemyIndex)
+        {
+            if (attacker == null || attacker.Stats == null || attacker.Stats.IsDead())
+            {
+                return false;
+            }
+
+            if (targetEnemyIndex < 0 || targetEnemyIndex >= activeEnemyRuntimes.Count)
+            {
+                return false;
+            }
+
+            EnemyRuntime target = activeEnemyRuntimes[targetEnemyIndex];
+            if (target == null || target.Stats == null || target.Stats.IsDead())
+            {
+                return false;
+            }
+
+            float attackDistance = attacker.CombatRadius + target.CombatRadius + attacker.AttackReachAnchor + PositionEpsilon;
+            return Vector2.Distance(attacker.PositionAnchor, target.PositionAnchor) <= attackDistance;
+        }
+
+        private bool CanEnemyAttackTarget(EnemyRuntime attacker, int attackerIndex, int targetAllyIndex)
+        {
+            if (attacker == null || attacker.Stats == null || attacker.Stats.IsDead())
+            {
+                return false;
+            }
+
+            if (targetAllyIndex < 0 || targetAllyIndex >= activeAllyRuntimes.Count)
+            {
+                return false;
+            }
+
+            AllyRuntime target = activeAllyRuntimes[targetAllyIndex];
+            if (target == null || target.Stats == null || target.Stats.IsDead())
+            {
+                return false;
+            }
+
+            float attackDistance = attacker.CombatRadius + target.CombatRadius + attacker.AttackReachAnchor + PositionEpsilon;
+            return Vector2.Distance(attacker.PositionAnchor, target.PositionAnchor) <= attackDistance;
+        }
+
+        private int CountActuallyEngagedEnemies()
+        {
+            int count = 0;
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                EnemyRuntime enemy = activeEnemyRuntimes[i];
+                if (enemy == null || enemy.Stats == null || enemy.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                int targetAllyIndex = ResolveEnemyAttackTargetIndex(enemy, i);
+                if (CanEnemyAttackTarget(enemy, i, targetAllyIndex))
+                {
+                    count += 1;
+                }
+            }
+
+            return count;
+        }
+
+        private int ResolveNearestAdditionalEnemyIndex(Vector2 referencePosition, List<int> excludedIndices)
+        {
+            int bestIndex = -1;
+            float bestDistance = float.MaxValue;
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                if (excludedIndices != null && excludedIndices.Contains(i))
+                {
+                    continue;
+                }
+
+                EnemyRuntime enemy = activeEnemyRuntimes[i];
+                if (enemy == null || enemy.Stats == null || enemy.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                float distance = Vector2.SqrMagnitude(enemy.PositionAnchor - referencePosition);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestIndex = i;
+                }
+            }
+
+            return bestIndex;
         }
 
         private void SyncPlayerAggregateState()
@@ -588,18 +1163,96 @@ namespace WitchTower.Battle
             return -1;
         }
 
-        private int ResolveEnemyAttackTargetIndex()
+        private int ResolveEnemyAttackTargetIndex(EnemyRuntime attacker, int attackerIndex)
         {
-            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
+            if (attacker == null)
             {
-                AllyRuntime ally = activeAllyRuntimes[i];
-                if (ally != null && ally.Stats != null && !ally.Stats.IsDead())
+                return -1;
+            }
+
+            int lockedIndex = ResolveAllyRuntimeIndexById(attacker.TargetAllyRuntimeId);
+            if (lockedIndex >= 0)
+            {
+                AllyRuntime lockedAlly = activeAllyRuntimes[lockedIndex];
+                if (lockedAlly != null && lockedAlly.Stats != null && !lockedAlly.Stats.IsDead())
                 {
-                    return i;
+                    return lockedIndex;
                 }
             }
 
-            return -1;
+            int resolvedIndex = ResolvePreferredAllyTargetIndex(attacker.PositionAnchor);
+            attacker.TargetAllyRuntimeId = resolvedIndex >= 0 ? activeAllyRuntimes[resolvedIndex].RuntimeId : -1;
+            if (attackerIndex >= 0 && attackerIndex < activeEnemyRuntimes.Count)
+            {
+                activeEnemyRuntimes[attackerIndex].TargetAllyRuntimeId = attacker.TargetAllyRuntimeId;
+            }
+
+            return resolvedIndex;
+        }
+
+        private int ResolveEnemyAttackTargetIndex(EnemyDataSO attackerData, int attackerIndex)
+        {
+            Vector2 referenceAnchor = attackerIndex >= 0 && attackerIndex < activeEnemyRuntimes.Count
+                ? activeEnemyRuntimes[attackerIndex].PositionAnchor
+                : new Vector2(EnemySpawnX, ResolveEnemySpawnLaneY(attackerIndex));
+            return ResolvePreferredAllyTargetIndex(referenceAnchor);
+        }
+
+        private int ResolvePreferredAllyTargetIndex(Vector2 referenceAnchor)
+        {
+            int bestIndex = -1;
+            float bestScore = float.MaxValue;
+
+            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
+            {
+                AllyRuntime ally = activeAllyRuntimes[i];
+                if (ally == null || ally.Stats == null || ally.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                float yDistance = Mathf.Abs(ally.HomeAnchor.y - referenceAnchor.y);
+                float xPressure = Mathf.Max(0f, referenceAnchor.x - ally.HomeAnchor.x);
+                float score = (xPressure * 0.62f) + (yDistance * 1.80f);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestIndex = i;
+                }
+            }
+
+            return bestIndex;
+        }
+
+        private static float ResolveEnemyLaneY(int enemyIndex)
+        {
+            return BattleFormationLayout.ResolveEnemyLaneY(enemyIndex);
+        }
+
+        private float ResolveEnemySpawnLaneY(int spawnIndex)
+        {
+            var activeLaneYs = new List<float>();
+            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
+            {
+                AllyRuntime ally = activeAllyRuntimes[i];
+                if (ally == null || ally.Stats == null || ally.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                activeLaneYs.Add(ally.HomeAnchor.y);
+            }
+
+            if (activeLaneYs.Count <= 0)
+            {
+                return ResolveEnemyLaneY(spawnIndex);
+            }
+
+            activeLaneYs.Sort((left, right) => right.CompareTo(left));
+            int laneIndex = Mathf.Abs(spawnIndex) % activeLaneYs.Count;
+            int laneCycle = Mathf.Abs(spawnIndex) / activeLaneYs.Count;
+            float offset = SingleLaneSpawnOffsets[Mathf.Abs(laneCycle) % SingleLaneSpawnOffsets.Length];
+            return Mathf.Clamp(activeLaneYs[laneIndex] + offset, 0.18f, 0.82f);
         }
 
         public bool IsAllyAlive(int index)
@@ -650,6 +1303,109 @@ namespace WitchTower.Battle
                 : 0;
         }
 
+        public Vector2 GetAllyPositionAnchor(int index)
+        {
+            if (index < 0 || index >= activeAllyRuntimes.Count)
+            {
+                return ResolveAllyHomeAnchor(index);
+            }
+
+            AllyRuntime ally = activeAllyRuntimes[index];
+            return ally != null ? ally.PositionAnchor : ResolveAllyHomeAnchor(index);
+        }
+
+        public int GetAllyTargetEnemyIndex(int index)
+        {
+            if (index < 0 || index >= activeAllyRuntimes.Count)
+            {
+                return -1;
+            }
+
+            AllyRuntime ally = activeAllyRuntimes[index];
+            return ResolveAllyTargetEnemyIndex(ally, index);
+        }
+
+        public bool IsAllyMoving(int index)
+        {
+            if (index < 0 || index >= activeAllyRuntimes.Count)
+            {
+                return false;
+            }
+
+            AllyRuntime ally = activeAllyRuntimes[index];
+            return ally != null && ally.IsMoving;
+        }
+
+        public bool HasEnemyRuntime(int index)
+        {
+            if (index < 0 || index >= activeEnemyRuntimes.Count)
+            {
+                return false;
+            }
+
+            EnemyRuntime enemy = activeEnemyRuntimes[index];
+            return enemy != null && enemy.Stats != null;
+        }
+
+        public int GetEnemyCurrentHp(int index)
+        {
+            if (index < 0 || index >= activeEnemyRuntimes.Count)
+            {
+                return 0;
+            }
+
+            EnemyRuntime enemy = activeEnemyRuntimes[index];
+            return enemy != null && enemy.Stats != null
+                ? Mathf.Max(0, enemy.Stats.CurrentHp)
+                : 0;
+        }
+
+        public int GetEnemyMaxHp(int index)
+        {
+            if (index < 0 || index >= activeEnemyRuntimes.Count)
+            {
+                return 0;
+            }
+
+            EnemyRuntime enemy = activeEnemyRuntimes[index];
+            return enemy != null && enemy.Stats != null
+                ? Mathf.Max(0, enemy.Stats.MaxHp)
+                : 0;
+        }
+
+        public Vector2 GetEnemyPositionAnchor(int index)
+        {
+            if (index < 0 || index >= activeEnemyRuntimes.Count)
+            {
+                return new Vector2(EnemySpawnX, ResolveEnemyLaneY(index));
+            }
+
+            EnemyRuntime enemy = activeEnemyRuntimes[index];
+            return enemy != null ? enemy.PositionAnchor : new Vector2(EnemySpawnX, ResolveEnemyLaneY(index));
+        }
+
+        public int GetEnemyTargetAllyIndex(int index)
+        {
+            if (index < 0 || index >= activeEnemyRuntimes.Count)
+            {
+                return -1;
+            }
+
+            EnemyRuntime enemy = activeEnemyRuntimes[index];
+            return ResolveEnemyAttackTargetIndex(enemy, index);
+        }
+
+        public bool IsEnemyMoving(int index)
+        {
+            if (index < 0 || index >= activeEnemyRuntimes.Count)
+            {
+                return false;
+            }
+
+            EnemyRuntime enemy = activeEnemyRuntimes[index];
+            return enemy != null && enemy.IsMoving;
+        }
+
         private int CountAliveAllies()
         {
             int aliveCount = 0;
@@ -664,15 +1420,167 @@ namespace WitchTower.Battle
             return aliveCount;
         }
 
+        private static bool ResolveBossEncounter(int floor)
+        {
+            return floor > 0 && floor % 10 == 0;
+        }
+
+        private int ResolveEncounterEnemyCount()
+        {
+            if (isBossEncounter)
+            {
+                return Mathf.Max(1, bossWaveEnemyCount);
+            }
+
+            int configuredEnemyCount = normalWaveEnemyCount > 0
+                ? normalWaveEnemyCount
+                : ReferenceEncounterEnemyCount;
+            return Mathf.Clamp(configuredEnemyCount, MinEncounterEnemyCount, MaxEncounterEnemyCount);
+        }
+
+        private float ResolveEnemySpawnInterval()
+        {
+            if (isBossEncounter)
+            {
+                return 0.12f;
+            }
+
+            int activePartyCount = Mathf.Max(1, CurrentAliveAllyCount > 0 ? CurrentAliveAllyCount : activeAllyRuntimes.Count);
+            float interval;
+            if (normalEnemySpawnInterval <= 0f || normalEnemySpawnInterval >= 0.45f)
+            {
+                if (activePartyCount <= 1)
+                {
+                    interval = SparsePartySpawnInterval;
+                }
+                else if (activePartyCount == 2)
+                {
+                    interval = DuoPartySpawnInterval;
+                }
+                else
+                {
+                    interval = ReferenceSpawnInterval;
+                }
+            }
+            else
+            {
+                interval = Mathf.Clamp(normalEnemySpawnInterval, 0.08f, 0.30f);
+                if (activePartyCount <= 1)
+                {
+                    interval = Mathf.Max(interval, SparsePartySpawnInterval);
+                }
+                else if (activePartyCount == 2)
+                {
+                    interval = Mathf.Max(interval, DuoPartySpawnInterval);
+                }
+            }
+
+            if (CurrentEnemyCountTarget >= MassiveEncounterEnemyCount)
+            {
+                interval *= 0.78f;
+            }
+            else if (CurrentEnemyCountTarget >= LargeEncounterEnemyCount)
+            {
+                interval *= 0.88f;
+            }
+
+            return Mathf.Clamp(interval, 0.08f, 0.30f);
+        }
+
+        private int ResolveOpeningSpawnBurst()
+        {
+            if (isBossEncounter)
+            {
+                return 1;
+            }
+
+            int activePartyCount = Mathf.Max(1, CurrentAliveAllyCount > 0 ? CurrentAliveAllyCount : activeAllyRuntimes.Count);
+            if (activePartyCount <= 1)
+            {
+                if (CurrentEnemyCountTarget >= MassiveEncounterEnemyCount)
+                {
+                    return Mathf.Min(3, CurrentEnemyCountTarget);
+                }
+
+                return CurrentEnemyCountTarget >= LargeEncounterEnemyCount
+                    ? Mathf.Min(2, CurrentEnemyCountTarget)
+                    : 1;
+            }
+
+            if (activePartyCount == 2)
+            {
+                if (CurrentEnemyCountTarget >= MassiveEncounterEnemyCount)
+                {
+                    return Mathf.Min(4, CurrentEnemyCountTarget);
+                }
+
+                return CurrentEnemyCountTarget >= LargeEncounterEnemyCount
+                    ? Mathf.Min(3, CurrentEnemyCountTarget)
+                    : Mathf.Min(2, CurrentEnemyCountTarget);
+            }
+
+            if (initialEnemySpawnBurst > 0)
+            {
+                return Mathf.Clamp(initialEnemySpawnBurst, 1, CurrentEnemyCountTarget);
+            }
+
+            if (CurrentEnemyCountTarget >= MassiveEncounterEnemyCount)
+            {
+                return Mathf.Min(4, CurrentEnemyCountTarget);
+            }
+
+            if (CurrentEnemyCountTarget >= LargeEncounterEnemyCount)
+            {
+                return Mathf.Min(3, CurrentEnemyCountTarget);
+            }
+
+            return Mathf.Clamp(ReferenceOpeningSpawnBurst, 1, CurrentEnemyCountTarget);
+        }
+
+        private int ResolveFollowupSpawnBurst()
+        {
+            if (isBossEncounter)
+            {
+                return 1;
+            }
+
+            if (normalEnemySpawnBurstSize > 0)
+            {
+                return Mathf.Clamp(normalEnemySpawnBurstSize, 1, 4);
+            }
+
+            if (CurrentEnemyCountTarget >= MassiveEncounterEnemyCount)
+            {
+                return 3;
+            }
+
+            if (CurrentEnemyCountTarget >= LargeEncounterEnemyCount)
+            {
+                return 2;
+            }
+
+            return 1;
+        }
+
         private void SpawnEnemyForCurrentEncounter()
         {
+            int spawnIndex = activeEnemyRuntimes.Count;
             BattleUnitStats spawnedStats = CreateEnemyStats(currentFloor, IsBossWave, out EnemyTraitRuntime spawnedTrait, out EnemyDataSO spawnedData);
+            Vector2 homeAnchor = new Vector2(EnemySpawnX, ResolveEnemySpawnLaneY(spawnIndex));
             var runtime = new EnemyRuntime
             {
+                RuntimeId = nextEnemyRuntimeId++,
                 Stats = spawnedStats,
                 Data = spawnedData,
                 Trait = spawnedTrait,
-                AttackTimer = 0f
+                AttackTimer = 0f,
+                AttackLockRemaining = 0f,
+                HomeAnchor = homeAnchor,
+                PositionAnchor = homeAnchor,
+                TargetAllyRuntimeId = ResolveNearestAliveAllyRuntimeId(homeAnchor),
+                CombatRadius = ResolveEnemyCombatRadius(spawnedData),
+                AttackReachAnchor = ResolveEnemyAttackReach(spawnedData),
+                MoveSpeed = EnemyMoveSpeed
             };
 
             activeEnemyRuntimes.Add(runtime);
@@ -695,17 +1603,21 @@ namespace WitchTower.Battle
 
         private void TickEnemySpawns(float deltaTime)
         {
-            if (IsBossWave || spawnedEnemiesInCurrentWave >= CurrentEnemyCountTarget)
+            if (spawnedEnemiesInCurrentWave >= CurrentEnemyCountTarget)
             {
                 return;
             }
 
             enemySpawnTimer += deltaTime;
-            float interval = Mathf.Max(0.05f, normalEnemySpawnInterval);
+            float interval = ResolveEnemySpawnInterval();
             while (spawnedEnemiesInCurrentWave < CurrentEnemyCountTarget && enemySpawnTimer >= interval)
             {
                 enemySpawnTimer -= interval;
-                SpawnEnemyBurst(Mathf.Max(1, normalEnemySpawnBurstSize), false);
+                int burstSize = !openingBurstSpawned
+                    ? ResolveOpeningSpawnBurst()
+                    : ResolveFollowupSpawnBurst();
+                openingBurstSpawned = true;
+                SpawnEnemyBurst(burstSize, false);
             }
         }
 
@@ -743,32 +1655,6 @@ namespace WitchTower.Battle
 
             if (defeatedEnemiesInCurrentWave >= CurrentEnemyCountTarget && spawnedEnemiesInCurrentWave >= CurrentEnemyCountTarget)
             {
-                if (currentWave < TotalWaveCount)
-                {
-                    currentWave += 1;
-                    defeatedEnemiesInCurrentWave = 0;
-                    spawnedEnemiesInCurrentWave = 0;
-                    activeEnemiesInCurrentWave = 0;
-                    enemyStats = null;
-                    currentEnemyData = null;
-                    enemyTraitRuntime = default;
-                    enemyAttackTimer = 0f;
-                    engagedEnemyCount = 0;
-                    activeEnemyRuntimes.Clear();
-                    encounterSerial += 1;
-                    EncounterChanged?.Invoke();
-                    if (IsBossWave)
-                    {
-                        SpawnEnemyBurst(1, true);
-                        enemySpawnTimer = 0f;
-                    }
-                    else
-                    {
-                        enemySpawnTimer = Mathf.Max(0f, normalEnemySpawnInterval + 0.001f);
-                    }
-                    return true;
-                }
-
                 return false;
             }
 
@@ -781,60 +1667,71 @@ namespace WitchTower.Battle
             return true;
         }
 
-        private int ResolvePlayerAttackTargetIndex()
+        private int ResolvePlayerAttackTargetIndex(MonsterDataSO attackerData)
         {
-            if (activeEnemyRuntimes.Count <= 0)
+            int attackerIndex = ResolveLeadAliveAllyIndex();
+            if (attackerIndex < 0 || attackerIndex >= activeAllyRuntimes.Count)
             {
                 return -1;
             }
 
-            int engagedCount = Mathf.Min(Mathf.Max(1, engagedEnemyCount), activeEnemyRuntimes.Count);
-            for (int i = 0; i < engagedCount; i += 1)
-            {
-                EnemyRuntime runtime = activeEnemyRuntimes[i];
-                if (runtime != null && runtime.Stats != null && !runtime.Stats.IsDead())
-                {
-                    return i;
-                }
-            }
-
-            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
-            {
-                EnemyRuntime runtime = activeEnemyRuntimes[i];
-                if (runtime != null && runtime.Stats != null && !runtime.Stats.IsDead())
-                {
-                    return i;
-                }
-            }
-
-            return -1;
+            return ResolveAllyTargetEnemyIndex(activeAllyRuntimes[attackerIndex], attackerIndex);
         }
 
-        private List<int> CollectEnemyTargetIndices(int maxTargets)
+        private List<int> CollectEnemyTargetIndices(int maxTargets, AllyRuntime attacker, int attackerIndex)
         {
             var result = new List<int>();
             int desiredCount = Mathf.Max(1, maxTargets);
-            int engagedCount = Mathf.Min(Mathf.Max(1, engagedEnemyCount), activeEnemyRuntimes.Count);
-
-            for (int i = 0; i < engagedCount && result.Count < desiredCount; i += 1)
+            if (attacker == null || attackerIndex < 0 || attackerIndex >= activeAllyRuntimes.Count)
             {
-                EnemyRuntime runtime = activeEnemyRuntimes[i];
-                if (runtime != null && runtime.Stats != null && !runtime.Stats.IsDead())
-                {
-                    result.Add(i);
-                }
+                return result;
             }
 
-            for (int i = engagedCount; i < activeEnemyRuntimes.Count && result.Count < desiredCount; i += 1)
+            int primaryTargetIndex = ResolveAllyTargetEnemyIndex(attacker, attackerIndex);
+            if (primaryTargetIndex < 0)
             {
-                EnemyRuntime runtime = activeEnemyRuntimes[i];
-                if (runtime != null && runtime.Stats != null && !runtime.Stats.IsDead())
+                return result;
+            }
+
+            result.Add(primaryTargetIndex);
+            if (desiredCount <= 1)
+            {
+                return result;
+            }
+
+            Vector2 referencePosition = activeEnemyRuntimes[primaryTargetIndex].PositionAnchor;
+            while (result.Count < desiredCount)
+            {
+                int nextIndex = ResolveNearestAdditionalEnemyIndex(referencePosition, result);
+                if (nextIndex < 0)
                 {
-                    result.Add(i);
+                    break;
                 }
+
+                result.Add(nextIndex);
             }
 
             return result;
+        }
+
+        private bool HasEngagedEnemyTarget()
+        {
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                EnemyRuntime runtime = activeEnemyRuntimes[i];
+                if (runtime == null || runtime.Stats == null || runtime.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                int targetIndex = ResolveEnemyAttackTargetIndex(runtime, i);
+                if (CanEnemyAttackTarget(runtime, i, targetIndex))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private int FindDefeatedEnemyIndex()
@@ -867,14 +1764,13 @@ namespace WitchTower.Battle
 
         private void TickEnemyAttackers(float deltaTime)
         {
-            if (activeEnemyRuntimes.Count == 0 || engagedEnemyCount <= 0 || CountAliveAllies() <= 0)
+            if (activeEnemyRuntimes.Count == 0 || CountAliveAllies() <= 0)
             {
                 enemyAttackTimer = 0f;
                 return;
             }
 
-            int engagedCount = Mathf.Min(engagedEnemyCount, activeEnemyRuntimes.Count);
-            for (int i = 0; i < engagedCount; i += 1)
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
             {
                 EnemyRuntime attacker = activeEnemyRuntimes[i];
                 if (attacker == null || attacker.Stats == null || attacker.Stats.IsDead())
@@ -883,6 +1779,13 @@ namespace WitchTower.Battle
                 }
 
                 if (attacker.AttackLockRemaining > 0f)
+                {
+                    attacker.AttackTimer = 0f;
+                    continue;
+                }
+
+                int targetIndex = ResolveEnemyAttackTargetIndex(attacker, i);
+                if (!CanEnemyAttackTarget(attacker, i, targetIndex))
                 {
                     attacker.AttackTimer = 0f;
                     continue;
@@ -1127,6 +2030,45 @@ namespace WitchTower.Battle
         private static MonsterDamageType ResolvePlayerDamageType(MonsterDataSO monsterData)
         {
             return monsterData != null ? monsterData.damageType : MonsterDamageType.Physical;
+        }
+
+        private static bool IsMonsterMelee(MonsterDataSO monsterData)
+        {
+            return monsterData == null || monsterData.rangeType == MonsterRangeType.Melee;
+        }
+
+        private static float ResolvePlayerPresentationDelay(MonsterDataSO monsterData)
+        {
+            if (monsterData == null)
+            {
+                return 0f;
+            }
+
+            if (monsterData.rangeType == MonsterRangeType.Melee)
+            {
+                return MeleePresentationDelay;
+            }
+
+            return monsterData.damageType == MonsterDamageType.Magic
+                ? MagicPresentationDelay
+                : 0f;
+        }
+
+        private static float ResolveEnemyPresentationDelay(EnemyDataSO enemyData)
+        {
+            if (enemyData == null)
+            {
+                return 0f;
+            }
+
+            if (enemyData.attackRange < RangedAttackThreshold)
+            {
+                return MeleePresentationDelay;
+            }
+
+            return enemyData.damageType == MonsterDamageType.Magic
+                ? MagicPresentationDelay
+                : 0f;
         }
 
         private float GetCurrentEnemyAttackInterval(BattleUnitStats stats)
