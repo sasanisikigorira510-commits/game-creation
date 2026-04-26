@@ -40,10 +40,10 @@ MonoBehaviour:
   illustrationSprite: {fileID: 0}
   portraitResourcePath: FamilyMonsters/Mage/Mage1
   illustrationResourcePath: 
-  battleIdleResourcePath: MonsterBattle/mon_family_mage_1
+  battleIdleResourcePath: MonsterBattle/mon_family_mage_2_idle
   battleIdleFacing: 0
-  battleMoveResourcePath: MonsterBattle/mon_family_mage_1
+  battleMoveResourcePath: MonsterBattle/mon_family_mage_2_move
   battleMoveFacing: 0
-  battleAttackResourcePath: MonsterBattle/mon_family_mage_1
+  battleAttackResourcePath: MonsterBattle/mon_family_mage_2_attack
   battleAttackFacing: 0
   description: A fragile caster with high dark magic power.

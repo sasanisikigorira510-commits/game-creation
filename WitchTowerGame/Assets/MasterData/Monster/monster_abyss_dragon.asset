@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_abyss_dragon
+  m_EditorClassIdentifier: 
+  monsterId: monster_abyss_dragon
+  monsterName: "\u84bc\u9ed2\u7adc\u30a2\u30d3\u30b9"
+  encyclopediaNumber: 20
+  rarity: 5
+  element: 5
+  rangeType: 1
+  damageType: 1
+  baseStats:
+    maxHp: 112
+    attack: 24
+    magicAttack: 30
+    defense: 22
+    magicDefense: 21
+    attackSpeed: 0.9
+  attackRange: 2.25
+  normalAttackTargetCount: 2
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 1
+    magicAttackPerPlus: 2
+    defensePerPlus: 1
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  fusionExclusive: 0
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsters/Dragon/abyss_dragon
+  illustrationResourcePath: 
+  battleIdleResourcePath: MonsterBattle/mon_abyss_dragon_idle
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_abyss_dragon_move
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_abyss_dragon_attack
+  battleAttackFacing: 0
+  description: A mature dark dragon that burns enemies with abyssal flame.

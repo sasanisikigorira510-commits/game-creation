@@ -20,35 +20,35 @@ namespace WitchTower.Battle
     public sealed class BattleSceneController : MonoBehaviour
     {
         private static readonly Vector2[] AllyPreviewAnchors = BattleFormationLayout.AllyHomeAnchors;
-        private static readonly Vector2[] AllyApproachAnchors = BattleFormationLayout.AllyAdvanceAnchors;
+        private static readonly Vector2[] AllyApproachAnchors = BattleFormationLayout.AllyHomeAnchors;
         private static readonly float[] EnemyPreviewLaneYAnchors = BattleFormationLayout.EnemyLaneYAnchors;
 
         private static readonly string[] DevPartyOverrideIdlePaths =
         {
-            "MonsterBattle/mon_family_mage_1",
-            "MonsterBattle/mon_family_slime_1",
-            "MonsterBattle/mon_family_robot_1"
+            "MonsterBattle/mon_flare_drake_idle",
+            "MonsterBattle/mon_dragon_whelp_idle",
+            "MonsterBattle/mon_abyss_dragon_idle"
         };
 
         private static readonly string[] DevPartyOverrideMovePaths =
         {
-            "MonsterBattle/mon_family_mage_1",
-            "MonsterBattle/mon_family_slime_1",
-            "MonsterBattle/mon_family_robot_1"
+            "MonsterBattle/mon_flare_drake_move",
+            "MonsterBattle/mon_dragon_whelp_move",
+            "MonsterBattle/mon_abyss_dragon_move"
         };
 
         private static readonly string[] DevPartyOverrideAttackPaths =
         {
-            "MonsterBattle/mon_family_mage_1",
-            "MonsterBattle/mon_family_slime_1",
-            "MonsterBattle/mon_family_robot_1"
+            "MonsterBattle/mon_flare_drake_attack",
+            "MonsterBattle/mon_dragon_whelp_attack",
+            "MonsterBattle/mon_abyss_dragon_attack"
         };
 
         private static readonly string[] DevPartyOverrideMonsterIds =
         {
-            "monster_death_mage_elf",
-            "monster_worm",
-            "monster_rock_golem"
+            "monster_flare_drake",
+            "monster_dragon_whelp",
+            "monster_abyss_dragon"
         };
 
         private static readonly Vector2 AllyPreviewSize = new Vector2(220f, 220f);
@@ -59,7 +59,6 @@ namespace WitchTower.Battle
         private static readonly Vector2 BossPreviewSize = new Vector2(272f, 272f);
         private static Sprite fallbackRangedAttackEffectSprite;
         private static BattleAttackEffectProfileSO builtInFireProjectileEffectProfile;
-        private const float AttackPreviewScaleMultiplier = 1.18f;
         private const float BattlefieldMinX = 0.06f;
         private const float BattlefieldMaxX = 0.95f;
         private const float BattlefieldMinY = 0.14f;
@@ -70,6 +69,73 @@ namespace WitchTower.Battle
         private const float MeleeHorizontalMoveSpeed = 0.88f;
         private const float MeleeVerticalFollowStrength = 0.88f;
         private const float MeleeVerticalMoveSpeed = 0.72f;
+        private const float IdleFloatAmplitude = 6f;
+        private const float IdleSwayAmplitude = 2.5f;
+        private const float MoveBobAmplitude = 5f;
+        private const float AttackHopAmplitude = 7f;
+        private const float AttackLungeDistance = 22f;
+        private const float RangedAttackLungeDistance = 10f;
+        private const float AttackEffectGlobalScale = 1.28f;
+        private const string DragonWhelpMonsterId = "monster_dragon_whelp";
+        private const float DragonWhelpBasePreviewScale = 0.70f;
+        private const float DragonWhelpMovePreviewScale = 1.12f;
+        private const float DragonWhelpAttackPreviewScale = 1.38f;
+
+        private sealed class DragonAttackEffectDefinition
+        {
+            public string ResourcePath;
+            public float Scale = 1f;
+            public float Duration = 0.32f;
+            public float StartDelay;
+            public Vector2 StartOffset = new Vector2(26f, 10f);
+            public Vector2 TargetOffset = Vector2.zero;
+            public float ArcHeight = 6f;
+            public float FadeOutScale = 0.74f;
+            public Color Tint = Color.white;
+        }
+
+        private static readonly Dictionary<string, DragonAttackEffectDefinition> DragonAttackEffects = new Dictionary<string, DragonAttackEffectDefinition>
+        {
+            {
+                "monster_dragon_whelp",
+                new DragonAttackEffectDefinition
+                {
+                    ResourcePath = "BattleEffects/Dragon/fx_dragon_whelp_attack",
+                    Scale = 1.24f,
+                    Duration = 0.34f,
+                    StartOffset = new Vector2(22f, 8f),
+                    TargetOffset = new Vector2(8f, 12f),
+                    ArcHeight = 6f,
+                    FadeOutScale = 1.10f
+                }
+            },
+            {
+                "monster_flare_drake",
+                new DragonAttackEffectDefinition
+                {
+                    ResourcePath = "BattleEffects/Dragon/fx_flare_drake_attack",
+                    Scale = 1.10f,
+                    Duration = 0.42f,
+                    StartOffset = new Vector2(30f, 12f),
+                    TargetOffset = new Vector2(13f, 16f),
+                    ArcHeight = 8f,
+                    FadeOutScale = 1.17f
+                }
+            },
+            {
+                "monster_abyss_dragon",
+                new DragonAttackEffectDefinition
+                {
+                    ResourcePath = "BattleEffects/Dragon/fx_abyss_dragon_attack",
+                    Scale = 1.34f,
+                    Duration = 0.50f,
+                    StartOffset = new Vector2(36f, 15f),
+                    TargetOffset = new Vector2(18f, 22f),
+                    ArcHeight = 10f,
+                    FadeOutScale = 1.24f
+                }
+            }
+        };
 
         private static readonly string[] MinimalHiddenObjectNames =
         {
@@ -236,6 +302,7 @@ namespace WitchTower.Battle
             public float StartDelay;
             public float FadeOutScale = 0.66f;
             public bool UseArcMovement;
+            public List<Sprite> Frames;
         }
 
         private sealed class PreviewHpBar
@@ -298,6 +365,7 @@ namespace WitchTower.Battle
         private TMP_Text enemyHintText;
         private int lastEncounterSerial = -1;
         private int lastPresentedWave = -1;
+        private bool isApplyingEditorPreview;
         private BattleSimulator subscribedSimulator;
         private int targetEnemyPreviewCount;
         private int visibleEnemyPreviewCount;
@@ -333,7 +401,7 @@ namespace WitchTower.Battle
         private const float CombatLoopDuration = 1.8f;
         private const float EnemyCountCommitDelay = 0.12f;
         private const float KnockbackDuration = 0.16f;
-        private const float AttackVisualDuration = 0.36f;
+        private const float AttackVisualDuration = 0.48f;
         private const float AllyKnockbackDistance = 0.016f;
         private const float EnemyKnockbackDistance = 0.028f;
         private const float AllyDefeatVanishDuration = 0.28f;
@@ -393,10 +461,6 @@ namespace WitchTower.Battle
 
         private void OnValidate()
         {
-            if (!Application.isPlaying)
-            {
-                ApplyEditorPreview();
-            }
         }
 
         private void Start()
@@ -865,9 +929,17 @@ namespace WitchTower.Battle
 
         private void ApplyEditorPreview()
         {
-            ApplyBackdropForFloor(1);
-            ApplyMinimalPresentation();
-            ApplyEditorCombatantPreview();
+            isApplyingEditorPreview = true;
+            try
+            {
+                ApplyBackdropForFloor(1);
+                ApplyMinimalPresentation();
+                ApplyEditorCombatantPreview();
+            }
+            finally
+            {
+                isApplyingEditorPreview = false;
+            }
         }
 
         private void ApplyEditorCombatantPreview()
@@ -1047,13 +1119,6 @@ namespace WitchTower.Battle
             return BattleVisualPose.Idle;
         }
 
-        private bool IsAllyAttackVisualActive(int index)
-        {
-            return index >= 0 &&
-                   index < allyAttackVisualRemainings.Count &&
-                   allyAttackVisualRemainings[index] > 0f;
-        }
-
         private Sprite SelectEnemyPreviewSprite(int index, bool isMoving)
         {
             if (index >= 0 && index < enemyAttackVisualRemainings.Count && enemyAttackVisualRemainings[index] > 0f)
@@ -1099,13 +1164,6 @@ namespace WitchTower.Battle
                 : new Vector3(-1f, 1f, 1f);
         }
 
-        private bool IsEnemyAttackVisualActive(int index)
-        {
-            return index >= 0 &&
-                   index < enemyAttackVisualRemainings.Count &&
-                   enemyAttackVisualRemainings[index] > 0f;
-        }
-
         private Sprite SelectAttackFrame(IReadOnlyList<Sprite> frames, float remaining, float phaseOffset)
         {
             if (frames == null || frames.Count == 0)
@@ -1138,6 +1196,88 @@ namespace WitchTower.Battle
             float time = Time.realtimeSinceStartup * fps + phaseOffset;
             int frameIndex = Mathf.Abs(Mathf.FloorToInt(time)) % frames.Count;
             return frames[frameIndex];
+        }
+
+        private Vector2 ResolvePresentationMotionOffset(int index, bool isAlly, BattleVisualPose pose, float attackRemaining, bool isRanged)
+        {
+            if (!Application.isPlaying)
+            {
+                return Vector2.zero;
+            }
+
+            float time = Time.realtimeSinceStartup;
+            float phase = (index * 0.73f) + (isAlly ? 0.17f : 1.11f);
+            Vector2 offset = Vector2.zero;
+            if (pose == BattleVisualPose.Idle)
+            {
+                offset.x += Mathf.Sin((time * 1.7f) + phase) * IdleSwayAmplitude;
+                offset.y += Mathf.Sin((time * 2.8f) + phase) * IdleFloatAmplitude;
+            }
+            else if (pose == BattleVisualPose.Move)
+            {
+                offset.x += Mathf.Sin((time * 5.4f) + phase) * (IdleSwayAmplitude + 1f);
+                offset.y += Mathf.Abs(Mathf.Sin((time * 9.2f) + phase)) * MoveBobAmplitude;
+            }
+
+            if (attackRemaining > 0f)
+            {
+                float normalized = Mathf.Clamp01(1f - (attackRemaining / AttackVisualDuration));
+                float attackArc = Mathf.Sin(normalized * Mathf.PI);
+                float forwardDistance = isRanged ? RangedAttackLungeDistance : AttackLungeDistance;
+                offset.x += (isAlly ? 1f : -1f) * attackArc * forwardDistance;
+                offset.y += attackArc * AttackHopAmplitude;
+            }
+
+            return offset;
+        }
+
+        private static float ResolveMonsterPreviewScale(MonsterDataSO monsterData, BattleVisualPose pose)
+        {
+            return ResolveCharacterPreviewScale(monsterData != null ? monsterData.monsterId : null, pose);
+        }
+
+        private static float ResolveEnemyPreviewScale(EnemyDataSO enemyData, BattleVisualPose pose)
+        {
+            return ResolveCharacterPreviewScale(enemyData != null ? enemyData.enemyId : null, pose);
+        }
+
+        private static float ResolveCharacterPreviewScale(string characterId, BattleVisualPose pose)
+        {
+            if (!IsDragonWhelpId(characterId))
+            {
+                return 1f;
+            }
+
+            float poseScale = pose switch
+            {
+                BattleVisualPose.Attack => DragonWhelpAttackPreviewScale,
+                BattleVisualPose.Move => DragonWhelpMovePreviewScale,
+                _ => 1f
+            };
+            return DragonWhelpBasePreviewScale * poseScale;
+        }
+
+        private static bool IsDragonWhelpId(string characterId)
+        {
+            if (string.IsNullOrEmpty(characterId))
+            {
+                return false;
+            }
+
+            string normalizedId = characterId.ToLowerInvariant();
+            return normalizedId == DragonWhelpMonsterId ||
+                   normalizedId.Contains("dragon_whelp") ||
+                   normalizedId.Contains("hina_dragon");
+        }
+
+        private static void ApplyPreviewMotion(Image image, Vector2 motionOffset)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            image.rectTransform.anchoredPosition = motionOffset;
         }
 
         private static void SetImageSprite(Image image, Sprite sprite)
@@ -1240,6 +1380,47 @@ namespace WitchTower.Battle
             EnsureAllyPreviewHpBarCapacity();
             EnsureAllyPreviewEffectCapacity();
             EnsureEnemyPreviewCapacity(InitialEnemyPreviewSlotCapacity);
+            ArrangeMonsterPreviewLayers();
+        }
+
+        private void ArrangeMonsterPreviewLayers()
+        {
+            if (monsterPreviewRoot == null || !Application.isPlaying || isApplyingEditorPreview)
+            {
+                return;
+            }
+
+            for (int i = 0; i < enemyPreviewImages.Count; i += 1)
+            {
+                if (enemyPreviewImages[i] != null)
+                {
+                    enemyPreviewImages[i].transform.SetAsLastSibling();
+                }
+            }
+
+            for (int i = 0; i < enemyPreviewHpBars.Count; i += 1)
+            {
+                if (enemyPreviewHpBars[i]?.Root != null)
+                {
+                    enemyPreviewHpBars[i].Root.SetAsLastSibling();
+                }
+            }
+
+            for (int i = 0; i < allyPreviewImages.Count; i += 1)
+            {
+                if (allyPreviewImages[i] != null)
+                {
+                    allyPreviewImages[i].transform.SetAsLastSibling();
+                }
+            }
+
+            for (int i = 0; i < allyPreviewHpBars.Count; i += 1)
+            {
+                if (allyPreviewHpBars[i]?.Root != null)
+                {
+                    allyPreviewHpBars[i].Root.SetAsLastSibling();
+                }
+            }
         }
 
         private void UpdatePreviewLayout()
@@ -1260,9 +1441,7 @@ namespace WitchTower.Battle
             float contactT = combatStartProgress > combatSearchProgress
                 ? Mathf.Clamp01((engagementProgress - combatSearchProgress) / (combatStartProgress - combatSearchProgress))
                 : 1f;
-            float allyApproachT = combatStartProgress > 0f
-                ? Mathf.Clamp01(engagementProgress / combatStartProgress)
-                : 1f;
+            float allyApproachT = 1f;
             int engagedEnemyPreviewCount = 0;
             bool isBossWave = stateMachine != null && stateMachine.Simulator != null && stateMachine.Simulator.IsBossWave;
             bool enemyIsMelee = IsEnemyCloseCombat(currentPreviewEnemyData, enemyAttackRange);
@@ -1272,15 +1451,10 @@ namespace WitchTower.Battle
 
             for (int i = 0; i < allyPreviewImages.Count && i < AllyPreviewAnchors.Length; i += 1)
             {
-                float allyKnockbackRemaining = i < allyKnockbackRemainings.Count ? allyKnockbackRemainings[i] : 0f;
-                float allyKnockbackT = KnockbackDuration > 0f
-                    ? Mathf.Clamp01(allyKnockbackRemaining / KnockbackDuration)
-                    : 0f;
                 float allyDefeatRemaining = i < allyDefeatVanishRemainings.Count ? allyDefeatVanishRemainings[i] : 0f;
                 float allyVanishT = AllyDefeatVanishDuration > 0f
                     ? 1f - Mathf.Clamp01(allyDefeatRemaining / AllyDefeatVanishDuration)
                     : 0f;
-                float allyKnockbackOffset = AllyKnockbackDistance * EaseOutCubic(allyKnockbackT);
                 bool allyAlive = simulator == null || !simulator.HasAllyRuntime(i) || simulator.IsAllyAlive(i);
                 MonsterDataSO allyData = i < allyPreviewMonsterData.Count ? allyPreviewMonsterData[i] : null;
                 float allyRange = i < allyAttackRanges.Count ? allyAttackRanges[i] : 1f;
@@ -1302,24 +1476,26 @@ namespace WitchTower.Battle
 
                 Vector2 allyTargetAnchor = new Vector2(allyTargetX, allyTargetY);
                 Vector2 allyAnchor = Vector2.Lerp(allyStartAnchor, allyTargetAnchor, allyApproachT);
-                allyAnchor += new Vector2(-allyKnockbackOffset, 0f);
                 resolvedAllyAnchors[i] = allyAnchor;
                 allySlotAlive[i] = allyAlive;
                 float allyScale = allyAlive
                     ? 1f
                     : Mathf.Lerp(1f, 0.24f, allyVanishT);
-                float allyAttackScale = IsAllyAttackVisualActive(i) ? AttackPreviewScaleMultiplier : 1f;
+                BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT);
+                Vector2 allyPreviewSize = AllyPreviewSize * (allyScale * ResolveMonsterPreviewScale(allyData, allyPose));
                 ApplyPreviewImageLayout(
                     allyPreviewImages[i],
                     MapBattlefieldAnchor(allyAnchor),
-                    AllyPreviewSize * (allyScale * allyAttackScale));
+                    allyPreviewSize);
                 if (allyPreviewImages[i] != null)
                 {
-                    BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT);
                     Sprite allySprite = SelectAllyPreviewSprite(i, allyApproachT);
+                    float allyAttackRemaining = i < allyAttackVisualRemainings.Count ? allyAttackVisualRemainings[i] : 0f;
+                    Vector2 allyMotionOffset = ResolvePresentationMotionOffset(i, true, allyPose, allyAttackRemaining, allyRange >= RangedAttackThreshold);
                     SetImageSprite(allyPreviewImages[i], allySprite);
                     BattleFacingDirection allySourceFacing = BattleVisualResolver.ResolveMonsterFacing(allyData, allyPose);
                     allyPreviewImages[i].rectTransform.localScale = ResolveFacingScale(allySourceFacing, BattleFacingDirection.Right);
+                    ApplyPreviewMotion(allyPreviewImages[i], allyMotionOffset);
                     Color allyColor = allyPreviewImages[i].color;
                     allyColor.a = allyAlive ? 1f : Mathf.Clamp01(1f - allyVanishT);
                     allyPreviewImages[i].color = allyColor;
@@ -1330,12 +1506,13 @@ namespace WitchTower.Battle
                 UpdatePreviewHpBar(
                     i < allyPreviewHpBars.Count ? allyPreviewHpBars[i] : null,
                     MapBattlefieldAnchor(allyAnchor),
-                    AllyPreviewSize * (allyScale * allyAttackScale),
+                    allyPreviewSize,
                     allyAlive && allyMaxHp > 0,
                     allyColorAlpha: allyAlive ? 1f : Mathf.Clamp01(1f - allyVanishT),
                     currentHp: allyCurrentHp,
                     maxHp: allyMaxHp,
-                    fillColor: new Color(0.28f, 0.88f, 0.66f, 0.95f));
+                    fillColor: new Color(0.28f, 0.88f, 0.66f, 0.95f),
+                    motionOffset: allyPreviewImages[i] != null ? allyPreviewImages[i].rectTransform.anchoredPosition : Vector2.zero);
             }
 
             if (isBossWave)
@@ -1366,27 +1543,24 @@ namespace WitchTower.Battle
                         bossAnchor,
                         new Vector2(bossContactX, bossContactY),
                         contactT);
-                    float enemyKnockbackRemaining = enemyKnockbackRemainings.Count > 0 ? enemyKnockbackRemainings[0] : 0f;
-                    float enemyKnockbackT = KnockbackDuration > 0f
-                        ? Mathf.Clamp01(enemyKnockbackRemaining / KnockbackDuration)
-                        : 0f;
                     float enemyVanishRemaining = enemyDefeatVanishRemainings.Count > 0 ? enemyDefeatVanishRemainings[0] : 0f;
                     float enemyVanishT = enemyVanishRemaining > 0f && EnemyDefeatVanishDuration > 0f
                         ? 1f - Mathf.Clamp01(enemyVanishRemaining / EnemyDefeatVanishDuration)
                         : 0f;
-                    float enemyKnockbackOffset = EnemyKnockbackDistance * EaseOutCubic(enemyKnockbackT);
-                    bossAnchor += new Vector2(enemyKnockbackOffset, 0f);
                     float bossScale = Mathf.Lerp(1f, 0.24f, enemyVanishT);
-                    float bossAttackScale = IsEnemyAttackVisualActive(0) ? AttackPreviewScaleMultiplier : 1f;
+                    bool bossMoving = contactT < 1f;
+                    BattleVisualPose bossPose = ResolveEnemyPreviewPose(0, bossMoving);
+                    Vector2 bossPreviewSize = BossPreviewSize * (bossScale * ResolveEnemyPreviewScale(currentPreviewEnemyData, bossPose));
                     ApplyPreviewImageLayout(
                         enemyPreviewImages[0],
                         MapBattlefieldAnchor(bossAnchor),
-                        BossPreviewSize * (bossScale * bossAttackScale));
-                    bool bossMoving = contactT < 1f;
-                    BattleVisualPose bossPose = ResolveEnemyPreviewPose(0, bossMoving);
+                        bossPreviewSize);
+                    float bossAttackRemaining = enemyAttackVisualRemainings.Count > 0 ? enemyAttackVisualRemainings[0] : 0f;
+                    Vector2 bossMotionOffset = ResolvePresentationMotionOffset(0, false, bossPose, bossAttackRemaining, enemyAttackRange >= RangedAttackThreshold);
                     SetImageSprite(enemyPreviewImages[0], SelectEnemyPreviewSprite(0, bossMoving));
                     BattleFacingDirection bossSourceFacing = BattleVisualResolver.ResolveEnemyFacing(currentPreviewEnemyData, bossPose);
                     enemyPreviewImages[0].rectTransform.localScale = ResolveFacingScale(bossSourceFacing, BattleFacingDirection.Left);
+                    ApplyPreviewMotion(enemyPreviewImages[0], bossMotionOffset);
                     Color bossColor = enemyPreviewImages[0].color;
                     bossColor.a = 1f - enemyVanishT;
                     enemyPreviewImages[0].color = bossColor;
@@ -1395,12 +1569,13 @@ namespace WitchTower.Battle
                     UpdatePreviewHpBar(
                         enemyPreviewHpBars.Count > 0 ? enemyPreviewHpBars[0] : null,
                         MapBattlefieldAnchor(bossAnchor),
-                        BossPreviewSize * (bossScale * bossAttackScale),
+                        bossPreviewSize,
                         bossMaxHp > 0,
                         1f - enemyVanishT,
                         bossCurrentHp,
                         bossMaxHp,
-                        new Color(0.96f, 0.44f, 0.40f, 0.95f));
+                        new Color(0.96f, 0.44f, 0.40f, 0.95f),
+                        bossMotionOffset);
                     engagedEnemyPreviewCount = contactT >= 1f ? 1 : 0;
                 }
 
@@ -1415,6 +1590,7 @@ namespace WitchTower.Battle
                     stateMachine.SetEngagedEnemyCount(engagedEnemyPreviewCount);
                 }
 
+                ArrangeMonsterPreviewLayers();
                 return;
             }
 
@@ -1433,11 +1609,6 @@ namespace WitchTower.Battle
                 float contactJitter = i < enemyPreviewContactJitters.Count ? enemyPreviewContactJitters[i] : 0f;
                 float searchJitter = i < enemyPreviewSearchJitters.Count ? enemyPreviewSearchJitters[i] : 0f;
                 float spawnXJitter = i < enemyPreviewSpawnXJitters.Count ? enemyPreviewSpawnXJitters[i] : 0f;
-                float enemyKnockbackRemaining = i < enemyKnockbackRemainings.Count ? enemyKnockbackRemainings[i] : 0f;
-                float enemyKnockbackT = KnockbackDuration > 0f
-                    ? Mathf.Clamp01(enemyKnockbackRemaining / KnockbackDuration)
-                    : 0f;
-                float enemyKnockbackOffset = EnemyKnockbackDistance * EaseOutCubic(enemyKnockbackT);
                 float enemyVanishRemaining = i < enemyDefeatVanishRemainings.Count ? enemyDefeatVanishRemainings[i] : 0f;
                 float enemyVanishT = enemyVanishRemaining > 0f && EnemyDefeatVanishDuration > 0f
                     ? 1f - Mathf.Clamp01(enemyVanishRemaining / EnemyDefeatVanishDuration)
@@ -1488,11 +1659,6 @@ namespace WitchTower.Battle
                     alpha = 1f;
                 }
 
-                if (shouldShow && i < 8)
-                {
-                    anchor += new Vector2(enemyKnockbackOffset, 0f);
-                }
-
                 if (shouldShow && enemyVanishRemaining > 0f)
                 {
                     scale *= Mathf.Lerp(1f, 0.24f, enemyVanishT);
@@ -1504,16 +1670,19 @@ namespace WitchTower.Battle
                     engagedEnemyPreviewCount += 1;
                 }
 
-                float enemyAttackScale = IsEnemyAttackVisualActive(i) ? AttackPreviewScaleMultiplier : 1f;
+                bool enemyMoving = slotProgress < combatStartProgress;
+                BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving);
+                Vector2 enemyPreviewSize = EnemyPreviewSize * (scale * ResolveEnemyPreviewScale(currentPreviewEnemyData, enemyPose));
                 ApplyPreviewImageLayout(
                     image,
                     MapBattlefieldAnchor(anchor),
-                    EnemyPreviewSize * (scale * enemyAttackScale));
-                bool enemyMoving = slotProgress < combatStartProgress;
-                BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving);
+                    enemyPreviewSize);
+                float enemyAttackRemaining = i < enemyAttackVisualRemainings.Count ? enemyAttackVisualRemainings[i] : 0f;
+                Vector2 enemyMotionOffset = ResolvePresentationMotionOffset(i, false, enemyPose, enemyAttackRemaining, enemyAttackRange >= RangedAttackThreshold);
                 SetImageSprite(image, SelectEnemyPreviewSprite(i, enemyMoving));
                 BattleFacingDirection enemySourceFacing = BattleVisualResolver.ResolveEnemyFacing(currentPreviewEnemyData, enemyPose);
                 image.rectTransform.localScale = ResolveFacingScale(enemySourceFacing, BattleFacingDirection.Left);
+                ApplyPreviewMotion(image, enemyMotionOffset);
 
                 Color color = image.color;
                 color.a = alpha;
@@ -1524,18 +1693,21 @@ namespace WitchTower.Battle
                 UpdatePreviewHpBar(
                     i < enemyPreviewHpBars.Count ? enemyPreviewHpBars[i] : null,
                     MapBattlefieldAnchor(anchor),
-                    EnemyPreviewSize * (scale * enemyAttackScale),
+                    enemyPreviewSize,
                     shouldShow && enemyMaxHp > 0,
                     alpha,
                     enemyCurrentHp,
                     enemyMaxHp,
-                    new Color(0.96f, 0.44f, 0.40f, 0.95f));
+                    new Color(0.96f, 0.44f, 0.40f, 0.95f),
+                    enemyMotionOffset);
             }
 
             if (Application.isPlaying && stateMachine != null)
             {
                 stateMachine.SetEngagedEnemyCount(engagedEnemyPreviewCount);
             }
+
+            ArrangeMonsterPreviewLayers();
         }
 
         private static Image CreatePreviewImage(string objectName, Transform parent)
@@ -1576,20 +1748,23 @@ namespace WitchTower.Battle
                     ? 1f - Mathf.Clamp01(allyDefeatRemaining / AllyDefeatVanishDuration)
                     : 0f;
                 float allyScale = allyAlive ? 1f : Mathf.Lerp(1f, 0.24f, allyVanishT);
-                float allyAttackScale = IsAllyAttackVisualActive(i) ? AttackPreviewScaleMultiplier : 1f;
-
+                MonsterDataSO allyData = i < allyPreviewMonsterData.Count ? allyPreviewMonsterData[i] : null;
+                float allyApproachT = allyMoving ? 0f : 1f;
+                BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT);
+                Vector2 allyPreviewSize = AllyPreviewSize * (allyScale * ResolveMonsterPreviewScale(allyData, allyPose));
                 ApplyPreviewImageLayout(
                     allyPreviewImages[i],
                     MapBattlefieldAnchor(allyAnchor),
-                    AllyPreviewSize * (allyScale * allyAttackScale));
+                    allyPreviewSize);
 
-                MonsterDataSO allyData = i < allyPreviewMonsterData.Count ? allyPreviewMonsterData[i] : null;
-                float allyApproachT = allyMoving ? 0f : 1f;
                 Sprite allySprite = SelectAllyPreviewSprite(i, allyApproachT);
                 SetImageSprite(allyPreviewImages[i], allySprite);
-                BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT);
+                float allyAttackRemaining = i < allyAttackVisualRemainings.Count ? allyAttackVisualRemainings[i] : 0f;
+                float allyAttackRange = i < allyAttackRanges.Count ? allyAttackRanges[i] : 1f;
+                Vector2 allyMotionOffset = ResolvePresentationMotionOffset(i, true, allyPose, allyAttackRemaining, allyAttackRange >= RangedAttackThreshold);
                 BattleFacingDirection allySourceFacing = BattleVisualResolver.ResolveMonsterFacing(allyData, allyPose);
                 allyPreviewImages[i].rectTransform.localScale = ResolveFacingScale(allySourceFacing, BattleFacingDirection.Right);
+                ApplyPreviewMotion(allyPreviewImages[i], allyMotionOffset);
                 Color allyColor = allyPreviewImages[i].color;
                 allyColor.a = allyAlive ? 1f : Mathf.Clamp01(1f - allyVanishT);
                 allyPreviewImages[i].color = allyColor;
@@ -1597,12 +1772,13 @@ namespace WitchTower.Battle
                 UpdatePreviewHpBar(
                     i < allyPreviewHpBars.Count ? allyPreviewHpBars[i] : null,
                     MapBattlefieldAnchor(allyAnchor),
-                    AllyPreviewSize * (allyScale * allyAttackScale),
+                    allyPreviewSize,
                     simulator.HasAllyRuntime(i),
                     allyColor.a,
                     simulator.GetAllyCurrentHp(i),
                     simulator.GetAllyMaxHp(i),
-                    new Color(0.28f, 0.88f, 0.66f, 0.95f));
+                    new Color(0.28f, 0.88f, 0.66f, 0.95f),
+                    allyMotionOffset);
             }
 
             for (int i = 0; i < enemyPreviewImages.Count; i += 1)
@@ -1628,14 +1804,17 @@ namespace WitchTower.Battle
                     ? 1f - Mathf.Clamp01(enemyDefeatRemaining / EnemyDefeatVanishDuration)
                     : 0f;
                 float scale = Mathf.Lerp(1f, 0.24f, enemyVanishT);
-                float enemyAttackScale = IsEnemyAttackVisualActive(i) ? AttackPreviewScaleMultiplier : 1f;
-                Vector2 previewSize = (simulator.IsBossWave && i == 0 ? BossPreviewSize : EnemyPreviewSize) * (scale * enemyAttackScale);
+                BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving);
+                float enemyPreviewScale = ResolveEnemyPreviewScale(currentPreviewEnemyData, enemyPose);
+                Vector2 previewSize = (simulator.IsBossWave && i == 0 ? BossPreviewSize : EnemyPreviewSize) * (scale * enemyPreviewScale);
                 ApplyPreviewImageLayout(image, MapBattlefieldAnchor(enemyAnchor), previewSize);
 
                 SetImageSprite(image, SelectEnemyPreviewSprite(i, enemyMoving));
-                BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving);
+                float enemyAttackRemaining = i < enemyAttackVisualRemainings.Count ? enemyAttackVisualRemainings[i] : 0f;
+                Vector2 enemyMotionOffset = ResolvePresentationMotionOffset(i, false, enemyPose, enemyAttackRemaining, enemyAttackRange >= RangedAttackThreshold);
                 BattleFacingDirection enemySourceFacing = BattleVisualResolver.ResolveEnemyFacing(currentPreviewEnemyData, enemyPose);
                 image.rectTransform.localScale = ResolveFacingScale(enemySourceFacing, BattleFacingDirection.Left);
+                ApplyPreviewMotion(image, enemyMotionOffset);
                 Color color = image.color;
                 color.a = 1f - enemyVanishT;
                 image.color = color;
@@ -1648,13 +1827,16 @@ namespace WitchTower.Battle
                     color.a,
                     simulator.GetEnemyCurrentHp(i),
                     simulator.GetEnemyMaxHp(i),
-                    new Color(0.96f, 0.44f, 0.40f, 0.95f));
+                    new Color(0.96f, 0.44f, 0.40f, 0.95f),
+                    enemyMotionOffset);
             }
 
             if (stateMachine != null)
             {
                 stateMachine.SetEngagedEnemyCount(simulator.CurrentEngagedEnemyCount);
             }
+
+            ArrangeMonsterPreviewLayers();
         }
 
         private PreviewHpBar CreatePreviewHpBar(string objectName, Transform parent)
@@ -1713,7 +1895,7 @@ namespace WitchTower.Battle
             };
         }
 
-        private void UpdatePreviewHpBar(PreviewHpBar hpBar, Vector2 anchor, Vector2 previewSize, bool visible, float allyColorAlpha, int currentHp, int maxHp, Color fillColor)
+        private void UpdatePreviewHpBar(PreviewHpBar hpBar, Vector2 anchor, Vector2 previewSize, bool visible, float allyColorAlpha, int currentHp, int maxHp, Color fillColor, Vector2 motionOffset = default)
         {
             if (hpBar == null || hpBar.Root == null)
             {
@@ -1729,7 +1911,7 @@ namespace WitchTower.Battle
             hpBar.Root.gameObject.SetActive(true);
             hpBar.Root.anchorMin = anchor;
             hpBar.Root.anchorMax = anchor;
-            hpBar.Root.anchoredPosition = new Vector2(0f, (previewSize.y * 0.60f) + 12f);
+            hpBar.Root.anchoredPosition = motionOffset + new Vector2(0f, (previewSize.y * 0.60f) + 12f);
             hpBar.Root.sizeDelta = new Vector2(Mathf.Clamp(previewSize.x * 0.82f, 34f, 88f), PreviewHpBarSize.y);
 
             float alpha = Mathf.Clamp01(allyColorAlpha);
@@ -1774,7 +1956,13 @@ namespace WitchTower.Battle
 
         private void TrySpawnRangedAttackEffect(BattleHitInfo hitInfo)
         {
-            if (!minimalMonsterPresentation || !Application.isPlaying || !IsRangedAttackHit(hitInfo))
+            if (!minimalMonsterPresentation || !Application.isPlaying)
+            {
+                return;
+            }
+
+            DragonAttackEffectDefinition dragonEffect = ResolveDragonAttackEffect(hitInfo);
+            if (dragonEffect == null && !IsRangedAttackHit(hitInfo))
             {
                 return;
             }
@@ -1782,8 +1970,13 @@ namespace WitchTower.Battle
             EnsureMinimalCanvas();
             EnsureRangedEffectRoot();
 
-            BattleAttackEffectProfileSO profile = ResolveAttackEffectProfile(hitInfo);
+            BattleAttackEffectProfileSO profile = dragonEffect != null ? null : ResolveAttackEffectProfile(hitInfo);
             if (!TryResolveRangedAttackEndpoints(hitInfo, profile, out Vector2 startPosition, out Vector2 endPosition))
+            {
+                return;
+            }
+
+            if (dragonEffect != null && SpawnDragonAttackEffect(dragonEffect, startPosition, endPosition, hitInfo.TargetIsPlayer))
             {
                 return;
             }
@@ -1814,7 +2007,7 @@ namespace WitchTower.Battle
                     endPosition,
                     projectileDuration,
                     arcHeight,
-                    ResolveSpriteBaseSize(profile.projectileSprite, scale, 34f),
+                    ResolveSpriteBaseSize(profile.projectileSprite, scale, 46f),
                     Mathf.Max(0f, profile.projectileDelay));
             }
 
@@ -1827,9 +2020,9 @@ namespace WitchTower.Battle
                         tint,
                         endPosition + profile.warningAirOffset,
                         Mathf.Max(0.08f, profile.projectileDelay),
-                        ResolveSpriteBaseSize(profile.warningAirSprite, scale, 78f),
+                        ResolveSpriteBaseSize(profile.warningAirSprite, scale, 108f),
                         0f,
-                        0.92f);
+                        1.08f);
                 }
 
                 if (profile.HasWarningGroundSprite)
@@ -1839,9 +2032,9 @@ namespace WitchTower.Battle
                         tint,
                         endPosition + profile.warningGroundOffset,
                         Mathf.Max(0.08f, profile.projectileDelay),
-                        ResolveSpriteBaseSize(profile.warningGroundSprite, scale, 88f),
+                        ResolveSpriteBaseSize(profile.warningGroundSprite, scale, 118f),
                         0f,
-                        0.92f);
+                        1.08f);
                 }
 
                 if (profile.HasProjectileSprite)
@@ -1853,7 +2046,7 @@ namespace WitchTower.Battle
                         endPosition,
                         Mathf.Max(0.05f, profile.projectileDuration),
                         0f,
-                        ResolveSpriteBaseSize(profile.projectileSprite, scale, 86f),
+                        ResolveSpriteBaseSize(profile.projectileSprite, scale, 112f),
                         Mathf.Max(0f, profile.projectileDelay));
                 }
             }
@@ -1865,9 +2058,9 @@ namespace WitchTower.Battle
                     tint,
                     endPosition + profile.targetOffset,
                     Mathf.Max(0f, profile.impactDelay),
-                    ResolveSpriteBaseSize(profile.impactSprite, scale, 70f),
+                    ResolveSpriteBaseSize(profile.impactSprite, scale, 108f),
                     0f,
-                    0.60f);
+                    1.18f);
             }
 
             if (profile.HasHitOverlaySprite)
@@ -1877,9 +2070,9 @@ namespace WitchTower.Battle
                     tint,
                     endPosition + profile.targetOffset,
                     Mathf.Max(0f, profile.hitOverlayDelay),
-                    ResolveSpriteBaseSize(profile.hitOverlaySprite, scale, 64f),
-                    Mathf.Max(0.10f, profile.loopDuration),
-                    0.78f);
+                    ResolveSpriteBaseSize(profile.hitOverlaySprite, scale, 96f),
+                    Mathf.Max(0.14f, profile.loopDuration),
+                    1.10f);
             }
         }
 
@@ -1911,6 +2104,11 @@ namespace WitchTower.Battle
                 float normalized = effect.Duration > 0f
                     ? Mathf.Clamp01(activeElapsed / effect.Duration)
                     : 1f;
+                if (effect.Frames != null && effect.Frames.Count > 0)
+                {
+                    int frameIndex = Mathf.Clamp(Mathf.FloorToInt(normalized * effect.Frames.Count), 0, effect.Frames.Count - 1);
+                    effect.Image.sprite = effect.Frames[frameIndex];
+                }
 
                 Vector2 currentPosition = effect.UseArcMovement
                     ? Vector2.Lerp(effect.StartPosition, effect.EndPosition, normalized)
@@ -1935,12 +2133,15 @@ namespace WitchTower.Battle
                     fadeProgress = normalized;
                 }
 
-                effect.RectTransform.sizeDelta = Vector2.one * Mathf.Lerp(effect.BaseSize, effect.BaseSize * effect.FadeOutScale, fadeProgress);
+                float pulseStrength = effect.UseArcMovement ? 0.12f : 0.22f;
+                float pulseScale = 1f + (Mathf.Sin(normalized * Mathf.PI) * pulseStrength);
+                float resolvedSize = Mathf.Lerp(effect.BaseSize, effect.BaseSize * effect.FadeOutScale, fadeProgress) * pulseScale;
+                effect.RectTransform.sizeDelta = Vector2.one * resolvedSize;
 
                 float glow = 1f - Mathf.Abs((normalized * 2f) - 1f);
                 Color color = effect.BaseColor;
-                color.a = Mathf.Lerp(0.95f, 0.15f, fadeProgress);
-                color = Color.Lerp(color, Color.white, glow * 0.22f);
+                color.a = Mathf.Lerp(1f, 0.12f, fadeProgress);
+                color = Color.Lerp(color, Color.white, glow * 0.34f);
                 effect.Image.color = color;
 
                 if (normalized < 1f)
@@ -1965,6 +2166,53 @@ namespace WitchTower.Battle
             }
 
             activeRangedAttackEffects.Clear();
+        }
+
+        private DragonAttackEffectDefinition ResolveDragonAttackEffect(BattleHitInfo hitInfo)
+        {
+            if (hitInfo.TargetIsPlayer || hitInfo.AttackerIndex < 0 || hitInfo.AttackerIndex >= allyPreviewMonsterData.Count)
+            {
+                return null;
+            }
+
+            MonsterDataSO attackerData = allyPreviewMonsterData[hitInfo.AttackerIndex];
+            if (attackerData == null || string.IsNullOrEmpty(attackerData.monsterId))
+            {
+                return null;
+            }
+
+            return DragonAttackEffects.TryGetValue(attackerData.monsterId, out DragonAttackEffectDefinition definition)
+                ? definition
+                : null;
+        }
+
+        private bool SpawnDragonAttackEffect(DragonAttackEffectDefinition definition, Vector2 startPosition, Vector2 endPosition, bool targetIsPlayer)
+        {
+            if (definition == null || string.IsNullOrEmpty(definition.ResourcePath))
+            {
+                return false;
+            }
+
+            List<Sprite> frames = BattleVisualResolver.ResolveSpriteFramesFromResourcePath(definition.ResourcePath);
+            if (frames == null || frames.Count == 0)
+            {
+                return false;
+            }
+
+            float direction = targetIsPlayer ? -1f : 1f;
+            Vector2 projectileStart = startPosition + new Vector2(definition.StartOffset.x * direction, definition.StartOffset.y);
+            Vector2 projectileEnd = endPosition + new Vector2(definition.TargetOffset.x * direction, definition.TargetOffset.y);
+            SpawnAnimatedMovingRangedAttackEffect(
+                frames,
+                definition.Tint,
+                projectileStart,
+                projectileEnd,
+                definition.StartDelay,
+                definition.ArcHeight,
+                ResolveSpriteBaseSize(frames[0], definition.Scale, 92f),
+                definition.Duration,
+                definition.FadeOutScale);
+            return true;
         }
 
         private bool IsRangedAttackHit(BattleHitInfo hitInfo)
@@ -2137,7 +2385,7 @@ namespace WitchTower.Battle
                 endPosition,
                 Mathf.Lerp(0.12f, 0.22f, Mathf.Clamp01(distance / 520f)),
                 Mathf.Lerp(16f, 42f, Mathf.Clamp01(distance / 480f)),
-                Mathf.Lerp(22f, 34f, Mathf.Clamp01(distance / 540f)),
+                Mathf.Lerp(34f, 54f, Mathf.Clamp01(distance / 540f)),
                 0f);
         }
 
@@ -2172,6 +2420,70 @@ namespace WitchTower.Battle
             });
         }
 
+        private void SpawnAnimatedMovingRangedAttackEffect(
+            List<Sprite> frames,
+            Color tint,
+            Vector2 startPosition,
+            Vector2 endPosition,
+            float startDelay,
+            float arcHeight,
+            float baseSize,
+            float duration,
+            float fadeOutScale)
+        {
+            if (frames == null || frames.Count == 0 || frames[0] == null)
+            {
+                return;
+            }
+
+            Image image = CreateRangedEffectImage(frames[0], tint);
+            activeRangedAttackEffects.Add(new ActiveRangedAttackEffect
+            {
+                Image = image,
+                RectTransform = image.rectTransform,
+                BaseColor = tint,
+                StartPosition = startPosition,
+                EndPosition = endPosition,
+                Duration = Mathf.Max(0.08f, duration),
+                ArcHeight = arcHeight,
+                BaseSize = Mathf.Max(8f, baseSize),
+                StartDelay = Mathf.Max(0f, startDelay),
+                FadeOutScale = Mathf.Clamp(fadeOutScale, 0.4f, 1.35f),
+                UseArcMovement = true,
+                Frames = frames
+            });
+        }
+
+        private void SpawnAnimatedStaticRangedAttackEffect(
+            List<Sprite> frames,
+            Color tint,
+            Vector2 position,
+            float startDelay,
+            float baseSize,
+            float duration,
+            float fadeOutScale)
+        {
+            if (frames == null || frames.Count == 0 || frames[0] == null)
+            {
+                return;
+            }
+
+            Image image = CreateRangedEffectImage(frames[0], tint);
+            activeRangedAttackEffects.Add(new ActiveRangedAttackEffect
+            {
+                Image = image,
+                RectTransform = image.rectTransform,
+                BaseColor = tint,
+                StaticPosition = position,
+                Duration = Mathf.Max(0.08f, duration),
+                BaseSize = Mathf.Max(8f, baseSize),
+                StartDelay = Mathf.Max(0f, startDelay),
+                FadeOutScale = Mathf.Clamp(fadeOutScale, 0.4f, 1.35f),
+                UseArcMovement = false,
+                Frames = frames
+            });
+        }
+
         private void SpawnStaticRangedAttackEffect(
             Sprite sprite,
             Color tint,
@@ -2196,7 +2508,7 @@ namespace WitchTower.Battle
                 Duration = Mathf.Max(0.08f, sustainDuration <= 0f ? 0.18f : sustainDuration),
                 BaseSize = Mathf.Max(8f, baseSize),
                 StartDelay = Mathf.Max(0f, startDelay),
-                FadeOutScale = Mathf.Clamp(fadeOutScale, 0.4f, 1f),
+                FadeOutScale = Mathf.Clamp(fadeOutScale, 0.4f, 1.35f),
                 UseArcMovement = false
             });
         }
@@ -2224,13 +2536,13 @@ namespace WitchTower.Battle
         {
             if (sprite == null)
             {
-                return fallbackSize * scale;
+                return fallbackSize * scale * AttackEffectGlobalScale;
             }
 
             Rect rect = sprite.rect;
             float longestSide = Mathf.Max(rect.width, rect.height);
-            float normalizedSize = Mathf.Lerp(36f, 110f, Mathf.Clamp01(longestSide / 512f));
-            return normalizedSize * scale;
+            float normalizedSize = Mathf.Lerp(44f, 148f, Mathf.Clamp01(longestSide / 512f));
+            return normalizedSize * scale * AttackEffectGlobalScale;
         }
 
         private static Color ResolveFallbackRangedAttackEffectColor(MonsterDamageType damageType, bool isPlayerSide)
@@ -2334,14 +2646,22 @@ namespace WitchTower.Battle
                 canvasRect.offsetMin = Vector2.zero;
                 canvasRect.offsetMax = Vector2.zero;
 
-                Canvas canvas = minimalCanvasRoot.GetComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            }
 
-                CanvasScaler scaler = minimalCanvasRoot.GetComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1080f, 1920f);
-                scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-                scaler.matchWidthOrHeight = 0.5f;
+            Canvas canvasComponent = minimalCanvasRoot.GetComponent<Canvas>();
+            if (canvasComponent != null)
+            {
+                canvasComponent.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvasComponent.pixelPerfect = true;
+            }
+
+            CanvasScaler canvasScaler = minimalCanvasRoot.GetComponent<CanvasScaler>();
+            if (canvasScaler != null)
+            {
+                canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                canvasScaler.referenceResolution = new Vector2(1080f, 1920f);
+                canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+                canvasScaler.matchWidthOrHeight = 0.5f;
             }
 
             Transform backdropTransform = minimalCanvasRoot.transform.Find("Backdrop");
@@ -2545,17 +2865,17 @@ namespace WitchTower.Battle
 
                 if (waveEnemyCountText == null)
                 {
-                    waveEnemyCountText = waveHudRoot.transform.Find("EnemyCountText")?.GetComponent<Text>();
+                    waveEnemyCountText = ResolveLegacyHudText("EnemyCountText", TextAnchor.MiddleRight, 34);
                 }
 
                 if (waveTitleText == null)
                 {
-                    waveTitleText = waveHudRoot.transform.Find("WaveTitleText")?.GetComponent<Text>();
+                    waveTitleText = ResolveLegacyHudText("WaveTitleText", TextAnchor.MiddleLeft, 28);
                 }
 
                 if (battleStatusText == null)
                 {
-                    battleStatusText = waveHudRoot.transform.Find("BattleStatusText")?.GetComponent<Text>();
+                    battleStatusText = ResolveLegacyHudText("BattleStatusText", TextAnchor.MiddleCenter, 44);
                 }
 
                 if (waveEnemyCountText == null)
@@ -2636,6 +2956,49 @@ namespace WitchTower.Battle
             text.fontSize = fontSize;
             text.fontStyle = FontStyle.Bold;
             text.font = ResolveBuiltinUiFont();
+            text.raycastTarget = false;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            return text;
+        }
+
+        private Text ResolveLegacyHudText(string objectName, TextAnchor alignment, int fontSize)
+        {
+            if (waveHudRoot == null)
+            {
+                return null;
+            }
+
+            Transform child = waveHudRoot.transform.Find(objectName);
+            if (child == null)
+            {
+                return null;
+            }
+
+            TMP_Text tmp = child.GetComponent<TMP_Text>();
+            if (tmp != null)
+            {
+#if UNITY_EDITOR
+                DestroyImmediate(tmp);
+#else
+                Destroy(tmp);
+#endif
+            }
+
+            Text text = child.GetComponent<Text>();
+            if (text == null)
+            {
+                text = child.gameObject.AddComponent<Text>();
+            }
+
+            text.alignment = alignment;
+            text.color = Color.white;
+            text.fontSize = fontSize;
+            text.fontStyle = FontStyle.Bold;
+            text.font = ResolveBuiltinUiFont();
+            text.raycastTarget = false;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
             return text;
         }
 
@@ -2682,6 +3045,7 @@ namespace WitchTower.Battle
                 titleRect.offsetMax = Vector2.zero;
                 waveTitleText.alignment = TextAnchor.MiddleLeft;
                 waveTitleText.fontSize = 28;
+                waveTitleText.fontStyle = FontStyle.Bold;
                 waveTitleText.color = Color.white;
             }
 
@@ -3161,20 +3525,6 @@ namespace WitchTower.Battle
                 }
             }
 
-            for (int i = pendingHitReactions.Count - 1; i >= 0; i -= 1)
-            {
-                PendingHitReaction pending = pendingHitReactions[i];
-                pending.RemainingDelay -= deltaTime;
-                if (pending.RemainingDelay > 0f)
-                {
-                    pendingHitReactions[i] = pending;
-                    continue;
-                }
-
-                ApplyHitReaction(pending.HitInfo);
-                pendingHitReactions.RemoveAt(i);
-            }
-
             for (int i = 0; i < allyKnockbackRemainings.Count; i += 1)
             {
                 allyKnockbackRemainings[i] = Mathf.Max(0f, allyKnockbackRemainings[i] - deltaTime);
@@ -3306,40 +3656,11 @@ namespace WitchTower.Battle
             }
 
             TrySpawnRangedAttackEffect(hitInfo);
-
-            if (hitInfo.PresentationDelay > 0f)
-            {
-                pendingHitReactions.Add(new PendingHitReaction
-                {
-                    HitInfo = hitInfo,
-                    RemainingDelay = hitInfo.PresentationDelay
-                });
-                return;
-            }
-
-            ApplyHitReaction(hitInfo);
         }
 
         private void ApplyHitReaction(BattleHitInfo hitInfo)
         {
-            if (!hitInfo.CausesKnockback)
-            {
-                return;
-            }
-
-            if (hitInfo.TargetIsPlayer)
-            {
-                if (hitInfo.TargetIndex >= 0 && hitInfo.TargetIndex < allyKnockbackRemainings.Count)
-                {
-                    allyKnockbackRemainings[hitInfo.TargetIndex] = KnockbackDuration;
-                }
-                return;
-            }
-
-            if (hitInfo.TargetIndex >= 0 && hitInfo.TargetIndex < enemyKnockbackRemainings.Count)
-            {
-                enemyKnockbackRemainings[hitInfo.TargetIndex] = KnockbackDuration;
-            }
+            // Knockback has been removed from the battle presentation.
         }
 
         private void HandleEnemyDefeated(int remainingCount, int defeatedPreviewIndex)
@@ -3642,6 +3963,8 @@ namespace WitchTower.Battle
 
                 enemyPreviewHpBars[i] = CreatePreviewHpBar($"EnemyMonsterHp_{i + 1}", monsterPreviewRoot.transform);
             }
+
+            ArrangeMonsterPreviewLayers();
         }
 
         private PreviewHpBar CollectPreviewHpBar(Transform root)

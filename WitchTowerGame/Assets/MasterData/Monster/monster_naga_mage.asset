@@ -40,10 +40,10 @@ MonoBehaviour:
   illustrationSprite: {fileID: 0}
   portraitResourcePath: FamilyMonsters/Mage/Mage2
   illustrationResourcePath: 
-  battleIdleResourcePath: MonsterBattle/mon_family_mage_2
+  battleIdleResourcePath: MonsterBattle/mon_family_mage_2_idle
   battleIdleFacing: 0
-  battleMoveResourcePath: MonsterBattle/mon_family_mage_2
+  battleMoveResourcePath: MonsterBattle/mon_family_mage_2_move
   battleMoveFacing: 0
-  battleAttackResourcePath: MonsterBattle/mon_family_mage_2
+  battleAttackResourcePath: MonsterBattle/mon_family_mage_2_attack
   battleAttackFacing: 0
   description: A water-aligned caster that controls the field with serpent sorcery.

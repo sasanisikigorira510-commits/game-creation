@@ -18,6 +18,6 @@ MonoBehaviour:
   repeatRewardTableId: drop_common_floor
   monsterRecruitChance: 0.35
   recruitableMonsterIds:
-  - monster_dragoon
+  - monster_flare_drake
   - monster_vault_guard
   - monster_hell_knight

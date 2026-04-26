@@ -11,10 +11,11 @@ namespace WitchTower.Battle
     {
         private static readonly string[] DevPartyOverrideMonsterIds =
         {
-            "monster_death_mage_elf",
-            "monster_worm",
-            "monster_rock_golem"
+            "monster_flare_drake",
+            "monster_dragon_whelp",
+            "monster_abyss_dragon"
         };
+        private const string DevEnemyOverrideId = "enemy_slime";
         private static readonly float[] EnemyAttackSlotAngles =
         {
             0f,
@@ -33,11 +34,28 @@ namespace WitchTower.Battle
             0.04f,
             -0.04f
         };
+        private static readonly int[] EnemySpawnLanePattern =
+        {
+            2,
+            3,
+            1,
+            4,
+            2,
+            0,
+            5,
+            3,
+            1,
+            4,
+            2,
+            5
+        };
         private const float EnemySpawnX = 1.04f;
         private const float AllyMoveSpeed = 0.26f;
         private const float EnemyMoveSpeed = 0.42f;
         private const float AllyReturnSpeed = 0.34f;
         private const float EnemyReturnSpeed = 0.26f;
+        private const float MonsterMoveSpeedMultiplier = 0.34f;
+        private const float EnemySpawnIntervalMultiplier = 2.0f;
         private const float DefaultAllyCombatRadius = 0.035f;
         private const float DefaultEnemyCombatRadius = 0.037f;
         private const float RangeOffsetPadding = 0.012f;
@@ -62,12 +80,12 @@ namespace WitchTower.Battle
             public MonsterDataSO Data;
             public OwnedMonsterData OwnedMonster;
             public float AttackTimer;
-            public float AttackLockRemaining;
             public Vector2 HomeAnchor;
             public Vector2 PositionAnchor;
             public int TargetEnemyRuntimeId = -1;
             public float CombatRadius;
             public float AttackReachAnchor;
+            public float SearchReachAnchor;
             public float MoveSpeed;
             public bool IsMoving;
         }
@@ -79,7 +97,6 @@ namespace WitchTower.Battle
             public EnemyDataSO Data;
             public EnemyTraitRuntime Trait;
             public float AttackTimer;
-            public float AttackLockRemaining;
             public Vector2 HomeAnchor;
             public Vector2 PositionAnchor;
             public int TargetAllyRuntimeId = -1;
@@ -203,9 +220,9 @@ namespace WitchTower.Battle
                 return BattleResult.None;
             }
 
-            TickAttackLocks(deltaTime);
             TickEnemySpawns(deltaTime);
             TickUnitMovement(deltaTime);
+            skillSet ??= new BattleSkillSet();
             skillSet.Tick(deltaTime);
             TickGuard(deltaTime);
             TickAllyAttackers(deltaTime);
@@ -387,7 +404,6 @@ namespace WitchTower.Battle
             var result = DamageCalculator.Calculate(attacker.Stats, BuildCurrentPlayerDefenseSnapshot(targetAlly), ResolveEnemyDamageType(attacker.Data));
             int targetCount = Mathf.Min(ResolveEnemyNormalAttackTargetCount(attacker.Data), 1);
             int totalDamage = 0;
-            bool causesKnockback = ResolveEnemyNormalAttackAppliesKnockback(attacker.Data);
 
             for (int i = 0; i < targetCount; i += 1)
             {
@@ -401,11 +417,6 @@ namespace WitchTower.Battle
                 return;
             }
 
-            if (causesKnockback)
-            {
-                ApplyPlayerAttackKnockbackLock(targetIndex, ResolveEnemyKnockbackDuration(attacker.Data));
-            }
-
             ApplyEnemyLifeSteal(attacker, totalDamage);
             SyncPlayerAggregateState();
             NotifyAllyDefeatedIfNeeded(targetIndex, wasAlive);
@@ -414,7 +425,7 @@ namespace WitchTower.Battle
                 totalDamage,
                 result.IsCritical,
                 false,
-                causesKnockback,
+                false,
                 targetIndex,
                 attackerIndex,
                 ResolveEnemyPresentationDelay(attacker.Data)));
@@ -438,7 +449,6 @@ namespace WitchTower.Battle
 
             int totalDamage = 0;
             bool anyCritical = false;
-            bool causesKnockback = !isSkill && ResolvePlayerNormalAttackAppliesKnockback(attacker.Data);
             int primaryTargetIndex = targetIndices[0];
 
             for (int i = 0; i < targetIndices.Count; i += 1)
@@ -471,17 +481,12 @@ namespace WitchTower.Battle
                 return;
             }
 
-            if (causesKnockback)
-            {
-                ApplyEnemyAttackKnockbackLock(primaryTargetIndex, ResolvePlayerKnockbackDuration(attacker.Data));
-            }
-
             RaiseHitResolved(new BattleHitInfo(
                 false,
                 totalDamage,
                 anyCritical,
                 isSkill,
-                causesKnockback,
+                false,
                 primaryTargetIndex,
                 attackerIndex,
                 ResolvePlayerPresentationDelay(attacker.Data)));
@@ -496,31 +501,6 @@ namespace WitchTower.Battle
             }
 
             guardRemainingTime -= deltaTime;
-        }
-
-        private void TickAttackLocks(float deltaTime)
-        {
-            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
-            {
-                AllyRuntime ally = activeAllyRuntimes[i];
-                if (ally == null)
-                {
-                    continue;
-                }
-
-                ally.AttackLockRemaining = Mathf.Max(0f, ally.AttackLockRemaining - deltaTime);
-            }
-
-            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
-            {
-                EnemyRuntime enemy = activeEnemyRuntimes[i];
-                if (enemy == null)
-                {
-                    continue;
-                }
-
-                enemy.AttackLockRemaining = Mathf.Max(0f, enemy.AttackLockRemaining - deltaTime);
-            }
         }
 
         private void TickAllyAttackers(float deltaTime)
@@ -538,20 +518,14 @@ namespace WitchTower.Battle
                     continue;
                 }
 
-                if (attacker.AttackLockRemaining > 0f)
-                {
-                    attacker.AttackTimer = 0f;
-                    continue;
-                }
-
                 int targetIndex = ResolveAllyTargetEnemyIndex(attacker, i);
+                float interval = GetCurrentPlayerAttackInterval(attacker.Stats);
                 if (!CanAllyAttackTarget(attacker, targetIndex))
                 {
-                    attacker.AttackTimer = 0f;
+                    attacker.AttackTimer = Mathf.Min(attacker.AttackTimer + deltaTime, interval * 0.90f);
                     continue;
                 }
 
-                float interval = GetCurrentPlayerAttackInterval(attacker.Stats);
                 attacker.AttackTimer += deltaTime;
                 while (attacker.AttackTimer >= interval)
                 {
@@ -581,7 +555,10 @@ namespace WitchTower.Battle
                 {
                     ally.TargetEnemyRuntimeId = -1;
                     ally.IsMoving = false;
-                    ally.PositionAnchor = Vector2.MoveTowards(ally.PositionAnchor, ally.HomeAnchor, AllyReturnSpeed * deltaTime);
+                    ally.PositionAnchor = Vector2.MoveTowards(
+                        ally.PositionAnchor,
+                        ally.HomeAnchor,
+                        AllyReturnSpeed * MonsterMoveSpeedMultiplier * deltaTime);
                     continue;
                 }
 
@@ -594,12 +571,28 @@ namespace WitchTower.Battle
                 }
 
                 EnemyRuntime targetEnemy = activeEnemyRuntimes[targetEnemyIndex];
-                Vector2 targetAnchor = ResolveDesiredCombatAnchor(
-                    ally.PositionAnchor,
-                    targetEnemy.PositionAnchor,
-                    true,
-                    ally.CombatRadius + targetEnemy.CombatRadius + ally.AttackReachAnchor);
+                if (ShouldAllyHoldFormation(ally, targetEnemy))
+                {
+                    ally.PositionAnchor = MoveRuntimeTowards(ally.PositionAnchor, ally.HomeAnchor, ally.MoveSpeed, deltaTime, out bool allyHolding);
+                    ally.IsMoving = allyHolding;
+                    continue;
+                }
+
+                float desiredSeparation = ally.CombatRadius + targetEnemy.CombatRadius + ally.AttackReachAnchor;
+                Vector2 targetAnchor = IsMonsterMelee(ally.Data)
+                    ? ResolveDesiredCombatAnchor(
+                        ally.PositionAnchor,
+                        targetEnemy.PositionAnchor,
+                        true,
+                        desiredSeparation)
+                    : new Vector2(targetEnemy.PositionAnchor.x - desiredSeparation, ally.HomeAnchor.y);
+                targetAnchor.x += ResolveAllyCombatPressureAdvance(i, ally.Data);
                 targetAnchor = BattleFormationLayout.ClampAllyCombatAnchor(i, ally.Data, targetAnchor);
+                targetAnchor.x = Mathf.Max(targetAnchor.x, ally.PositionAnchor.x);
+                if (!IsMonsterMelee(ally.Data))
+                {
+                    targetAnchor.y = ally.HomeAnchor.y;
+                }
                 ally.PositionAnchor = MoveRuntimeTowards(ally.PositionAnchor, targetAnchor, ally.MoveSpeed, deltaTime, out bool allyMoving);
                 ally.IsMoving = allyMoving;
             }
@@ -616,7 +609,10 @@ namespace WitchTower.Battle
                 {
                     enemy.TargetAllyRuntimeId = -1;
                     enemy.IsMoving = false;
-                    enemy.PositionAnchor = Vector2.MoveTowards(enemy.PositionAnchor, enemy.HomeAnchor, EnemyReturnSpeed * deltaTime);
+                    enemy.PositionAnchor = Vector2.MoveTowards(
+                        enemy.PositionAnchor,
+                        enemy.HomeAnchor,
+                        EnemyReturnSpeed * MonsterMoveSpeedMultiplier * deltaTime);
                     continue;
                 }
 
@@ -636,6 +632,41 @@ namespace WitchTower.Battle
             }
 
             engagedEnemyCount = CountActuallyEngagedEnemies();
+        }
+
+        private static bool ShouldAllyHoldFormation(AllyRuntime ally, EnemyRuntime targetEnemy)
+        {
+            return !IsEnemyInsideAllySearchRange(ally, targetEnemy);
+        }
+
+        private static bool IsEnemyInsideAllySearchRange(AllyRuntime ally, EnemyRuntime enemy)
+        {
+            if (ally == null || enemy == null)
+            {
+                return false;
+            }
+
+            float enemyFrontX = enemy.PositionAnchor.x - enemy.CombatRadius;
+            float searchThresholdX = ally.HomeAnchor.x + Mathf.Max(ally.AttackReachAnchor, ally.SearchReachAnchor);
+            return enemyFrontX <= searchThresholdX + PositionEpsilon;
+        }
+
+        private static float ResolveAllyCombatPressureAdvance(int allyIndex, MonsterDataSO monsterData)
+        {
+            bool isRanged = monsterData != null && monsterData.rangeType == MonsterRangeType.Ranged;
+            bool isFrontline = allyIndex == 0 || allyIndex == 1;
+            bool isMidline = allyIndex == 2;
+            if (isFrontline)
+            {
+                return isRanged ? 0.03f : 0.04f;
+            }
+
+            if (isMidline)
+            {
+                return isRanged ? 0.02f : 0.03f;
+            }
+
+            return isRanged ? 0.015f : 0.02f;
         }
 
         private int ResolveEnemyQueueIndex(EnemyRuntime attacker, int attackerIndex, int targetAllyIndex)
@@ -750,12 +781,12 @@ namespace WitchTower.Battle
                     Data = monsterData,
                     OwnedMonster = ownedMonster,
                     AttackTimer = 0f,
-                    AttackLockRemaining = 0f,
                     HomeAnchor = homeAnchor,
                     PositionAnchor = homeAnchor,
                     CombatRadius = ResolveAllyCombatRadius(monsterData),
                     AttackReachAnchor = ResolveAllyAttackReach(monsterData),
-                    MoveSpeed = AllyMoveSpeed
+                    SearchReachAnchor = ResolveAllySearchReach(monsterData),
+                    MoveSpeed = AllyMoveSpeed * MonsterMoveSpeedMultiplier
                 });
             }
 
@@ -775,12 +806,12 @@ namespace WitchTower.Battle
                     Data = null,
                     OwnedMonster = null,
                     AttackTimer = 0f,
-                    AttackLockRemaining = 0f,
                     HomeAnchor = homeAnchor,
                     PositionAnchor = homeAnchor,
                     CombatRadius = ResolveAllyCombatRadius(null),
                     AttackReachAnchor = ResolveAllyAttackReach(null),
-                    MoveSpeed = AllyMoveSpeed
+                    SearchReachAnchor = ResolveAllySearchReach(null),
+                    MoveSpeed = AllyMoveSpeed * MonsterMoveSpeedMultiplier
                 });
             }
         }
@@ -796,7 +827,10 @@ namespace WitchTower.Battle
             if (lockedIndex >= 0)
             {
                 EnemyRuntime lockedEnemy = activeEnemyRuntimes[lockedIndex];
-                if (lockedEnemy != null && lockedEnemy.Stats != null && !lockedEnemy.Stats.IsDead())
+                if (lockedEnemy != null &&
+                    lockedEnemy.Stats != null &&
+                    !lockedEnemy.Stats.IsDead() &&
+                    IsEnemyInsideAllySearchRange(ally, lockedEnemy))
                 {
                     return lockedIndex;
                 }
@@ -809,9 +843,9 @@ namespace WitchTower.Battle
 
         private int ResolvePreferredEnemyTargetIndex(AllyRuntime ally, int allyIndex)
         {
-            Vector2 referenceAnchor = ally != null ? ally.HomeAnchor : ResolveAllyHomeAnchor(allyIndex);
+            Vector2 referenceAnchor = ally != null ? ally.PositionAnchor : ResolveAllyHomeAnchor(allyIndex);
             int bestIndex = -1;
-            float bestScore = float.MaxValue;
+            float bestDistance = float.MaxValue;
 
             for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
             {
@@ -821,12 +855,15 @@ namespace WitchTower.Battle
                     continue;
                 }
 
-                float xPressure = Mathf.Max(0f, enemy.PositionAnchor.x - referenceAnchor.x);
-                float yDistance = Mathf.Abs(enemy.PositionAnchor.y - referenceAnchor.y);
-                float score = (xPressure * 1.15f) + (yDistance * 1.70f);
-                if (score < bestScore)
+                if (!IsEnemyInsideAllySearchRange(ally, enemy))
                 {
-                    bestScore = score;
+                    continue;
+                }
+
+                float distance = Vector2.SqrMagnitude(enemy.PositionAnchor - referenceAnchor);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
                     bestIndex = i;
                 }
             }
@@ -945,6 +982,17 @@ namespace WitchTower.Battle
             return Mathf.Max(0f, BattleAttackRangeResolver.ToAllyHoldOffset(attackRange) + RangeOffsetPadding);
         }
 
+        private static float ResolveAllySearchReach(MonsterDataSO monsterData)
+        {
+            if (monsterData != null && monsterData.rangeType == MonsterRangeType.Ranged)
+            {
+                return 0.86f;
+            }
+
+            float searchRange = BattleAttackRangeResolver.ResolveMonsterSearchRange(monsterData);
+            return Mathf.Max(0f, BattleAttackRangeResolver.ToAllySearchOffset(searchRange));
+        }
+
         private static float ResolveEnemyAttackReach(EnemyDataSO enemyData)
         {
             float attackRange = BattleAttackRangeResolver.ResolveEnemyAttackRange(enemyData);
@@ -1000,6 +1048,11 @@ namespace WitchTower.Battle
             }
 
             float attackDistance = attacker.CombatRadius + target.CombatRadius + attacker.AttackReachAnchor + PositionEpsilon;
+            if (!IsMonsterMelee(attacker.Data))
+            {
+                return Mathf.Abs(attacker.PositionAnchor.x - target.PositionAnchor.x) <= attackDistance;
+            }
+
             return Vector2.Distance(attacker.PositionAnchor, target.PositionAnchor) <= attackDistance;
         }
 
@@ -1231,28 +1284,11 @@ namespace WitchTower.Battle
 
         private float ResolveEnemySpawnLaneY(int spawnIndex)
         {
-            var activeLaneYs = new List<float>();
-            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
-            {
-                AllyRuntime ally = activeAllyRuntimes[i];
-                if (ally == null || ally.Stats == null || ally.Stats.IsDead())
-                {
-                    continue;
-                }
-
-                activeLaneYs.Add(ally.HomeAnchor.y);
-            }
-
-            if (activeLaneYs.Count <= 0)
-            {
-                return ResolveEnemyLaneY(spawnIndex);
-            }
-
-            activeLaneYs.Sort((left, right) => right.CompareTo(left));
-            int laneIndex = Mathf.Abs(spawnIndex) % activeLaneYs.Count;
-            int laneCycle = Mathf.Abs(spawnIndex) / activeLaneYs.Count;
-            float offset = SingleLaneSpawnOffsets[Mathf.Abs(laneCycle) % SingleLaneSpawnOffsets.Length];
-            return Mathf.Clamp(activeLaneYs[laneIndex] + offset, 0.18f, 0.82f);
+            int safeSpawnIndex = Mathf.Max(0, spawnIndex);
+            int patternIndex = EnemySpawnLanePattern[safeSpawnIndex % EnemySpawnLanePattern.Length];
+            int laneCycle = safeSpawnIndex / EnemySpawnLanePattern.Length;
+            float offset = SingleLaneSpawnOffsets[laneCycle % SingleLaneSpawnOffsets.Length] * 0.34f;
+            return Mathf.Clamp(ResolveEnemyLaneY(patternIndex) + offset, 0.18f, 0.68f);
         }
 
         public bool IsAllyAlive(int index)
@@ -1440,9 +1476,12 @@ namespace WitchTower.Battle
 
         private float ResolveEnemySpawnInterval()
         {
+            float minInterval = 0.08f * EnemySpawnIntervalMultiplier;
+            float maxInterval = 0.30f * EnemySpawnIntervalMultiplier;
+
             if (isBossEncounter)
             {
-                return 0.12f;
+                return Mathf.Clamp(0.12f * EnemySpawnIntervalMultiplier, minInterval, maxInterval);
             }
 
             int activePartyCount = Mathf.Max(1, CurrentAliveAllyCount > 0 ? CurrentAliveAllyCount : activeAllyRuntimes.Count);
@@ -1484,7 +1523,7 @@ namespace WitchTower.Battle
                 interval *= 0.88f;
             }
 
-            return Mathf.Clamp(interval, 0.08f, 0.30f);
+            return Mathf.Clamp(interval * EnemySpawnIntervalMultiplier, minInterval, maxInterval);
         }
 
         private int ResolveOpeningSpawnBurst()
@@ -1564,7 +1603,7 @@ namespace WitchTower.Battle
 
         private void SpawnEnemyForCurrentEncounter()
         {
-            int spawnIndex = activeEnemyRuntimes.Count;
+            int spawnIndex = Mathf.Max(0, spawnedEnemiesInCurrentWave - 1);
             BattleUnitStats spawnedStats = CreateEnemyStats(currentFloor, IsBossWave, out EnemyTraitRuntime spawnedTrait, out EnemyDataSO spawnedData);
             Vector2 homeAnchor = new Vector2(EnemySpawnX, ResolveEnemySpawnLaneY(spawnIndex));
             var runtime = new EnemyRuntime
@@ -1574,13 +1613,12 @@ namespace WitchTower.Battle
                 Data = spawnedData,
                 Trait = spawnedTrait,
                 AttackTimer = 0f,
-                AttackLockRemaining = 0f,
                 HomeAnchor = homeAnchor,
                 PositionAnchor = homeAnchor,
                 TargetAllyRuntimeId = ResolveNearestAliveAllyRuntimeId(homeAnchor),
                 CombatRadius = ResolveEnemyCombatRadius(spawnedData),
                 AttackReachAnchor = ResolveEnemyAttackReach(spawnedData),
-                MoveSpeed = EnemyMoveSpeed
+                MoveSpeed = EnemyMoveSpeed * MonsterMoveSpeedMultiplier
             };
 
             activeEnemyRuntimes.Add(runtime);
@@ -1642,6 +1680,7 @@ namespace WitchTower.Battle
 
             defeatedEnemiesInCurrentWave += 1;
             activeEnemiesInCurrentWave = activeEnemyRuntimes.Count;
+            RetargetAlliesToNearestSearchableEnemies();
             SetEngagedEnemyCount(Mathf.Min(engagedEnemyCount, activeEnemiesInCurrentWave));
             EnemyDefeated?.Invoke(CurrentRemainingEnemyCount, removalIndex);
 
@@ -1665,6 +1704,21 @@ namespace WitchTower.Battle
             encounterSerial += 1;
             EncounterChanged?.Invoke();
             return true;
+        }
+
+        private void RetargetAlliesToNearestSearchableEnemies()
+        {
+            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
+            {
+                AllyRuntime ally = activeAllyRuntimes[i];
+                if (ally == null || ally.Stats == null || ally.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                int targetIndex = ResolvePreferredEnemyTargetIndex(ally, i);
+                ally.TargetEnemyRuntimeId = targetIndex >= 0 ? activeEnemyRuntimes[targetIndex].RuntimeId : -1;
+            }
         }
 
         private int ResolvePlayerAttackTargetIndex(MonsterDataSO attackerData)
@@ -1778,12 +1832,6 @@ namespace WitchTower.Battle
                     continue;
                 }
 
-                if (attacker.AttackLockRemaining > 0f)
-                {
-                    attacker.AttackTimer = 0f;
-                    continue;
-                }
-
                 int targetIndex = ResolveEnemyAttackTargetIndex(attacker, i);
                 if (!CanEnemyAttackTarget(attacker, i, targetIndex))
                 {
@@ -1826,7 +1874,6 @@ namespace WitchTower.Battle
             }
 
             ally.AttackTimer = 0f;
-            ally.AttackLockRemaining = 0f;
             AllyDefeated?.Invoke(allyIndex);
         }
 
@@ -1850,76 +1897,16 @@ namespace WitchTower.Battle
             return 1;
         }
 
-        private bool ResolveEnemyNormalAttackAppliesKnockback(EnemyDataSO enemyData)
-        {
-            return enemyData != null && enemyData.normalAttackAppliesKnockback;
-        }
-
-        private bool ResolvePlayerNormalAttackAppliesKnockback(MonsterDataSO monsterData)
-        {
-            return monsterData != null && monsterData.normalAttackAppliesKnockback;
-        }
-
-        private float ResolveEnemyKnockbackDuration(EnemyDataSO enemyData)
-        {
-            if (enemyData != null)
-            {
-                return Mathf.Max(0f, enemyData.normalAttackKnockbackDuration);
-            }
-
-            return 0f;
-        }
-
-        private float ResolvePlayerKnockbackDuration(MonsterDataSO monsterData)
-        {
-            if (monsterData != null)
-            {
-                return Mathf.Max(0f, monsterData.normalAttackKnockbackDuration);
-            }
-
-            return 0f;
-        }
-
-        private void ApplyPlayerAttackKnockbackLock(int allyIndex, float duration)
-        {
-            if (allyIndex < 0 || allyIndex >= activeAllyRuntimes.Count)
-            {
-                return;
-            }
-
-            AllyRuntime ally = activeAllyRuntimes[allyIndex];
-            if (ally == null)
-            {
-                return;
-            }
-
-            ally.AttackLockRemaining = Mathf.Max(ally.AttackLockRemaining, duration);
-            ally.AttackTimer = 0f;
-        }
-
-        private void ApplyEnemyAttackKnockbackLock(int enemyIndex, float duration)
-        {
-            if (enemyIndex < 0 || enemyIndex >= activeEnemyRuntimes.Count)
-            {
-                return;
-            }
-
-            EnemyRuntime enemy = activeEnemyRuntimes[enemyIndex];
-            if (enemy == null)
-            {
-                return;
-            }
-
-            enemy.AttackLockRemaining = Mathf.Max(enemy.AttackLockRemaining, duration);
-            enemy.AttackTimer = 0f;
-            enemyAttackTimer = activeEnemyRuntimes.Count > 0 ? activeEnemyRuntimes[0].AttackTimer : 0f;
-        }
-
         private BattleUnitStats CreateEnemyStats(int floor, bool isBossEncounter, out EnemyTraitRuntime runtime, out EnemyDataSO enemyData)
         {
             var masterDataManager = MasterDataManager.Instance;
             var floorData = masterDataManager != null ? masterDataManager.GetFloorData(floor) : null;
             enemyData = floorData != null ? floorData.enemyData : null;
+            EnemyDataSO devEnemyData = masterDataManager != null ? masterDataManager.GetEnemyData(DevEnemyOverrideId) : null;
+            if (devEnemyData != null)
+            {
+                enemyData = devEnemyData;
+            }
 
             if (enemyData == null)
             {

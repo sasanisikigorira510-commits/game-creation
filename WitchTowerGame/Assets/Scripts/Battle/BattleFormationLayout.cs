@@ -7,20 +7,20 @@ namespace WitchTower.Battle
     {
         public static readonly Vector2[] AllyHomeAnchors =
         {
-            new Vector2(0.09f, 0.26f),
-            new Vector2(0.15f, 0.34f),
-            new Vector2(0.09f, 0.44f),
-            new Vector2(0.05f, 0.30f),
-            new Vector2(0.05f, 0.40f)
+            new Vector2(0.53f, 0.30f),
+            new Vector2(0.53f, 0.44f),
+            new Vector2(0.30f, 0.37f),
+            new Vector2(0.18f, 0.24f),
+            new Vector2(0.18f, 0.50f)
         };
 
         public static readonly Vector2[] AllyAdvanceAnchors =
         {
-            new Vector2(0.22f, 0.26f),
-            new Vector2(0.27f, 0.34f),
-            new Vector2(0.22f, 0.44f),
-            new Vector2(0.16f, 0.30f),
-            new Vector2(0.16f, 0.40f)
+            new Vector2(0.53f, 0.30f),
+            new Vector2(0.53f, 0.44f),
+            new Vector2(0.30f, 0.37f),
+            new Vector2(0.18f, 0.24f),
+            new Vector2(0.18f, 0.50f)
         };
 
         public static readonly float[] EnemyLaneYAnchors =
@@ -67,12 +67,43 @@ namespace WitchTower.Battle
         {
             Vector2 homeAnchor = ResolveAllyHomeAnchor(allyIndex);
             bool isRanged = monsterData != null && monsterData.rangeType == MonsterRangeType.Ranged;
-            float maxAdvance = isRanged ? 0.14f : 0.22f;
-            float verticalLeash = isRanged ? 0.10f : 0.15f;
+            bool isDragon = IsDragonLineage(monsterData);
+            bool isFrontline = allyIndex == 0 || allyIndex == 1;
+            bool isMidline = allyIndex == 2;
+            float maxAdvance = isFrontline
+                ? (isRanged ? 0.24f : 0.18f)
+                : isMidline
+                    ? (isRanged ? 0.34f : 0.14f)
+                    : (isRanged ? 0.32f : 0.12f);
+            if (isDragon)
+            {
+                maxAdvance += isFrontline ? 0.04f : isMidline ? 0.12f : 0.08f;
+            }
+
+            float verticalLeash = isFrontline
+                ? (isRanged ? 0.18f : 0.16f)
+                : isMidline
+                    ? (isRanged ? 0.17f : 0.14f)
+                    : (isRanged ? 0.16f : 0.12f);
+            if (isDragon)
+            {
+                verticalLeash += isFrontline ? 0.03f : 0.04f;
+            }
 
             return new Vector2(
-                Mathf.Clamp(desiredAnchor.x, homeAnchor.x - 0.01f, homeAnchor.x + maxAdvance),
+                Mathf.Clamp(desiredAnchor.x, homeAnchor.x, homeAnchor.x + maxAdvance),
                 Mathf.Clamp(desiredAnchor.y, homeAnchor.y - verticalLeash, homeAnchor.y + verticalLeash));
+        }
+
+        private static bool IsDragonLineage(MonsterDataSO monsterData)
+        {
+            if (monsterData == null || string.IsNullOrEmpty(monsterData.monsterId))
+            {
+                return false;
+            }
+
+            string monsterId = monsterData.monsterId.ToLowerInvariant();
+            return monsterId.Contains("dragon") || monsterId.Contains("drake");
         }
     }
 }

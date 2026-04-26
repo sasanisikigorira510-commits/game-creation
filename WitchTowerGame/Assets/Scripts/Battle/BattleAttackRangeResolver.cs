@@ -6,6 +6,9 @@ namespace WitchTower.Battle
 {
     public static class BattleAttackRangeResolver
     {
+        private const float CombatReachOffsetPerRangeStep = 0.14f;
+        private const float MaxCombatReachOffset = 0.24f;
+
         private static readonly Dictionary<string, float> MonsterAttackRangeDefaults = new Dictionary<string, float>
         {
             { "monster_rock_golem", 0.95f },
@@ -18,6 +21,9 @@ namespace WitchTower.Battle
             { "monster_worm", 0.90f },
             { "monster_naga", 1.20f },
             { "monster_dragoon", 1.30f },
+            { "monster_dragon_whelp", 1.05f },
+            { "monster_flare_drake", 1.30f },
+            { "monster_abyss_dragon", 2.25f },
             { "monster_bat", 1.75f },
             { "monster_bee", 1.60f },
             { "monster_centaur", 2.00f },
@@ -80,12 +86,12 @@ namespace WitchTower.Battle
 
         public static float ToAllyHoldOffset(float attackRange)
         {
-            return Mathf.Clamp((attackRange - 1.0f) * 0.075f, 0f, 0.16f);
+            return ResolveCombatReachOffset(attackRange);
         }
 
         public static float ToEnemyHoldOffset(float attackRange)
         {
-            return Mathf.Clamp((attackRange - 1.0f) * 0.075f, 0f, 0.16f);
+            return ResolveCombatReachOffset(attackRange);
         }
 
         public static float ResolveMonsterSearchRange(MonsterDataSO monsterData)
@@ -104,6 +110,18 @@ namespace WitchTower.Battle
         public static float ToEnemySearchOffset(float searchRange)
         {
             return Mathf.Clamp((searchRange - 1.0f) * 0.065f, 0.08f, 0.24f);
+        }
+
+        public static float ToAllySearchOffset(float searchRange)
+        {
+            return Mathf.Clamp((searchRange - 1.0f) * 0.24f, 0.28f, 0.62f);
+        }
+
+        private static float ResolveCombatReachOffset(float attackRange)
+        {
+            // The battle field uses normalized anchors, so ranged units need a bigger
+            // world-space offset than the raw attackRange number suggests.
+            return Mathf.Clamp((attackRange - 1.0f) * CombatReachOffsetPerRangeStep, 0f, MaxCombatReachOffset);
         }
 
         public static float ResolveCombatSearchProgress(IReadOnlyList<float> allySearchRanges, float enemySearchRange)

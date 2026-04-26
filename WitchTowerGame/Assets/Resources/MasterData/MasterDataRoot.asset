@@ -16,8 +16,11 @@ MonoBehaviour:
   monsterDataList:
   - {fileID: 11400000, guid: e38c28c7595044a983e286d6dae622e5, type: 2}
   - {fileID: 11400000, guid: 088cc4a6c1834733965bb9f6f9e6646a, type: 2}
+  - {fileID: 11400000, guid: 53af22bdb89e4572ad3ad2063003d0d5, type: 2}
+  - {fileID: 11400000, guid: a74b548ea1ee4879b3909899448cabc7, type: 2}
   - {fileID: 11400000, guid: a2abfa27e4494169af384f16b8a3bbdc, type: 2}
   - {fileID: 11400000, guid: a371c518fbed4dc8a00a9f19ebf6b2c0, type: 2}
+  - {fileID: 11400000, guid: b87e65904e86432d806a396f5ec8452d, type: 2}
   - {fileID: 11400000, guid: 75699fa21be74463a43003e91a8b9519, type: 2}
   - {fileID: 11400000, guid: b5324b736943452b85cd680d7a42610f, type: 2}
   - {fileID: 11400000, guid: 4f0bd33a73284b629b48e46265f1078b, type: 2}
@@ -29,7 +32,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ba588cfb136740d98ad8429ec2e097ac, type: 2}
   - {fileID: 11400000, guid: bdfe1b921cd449aba57de79ea568b507, type: 2}
   - {fileID: 11400000, guid: 963012703f674189be801aa578a99ab3, type: 2}
-  - {fileID: 11400000, guid: 5a3f3ef0f72b4e4492e2ac70ce659f93, type: 2}
   - {fileID: 11400000, guid: 8a87efa31a6c46319138fd2c5f0a473c, type: 2}
   enemyDataList:
   - {fileID: 11400000, guid: c84bd75f92d78dc4db72767294c83c05, type: 2}

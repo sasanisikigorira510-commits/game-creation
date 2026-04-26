@@ -10,13 +10,20 @@ namespace WitchTower.Data
     public static class PrototypePartyBootstrapService
     {
         private const int DefaultPartySize = 5;
+        private static readonly string[] RequiredPreviewMonsterIds =
+        {
+            "monster_flare_drake",
+            "monster_dragon_whelp",
+            "monster_abyss_dragon"
+        };
+
         private static readonly string[] PrototypePartyMonsterIds =
         {
-            "monster_worm",
+            "monster_flare_drake",
+            "monster_dragon_whelp",
+            "monster_abyss_dragon",
             "monster_rock_golem",
-            "monster_death_mage_elf",
-            "monster_centaur",
-            "monster_wraith"
+            "monster_death_mage_elf"
         };
 
         public static bool EnsureParty(PlayerProfile profile, int desiredPartyCount = DefaultPartySize)
@@ -36,18 +43,18 @@ namespace WitchTower.Data
 
             bool changed = false;
             List<string> validPartyIds = ResolveValidPartyIds(profile);
+            foreach (string monsterId in PrototypePartyMonsterIds)
+            {
+                OwnedMonsterData ensuredMonster = EnsureOwnedMonster(profile, masterDataManager, monsterId, out bool addedMonster);
+                changed |= addedMonster;
+                if (ensuredMonster != null)
+                {
+                    profile.MarkMonsterDexOwned(ensuredMonster.MonsterId);
+                }
+            }
+
             if (profile.OwnedMonsters.Count < targetCount || validPartyIds.Count < targetCount)
             {
-                foreach (string monsterId in PrototypePartyMonsterIds)
-                {
-                    OwnedMonsterData ensuredMonster = EnsureOwnedMonster(profile, masterDataManager, monsterId, out bool addedMonster);
-                    changed |= addedMonster;
-                    if (ensuredMonster != null)
-                    {
-                        profile.MarkMonsterDexOwned(ensuredMonster.MonsterId);
-                    }
-                }
-
                 MonsterDataSO[] allMonsterData = masterDataManager.GetAllMonsterData();
                 if (allMonsterData != null)
                 {
@@ -72,7 +79,8 @@ namespace WitchTower.Data
                 validPartyIds = ResolveValidPartyIds(profile);
             }
 
-            List<string> resolvedPartyIds = BuildResolvedPartyIds(profile, validPartyIds, targetCount);
+            bool shouldPrioritizePreviewParty = IsMissingRequiredPreviewMonster(profile, validPartyIds);
+            List<string> resolvedPartyIds = BuildResolvedPartyIds(profile, validPartyIds, targetCount, shouldPrioritizePreviewParty);
             if (!profile.PartyMonsterInstanceIds.SequenceEqual(resolvedPartyIds))
             {
                 profile.SetPartyMonsterIds(resolvedPartyIds);
@@ -100,7 +108,27 @@ namespace WitchTower.Data
             return result;
         }
 
-        private static List<string> BuildResolvedPartyIds(PlayerProfile profile, List<string> validPartyIds, int targetCount)
+        private static bool IsMissingRequiredPreviewMonster(PlayerProfile profile, List<string> validPartyIds)
+        {
+            if (profile == null)
+            {
+                return false;
+            }
+
+            var selectedMonsterIds = new HashSet<string>();
+            foreach (string instanceId in validPartyIds)
+            {
+                OwnedMonsterData ownedMonster = profile.GetOwnedMonster(instanceId);
+                if (ownedMonster != null && !string.IsNullOrEmpty(ownedMonster.MonsterId))
+                {
+                    selectedMonsterIds.Add(ownedMonster.MonsterId);
+                }
+            }
+
+            return RequiredPreviewMonsterIds.Any(monsterId => !selectedMonsterIds.Contains(monsterId));
+        }
+
+        private static List<string> BuildResolvedPartyIds(PlayerProfile profile, List<string> validPartyIds, int targetCount, bool prioritizePreviewParty)
         {
             var resolvedIds = new List<string>();
             var seenInstanceIds = new HashSet<string>();
@@ -121,17 +149,32 @@ namespace WitchTower.Data
                 resolvedIds.Add(ownedMonster.InstanceId);
             }
 
+            if (prioritizePreviewParty)
+            {
+                foreach (string monsterId in PrototypePartyMonsterIds)
+                {
+                    OwnedMonsterData ownedMonster = ResolveOwnedMonsterByMonsterId(profile, monsterId);
+                    if (ownedMonster != null)
+                    {
+                        AddPartyInstance(ownedMonster.InstanceId);
+                    }
+                }
+            }
+
             foreach (string instanceId in validPartyIds)
             {
                 AddPartyInstance(instanceId);
             }
 
-            foreach (string monsterId in PrototypePartyMonsterIds)
+            if (!prioritizePreviewParty)
             {
-                OwnedMonsterData ownedMonster = ResolveOwnedMonsterByMonsterId(profile, monsterId);
-                if (ownedMonster != null)
+                foreach (string monsterId in PrototypePartyMonsterIds)
                 {
-                    AddPartyInstance(ownedMonster.InstanceId);
+                    OwnedMonsterData ownedMonster = ResolveOwnedMonsterByMonsterId(profile, monsterId);
+                    if (ownedMonster != null)
+                    {
+                        AddPartyInstance(ownedMonster.InstanceId);
+                    }
                 }
             }
 
