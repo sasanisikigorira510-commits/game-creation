@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using WitchTower.Battle;
 using WitchTower.Data;
+using WitchTower.Home;
 using WitchTower.Managers;
 using WitchTower.MasterData;
 using WitchTower.Save;
@@ -57,6 +58,7 @@ namespace WitchTower.Core
         [SerializeField] private string battleSceneName = "BattleScene";
         [SerializeField] private string formationSceneName = "FormationScene";
         [SerializeField] private string equipmentSceneName = "EquipmentScene";
+        [SerializeField] private string fusionSceneName = "FusionScene";
 
         private static readonly string[] TitleOverlayObjectNames =
         {
@@ -84,24 +86,21 @@ namespace WitchTower.Core
 
         private static readonly FormationMonsterEntry[] FormationRoster =
         {
-            new FormationMonsterEntry("bat", "バット", "先制", "FormationMonsters/Bat", new Color(0.62f, 0.87f, 0.53f)),
-            new FormationMonsterEntry("goblin", "ゴブリン", "前衛", "FormationMonsters/Goblin", new Color(0.74f, 0.42f, 0.36f)),
-            new FormationMonsterEntry("wraith", "レイス", "妨害", "FamilyMonsters/Mage/Mage3", new Color(0.52f, 0.74f, 0.9f)),
-            new FormationMonsterEntry("bee", "ビー", "速攻", "FormationMonsters/Bee", new Color(0.86f, 0.75f, 0.34f)),
-            new FormationMonsterEntry("naga", "ナーガ", "後衛", "FormationMonsters/Naga", new Color(0.34f, 0.75f, 0.64f)),
-            new FormationMonsterEntry("worm", "ワーム", "盾役", "FamilyMonsters/Slime/Slime1", new Color(0.69f, 0.55f, 0.3f)),
-            new FormationMonsterEntry("centaur", "ケンタウロス", "物理", "FormationMonsters/Centaur", new Color(0.78f, 0.47f, 0.31f)),
-            new FormationMonsterEntry("ghost", "ゴースト", "支援", "FormationMonsters/Ghost", new Color(0.56f, 0.84f, 0.93f)),
-            new FormationMonsterEntry("death_mage_elf", "デスメイジ", "呪術", "FamilyMonsters/Mage/Mage1", new Color(0.74f, 0.48f, 0.86f)),
-            new FormationMonsterEntry("dragon_whelp", "ヒナドラ", "幼竜", "FamilyMonsters/Dragon/dragon_whelp", new Color(0.95f, 0.45f, 0.28f)),
-            new FormationMonsterEntry("flare_drake", "フレアドレイク", "火竜", "FamilyMonsters/Dragon/flare_drake", new Color(0.88f, 0.5f, 0.34f)),
-            new FormationMonsterEntry("abyss_dragon", "蒼黒竜アビス", "黒焔", "FamilyMonsters/Dragon/abyss_dragon", new Color(0.36f, 0.58f, 0.95f)),
-            new FormationMonsterEntry("hell_knight", "ヘルナイト", "重装", "FormationMonsters/HellKnight", new Color(0.82f, 0.35f, 0.28f)),
-            new FormationMonsterEntry("naga_mage", "ナーガメイジ", "魔法", "FamilyMonsters/Mage/Mage2", new Color(0.38f, 0.78f, 0.82f)),
-            new FormationMonsterEntry("shadow", "シャドウ", "奇襲", "FormationMonsters/Shadow", new Color(0.45f, 0.5f, 0.68f)),
-            new FormationMonsterEntry("soul_eater", "ソウルイーター", "吸収", "FormationMonsters/SoulEater", new Color(0.5f, 0.92f, 0.76f)),
-            new FormationMonsterEntry("spectral_warrior", "スペクトル", "霊騎", "FamilyMonsters/Robot/Robot3", new Color(0.42f, 0.72f, 0.96f)),
-            new FormationMonsterEntry("vault_guard", "ヴォルトガード", "守護", "FamilyMonsters/Robot/Robot2", new Color(0.9f, 0.76f, 0.4f))
+            new FormationMonsterEntry("dragon_whelp", "ヒナドラ", "幼竜", "FamilyMonsterCards/Dragon/dragon_whelp", new Color(0.95f, 0.45f, 0.28f)),
+            new FormationMonsterEntry("flare_drake", "フレアドレイク", "火竜", "FamilyMonsterCards/Dragon/flare_drake", new Color(0.88f, 0.5f, 0.34f)),
+            new FormationMonsterEntry("abyss_dragon", "蒼黒竜アビス", "黒焔", "FamilyMonsterCards/Dragon/abyss_dragon", new Color(0.36f, 0.58f, 0.95f)),
+            new FormationMonsterEntry("chibi_gear", "チビギア", "小型機", "FamilyMonsterCards/Robot/chibi_gear", new Color(0.55f, 0.8f, 0.9f)),
+            new FormationMonsterEntry("armed_droid", "アームドロイド", "戦闘機", "FamilyMonsterCards/Robot/armed_droid", new Color(0.48f, 0.7f, 0.92f)),
+            new FormationMonsterEntry("omega_leon", "機皇オメガレオン", "機皇", "FamilyMonsterCards/Robot/omega_leon", new Color(0.92f, 0.76f, 0.42f)),
+            new FormationMonsterEntry("rock_golem", "ロックゴーレム", "岩兵", "FamilyMonsterCards/Golem/rock_golem", new Color(0.6f, 0.58f, 0.46f)),
+            new FormationMonsterEntry("ore_giant_garm", "鉱石巨人ガルム", "鉱巨", "FamilyMonsterCards/Golem/ore_giant_garm", new Color(0.56f, 0.7f, 0.68f)),
+            new FormationMonsterEntry("cosmic_ore_fortress_golem", "宇宙鉱石要塞ゴーレム", "要塞", "FamilyMonsterCards/Golem/cosmic_ore_fortress_golem", new Color(0.56f, 0.62f, 0.9f)),
+            new FormationMonsterEntry("apprentice_swordsman", "見習い剣士", "剣士", "FamilyMonsterCards/Swordsman/apprentice_swordsman", new Color(0.78f, 0.58f, 0.42f)),
+            new FormationMonsterEntry("holy_armor_leon", "聖鎧剣士レオン", "聖鎧", "FamilyMonsterCards/Swordsman/holy_armor_leon", new Color(0.9f, 0.82f, 0.56f)),
+            new FormationMonsterEntry("sword_saint_alvarez", "剣聖アルヴァレス", "剣聖", "FamilyMonsterCards/Swordsman/sword_saint_alvarez", new Color(0.88f, 0.72f, 0.48f)),
+            new FormationMonsterEntry("apprentice_mage", "見習い魔導士", "魔導", "FamilyMonsterCards/Mage/apprentice_mage", new Color(0.58f, 0.46f, 0.86f)),
+            new FormationMonsterEntry("dark_robe_curse_mage_noah", "黒衣の呪術師ノア", "呪術", "FamilyMonsterCards/Mage/dark_robe_curse_mage_noah", new Color(0.5f, 0.38f, 0.82f)),
+            new FormationMonsterEntry("abyss_grand_mage_seraphis", "深淵大魔導セラフィス", "深淵", "FamilyMonsterCards/Mage/abyss_grand_mage_seraphis", new Color(0.72f, 0.46f, 0.94f))
         };
 
         private const string FormationScreenTexturePath = "FormationUI/FormationScreen";
@@ -158,6 +157,7 @@ namespace WitchTower.Core
 
         private void Start()
         {
+            NormalizeCanvasScales();
             SimplifyTitlePresentation();
 
             if (Application.isPlaying)
@@ -175,6 +175,7 @@ namespace WitchTower.Core
 
         private void OnEnable()
         {
+            NormalizeCanvasScales();
             if (Application.isPlaying)
             {
                 return;
@@ -191,6 +192,7 @@ namespace WitchTower.Core
 
         private void OnValidate()
         {
+            NormalizeCanvasScales();
             if (Application.isPlaying)
             {
                 return;
@@ -238,7 +240,8 @@ namespace WitchTower.Core
 
         public void OpenFusion()
         {
-            Debug.Log("[TitleSceneController] Fusion menu is not implemented yet.");
+            EnsureRuntimeState();
+            SceneManager.LoadScene(fusionSceneName);
         }
 
         public void CloseFormation()
@@ -261,6 +264,7 @@ namespace WitchTower.Core
             ManagerFactory.EnsureSaveManager();
             ManagerFactory.EnsureMasterDataManager();
             ManagerFactory.EnsureAudioManager();
+            ManagerFactory.EnsureUiPresentationCamera();
 
             if (SaveManager.Instance.CurrentSaveData == null)
             {
@@ -313,6 +317,18 @@ namespace WitchTower.Core
             }
         }
 
+        private static void NormalizeCanvasScales()
+        {
+            Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+            foreach (Canvas canvas in canvases)
+            {
+                if (canvas != null)
+                {
+                    canvas.transform.localScale = Vector3.one;
+                }
+            }
+        }
+
         private void EnsureEquipmentScene()
         {
             if (equipmentSceneRoot != null)
@@ -325,6 +341,7 @@ namespace WitchTower.Core
             {
                 return;
             }
+            canvas.transform.localScale = Vector3.one;
 
             Font font = ResolveRuntimeFont();
             equipmentSceneRoot = CreateUiObject("EquipmentSceneRoot", canvas.transform);
@@ -1238,6 +1255,7 @@ namespace WitchTower.Core
             {
                 return;
             }
+            canvas.transform.localScale = Vector3.one;
 
             Font font = null;
             try

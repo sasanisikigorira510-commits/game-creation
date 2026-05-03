@@ -13,41 +13,43 @@ MonoBehaviour:
   m_Name: monster_flare_drake
   m_EditorClassIdentifier: 
   monsterId: monster_flare_drake
-  monsterName: "\u30d5\u30ec\u30a2\u30c9\u30ec\u30a4\u30af"
-  encyclopediaNumber: 19
-  rarity: 3
+  monsterName: "フレアドレイク"
+  encyclopediaNumber: 2
+  raceId: dragon
+  classRank: 2
+  rarity: 2
   element: 3
-  rangeType: 0
-  damageType: 0
+  rangeType: 1
+  damageType: 1
   baseStats:
-    maxHp: 74
+    maxHp: 86
     attack: 21
-    magicAttack: 9
-    defense: 14
-    magicDefense: 11
-    attackSpeed: 1.04
-  attackRange: 1.3
+    magicAttack: 23
+    defense: 15
+    magicDefense: 14
+    attackSpeed: 0.98
+  attackRange: 1.85
   normalAttackTargetCount: 1
   normalAttackAppliesKnockback: 0
   normalAttackKnockbackDuration: 0.18
   plusValueCap: 99
   plusGrowth:
     maxHpPerPlus: 2
-    attackPerPlus: 1
-    magicAttackPerPlus: 0
-    defensePerPlus: 1
+    attackPerPlus: 2
+    magicAttackPerPlus: 2
+    defensePerPlus: 2
     magicDefensePerPlus: 1
-    attackSpeedPerPlus: 0.003
+    attackSpeedPerPlus: 0.002
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FamilyMonsters/Dragon/flare_drake
-  illustrationResourcePath: 
+  portraitResourcePath: FamilyMonsterCards/Dragon/flare_drake
+  illustrationResourcePath: FamilyMonsters/Dragon/flare_drake
   battleIdleResourcePath: MonsterBattle/mon_flare_drake_idle
   battleIdleFacing: 0
   battleMoveResourcePath: MonsterBattle/mon_flare_drake_move
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_flare_drake_attack
   battleAttackFacing: 0
-  description: A grown fire drake that pushes the front line with strong physical attacks.
+  description: "火炎をまとって飛ぶ成長期の竜。中距離からブレスで敵を焼き払う。"

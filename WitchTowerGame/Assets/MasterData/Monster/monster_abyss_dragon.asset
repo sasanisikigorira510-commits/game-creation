@@ -13,19 +13,21 @@ MonoBehaviour:
   m_Name: monster_abyss_dragon
   m_EditorClassIdentifier: 
   monsterId: monster_abyss_dragon
-  monsterName: "\u84bc\u9ed2\u7adc\u30a2\u30d3\u30b9"
-  encyclopediaNumber: 20
-  rarity: 5
+  monsterName: "蒼黒竜アビス"
+  encyclopediaNumber: 3
+  raceId: dragon
+  classRank: 3
+  rarity: 3
   element: 5
   rangeType: 1
   damageType: 1
   baseStats:
-    maxHp: 112
-    attack: 24
-    magicAttack: 30
-    defense: 22
-    magicDefense: 21
-    attackSpeed: 0.9
+    maxHp: 126
+    attack: 30
+    magicAttack: 38
+    defense: 24
+    magicDefense: 25
+    attackSpeed: 0.86
   attackRange: 2.25
   normalAttackTargetCount: 2
   normalAttackAppliesKnockback: 0
@@ -33,21 +35,21 @@ MonoBehaviour:
   plusValueCap: 99
   plusGrowth:
     maxHpPerPlus: 2
-    attackPerPlus: 1
-    magicAttackPerPlus: 2
-    defensePerPlus: 1
+    attackPerPlus: 2
+    magicAttackPerPlus: 3
+    defensePerPlus: 3
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FamilyMonsters/Dragon/abyss_dragon
-  illustrationResourcePath: 
+  portraitResourcePath: FamilyMonsterCards/Dragon/abyss_dragon
+  illustrationResourcePath: FamilyMonsters/Dragon/abyss_dragon
   battleIdleResourcePath: MonsterBattle/mon_abyss_dragon_idle
   battleIdleFacing: 0
   battleMoveResourcePath: MonsterBattle/mon_abyss_dragon_move
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_abyss_dragon_attack
   battleAttackFacing: 0
-  description: A mature dark dragon that burns enemies with abyssal flame.
+  description: "蒼黒の炎を操る上位竜。広い射程と重い一撃で戦線を支配する。"

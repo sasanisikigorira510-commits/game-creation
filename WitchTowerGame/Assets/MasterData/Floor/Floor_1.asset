@@ -18,6 +18,6 @@ MonoBehaviour:
   repeatRewardTableId: drop_common_floor
   monsterRecruitChance: 0.45
   recruitableMonsterIds:
-  - monster_bat
-  - monster_bee
-  - monster_worm
+  - monster_dragon_whelp
+  - monster_chibi_gear
+  - monster_rock_golem

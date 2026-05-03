@@ -6,6 +6,7 @@ using WitchTower.Managers;
 
 namespace WitchTower.Home
 {
+    [ExecuteAlways]
     public sealed class HomeSceneController : MonoBehaviour
     {
         private enum HomeTab
@@ -22,6 +23,7 @@ namespace WitchTower.Home
         [SerializeField] private EquipmentPanelController equipmentPanelController;
         [SerializeField] private MissionPanelController missionPanelController;
         [SerializeField] private string battleSceneName = "BattleScene";
+        [SerializeField] private string fusionSceneName = "FusionScene";
         private static readonly string[] LegacyHomeObjectNames =
         {
             "ContentRoot",
@@ -29,17 +31,42 @@ namespace WitchTower.Home
             "HomeBackgroundShade",
             "HomeTopScrim",
             "HomeBottomScrim",
-            "HomeTitleSigil"
+            "HomeTitleSigil",
+            "ScreenTitle",
+            "ScreenSubtitle"
         };
 
         private HomeTab currentTab = HomeTab.Home;
         private GameObject unifiedMenuRoot;
 
+        private void OnEnable()
+        {
+            if (Application.isPlaying)
+            {
+                return;
+            }
+
+            ApplyEditorPreview();
+        }
+
         private void Start()
         {
+            if (!Application.isPlaying)
+            {
+                ApplyEditorPreview();
+                return;
+            }
+
             EnsureRuntimeState();
             RefreshAllPanels();
             RefreshCurrentTab();
+            HideLegacyHomeUi();
+            BuildUnifiedMenu();
+        }
+
+        private void ApplyEditorPreview()
+        {
+            NormalizeCanvasScales();
             HideLegacyHomeUi();
             BuildUnifiedMenu();
         }
@@ -156,6 +183,7 @@ namespace WitchTower.Home
             ManagerFactory.EnsureGameManager();
             ManagerFactory.EnsureSaveManager();
             ManagerFactory.EnsureMasterDataManager();
+            ManagerFactory.EnsureUiPresentationCamera();
 
             if (SaveManager.Instance.CurrentSaveData == null)
             {
@@ -177,6 +205,8 @@ namespace WitchTower.Home
         {
             if (unifiedMenuRoot != null)
             {
+                unifiedMenuRoot.SetActive(true);
+                unifiedMenuRoot.transform.SetAsLastSibling();
                 return;
             }
 
@@ -185,22 +215,62 @@ namespace WitchTower.Home
             {
                 return;
             }
+            canvas.transform.localScale = Vector3.one;
+
+            Transform existingMenu = canvas.transform.Find("UnifiedHomeMenu");
+            if (existingMenu != null)
+            {
+                if (!Application.isPlaying)
+                {
+                    DestroyImmediate(existingMenu.gameObject);
+                }
+                else
+                {
+                    unifiedMenuRoot = existingMenu.gameObject;
+                    unifiedMenuRoot.SetActive(true);
+                    unifiedMenuRoot.transform.SetAsLastSibling();
+                    return;
+                }
+            }
 
             Sprite backgroundSprite = Resources.Load<Sprite>("UI/HomeMenu/HomeMenuBackground");
             Sprite panelSprite = Resources.Load<Sprite>("UI/HomeMenu/HomeMenuPanel");
-            if (backgroundSprite == null || panelSprite == null)
+            if (backgroundSprite == null)
             {
                 return;
             }
 
             unifiedMenuRoot = CreateUiRoot("UnifiedHomeMenu", canvas.transform);
+            unifiedMenuRoot.transform.SetAsLastSibling();
             CreateMenuImage("UnifiedHomeBackground", unifiedMenuRoot.transform, backgroundSprite, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2560f, 1920f), true);
-            Image panelImage = CreateMenuImage("UnifiedHomePanel", unifiedMenuRoot.transform, panelSprite, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, -10f), new Vector2(1080f, 411f), true);
 
-            CreateTransparentButton("BattleButton", panelImage.transform, new Vector2(-270f, 108f), new Vector2(430f, 120f), StartBattle);
-            CreateTransparentButton("FormationButton", panelImage.transform, new Vector2(270f, 108f), new Vector2(430f, 120f), OpenFormationMenu);
-            CreateTransparentButton("EquipmentButton", panelImage.transform, new Vector2(-270f, -76f), new Vector2(430f, 120f), OpenEquipmentMenu);
-            CreateTransparentButton("FusionButton", panelImage.transform, new Vector2(270f, -76f), new Vector2(430f, 120f), OpenFusionMenu);
+            Sprite battleSprite = Resources.Load<Sprite>("UI/HomeMenu/BattleButton");
+            Sprite formationSprite = Resources.Load<Sprite>("UI/HomeMenu/FormationButton");
+            Sprite equipmentSprite = Resources.Load<Sprite>("UI/HomeMenu/EquipmentButton");
+            Sprite fusionSprite = Resources.Load<Sprite>("UI/HomeMenu/FusionButton");
+            if (battleSprite != null && formationSprite != null && equipmentSprite != null && fusionSprite != null)
+            {
+                CreateSpriteButton("BattleButton", unifiedMenuRoot.transform, battleSprite, new Vector2(-272f, 520f), new Vector2(500f, 330f), StartBattle);
+                CreateSpriteButton("FormationButton", unifiedMenuRoot.transform, formationSprite, new Vector2(272f, 520f), new Vector2(500f, 330f), OpenFormationMenu);
+                CreateSpriteButton("EquipmentButton", unifiedMenuRoot.transform, equipmentSprite, new Vector2(-272f, 185f), new Vector2(500f, 330f), OpenEquipmentMenu);
+                CreateSpriteButton("FusionButton", unifiedMenuRoot.transform, fusionSprite, new Vector2(272f, 185f), new Vector2(500f, 330f), OpenFusionMenu);
+                return;
+            }
+
+            if (panelSprite == null)
+            {
+                return;
+            }
+
+            Image panelImage = CreateMenuImage("UnifiedHomePanel", unifiedMenuRoot.transform, panelSprite, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(1080f, 430f), true);
+            RectTransform panelRect = panelImage.rectTransform;
+            panelRect.pivot = new Vector2(0.5f, 0f);
+            panelRect.anchoredPosition = new Vector2(0f, 16f);
+
+            CreateTransparentButton("BattleButton", panelImage.transform, new Vector2(-272f, 104f), new Vector2(505f, 174f), StartBattle);
+            CreateTransparentButton("FormationButton", panelImage.transform, new Vector2(272f, 104f), new Vector2(486f, 174f), OpenFormationMenu);
+            CreateTransparentButton("EquipmentButton", panelImage.transform, new Vector2(-272f, -91f), new Vector2(508f, 160f), OpenEquipmentMenu);
+            CreateTransparentButton("FusionButton", panelImage.transform, new Vector2(272f, -91f), new Vector2(486f, 160f), OpenFusionMenu);
         }
 
         private void OpenFormationMenu()
@@ -215,10 +285,14 @@ namespace WitchTower.Home
             HideUnifiedMenu();
         }
 
-        private void OpenFusionMenu()
+        public void OpenFusionMenu()
         {
-            OpenEnhance();
-            HideUnifiedMenu();
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            SceneManager.LoadScene(fusionSceneName);
         }
 
         private void HideUnifiedMenu()
@@ -226,6 +300,18 @@ namespace WitchTower.Home
             if (unifiedMenuRoot != null)
             {
                 unifiedMenuRoot.SetActive(false);
+            }
+        }
+
+        private static void NormalizeCanvasScales()
+        {
+            Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+            foreach (Canvas canvas in canvases)
+            {
+                if (canvas != null)
+                {
+                    canvas.transform.localScale = Vector3.one;
+                }
             }
         }
 
@@ -269,6 +355,46 @@ namespace WitchTower.Home
             image.preserveAspect = preserveAspect;
             image.raycastTarget = false;
             return image;
+        }
+
+        private static void CreateSpriteButton(string name, Transform parent, Sprite sprite, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction action)
+        {
+            GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            root.transform.SetParent(parent, false);
+
+            RectTransform rectTransform = root.GetComponent<RectTransform>();
+            rectTransform.anchorMin = new Vector2(0.5f, 0f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+
+            Image image = root.GetComponent<Image>();
+            image.color = new Color(1f, 1f, 1f, 0.001f);
+            image.raycastTarget = true;
+
+            Button button = root.GetComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(action);
+
+            GameObject visualRoot = new GameObject($"{name}Visual", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            visualRoot.transform.SetParent(root.transform, false);
+            RectTransform visualRect = visualRoot.GetComponent<RectTransform>();
+            visualRect.anchorMin = new Vector2(0.5f, 0.5f);
+            visualRect.anchorMax = new Vector2(0.5f, 0.5f);
+            visualRect.pivot = new Vector2(0.5f, 0.5f);
+            visualRect.anchoredPosition = Vector2.zero;
+
+            float spriteWidth = Mathf.Max(1f, sprite.rect.width);
+            float spriteHeight = Mathf.Max(1f, sprite.rect.height);
+            float scale = Mathf.Min(size.x / spriteWidth, size.y / spriteHeight);
+            visualRect.sizeDelta = new Vector2(spriteWidth * scale, spriteHeight * scale);
+
+            Image visual = visualRoot.GetComponent<Image>();
+            visual.sprite = sprite;
+            visual.color = Color.white;
+            visual.preserveAspect = true;
+            visual.raycastTarget = false;
         }
 
         private static void CreateTransparentButton(string name, Transform parent, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction action)

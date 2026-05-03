@@ -80,6 +80,8 @@ namespace WitchTower.MasterData
         public int encyclopediaNumber;
 
         [Header("Classification")]
+        public string raceId;
+        [Min(1)] public int classRank = 1;
         public MonsterRarity rarity = MonsterRarity.Iron;
         public MonsterElement element = MonsterElement.None;
         public MonsterRangeType rangeType = MonsterRangeType.Melee;

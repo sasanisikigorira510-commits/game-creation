@@ -18,6 +18,8 @@ MonoBehaviour:
   repeatRewardTableId: drop_common_floor
   monsterRecruitChance: 0.42
   recruitableMonsterIds:
-  - monster_goblin
-  - monster_naga
-  - monster_ghost
+  - monster_dragon_whelp
+  - monster_chibi_gear
+  - monster_rock_golem
+  - monster_apprentice_swordsman
+  - monster_apprentice_mage

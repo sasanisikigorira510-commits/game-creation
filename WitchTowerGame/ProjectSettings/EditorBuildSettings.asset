@@ -20,4 +20,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/BattleScene.unity
     guid: ddfe9a190b4a17d47bbdcfd25c011429
+  - enabled: 1
+    path: Assets/Scenes/FusionScene.unity
+    guid: 12942e42747234cdaaac6e1868a49d0a
   m_configObjects: {}
+  m_UseUCBPForAssetBundles: 0

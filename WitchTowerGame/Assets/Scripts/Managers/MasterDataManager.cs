@@ -1,4 +1,5 @@
 using UnityEngine;
+using WitchTower.Data;
 using WitchTower.MasterData;
 
 namespace WitchTower.Managers
@@ -146,6 +147,18 @@ namespace WitchTower.Managers
                         return monsterData;
                     }
                 }
+            }
+
+            MonsterDataSO firstMonsterData = GetMonsterData(firstMonsterId);
+            MonsterDataSO secondMonsterData = GetMonsterData(secondMonsterId);
+            if (MonsterFusionCatalog.TryResolveNormalRecipe(firstMonsterData, secondMonsterData, monsterDataList, out _, out MonsterDataSO normalFusionResult))
+            {
+                return normalFusionResult;
+            }
+
+            if (MonsterFusionCatalog.TryResolveRecipe(firstMonsterId, secondMonsterId, out MonsterFusionRecipeDefinition catalogRecipe, false))
+            {
+                return GetMonsterData(catalogRecipe.ResultMonsterId);
             }
 
             return null;

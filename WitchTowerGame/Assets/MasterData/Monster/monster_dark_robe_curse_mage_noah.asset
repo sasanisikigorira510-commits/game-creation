@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_dark_robe_curse_mage_noah
+  m_EditorClassIdentifier: 
+  monsterId: monster_dark_robe_curse_mage_noah
+  monsterName: "黒衣の呪術師ノア"
+  encyclopediaNumber: 14
+  raceId: mage
+  classRank: 2
+  rarity: 2
+  element: 5
+  rangeType: 1
+  damageType: 1
+  baseStats:
+    maxHp: 66
+    attack: 8
+    magicAttack: 32
+    defense: 11
+    magicDefense: 22
+    attackSpeed: 0.96
+  attackRange: 2.25
+  normalAttackTargetCount: 1
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 2
+    magicAttackPerPlus: 2
+    defensePerPlus: 2
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  fusionExclusive: 0
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsterCards/Mage/dark_robe_curse_mage_noah
+  illustrationResourcePath: FamilyMonsters/Mage/dark_robe_curse_mage_noah
+  battleIdleResourcePath: MonsterBattle/mon_dark_robe_curse_mage_noah_idle
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_dark_robe_curse_mage_noah_move
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_dark_robe_curse_mage_noah_attack
+  battleAttackFacing: 0
+  description: "黒衣をまとった中位呪術師。高い魔力で後衛から敵を削る。"

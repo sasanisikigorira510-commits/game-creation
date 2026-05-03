@@ -18,7 +18,8 @@ MonoBehaviour:
   repeatRewardTableId: drop_common_floor
   monsterRecruitChance: 0.35
   recruitableMonsterIds:
-  - monster_hell_knight
-  - monster_soul_eater
-  - monster_spectral_warrior
   - monster_abyss_dragon
+  - monster_omega_leon
+  - monster_cosmic_ore_fortress_golem
+  - monster_sword_saint_alvarez
+  - monster_abyss_grand_mage_seraphis

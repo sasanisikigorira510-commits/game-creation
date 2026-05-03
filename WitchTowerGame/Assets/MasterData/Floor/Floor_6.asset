@@ -18,6 +18,8 @@ MonoBehaviour:
   repeatRewardTableId: drop_common_floor
   monsterRecruitChance: 0.4
   recruitableMonsterIds:
-  - monster_centaur
-  - monster_naga_mage
-  - monster_shadow
+  - monster_flare_drake
+  - monster_armed_droid
+  - monster_ore_giant_garm
+  - monster_holy_armor_leon
+  - monster_dark_robe_curse_mage_noah

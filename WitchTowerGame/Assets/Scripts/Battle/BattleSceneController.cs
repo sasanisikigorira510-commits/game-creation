@@ -25,30 +25,38 @@ namespace WitchTower.Battle
 
         private static readonly string[] DevPartyOverrideIdlePaths =
         {
-            "MonsterBattle/mon_flare_drake_idle",
             "MonsterBattle/mon_dragon_whelp_idle",
-            "MonsterBattle/mon_abyss_dragon_idle"
+            "MonsterBattle/mon_chibi_gear_idle",
+            "MonsterBattle/mon_rock_golem_idle",
+            "MonsterBattle/mon_apprentice_swordsman_idle",
+            "MonsterBattle/mon_apprentice_mage_idle"
         };
 
         private static readonly string[] DevPartyOverrideMovePaths =
         {
-            "MonsterBattle/mon_flare_drake_move",
             "MonsterBattle/mon_dragon_whelp_move",
-            "MonsterBattle/mon_abyss_dragon_move"
+            "MonsterBattle/mon_chibi_gear_move",
+            "MonsterBattle/mon_rock_golem_move",
+            "MonsterBattle/mon_apprentice_swordsman_move",
+            "MonsterBattle/mon_apprentice_mage_move"
         };
 
         private static readonly string[] DevPartyOverrideAttackPaths =
         {
-            "MonsterBattle/mon_flare_drake_attack",
             "MonsterBattle/mon_dragon_whelp_attack",
-            "MonsterBattle/mon_abyss_dragon_attack"
+            "MonsterBattle/mon_chibi_gear_attack",
+            "MonsterBattle/mon_rock_golem_attack",
+            "MonsterBattle/mon_apprentice_swordsman_attack",
+            "MonsterBattle/mon_apprentice_mage_attack"
         };
 
         private static readonly string[] DevPartyOverrideMonsterIds =
         {
-            "monster_flare_drake",
             "monster_dragon_whelp",
-            "monster_abyss_dragon"
+            "monster_chibi_gear",
+            "monster_rock_golem",
+            "monster_apprentice_swordsman",
+            "monster_apprentice_mage"
         };
 
         private static readonly Vector2 AllyPreviewSize = new Vector2(220f, 220f);
@@ -76,11 +84,6 @@ namespace WitchTower.Battle
         private const float AttackLungeDistance = 22f;
         private const float RangedAttackLungeDistance = 10f;
         private const float AttackEffectGlobalScale = 1.28f;
-        private const string DragonWhelpMonsterId = "monster_dragon_whelp";
-        private const float DragonWhelpBasePreviewScale = 0.70f;
-        private const float DragonWhelpMovePreviewScale = 1.12f;
-        private const float DragonWhelpAttackPreviewScale = 1.38f;
-
         private sealed class DragonAttackEffectDefinition
         {
             public string ResourcePath;
@@ -463,8 +466,21 @@ namespace WitchTower.Battle
         {
         }
 
+        private static void NormalizeCanvasScales()
+        {
+            Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+            foreach (Canvas canvas in canvases)
+            {
+                if (canvas != null)
+                {
+                    canvas.transform.localScale = Vector3.one;
+                }
+            }
+        }
+
         private void Start()
         {
+            NormalizeCanvasScales();
             if (!Application.isPlaying)
             {
                 ApplyEditorPreview();
@@ -932,6 +948,7 @@ namespace WitchTower.Battle
             isApplyingEditorPreview = true;
             try
             {
+                NormalizeCanvasScales();
                 ApplyBackdropForFloor(1);
                 ApplyMinimalPresentation();
                 ApplyEditorCombatantPreview();
@@ -981,16 +998,16 @@ namespace WitchTower.Battle
                 0);
             allyAttackRanges.Clear();
             allySearchRanges.Clear();
+            allyAttackRanges.Add(BattleAttackRangeResolver.ResolveMonsterAttackRange(MasterDataManager.Instance?.GetMonsterData("monster_dragon_whelp")));
+            allyAttackRanges.Add(BattleAttackRangeResolver.ResolveMonsterAttackRange(MasterDataManager.Instance?.GetMonsterData("monster_chibi_gear")));
             allyAttackRanges.Add(BattleAttackRangeResolver.ResolveMonsterAttackRange(MasterDataManager.Instance?.GetMonsterData("monster_rock_golem")));
-            allyAttackRanges.Add(BattleAttackRangeResolver.ResolveMonsterAttackRange(MasterDataManager.Instance?.GetMonsterData("monster_goblin")));
-            allyAttackRanges.Add(BattleAttackRangeResolver.ResolveMonsterAttackRange(MasterDataManager.Instance?.GetMonsterData("monster_wraith")));
-            allyAttackRanges.Add(BattleAttackRangeResolver.ResolveMonsterAttackRange(MasterDataManager.Instance?.GetMonsterData("monster_centaur")));
-            allyAttackRanges.Add(BattleAttackRangeResolver.ResolveMonsterAttackRange(MasterDataManager.Instance?.GetMonsterData("monster_hell_knight")));
+            allyAttackRanges.Add(BattleAttackRangeResolver.ResolveMonsterAttackRange(MasterDataManager.Instance?.GetMonsterData("monster_apprentice_swordsman")));
+            allyAttackRanges.Add(BattleAttackRangeResolver.ResolveMonsterAttackRange(MasterDataManager.Instance?.GetMonsterData("monster_apprentice_mage")));
+            allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_dragon_whelp")));
+            allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_chibi_gear")));
             allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_rock_golem")));
-            allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_goblin")));
-            allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_wraith")));
-            allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_centaur")));
-            allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_hell_knight")));
+            allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_apprentice_swordsman")));
+            allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_apprentice_mage")));
             enemyAttackRange = BattleAttackRangeResolver.ResolveEnemyAttackRange(MasterDataManager.Instance?.GetFloorData(1)?.enemyData);
             enemySearchRange = BattleAttackRangeResolver.ResolveEnemySearchRange(MasterDataManager.Instance?.GetFloorData(1)?.enemyData);
             combatStartProgress = BattleAttackRangeResolver.ResolveCombatStartProgress(allyAttackRanges, enemyAttackRange);
@@ -1243,31 +1260,7 @@ namespace WitchTower.Battle
 
         private static float ResolveCharacterPreviewScale(string characterId, BattleVisualPose pose)
         {
-            if (!IsDragonWhelpId(characterId))
-            {
-                return 1f;
-            }
-
-            float poseScale = pose switch
-            {
-                BattleVisualPose.Attack => DragonWhelpAttackPreviewScale,
-                BattleVisualPose.Move => DragonWhelpMovePreviewScale,
-                _ => 1f
-            };
-            return DragonWhelpBasePreviewScale * poseScale;
-        }
-
-        private static bool IsDragonWhelpId(string characterId)
-        {
-            if (string.IsNullOrEmpty(characterId))
-            {
-                return false;
-            }
-
-            string normalizedId = characterId.ToLowerInvariant();
-            return normalizedId == DragonWhelpMonsterId ||
-                   normalizedId.Contains("dragon_whelp") ||
-                   normalizedId.Contains("hina_dragon");
+            return 1f;
         }
 
         private static void ApplyPreviewMotion(Image image, Vector2 motionOffset)
@@ -2647,6 +2640,7 @@ namespace WitchTower.Battle
                 canvasRect.offsetMax = Vector2.zero;
 
             }
+            minimalCanvasRoot.transform.localScale = Vector3.one;
 
             Canvas canvasComponent = minimalCanvasRoot.GetComponent<Canvas>();
             if (canvasComponent != null)

@@ -20,17 +20,17 @@ namespace WitchTower.Formation
             public string Name;
             public string ResourcePath;
             public int Level;
-            public int Rarity;
+            public int ClassRank;
             public int AcquiredOrder;
             public bool IsFavorite;
 
-            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int rarity, int acquiredOrder, bool isFavorite)
+            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int classRank, int acquiredOrder, bool isFavorite)
             {
                 InstanceId = instanceId;
                 Name = name;
                 ResourcePath = resourcePath;
                 Level = level;
-                Rarity = rarity;
+                ClassRank = classRank;
                 AcquiredOrder = acquiredOrder;
                 IsFavorite = isFavorite;
             }
@@ -56,7 +56,7 @@ namespace WitchTower.Formation
             Favorite,
             Level,
             Acquired,
-            Rarity
+            Class
         }
 
         private enum FilterMode
@@ -108,12 +108,18 @@ namespace WitchTower.Formation
         private readonly List<MonsterCardView> rosterViews = new List<MonsterCardView>();
         private readonly List<FormationSlotView> slotViews = new List<FormationSlotView>();
 
-        private const string Rarity1FrameTexturePath = "EquipmentFrames/eq_rarity_1_frame";
-        private const string Rarity2FrameTexturePath = "EquipmentFrames/eq_rarity_2_frame";
-        private const string Rarity3FrameTexturePath = "EquipmentFrames/eq_rarity_3_frame";
-        private const string Rarity4FrameTexturePath = "EquipmentFrames/eq_rarity_4_frame";
-        private const string Rarity5FrameTexturePath = "EquipmentFrames/eq_rarity_5_frame";
-        private const string Rarity6FrameTexturePath = "EquipmentFrames/eq_rarity_6_frame";
+        private const string Class1CardFrameTexturePath = "MonsterCardFrames/monster_class_1_card_frame";
+        private const string Class2CardFrameTexturePath = "MonsterCardFrames/monster_class_2_card_frame";
+        private const string Class3CardFrameTexturePath = "MonsterCardFrames/monster_class_3_card_frame";
+        private const string Class4CardFrameTexturePath = "MonsterCardFrames/monster_class_4_card_frame";
+        private const string Class5CardFrameTexturePath = "MonsterCardFrames/monster_class_5_card_frame";
+        private const string Class6CardFrameTexturePath = "MonsterCardFrames/monster_class_6_card_frame";
+        private const string Class1SlotFrameTexturePath = "MonsterCardFrames/monster_class_1_slot_frame";
+        private const string Class2SlotFrameTexturePath = "MonsterCardFrames/monster_class_2_slot_frame";
+        private const string Class3SlotFrameTexturePath = "MonsterCardFrames/monster_class_3_slot_frame";
+        private const string Class4SlotFrameTexturePath = "MonsterCardFrames/monster_class_4_slot_frame";
+        private const string Class5SlotFrameTexturePath = "MonsterCardFrames/monster_class_5_slot_frame";
+        private const string Class6SlotFrameTexturePath = "MonsterCardFrames/monster_class_6_slot_frame";
 
         private RectTransform rosterContent;
         private Text summaryText;
@@ -132,12 +138,12 @@ namespace WitchTower.Formation
                 return;
             }
 
-            HideSceneArtifacts();
-            EnsureScaffold();
+            ApplyEditorPreview();
         }
 
         private void Start()
         {
+            NormalizeCanvasScales();
             if (!Application.isPlaying)
             {
                 return;
@@ -163,6 +169,17 @@ namespace WitchTower.Formation
             }
         }
 
+        private void ApplyEditorPreview()
+        {
+            NormalizeCanvasScales();
+            HideSceneArtifacts();
+            roster.Clear();
+            selectedMonsters.Clear();
+            SeedFallbackRoster();
+            EnsureScaffold();
+            RefreshView();
+        }
+
         public void ReturnHome()
         {
             SaveManager.Instance?.SaveCurrentGame();
@@ -176,6 +193,7 @@ namespace WitchTower.Formation
             ManagerFactory.EnsureSaveManager();
             ManagerFactory.EnsureMasterDataManager();
             ManagerFactory.EnsureAudioManager();
+            ManagerFactory.EnsureUiPresentationCamera();
 
             if (SaveManager.Instance.CurrentSaveData == null)
             {
@@ -198,6 +216,18 @@ namespace WitchTower.Formation
                 if (target != null)
                 {
                     target.SetActive(false);
+                }
+            }
+        }
+
+        private static void NormalizeCanvasScales()
+        {
+            Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+            foreach (Canvas canvas in canvases)
+            {
+                if (canvas != null)
+                {
+                    canvas.transform.localScale = Vector3.one;
                 }
             }
         }
@@ -249,7 +279,7 @@ namespace WitchTower.Formation
                     monsterData.monsterName,
                     GetPortraitResourcePath(monsterData),
                     Mathf.Max(1, ownedMonster.Level),
-                    (int)monsterData.rarity,
+                    Mathf.Max(1, monsterData.classRank),
                     ownedMonster.AcquiredOrder,
                     ownedMonster.IsFavorite);
 
@@ -313,19 +343,17 @@ namespace WitchTower.Formation
 
         private void SeedFallbackRoster()
         {
-            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "FamilyMonsters/Robot/Robot1", 14, 2, 9, false));
-            roster.Add(new MonsterEntry("bat_a", "バット", "FormationMonsters/Bat", 12, 1, 8, false));
-            roster.Add(new MonsterEntry("goblin_a", "ゴブリン", "FormationMonsters/Goblin", 18, 1, 7, false));
-            roster.Add(new MonsterEntry("wraith_a", "レイス", "FamilyMonsters/Mage/Mage3", 20, 2, 6, true));
-            roster.Add(new MonsterEntry("bee_a", "ビー", "FormationMonsters/Bee", 9, 1, 5, false));
-            roster.Add(new MonsterEntry("naga_a", "ナーガ", "FormationMonsters/Naga", 24, 2, 4, false));
-            roster.Add(new MonsterEntry("centaur_a", "ケンタウロス", "FormationMonsters/Centaur", 27, 3, 3, true));
-            roster.Add(new MonsterEntry("deathmage_a", "デスメイジ", "FamilyMonsters/Mage/Mage1", 31, 3, 2, true));
-            roster.Add(new MonsterEntry("hellknight_a", "ヘルナイト", "FormationMonsters/HellKnight", 33, 4, 1, true));
+            roster.Add(new MonsterEntry("dragon_whelp_a", "ヒナドラ", "FamilyMonsterCards/Dragon/dragon_whelp", 14, 1, 9, false));
+            roster.Add(new MonsterEntry("chibi_gear_a", "チビギア", "FamilyMonsterCards/Robot/chibi_gear", 12, 1, 8, false));
+            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "FamilyMonsterCards/Golem/rock_golem", 18, 1, 7, false));
+            roster.Add(new MonsterEntry("apprentice_swordsman_a", "見習い剣士", "FamilyMonsterCards/Swordsman/apprentice_swordsman", 20, 1, 6, false));
+            roster.Add(new MonsterEntry("apprentice_mage_a", "見習い魔導士", "FamilyMonsterCards/Mage/apprentice_mage", 22, 1, 5, false));
 
-            selectedMonsters.Add(roster[8]);
-            selectedMonsters.Add(roster[7]);
             selectedMonsters.Add(roster[0]);
+            selectedMonsters.Add(roster[1]);
+            selectedMonsters.Add(roster[2]);
+            selectedMonsters.Add(roster[3]);
+            selectedMonsters.Add(roster[4]);
         }
 
         private void EnsureScaffold()
@@ -346,6 +374,7 @@ namespace WitchTower.Formation
             {
                 return;
             }
+            canvas.transform.localScale = Vector3.one;
 
             runtimeFont = GetRuntimeFont();
 
@@ -412,6 +441,7 @@ namespace WitchTower.Formation
                 slotView.FrameArt = slotFrameObject.AddComponent<RawImage>();
                 slotView.FrameArt.color = new Color(1f, 1f, 1f, 0.94f);
                 slotView.FrameArt.raycastTarget = false;
+                slotFrameObject.transform.SetAsFirstSibling();
 
                 GameObject portraitObject = CreateUiObject("Portrait", slotObject.transform);
                 RectTransform portraitRect = portraitObject.GetComponent<RectTransform>();
@@ -553,6 +583,10 @@ namespace WitchTower.Formation
                     slotView.FrameArt.color = new Color(1f, 1f, 1f, 0.94f);
                     slotView.FrameArt.raycastTarget = false;
                     slotFrameObject.transform.SetAsFirstSibling();
+                }
+                else
+                {
+                    slotView.FrameArt.transform.SetAsFirstSibling();
                 }
 
                 if (slotView.Background == null || slotView.FrameArt == null || slotView.Portrait == null || slotView.NameLabel == null || slotView.StatusLabel == null)
@@ -721,7 +755,7 @@ namespace WitchTower.Formation
                     view.Background.color = new Color(0.09f, 0.15f, 0.12f, 0.72f);
                     if (view.FrameArt != null)
                     {
-                        view.FrameArt.texture = LoadFrameTexture(ResolveMonsterFrameTexturePath(entry.Rarity));
+                        view.FrameArt.texture = LoadFrameTexture(ResolveMonsterSlotFrameTexturePath(entry.ClassRank));
                         view.FrameArt.color = Color.white;
                     }
                     view.Portrait.sprite = LoadPortrait(entry.ResourcePath);
@@ -735,7 +769,7 @@ namespace WitchTower.Formation
                     view.Background.color = new Color(0.06f, 0.09f, 0.13f, 0.66f);
                     if (view.FrameArt != null)
                     {
-                        view.FrameArt.texture = LoadFrameTexture(ResolveMonsterFrameTexturePath(1));
+                        view.FrameArt.texture = LoadFrameTexture(ResolveMonsterSlotFrameTexturePath(1));
                         view.FrameArt.color = new Color(1f, 1f, 1f, 0.48f);
                     }
                     view.Portrait.sprite = null;
@@ -762,12 +796,12 @@ namespace WitchTower.Formation
             List<MonsterEntry> displayEntries = BuildDisplayEntries();
             emptyStateLabel.gameObject.SetActive(displayEntries.Count == 0);
 
-            const float cardWidth = 204f;
-            const float cardHeight = 222f;
-            const float spacingX = 24f;
-            const float spacingY = 28f;
+            const float cardWidth = 218f;
+            const float cardHeight = 300f;
+            const float spacingX = 16f;
+            const float spacingY = 24f;
             const float paddingLeft = 18f;
-            const float paddingTop = 18f;
+            const float paddingTop = 24f;
 
             int rowCount = Mathf.Max(1, Mathf.CeilToInt(displayEntries.Count / (float)GridColumnCount));
             float contentHeight = paddingTop + rowCount * cardHeight + Mathf.Max(0, rowCount - 1) * spacingY + 18f;
@@ -810,48 +844,72 @@ namespace WitchTower.Formation
             frameRect.anchorMax = new Vector2(0.5f, 0.5f);
             frameRect.pivot = new Vector2(0.5f, 0.5f);
             frameRect.anchoredPosition = Vector2.zero;
-            frameRect.sizeDelta = new Vector2(size.x + 14f, size.y + 14f);
+            frameRect.sizeDelta = new Vector2(size.x + 16f, size.y + 16f);
             RawImage frameImage = frameObject.AddComponent<RawImage>();
-            frameImage.texture = LoadFrameTexture(ResolveMonsterFrameTexturePath(entry.Rarity));
+            frameImage.texture = LoadFrameTexture(ResolveMonsterCardFrameTexturePath(entry.ClassRank));
             frameImage.color = isSelected
                 ? Color.white
                 : new Color(1f, 1f, 1f, 0.96f);
             frameImage.raycastTarget = false;
+            frameObject.transform.SetAsFirstSibling();
 
             GameObject body = CreatePanel("Body", card.transform,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                Vector2.zero, new Vector2(size.x - 44f, size.y - 44f),
+                Vector2.zero, new Vector2(size.x - 34f, size.y - 44f),
                 isSelected ? new Color(0.09f, 0.17f, 0.14f, 0.98f) : new Color(0.06f, 0.09f, 0.13f, 0.98f));
             body.GetComponent<Image>().raycastTarget = false;
-            frameObject.transform.SetAsLastSibling();
+
+            Sprite portraitSprite = LoadPortrait(entry.ResourcePath);
+            if (portraitSprite != null && portraitSprite.texture != null)
+            {
+                portraitSprite.texture.filterMode = UnityEngine.FilterMode.Trilinear;
+            }
+
+            GameObject portraitShadow = CreateUiObject("PortraitShadow", body.transform);
+            RectTransform portraitShadowRect = portraitShadow.GetComponent<RectTransform>();
+            portraitShadowRect.anchorMin = new Vector2(0.5f, 1f);
+            portraitShadowRect.anchorMax = new Vector2(0.5f, 1f);
+            portraitShadowRect.pivot = new Vector2(0.5f, 1f);
+            portraitShadowRect.anchoredPosition = new Vector2(2f, -18f);
+            portraitShadowRect.sizeDelta = new Vector2(160f, 160f);
+            Image portraitShadowImage = portraitShadow.AddComponent<Image>();
+            portraitShadowImage.sprite = portraitSprite;
+            portraitShadowImage.preserveAspect = true;
+            portraitShadowImage.useSpriteMesh = false;
+            portraitShadowImage.color = new Color(0f, 0f, 0f, 0.58f);
+            portraitShadowImage.raycastTarget = false;
 
             GameObject portrait = CreateUiObject("Portrait", body.transform);
             RectTransform portraitRect = portrait.GetComponent<RectTransform>();
             portraitRect.anchorMin = new Vector2(0.5f, 1f);
             portraitRect.anchorMax = new Vector2(0.5f, 1f);
             portraitRect.pivot = new Vector2(0.5f, 1f);
-            portraitRect.anchoredPosition = new Vector2(0f, -22f);
-            portraitRect.sizeDelta = new Vector2(90f, 90f);
+            portraitRect.anchoredPosition = new Vector2(0f, -20f);
+            portraitRect.sizeDelta = new Vector2(156f, 156f);
             Image portraitImage = portrait.AddComponent<Image>();
-            portraitImage.sprite = LoadPortrait(entry.ResourcePath);
+            portraitImage.sprite = portraitSprite;
             portraitImage.preserveAspect = true;
+            portraitImage.useSpriteMesh = false;
             portraitImage.color = Color.white;
             portraitImage.raycastTarget = false;
 
-            CreateText("NameLabel", body.transform, runtimeFont, entry.Name, 19, FontStyle.Bold,
+            Text nameLabel = CreateText("NameLabel", body.transform, runtimeFont, entry.Name, 15, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -136f), new Vector2(172f, 24f), TextAnchor.MiddleCenter,
+                new Vector2(0f, -180f), new Vector2(174f, 34f), TextAnchor.MiddleCenter,
                 new Color(0.96f, 0.98f, 1f, 1f));
+            nameLabel.resizeTextForBestFit = true;
+            nameLabel.resizeTextMinSize = 10;
+            nameLabel.resizeTextMaxSize = 15;
 
-            CreateText("LevelLabel", body.transform, runtimeFont, "Lv." + entry.Level, 17, FontStyle.Bold,
+            CreateText("LevelLabel", body.transform, runtimeFont, "Lv." + entry.Level, 14, FontStyle.Bold,
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(16f, 16f), new Vector2(72f, 22f), TextAnchor.MiddleLeft,
+                new Vector2(12f, 10f), new Vector2(62f, 20f), TextAnchor.MiddleLeft,
                 new Color(0.98f, 0.91f, 0.66f, 1f));
 
             GameObject favoriteButton = CreateActionButton("FavoriteButton", body.transform, runtimeFont,
                 entry.IsFavorite ? "♥" : "♡",
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(8f, -8f), new Vector2(56f, 56f),
+                new Vector2(8f, -8f), new Vector2(54f, 54f),
                 new Color(0f, 0f, 0f, 0f), () => ToggleFavorite(entry));
 
             Text favoriteText = FindChildText(favoriteButton);
@@ -865,14 +923,14 @@ namespace WitchTower.Formation
 
             GameObject checkBadge = CreatePanel("CheckBadge", body.transform,
                 new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(-16f, 16f), new Vector2(92f, 36f),
+                new Vector2(-10f, 10f), new Vector2(74f, 28f),
                 isSelected ? new Color(0.12f, 0.38f, 0.22f, 0.98f) : new Color(0f, 0f, 0f, 0.18f));
             checkBadge.GetComponent<Image>().raycastTarget = false;
 
             CreateText("CheckText", checkBadge.transform, runtimeFont,
-                isSelected ? "出撃中" : "未編成", 15, FontStyle.Bold,
+                isSelected ? "出撃中" : "未編成", 12, FontStyle.Bold,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                Vector2.zero, new Vector2(76f, 20f), TextAnchor.MiddleCenter,
+                Vector2.zero, new Vector2(62f, 18f), TextAnchor.MiddleCenter,
                 isSelected ? Color.white : new Color(0.84f, 0.88f, 0.92f, 0.9f));
 
             return new MonsterCardView
@@ -921,8 +979,8 @@ namespace WitchTower.Formation
                     return CompareByLevel(left, right);
                 case SortMode.Acquired:
                     return CompareByAcquired(left, right);
-                case SortMode.Rarity:
-                    return CompareByRarity(left, right);
+                case SortMode.Class:
+                    return CompareByClassRank(left, right);
                 default:
                     return CompareByFavorite(left, right);
             }
@@ -950,9 +1008,9 @@ namespace WitchTower.Formation
             return string.CompareOrdinal(left.InstanceId, right.InstanceId);
         }
 
-        private static int CompareByRarity(MonsterEntry left, MonsterEntry right)
+        private static int CompareByClassRank(MonsterEntry left, MonsterEntry right)
         {
-            int result = right.Rarity.CompareTo(left.Rarity);
+            int result = right.ClassRank.CompareTo(left.ClassRank);
             if (result != 0)
             {
                 return result;
@@ -1071,8 +1129,8 @@ namespace WitchTower.Formation
                     return "レベル順";
                 case SortMode.Acquired:
                     return "入手順";
-                case SortMode.Rarity:
-                    return "レア度順";
+                case SortMode.Class:
+                    return "クラス順";
                 default:
                     return "お気に入り優先";
             }
@@ -1136,28 +1194,54 @@ namespace WitchTower.Formation
             }
 
             Texture2D loaded = Resources.Load<Texture2D>(resourcePath);
+            if (loaded != null)
+            {
+                loaded.filterMode = UnityEngine.FilterMode.Trilinear;
+                loaded.wrapMode = TextureWrapMode.Clamp;
+            }
             textureCache[resourcePath] = loaded;
             return loaded;
         }
 
-        private static string ResolveMonsterFrameTexturePath(int rarity)
+        private static string ResolveMonsterCardFrameTexturePath(int classRank)
         {
-            switch (Mathf.Clamp(rarity, 1, 6))
+            switch (Mathf.Clamp(classRank, 1, 6))
             {
                 case 1:
-                    return Rarity1FrameTexturePath;
+                    return Class1CardFrameTexturePath;
                 case 2:
-                    return Rarity2FrameTexturePath;
+                    return Class2CardFrameTexturePath;
                 case 3:
-                    return Rarity3FrameTexturePath;
+                    return Class3CardFrameTexturePath;
                 case 4:
-                    return Rarity4FrameTexturePath;
+                    return Class4CardFrameTexturePath;
                 case 5:
-                    return Rarity5FrameTexturePath;
+                    return Class5CardFrameTexturePath;
                 case 6:
-                    return Rarity6FrameTexturePath;
+                    return Class6CardFrameTexturePath;
                 default:
-                    return Rarity1FrameTexturePath;
+                    return Class1CardFrameTexturePath;
+            }
+        }
+
+        private static string ResolveMonsterSlotFrameTexturePath(int classRank)
+        {
+            switch (Mathf.Clamp(classRank, 1, 6))
+            {
+                case 1:
+                    return Class1SlotFrameTexturePath;
+                case 2:
+                    return Class2SlotFrameTexturePath;
+                case 3:
+                    return Class3SlotFrameTexturePath;
+                case 4:
+                    return Class4SlotFrameTexturePath;
+                case 5:
+                    return Class5SlotFrameTexturePath;
+                case 6:
+                    return Class6SlotFrameTexturePath;
+                default:
+                    return Class1SlotFrameTexturePath;
             }
         }
 

@@ -146,6 +146,12 @@ namespace WitchTower.Data
                 PlusWisdom = Math.Max(0, plusValue),
                 PlusDefense = Math.Max(0, plusValue),
                 PlusMagicDefense = Math.Max(0, plusValue),
+                FusionBonusHp = 0,
+                FusionBonusAttack = 0,
+                FusionBonusWisdom = 0,
+                FusionBonusDefense = 0,
+                FusionBonusMagicDefense = 0,
+                FusionBonusAttackSpeed = 0f,
                 IsFavorite = isFavorite,
                 AcquiredOrder = acquiredOrder,
                 EquippedWeaponInstanceId = string.Empty,
@@ -206,6 +212,12 @@ namespace WitchTower.Data
                 monster.PlusWisdom = Math.Max(0, monster.PlusWisdom);
                 monster.PlusDefense = Math.Max(0, monster.PlusDefense);
                 monster.PlusMagicDefense = Math.Max(0, monster.PlusMagicDefense);
+                monster.FusionBonusHp = Math.Max(0, monster.FusionBonusHp);
+                monster.FusionBonusAttack = Math.Max(0, monster.FusionBonusAttack);
+                monster.FusionBonusWisdom = Math.Max(0, monster.FusionBonusWisdom);
+                monster.FusionBonusDefense = Math.Max(0, monster.FusionBonusDefense);
+                monster.FusionBonusMagicDefense = Math.Max(0, monster.FusionBonusMagicDefense);
+                monster.FusionBonusAttackSpeed = Math.Max(0f, monster.FusionBonusAttackSpeed);
                 monster.PlusValue = Math.Max(0, monster.PlusValue);
 
                 bool hasItemizedPlus =

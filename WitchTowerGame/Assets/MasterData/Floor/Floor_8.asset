@@ -18,6 +18,6 @@ MonoBehaviour:
   repeatRewardTableId: drop_common_floor
   monsterRecruitChance: 0.38
   recruitableMonsterIds:
-  - monster_death_mage_elf
-  - monster_shadow
-  - monster_soul_eater
+  - monster_sword_saint_alvarez
+  - monster_abyss_grand_mage_seraphis
+  - monster_abyss_dragon

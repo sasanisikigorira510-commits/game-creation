@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -14,7 +15,11 @@ public static class UnityMcpSceneBuilder
 {
     private const string TitleScenePath = "Assets/Scenes/TitleScene.unity";
     private const string HomeScenePath = "Assets/Scenes/HomeScene.unity";
+    private const string FormationScenePath = "Assets/Scenes/FormationScene.unity";
+    private const string EquipmentScenePath = "Assets/Scenes/EquipmentScene.unity";
+    private const string FusionScenePath = "Assets/Scenes/FusionScene.unity";
     private const string BattleScenePath = "Assets/Scenes/BattleScene.unity";
+    private const string UiPresentationCameraName = "UiPresentationCamera";
     private const string WitchSpritePath = "Assets/Art/External/Derived/witch_idle.png";
     private const string WitchCastSpritePath = "Assets/Art/External/Derived/witch_cast.png";
     private const string EnemySpritePath = "Assets/Art/External/Derived/enemy_death_mage_elf.png";
@@ -35,7 +40,46 @@ public static class UnityMcpSceneBuilder
 
         RebuildMinimalTitleScene();
         RebuildMinimalHomeScene();
+        RebuildFusionScene();
         RebuildMinimalBattleScene();
+    }
+
+    [MenuItem("Tools/MCP/Ensure UI Scene Cameras")]
+    public static void EnsureUiSceneCameras()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            Debug.LogWarning("[UnityMcpSceneBuilder] UI scene camera update skipped during play mode.");
+            return;
+        }
+
+        string activeScenePath = SceneManager.GetActiveScene().path;
+        string[] scenePaths =
+        {
+            TitleScenePath,
+            HomeScenePath,
+            FormationScenePath,
+            EquipmentScenePath,
+            FusionScenePath
+        };
+
+        foreach (string scenePath in scenePaths)
+        {
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath) == null)
+            {
+                continue;
+            }
+
+            Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            EnsureUiPresentationCameraInOpenScene();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+        }
+
+        if (!string.IsNullOrEmpty(activeScenePath) && AssetDatabase.LoadAssetAtPath<SceneAsset>(activeScenePath) != null)
+        {
+            EditorSceneManager.OpenScene(activeScenePath, OpenSceneMode.Single);
+        }
     }
 
     [MenuItem("Tools/MCP/Rebuild Minimal Title Scene")]
@@ -418,6 +462,46 @@ public static class UnityMcpSceneBuilder
         EditorSceneManager.SaveScene(scene);
     }
 
+    [MenuItem("Tools/MCP/Rebuild Fusion Scene")]
+    public static void RebuildFusionScene()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            Debug.LogWarning("[UnityMcpSceneBuilder] Fusion scene rebuild skipped during play mode.");
+            return;
+        }
+
+        Scene scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(FusionScenePath) != null
+            ? EditorSceneManager.OpenScene(FusionScenePath, OpenSceneMode.Single)
+            : EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        ClearScene(scene);
+
+        EnsureEventSystem();
+        Canvas canvas = CreateCanvas("FusionCanvas");
+
+        GameObject panelObject = new GameObject("FusionScenePanel", typeof(RectTransform), typeof(Image), typeof(MonsterFusionPanelController));
+        panelObject.transform.SetParent(canvas.transform, false);
+        RectTransform panelRect = panelObject.GetComponent<RectTransform>();
+        panelRect.anchorMin = Vector2.zero;
+        panelRect.anchorMax = Vector2.one;
+        panelRect.offsetMin = Vector2.zero;
+        panelRect.offsetMax = Vector2.zero;
+        panelRect.localScale = Vector3.one;
+
+        Image panelImage = panelObject.GetComponent<Image>();
+        panelImage.color = new Color(0f, 0f, 0f, 0.001f);
+
+        MonsterFusionPanelController panel = panelObject.GetComponent<MonsterFusionPanelController>();
+        GameObject controllerRoot = new GameObject("FusionSceneRoot");
+        controllerRoot.AddComponent<FusionSceneController>();
+        panel.Show(null);
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene, FusionScenePath);
+        EnsureSceneInBuildSettings(FusionScenePath);
+        AssetDatabase.SaveAssets();
+    }
+
     [MenuItem("Tools/MCP/Rebuild Minimal Battle Scene")]
     public static void RebuildMinimalBattleScene()
     {
@@ -607,6 +691,27 @@ public static class UnityMcpSceneBuilder
         }
     }
 
+    private static void EnsureSceneInBuildSettings(string scenePath)
+    {
+        List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+        for (int i = 0; i < scenes.Count; i += 1)
+        {
+            if (scenes[i].path == scenePath)
+            {
+                if (!scenes[i].enabled)
+                {
+                    scenes[i].enabled = true;
+                    EditorBuildSettings.scenes = scenes.ToArray();
+                }
+
+                return;
+            }
+        }
+
+        scenes.Add(new EditorBuildSettingsScene(scenePath, true));
+        EditorBuildSettings.scenes = scenes.ToArray();
+    }
+
     private static void EnsureEventSystem()
     {
         if (UnityEngine.Object.FindObjectOfType<EventSystem>() != null)
@@ -621,6 +726,7 @@ public static class UnityMcpSceneBuilder
     private static Canvas CreateCanvas(string name)
     {
         GameObject canvasObject = new GameObject(name, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        canvasObject.transform.localScale = Vector3.one;
         Canvas canvas = canvasObject.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
@@ -1489,6 +1595,31 @@ public static class UnityMcpSceneBuilder
         CanvasGroup group = flash.AddComponent<CanvasGroup>();
         group.alpha = 0f;
         return group;
+    }
+
+    private static void EnsureUiPresentationCameraInOpenScene()
+    {
+        GameObject cameraObject = GameObject.Find(UiPresentationCameraName);
+        if (cameraObject == null)
+        {
+            cameraObject = new GameObject(UiPresentationCameraName);
+        }
+
+        Camera camera = cameraObject.GetComponent<Camera>();
+        if (camera == null)
+        {
+            camera = cameraObject.AddComponent<Camera>();
+        }
+
+        cameraObject.SetActive(true);
+        camera.enabled = true;
+        camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.backgroundColor = new Color(0.012f, 0.018f, 0.028f, 1f);
+        camera.cullingMask = 0;
+        camera.orthographic = true;
+        camera.depth = -1000f;
+        camera.allowHDR = false;
+        camera.allowMSAA = false;
     }
 
     private static void SetObjectField(Object target, string fieldName, Object value)

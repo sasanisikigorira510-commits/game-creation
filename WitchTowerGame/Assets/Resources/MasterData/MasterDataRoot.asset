@@ -14,25 +14,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerBaseData: {fileID: 11400000, guid: f74b7773e2007f54288859dfc5f38824, type: 2}
   monsterDataList:
-  - {fileID: 11400000, guid: e38c28c7595044a983e286d6dae622e5, type: 2}
-  - {fileID: 11400000, guid: 088cc4a6c1834733965bb9f6f9e6646a, type: 2}
   - {fileID: 11400000, guid: 53af22bdb89e4572ad3ad2063003d0d5, type: 2}
   - {fileID: 11400000, guid: a74b548ea1ee4879b3909899448cabc7, type: 2}
-  - {fileID: 11400000, guid: a2abfa27e4494169af384f16b8a3bbdc, type: 2}
-  - {fileID: 11400000, guid: a371c518fbed4dc8a00a9f19ebf6b2c0, type: 2}
   - {fileID: 11400000, guid: b87e65904e86432d806a396f5ec8452d, type: 2}
-  - {fileID: 11400000, guid: 75699fa21be74463a43003e91a8b9519, type: 2}
-  - {fileID: 11400000, guid: b5324b736943452b85cd680d7a42610f, type: 2}
-  - {fileID: 11400000, guid: 4f0bd33a73284b629b48e46265f1078b, type: 2}
-  - {fileID: 11400000, guid: 7044184bcbba40b999040aada57dde08, type: 2}
-  - {fileID: 11400000, guid: b4fe508c2799415c881a144777b86ae9, type: 2}
-  - {fileID: 11400000, guid: d40e0cac24984259850a650c2cab5a48, type: 2}
-  - {fileID: 11400000, guid: 07a9368544204bbf9eaa8cb92ac7debb, type: 2}
-  - {fileID: 11400000, guid: fe00beedc1ea4d8cafbe0f2206e3ffba, type: 2}
-  - {fileID: 11400000, guid: ba588cfb136740d98ad8429ec2e097ac, type: 2}
-  - {fileID: 11400000, guid: bdfe1b921cd449aba57de79ea568b507, type: 2}
-  - {fileID: 11400000, guid: 963012703f674189be801aa578a99ab3, type: 2}
+  - {fileID: 11400000, guid: 06187ff35c9e4108a4ce3af71495b85a, type: 2}
+  - {fileID: 11400000, guid: 6ecfbc1ffff743c7a58941fab98e9291, type: 2}
+  - {fileID: 11400000, guid: 4896cae723534d8896921264ad9f7bc0, type: 2}
   - {fileID: 11400000, guid: 8a87efa31a6c46319138fd2c5f0a473c, type: 2}
+  - {fileID: 11400000, guid: 27373a89fefd4b41b2cb9c36fc8ae37a, type: 2}
+  - {fileID: 11400000, guid: 22205d5a37cc43ff9ea369eadc7bbc5d, type: 2}
+  - {fileID: 11400000, guid: e1ee62a648e14e1883283e667d9bcff7, type: 2}
+  - {fileID: 11400000, guid: a5566082b8d14f4685110f093ca65a97, type: 2}
+  - {fileID: 11400000, guid: ac86d6f0a0b54ed5a2fcda2143d15772, type: 2}
+  - {fileID: 11400000, guid: 5553eddff4b84ec995183469c6524f9e, type: 2}
+  - {fileID: 11400000, guid: 77f3ddeaaf554d79ac3c36fb3188e708, type: 2}
+  - {fileID: 11400000, guid: e151f7fa0c394137a9de04bb7702b5b1, type: 2}
   enemyDataList:
   - {fileID: 11400000, guid: c84bd75f92d78dc4db72767294c83c05, type: 2}
   - {fileID: 11400000, guid: cb74962307d647c46b210b716978252b, type: 2}

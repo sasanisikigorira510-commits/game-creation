@@ -14,6 +14,7 @@ namespace WitchTower.Core
             Application.runInBackground = true;
             DontDestroyOnLoad(gameObject);
             EnsureManagers();
+            ManagerFactory.EnsureUiPresentationCamera();
             InitializeGame();
         }
 

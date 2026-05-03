@@ -19,11 +19,11 @@ namespace WitchTower.Battle
     {
         private static readonly string[] FallbackPartySpritePaths =
         {
-            "MonsterPortraits/mon_rock_golem_portrait",
-            "FormationMonsters/Goblin",
-            "FormationMonsters/Wraith",
-            "FormationMonsters/Centaur",
-            "FormationMonsters/HellKnight"
+            "FamilyMonsters/Dragon/dragon_whelp",
+            "FamilyMonsters/Robot/chibi_gear",
+            "FamilyMonsters/Golem/rock_golem",
+            "FamilyMonsters/Swordsman/apprentice_swordsman",
+            "FamilyMonsters/Mage/apprentice_mage"
         };
 
         private static readonly Dictionary<string, string> EnemyPortraitPaths = new Dictionary<string, string>

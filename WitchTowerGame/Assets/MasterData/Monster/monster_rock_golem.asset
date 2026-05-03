@@ -13,37 +13,43 @@ MonoBehaviour:
   m_Name: monster_rock_golem
   m_EditorClassIdentifier: 
   monsterId: monster_rock_golem
-  monsterName: "\u30ed\u30c3\u30af\u30b4\u30fc\u30ec\u30e0"
-  encyclopediaNumber: 1
-  rarity: 2
+  monsterName: "ロックゴーレム"
+  encyclopediaNumber: 7
+  raceId: golem
+  classRank: 1
+  rarity: 1
   element: 1
   rangeType: 0
   damageType: 0
   baseStats:
-    maxHp: 78
-    attack: 18
-    magicAttack: 6
-    defense: 20
+    maxHp: 82
+    attack: 16
+    magicAttack: 3
+    defense: 22
     magicDefense: 10
     attackSpeed: 0.78
+  attackRange: 0.95
+  normalAttackTargetCount: 1
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
   plusValueCap: 99
   plusGrowth:
-    maxHpPerPlus: 2
+    maxHpPerPlus: 1
     attackPerPlus: 1
     magicAttackPerPlus: 0
     defensePerPlus: 1
-    magicDefensePerPlus: 1
+    magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FamilyMonsters/Robot/Robot1
-  illustrationResourcePath: 
+  portraitResourcePath: FamilyMonsterCards/Golem/rock_golem
+  illustrationResourcePath: FamilyMonsters/Golem/rock_golem
   battleIdleResourcePath: MonsterBattle/mon_rock_golem_idle
   battleIdleFacing: 0
-  battleMoveResourcePath: MonsterBattle/mon_rock_golem_idle
+  battleMoveResourcePath: MonsterBattle/mon_rock_golem_move
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_rock_golem_attack
   battleAttackFacing: 0
-  description: "\u53e4\u3044\u77f3\u6750\u306b\u82d4\u304c\u5bbf\u3063\u305f\u5b88\u8b77\u8005\u3002\u977e\u304f\u4e00\u6483\u306f\u91cd\u3044\u304c\u3001\u9806\u5fdc\u3059\u308b\u3068\u9ad8\u3044\u8010\u4e45\u529b\u3067\u524d\u7dda\u3092\u652f\u3048\u308b\u3002"
+  description: "岩でできた下位ゴーレム。動きは遅いが、前線で敵を受け止める。"

@@ -181,6 +181,12 @@ namespace WitchTower.Save
         public int PlusWisdom;
         public int PlusDefense;
         public int PlusMagicDefense;
+        public int FusionBonusHp;
+        public int FusionBonusAttack;
+        public int FusionBonusWisdom;
+        public int FusionBonusDefense;
+        public int FusionBonusMagicDefense;
+        public float FusionBonusAttackSpeed;
         public bool IsFavorite;
         public int AcquiredOrder;
         public string EquippedWeaponInstanceId;

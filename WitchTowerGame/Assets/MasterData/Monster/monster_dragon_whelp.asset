@@ -13,20 +13,22 @@ MonoBehaviour:
   m_Name: monster_dragon_whelp
   m_EditorClassIdentifier: 
   monsterId: monster_dragon_whelp
-  monsterName: "\u30d2\u30ca\u30c9\u30e9"
-  encyclopediaNumber: 18
-  rarity: 2
+  monsterName: "ヒナドラ"
+  encyclopediaNumber: 1
+  raceId: dragon
+  classRank: 1
+  rarity: 1
   element: 3
-  rangeType: 0
-  damageType: 0
+  rangeType: 1
+  damageType: 1
   baseStats:
-    maxHp: 54
-    attack: 14
-    magicAttack: 6
+    maxHp: 58
+    attack: 13
+    magicAttack: 12
     defense: 9
-    magicDefense: 7
-    attackSpeed: 1.12
-  attackRange: 1.05
+    magicDefense: 8
+    attackSpeed: 1.08
+  attackRange: 1.55
   normalAttackTargetCount: 1
   normalAttackAppliesKnockback: 0
   normalAttackKnockbackDuration: 0.18
@@ -34,7 +36,7 @@ MonoBehaviour:
   plusGrowth:
     maxHpPerPlus: 1
     attackPerPlus: 1
-    magicAttackPerPlus: 0
+    magicAttackPerPlus: 1
     defensePerPlus: 1
     magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
@@ -42,12 +44,12 @@ MonoBehaviour:
   fusionRecipes: []
   portraitSprite: {fileID: 0}
   illustrationSprite: {fileID: 0}
-  portraitResourcePath: FamilyMonsters/Dragon/dragon_whelp
-  illustrationResourcePath: 
+  portraitResourcePath: FamilyMonsterCards/Dragon/dragon_whelp
+  illustrationResourcePath: FamilyMonsters/Dragon/dragon_whelp
   battleIdleResourcePath: MonsterBattle/mon_dragon_whelp_idle
   battleIdleFacing: 0
   battleMoveResourcePath: MonsterBattle/mon_dragon_whelp_move
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_dragon_whelp_attack
   battleAttackFacing: 0
-  description: A young fire dragon with quick movement and balanced early-game stats.
+  description: "炎の息を覚え始めた幼いドラゴン。素早く動き、序盤の万能アタッカーとして扱いやすい。"

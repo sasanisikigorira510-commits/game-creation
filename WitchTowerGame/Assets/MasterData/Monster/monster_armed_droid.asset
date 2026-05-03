@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_armed_droid
+  m_EditorClassIdentifier: 
+  monsterId: monster_armed_droid
+  monsterName: "アームドロイド"
+  encyclopediaNumber: 5
+  raceId: robot
+  classRank: 2
+  rarity: 2
+  element: 4
+  rangeType: 0
+  damageType: 0
+  baseStats:
+    maxHp: 92
+    attack: 25
+    magicAttack: 6
+    defense: 22
+    magicDefense: 13
+    attackSpeed: 0.92
+  attackRange: 1.15
+  normalAttackTargetCount: 1
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 2
+    magicAttackPerPlus: 0
+    defensePerPlus: 2
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  fusionExclusive: 0
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsterCards/Robot/armed_droid
+  illustrationResourcePath: FamilyMonsters/Robot/armed_droid
+  battleIdleResourcePath: MonsterBattle/mon_armed_droid_idle
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_armed_droid_move
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_armed_droid_attack
+  battleAttackFacing: 0
+  description: "武装を増設した中位ドロイド。耐久と物理攻撃のバランスに優れる。"
