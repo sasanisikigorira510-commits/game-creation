@@ -71,20 +71,20 @@ namespace WitchTower.Battle
             bool isFrontline = allyIndex == 0 || allyIndex == 1;
             bool isMidline = allyIndex == 2;
             float maxAdvance = isFrontline
-                ? (isRanged ? 0.24f : 0.18f)
+                ? (isRanged ? 0.26f : 0.24f)
                 : isMidline
-                    ? (isRanged ? 0.34f : 0.14f)
-                    : (isRanged ? 0.32f : 0.12f);
+                    ? (isRanged ? 0.36f : 0.34f)
+                    : (isRanged ? 0.34f : 0.42f);
             if (isDragon)
             {
                 maxAdvance += isFrontline ? 0.04f : isMidline ? 0.12f : 0.08f;
             }
 
             float verticalLeash = isFrontline
-                ? (isRanged ? 0.18f : 0.16f)
+                ? (isRanged ? 0.30f : 0.30f)
                 : isMidline
-                    ? (isRanged ? 0.17f : 0.14f)
-                    : (isRanged ? 0.16f : 0.12f);
+                    ? (isRanged ? 0.32f : 0.32f)
+                    : (isRanged ? 0.34f : 0.34f);
             if (isDragon)
             {
                 verticalLeash += isFrontline ? 0.03f : 0.04f;

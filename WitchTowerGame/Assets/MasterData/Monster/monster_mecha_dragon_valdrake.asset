@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_mecha_dragon_valdrake
+  m_EditorClassIdentifier: 
+  monsterId: monster_mecha_dragon_valdrake
+  monsterName: "機竜ヴァルドレイク"
+  encyclopediaNumber: 16
+  raceId: special
+  classRank: 4
+  rarity: 4
+  element: 4
+  rangeType: 1
+  damageType: 1
+  baseStats:
+    maxHp: 176
+    attack: 42
+    magicAttack: 54
+    defense: 36
+    magicDefense: 30
+    attackSpeed: 0.82
+  attackRange: 2.35
+  normalAttackTargetCount: 2
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 2
+    magicAttackPerPlus: 4
+    defensePerPlus: 4
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  fusionExclusive: 1
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsterCards/Class4/mecha_dragon_valdrake
+  illustrationResourcePath: FamilyMonsters/Class4/mecha_dragon_valdrake
+  battleIdleResourcePath: MonsterBattle/mon_mecha_dragon_valdrake_idle
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_mecha_dragon_valdrake_move
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_mecha_dragon_valdrake_attack
+  battleAttackFacing: 0
+  description: "竜の魔力と機械装甲が融合した特殊個体。中距離から機械竜の砲撃を放つ。"

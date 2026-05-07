@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_mecha_sword_saint_gransaber
+  m_EditorClassIdentifier: 
+  monsterId: monster_mecha_sword_saint_gransaber
+  monsterName: "機甲剣聖グランセイバー"
+  encyclopediaNumber: 21
+  raceId: special
+  classRank: 4
+  rarity: 4
+  element: 4
+  rangeType: 0
+  damageType: 0
+  baseStats:
+    maxHp: 168
+    attack: 72
+    magicAttack: 12
+    defense: 42
+    magicDefense: 24
+    attackSpeed: 0.98
+  attackRange: 1.28
+  normalAttackTargetCount: 2
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 2
+    magicAttackPerPlus: 0
+    defensePerPlus: 4
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  fusionExclusive: 1
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsterCards/Class4/mecha_sword_saint_gransaber
+  illustrationResourcePath: FamilyMonsters/Class4/mecha_sword_saint_gransaber
+  battleIdleResourcePath: MonsterBattle/mon_mecha_sword_saint_gransaber_idle
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_mecha_sword_saint_gransaber_move
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_mecha_sword_saint_gransaber_attack
+  battleAttackFacing: 0
+  description: "機械装甲で剣技を増幅する特殊剣聖。鋭い連撃で敵を削る。"

@@ -63,6 +63,17 @@ namespace WitchTower.MasterData
     }
 
     [System.Serializable]
+    public struct MonsterLevelGrowthCoefficients
+    {
+        [Min(0f)] public float maxHpCoefficient;
+        [Min(0f)] public float attackCoefficient;
+        [Min(0f)] public float magicAttackCoefficient;
+        [Min(0f)] public float defenseCoefficient;
+        [Min(0f)] public float magicDefenseCoefficient;
+        [Min(0f)] public float attackSpeedCoefficient;
+    }
+
+    [System.Serializable]
     public sealed class MonsterFusionRecipeEntry
     {
         public string parentMonsterIdA;
@@ -95,6 +106,7 @@ namespace WitchTower.MasterData
         [Min(0f)] public float normalAttackKnockbackDuration = 0.18f;
         public int plusValueCap = 99;
         public MonsterPlusGrowth plusGrowth;
+        public MonsterLevelGrowthCoefficients levelGrowth;
 
         [Header("Fusion")]
         public bool fusionExclusive;

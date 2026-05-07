@@ -125,6 +125,12 @@ namespace WitchTower.Core
         private const string VolatileRelicTexturePath = "EquipmentRelics/relic_volatile_ember_icon";
         private const string LockedEquipmentIconTexturePath = "EquipmentUi/ui_lock_locked_icon";
         private const string UnlockedEquipmentIconTexturePath = "EquipmentUi/ui_lock_unlocked_icon";
+        private const string EquipmentEnhanceRuneTexturePath = "UI/EquipmentEnhance/EnhanceRuneCircle";
+        private const string EquipmentEnhanceSuccessBasePath = "UI/EquipmentEnhance/EnhanceSuccess_";
+        private const string EquipmentEnhanceFailBasePath = "UI/EquipmentEnhance/EnhanceFail_";
+        private const string EquipmentEnhanceDestroyBasePath = "UI/EquipmentEnhance/EnhanceDestroy_";
+        private const int EquipmentEnhanceEffectFrameCount = 8;
+        private const float EquipmentEnhanceEffectDuration = 0.92f;
 
         private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
         private readonly FormationSlotView[] slotViews = new FormationSlotView[5];
@@ -150,9 +156,19 @@ namespace WitchTower.Core
         private RectTransform equipmentEnhanceOverlayListRect;
         private Text equipmentEnhanceOverlayTitleText;
         private Text equipmentEnhanceOverlayInfoText;
+        private Text equipmentEnhanceOverlayResultText;
+        private RawImage equipmentEnhanceRuneImage;
+        private RawImage equipmentEnhanceEffectImage;
+        private RectTransform equipmentEnhanceRuneRect;
+        private RectTransform equipmentEnhanceEffectRect;
+        private Texture2D[] equipmentEnhanceSuccessTextures;
+        private Texture2D[] equipmentEnhanceFailTextures;
+        private Texture2D[] equipmentEnhanceDestroyTextures;
         private string selectedEquipmentMonsterInstanceId;
         private string selectedEquipmentEnhanceInstanceId;
         private string equipmentLastActionMessage;
+        private EquipmentEnhancementResultType activeEquipmentEnhanceEffect = EquipmentEnhancementResultType.None;
+        private float equipmentEnhanceEffectTimer;
         private int selectedSlotIndex;
 
         private void Start()
@@ -204,6 +220,16 @@ namespace WitchTower.Core
                 EnsureEquipmentScene();
                 RefreshEquipmentScene();
             }
+        }
+
+        private void Update()
+        {
+            if (equipmentEnhanceOverlayRoot == null)
+            {
+                return;
+            }
+
+            AnimateEquipmentEnhancementEffect();
         }
 
         public void StartNewGame()
@@ -344,6 +370,9 @@ namespace WitchTower.Core
             canvas.transform.localScale = Vector3.one;
 
             Font font = ResolveRuntimeFont();
+            equipmentEnhanceSuccessTextures = LoadTextureSequence(EquipmentEnhanceSuccessBasePath, EquipmentEnhanceEffectFrameCount);
+            equipmentEnhanceFailTextures = LoadTextureSequence(EquipmentEnhanceFailBasePath, EquipmentEnhanceEffectFrameCount);
+            equipmentEnhanceDestroyTextures = LoadTextureSequence(EquipmentEnhanceDestroyBasePath, EquipmentEnhanceEffectFrameCount);
             equipmentSceneRoot = CreateUiObject("EquipmentSceneRoot", canvas.transform);
             RectTransform rootRect = equipmentSceneRoot.AddComponent<RectTransform>();
             rootRect.anchorMin = Vector2.zero;
@@ -493,12 +522,40 @@ namespace WitchTower.Core
                 TextAnchor.UpperLeft, new Color(0.80f, 0.86f, 0.92f), new Vector2(0f, 1f), new Vector2(1f, 1f),
                 new Vector2(0f, 1f), new Vector2(28f, -126f), new Vector2(804f, 60f));
 
+            GameObject ritualArea = CreateUiObject("EquipmentEnhanceRitualArea", overlayPanel.transform);
+            RectTransform ritualRect = ritualArea.AddComponent<RectTransform>();
+            ritualRect.anchorMin = new Vector2(0.5f, 1f);
+            ritualRect.anchorMax = new Vector2(0.5f, 1f);
+            ritualRect.pivot = new Vector2(0.5f, 0.5f);
+            ritualRect.anchoredPosition = new Vector2(0f, -292f);
+            ritualRect.sizeDelta = new Vector2(560f, 220f);
+
+            Image ritualImage = ritualArea.AddComponent<Image>();
+            ritualImage.color = new Color(0.015f, 0.02f, 0.035f, 0.86f);
+
+            equipmentEnhanceRuneImage = CreateRawPortrait("EquipmentEnhanceRune", ritualArea.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(198f, 198f));
+            equipmentEnhanceRuneImage.texture = LoadMonsterTexture(EquipmentEnhanceRuneTexturePath);
+            equipmentEnhanceRuneImage.raycastTarget = false;
+            equipmentEnhanceRuneRect = equipmentEnhanceRuneImage.GetComponent<RectTransform>();
+
+            equipmentEnhanceEffectImage = CreateRawPortrait("EquipmentEnhanceEffect", ritualArea.transform,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(236f, 236f));
+            equipmentEnhanceEffectImage.texture = null;
+            equipmentEnhanceEffectImage.color = new Color(1f, 1f, 1f, 0f);
+            equipmentEnhanceEffectImage.raycastTarget = false;
+            equipmentEnhanceEffectRect = equipmentEnhanceEffectImage.GetComponent<RectTransform>();
+
+            equipmentEnhanceOverlayResultText = CreateText("EquipmentEnhanceOverlayResult", overlayPanel.transform, font, string.Empty, 18, FontStyle.Bold,
+                TextAnchor.MiddleCenter, new Color(1f, 0.86f, 0.52f), new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(0.5f, 1f), new Vector2(0f, -416f), new Vector2(804f, 30f));
+
             equipmentEnhanceOverlayListRect = CreateUiObject("EquipmentEnhanceOverlayList", overlayPanel.transform).AddComponent<RectTransform>();
             equipmentEnhanceOverlayListRect.anchorMin = new Vector2(0f, 1f);
             equipmentEnhanceOverlayListRect.anchorMax = new Vector2(0f, 1f);
             equipmentEnhanceOverlayListRect.pivot = new Vector2(0f, 1f);
-            equipmentEnhanceOverlayListRect.anchoredPosition = new Vector2(28f, -214f);
-            equipmentEnhanceOverlayListRect.sizeDelta = new Vector2(804f, 716f);
+            equipmentEnhanceOverlayListRect.anchoredPosition = new Vector2(28f, -466f);
+            equipmentEnhanceOverlayListRect.sizeDelta = new Vector2(804f, 460f);
 
             CreateActionButton(overlayPanel.transform, font, "閉じる", new Vector2(1f, 1f), new Vector2(1f, 1f),
                 new Vector2(1f, 1f), new Vector2(-28f, -28f), new Vector2(96f, 40f),
@@ -811,6 +868,12 @@ namespace WitchTower.Core
 
             EquipmentEnhancementResult result = profile.TryEnhanceEquipment(equipmentInstanceId, relicId);
             equipmentLastActionMessage = result.Message;
+            StartEquipmentEnhancementEffect(result.ResultType);
+            if (result.ResultType == EquipmentEnhancementResultType.Destroyed)
+            {
+                selectedEquipmentEnhanceInstanceId = string.Empty;
+            }
+
             if (Application.isPlaying && SaveManager.Instance != null)
             {
                 SaveManager.Instance.SaveCurrentGame();
@@ -823,6 +886,13 @@ namespace WitchTower.Core
         private void OpenEquipmentEnhancementOverlay(string equipmentInstanceId)
         {
             selectedEquipmentEnhanceInstanceId = equipmentInstanceId;
+            activeEquipmentEnhanceEffect = EquipmentEnhancementResultType.None;
+            equipmentEnhanceEffectTimer = 0f;
+            if (equipmentEnhanceEffectImage != null)
+            {
+                equipmentEnhanceEffectImage.color = new Color(1f, 1f, 1f, 0f);
+            }
+
             if (equipmentEnhanceOverlayRoot != null)
             {
                 equipmentEnhanceOverlayRoot.SetActive(true);
@@ -835,6 +905,8 @@ namespace WitchTower.Core
         private void CloseEquipmentEnhancementOverlay()
         {
             selectedEquipmentEnhanceInstanceId = string.Empty;
+            activeEquipmentEnhanceEffect = EquipmentEnhancementResultType.None;
+            equipmentEnhanceEffectTimer = 0f;
             if (equipmentEnhanceOverlayRoot != null)
             {
                 equipmentEnhanceOverlayRoot.SetActive(false);
@@ -864,6 +936,11 @@ namespace WitchTower.Core
                 equipmentEnhanceOverlayInfoText.text = equipment != null
                     ? $"強化値 {EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / 残り {equipment.RemainingEnhanceAttempts}回 / {(equipment.IsLocked ? "ロック中" : "未ロック")}\n現在所持している強化遺物だけを表示しています。"
                     : "装備カードの「強化」から対象装備を選ぶと、ここに使用可能な強化遺物が表示されます。";
+            }
+
+            if (equipmentEnhanceOverlayResultText != null)
+            {
+                equipmentEnhanceOverlayResultText.text = equipmentLastActionMessage;
             }
 
             ClearChildren(equipmentEnhanceOverlayListRect);
@@ -997,6 +1074,91 @@ namespace WitchTower.Core
                 default:
                     return string.Empty;
             }
+        }
+
+        private void StartEquipmentEnhancementEffect(EquipmentEnhancementResultType resultType)
+        {
+            switch (resultType)
+            {
+                case EquipmentEnhancementResultType.Success:
+                case EquipmentEnhancementResultType.Failed:
+                case EquipmentEnhancementResultType.Destroyed:
+                    activeEquipmentEnhanceEffect = resultType;
+                    equipmentEnhanceEffectTimer = EquipmentEnhanceEffectDuration;
+                    if (equipmentEnhanceEffectImage != null)
+                    {
+                        equipmentEnhanceEffectImage.transform.SetAsLastSibling();
+                    }
+                    break;
+                default:
+                    activeEquipmentEnhanceEffect = EquipmentEnhancementResultType.None;
+                    equipmentEnhanceEffectTimer = 0f;
+                    break;
+            }
+        }
+
+        private void AnimateEquipmentEnhancementEffect()
+        {
+            float time = Application.isPlaying ? Time.unscaledTime : 0f;
+            if (equipmentEnhanceRuneRect != null)
+            {
+                float scale = 1f + Mathf.Sin(time * 2.8f) * 0.04f;
+                equipmentEnhanceRuneRect.localScale = Vector3.one * scale;
+                equipmentEnhanceRuneRect.localEulerAngles = new Vector3(0f, 0f, time * 16f);
+            }
+
+            if (equipmentEnhanceEffectImage == null || equipmentEnhanceEffectTimer <= 0f)
+            {
+                if (equipmentEnhanceEffectImage != null)
+                {
+                    equipmentEnhanceEffectImage.color = new Color(1f, 1f, 1f, 0f);
+                }
+                return;
+            }
+
+            float deltaTime = Application.isPlaying ? Time.unscaledDeltaTime : 0f;
+            equipmentEnhanceEffectTimer = Mathf.Max(0f, equipmentEnhanceEffectTimer - deltaTime);
+            float progress = Mathf.Clamp01(1f - equipmentEnhanceEffectTimer / EquipmentEnhanceEffectDuration);
+            Texture2D[] frames = ResolveEquipmentEnhancementEffectTextures(activeEquipmentEnhanceEffect);
+            if (frames != null && frames.Length > 0)
+            {
+                int frameIndex = Mathf.Clamp(Mathf.FloorToInt(progress * frames.Length), 0, frames.Length - 1);
+                equipmentEnhanceEffectImage.texture = frames[frameIndex];
+            }
+
+            float alpha = Mathf.Sin(progress * Mathf.PI) * 0.96f;
+            equipmentEnhanceEffectImage.color = new Color(1f, 1f, 1f, alpha);
+            if (equipmentEnhanceEffectRect != null)
+            {
+                float scale = 0.82f + progress * 0.5f;
+                equipmentEnhanceEffectRect.localScale = Vector3.one * scale;
+            }
+        }
+
+        private Texture2D[] ResolveEquipmentEnhancementEffectTextures(EquipmentEnhancementResultType resultType)
+        {
+            switch (resultType)
+            {
+                case EquipmentEnhancementResultType.Success:
+                    return equipmentEnhanceSuccessTextures;
+                case EquipmentEnhancementResultType.Destroyed:
+                    return equipmentEnhanceDestroyTextures;
+                case EquipmentEnhancementResultType.Failed:
+                    return equipmentEnhanceFailTextures;
+                default:
+                    return equipmentEnhanceFailTextures;
+            }
+        }
+
+        private Texture2D[] LoadTextureSequence(string basePath, int count)
+        {
+            Texture2D[] textures = new Texture2D[Mathf.Max(0, count)];
+            for (int i = 0; i < textures.Length; i += 1)
+            {
+                textures[i] = LoadMonsterTexture(basePath + i);
+            }
+
+            return textures;
         }
 
         private static string ResolveEquipmentIconTexturePath(string equipmentId)

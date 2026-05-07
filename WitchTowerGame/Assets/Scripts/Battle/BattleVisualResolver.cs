@@ -35,6 +35,15 @@ namespace WitchTower.Battle
             { "enemy_wraith", "FormationMonsters/Wraith" }
         };
 
+        private static readonly Dictionary<string, string> EnemyBattleBasePaths = new Dictionary<string, string>
+        {
+            { "enemy_class1_dragon_whelp", "MonsterBattle/mon_dragon_whelp" },
+            { "enemy_class1_chibi_gear", "MonsterBattle/mon_chibi_gear" },
+            { "enemy_class1_rock_golem", "MonsterBattle/mon_rock_golem" },
+            { "enemy_class1_apprentice_swordsman", "MonsterBattle/mon_apprentice_swordsman" },
+            { "enemy_class1_apprentice_mage", "MonsterBattle/mon_apprentice_mage" }
+        };
+
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
         private static readonly Dictionary<string, List<Sprite>> SpriteFramesCache = new Dictionary<string, List<Sprite>>();
 
@@ -182,6 +191,12 @@ namespace WitchTower.Battle
                 return LoadSprite("FormationMonsters/HellKnight");
             }
 
+            if (EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
+            {
+                Sprite frame = LoadSprite($"{battleBasePath}_idle_0");
+                return frame != null ? frame : LoadSprite($"{battleBasePath}_idle");
+            }
+
             if (EnemyPortraitPaths.TryGetValue(enemyData.enemyId, out string resourcePath))
             {
                 return LoadSprite(resourcePath);
@@ -192,11 +207,23 @@ namespace WitchTower.Battle
 
         public static Sprite ResolveEnemyMoveSprite(EnemyDataSO enemyData)
         {
+            if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
+            {
+                Sprite frame = LoadSprite($"{battleBasePath}_move_0");
+                return frame != null ? frame : ResolveEnemyIdleSprite(enemyData);
+            }
+
             return ResolveEnemyIdleSprite(enemyData);
         }
 
         public static Sprite ResolveEnemyAttackSprite(EnemyDataSO enemyData)
         {
+            if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
+            {
+                Sprite frame = LoadSprite($"{battleBasePath}_attack_0");
+                return frame != null ? frame : ResolveEnemyIdleSprite(enemyData);
+            }
+
             return ResolveEnemyIdleSprite(enemyData);
         }
 
@@ -257,16 +284,33 @@ namespace WitchTower.Battle
 
         public static List<Sprite> ResolveEnemyIdleSprites(EnemyDataSO enemyData)
         {
+            if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
+            {
+                return LoadSpriteFrames($"{battleBasePath}_idle");
+            }
+
             return BuildSingleSpriteList(ResolveEnemyIdleSprite(enemyData));
         }
 
         public static List<Sprite> ResolveEnemyMoveSprites(EnemyDataSO enemyData)
         {
+            if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
+            {
+                List<Sprite> frames = LoadSpriteFrames($"{battleBasePath}_move");
+                return frames.Count > 0 ? frames : ResolveEnemyIdleSprites(enemyData);
+            }
+
             return BuildSingleSpriteList(ResolveEnemyMoveSprite(enemyData));
         }
 
         public static List<Sprite> ResolveEnemyAttackSprites(EnemyDataSO enemyData)
         {
+            if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
+            {
+                List<Sprite> frames = LoadSpriteFrames($"{battleBasePath}_attack");
+                return frames.Count > 0 ? frames : ResolveEnemyIdleSprites(enemyData);
+            }
+
             return BuildSingleSpriteList(ResolveEnemyAttackSprite(enemyData));
         }
 

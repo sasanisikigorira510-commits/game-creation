@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_dragon_sword_saint_agito
+  m_EditorClassIdentifier: 
+  monsterId: monster_dragon_sword_saint_agito
+  monsterName: "竜剣聖アギト"
+  encyclopediaNumber: 18
+  raceId: special
+  classRank: 4
+  rarity: 4
+  element: 3
+  rangeType: 0
+  damageType: 0
+  baseStats:
+    maxHp: 164
+    attack: 68
+    magicAttack: 18
+    defense: 38
+    magicDefense: 26
+    attackSpeed: 1.04
+  attackRange: 1.32
+  normalAttackTargetCount: 2
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 2
+    magicAttackPerPlus: 0
+    defensePerPlus: 4
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  fusionExclusive: 1
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsterCards/Class4/dragon_sword_saint_agito
+  illustrationResourcePath: FamilyMonsters/Class4/dragon_sword_saint_agito
+  battleIdleResourcePath: MonsterBattle/mon_dragon_sword_saint_agito_idle
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_dragon_sword_saint_agito_move
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_dragon_sword_saint_agito_attack
+  battleAttackFacing: 0
+  description: "竜の闘気をまとった剣聖。素早い斬撃で前線を切り開く。"

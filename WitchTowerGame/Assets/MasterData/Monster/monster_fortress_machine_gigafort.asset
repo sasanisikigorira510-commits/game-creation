@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_fortress_machine_gigafort
+  m_EditorClassIdentifier: 
+  monsterId: monster_fortress_machine_gigafort
+  monsterName: "要塞機兵ギガフォート"
+  encyclopediaNumber: 20
+  raceId: special
+  classRank: 4
+  rarity: 4
+  element: 4
+  rangeType: 0
+  damageType: 0
+  baseStats:
+    maxHp: 270
+    attack: 50
+    magicAttack: 12
+    defense: 72
+    magicDefense: 34
+    attackSpeed: 0.55
+  attackRange: 1.18
+  normalAttackTargetCount: 2
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 2
+    magicAttackPerPlus: 0
+    defensePerPlus: 4
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  fusionExclusive: 1
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsterCards/Class4/fortress_machine_gigafort
+  illustrationResourcePath: FamilyMonsters/Class4/fortress_machine_gigafort
+  battleIdleResourcePath: MonsterBattle/mon_fortress_machine_gigafort_idle
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_fortress_machine_gigafort_move
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_fortress_machine_gigafort_attack
+  battleAttackFacing: 0
+  description: "要塞級の装甲を持つ機械兵。圧倒的な防御力で戦線を固定する。"

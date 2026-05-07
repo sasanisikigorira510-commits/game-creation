@@ -15,7 +15,6 @@ namespace WitchTower.Battle
             "monster_dragon_whelp",
             "monster_abyss_dragon"
         };
-        private const string DevEnemyOverrideId = "enemy_slime";
         private static readonly float[] EnemyAttackSlotAngles =
         {
             0f,
@@ -60,6 +59,8 @@ namespace WitchTower.Battle
         private const float DefaultEnemyCombatRadius = 0.037f;
         private const float RangeOffsetPadding = 0.012f;
         private const float PositionEpsilon = 0.0025f;
+        private const float AllyAttackForgivenessX = 0.075f;
+        private const float AllyAttackForgivenessY = 0.11f;
         private const float ReferenceSpawnInterval = 0.20f;
         private const int ReferenceEncounterEnemyCount = 5;
         private const int ReferenceOpeningSpawnBurst = 3;
@@ -522,7 +523,7 @@ namespace WitchTower.Battle
                 float interval = GetCurrentPlayerAttackInterval(attacker.Stats);
                 if (!CanAllyAttackTarget(attacker, targetIndex))
                 {
-                    attacker.AttackTimer = Mathf.Min(attacker.AttackTimer + deltaTime, interval * 0.90f);
+                    attacker.AttackTimer = Mathf.Min(attacker.AttackTimer + deltaTime, interval * 0.97f);
                     continue;
                 }
 
@@ -1050,10 +1051,26 @@ namespace WitchTower.Battle
             float attackDistance = attacker.CombatRadius + target.CombatRadius + attacker.AttackReachAnchor + PositionEpsilon;
             if (!IsMonsterMelee(attacker.Data))
             {
-                return Mathf.Abs(attacker.PositionAnchor.x - target.PositionAnchor.x) <= attackDistance;
+                return Mathf.Abs(attacker.PositionAnchor.x - target.PositionAnchor.x) <= attackDistance + AllyAttackForgivenessX;
             }
 
-            return Vector2.Distance(attacker.PositionAnchor, target.PositionAnchor) <= attackDistance;
+            if (Vector2.Distance(attacker.PositionAnchor, target.PositionAnchor) <= attackDistance)
+            {
+                return true;
+            }
+
+            if (attacker.IsMoving || !IsEnemyInsideAllySearchRange(attacker, target))
+            {
+                return false;
+            }
+
+            // Movement is clamped by formation leashes. If the unit has reached its
+            // closest allowed point, let a visually-contacting monster swing instead
+            // of freezing in idle just outside the exact radius.
+            float horizontalGap = Mathf.Abs(attacker.PositionAnchor.x - target.PositionAnchor.x);
+            float verticalGap = Mathf.Abs(attacker.PositionAnchor.y - target.PositionAnchor.y);
+            return horizontalGap <= attackDistance + AllyAttackForgivenessX &&
+                verticalGap <= attackDistance + AllyAttackForgivenessY;
         }
 
         private bool CanEnemyAttackTarget(EnemyRuntime attacker, int attackerIndex, int targetAllyIndex)
@@ -1458,7 +1475,7 @@ namespace WitchTower.Battle
 
         private static bool ResolveBossEncounter(int floor)
         {
-            return floor > 0 && floor % 10 == 0;
+            return BattleDungeonCatalog.ResolveIsBossEncounter(floor);
         }
 
         private int ResolveEncounterEnemyCount()
@@ -1468,9 +1485,12 @@ namespace WitchTower.Battle
                 return Mathf.Max(1, bossWaveEnemyCount);
             }
 
-            int configuredEnemyCount = normalWaveEnemyCount > 0
-                ? normalWaveEnemyCount
-                : ReferenceEncounterEnemyCount;
+            int dungeonEnemyCount = BattleDungeonCatalog.ResolveEnemyCount(currentFloor);
+            int configuredEnemyCount = dungeonEnemyCount > 0
+                ? dungeonEnemyCount
+                : normalWaveEnemyCount > 0
+                    ? normalWaveEnemyCount
+                    : ReferenceEncounterEnemyCount;
             return Mathf.Clamp(configuredEnemyCount, MinEncounterEnemyCount, MaxEncounterEnemyCount);
         }
 
@@ -1901,11 +1921,10 @@ namespace WitchTower.Battle
         {
             var masterDataManager = MasterDataManager.Instance;
             var floorData = masterDataManager != null ? masterDataManager.GetFloorData(floor) : null;
-            enemyData = floorData != null ? floorData.enemyData : null;
-            EnemyDataSO devEnemyData = masterDataManager != null ? masterDataManager.GetEnemyData(DevEnemyOverrideId) : null;
-            if (devEnemyData != null)
+            enemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, masterDataManager);
+            if (enemyData == null)
             {
-                enemyData = devEnemyData;
+                enemyData = floorData != null ? floorData.enemyData : null;
             }
 
             if (enemyData == null)

@@ -16,7 +16,8 @@ namespace WitchTower.Data
         ParentNotOwned = 4,
         FavoriteParentBlocked = 5,
         NoRecipe = 6,
-        ResultMonsterDataMissing = 7
+        ResultMonsterDataMissing = 7,
+        ParentLevelTooLow = 8
     }
 
     public sealed class MonsterFusionResult
@@ -83,6 +84,14 @@ namespace WitchTower.Data
                 ? masterDataManager.GetMonsterData(parentB.MonsterId)
                 : null;
 
+            if (!MonsterLevelService.IsAtMaxLevel(parentA, parentMonsterDataA) ||
+                !MonsterLevelService.IsAtMaxLevel(parentB, parentMonsterDataB))
+            {
+                return new MonsterFusionResult(
+                    MonsterFusionStatus.ParentLevelTooLow,
+                    message: BuildMaxLevelRequirementMessage(parentA, parentMonsterDataA, parentB, parentMonsterDataB));
+            }
+
             if (!TryResolveCatalogRecipe(masterDataManager, parentA.MonsterId, parentB.MonsterId, true, out MonsterFusionRecipeDefinition recipe, out MonsterDataSO resultMonsterData) &&
                 !MonsterFusionCatalog.TryResolveNormalRecipe(
                     parentMonsterDataA,
@@ -93,7 +102,7 @@ namespace WitchTower.Data
             {
                 return new MonsterFusionResult(
                     MonsterFusionStatus.NoRecipe,
-                    message: "通常配合ではクラス1〜3の親のみ配合できます。クラス3から先は特殊配合実装後に開放予定です。");
+                    message: "通常配合はクラス1〜3同士なら異種族・クラス違いでも可能です。クラス4以降は特殊配合の組み合わせが必要です。");
             }
 
             return new MonsterFusionResult(
@@ -127,13 +136,15 @@ namespace WitchTower.Data
                     message: "お気に入り登録中の親がいるため、配合を止めました。");
             }
 
-            int resultLevel = Math.Max(1, Math.Max(parentA.Level, parentB.Level));
+            int resultLevel = MonsterLevelService.ClampLevelToMax(Math.Max(parentA.Level, parentB.Level), preview.ResultMonsterData);
             FusionInheritedStats inheritedStats = CalculateInheritedStats(profile, parentA, parentB, masterDataManager);
+            MonsterIndividualValues inheritedIndividualValues = MonsterIndividualValueService.Inherit(parentA, parentB);
             RemoveParent(profile, parentA);
             RemoveParent(profile, parentB);
 
             OwnedMonsterData createdMonster = profile.AddOwnedMonster(preview.ResultMonsterData.monsterId, resultLevel);
             ApplyInheritedStats(createdMonster, inheritedStats);
+            MonsterIndividualValueService.Apply(createdMonster, inheritedIndividualValues);
             return new MonsterFusionResult(
                 MonsterFusionStatus.Success,
                 preview.Recipe,
@@ -178,6 +189,25 @@ namespace WitchTower.Data
 
             resultMonsterData = masterDataManager.GetMonsterData(recipe.ResultMonsterId);
             return resultMonsterData != null;
+        }
+
+        private static string BuildMaxLevelRequirementMessage(
+            OwnedMonsterData parentA,
+            MonsterDataSO parentMonsterDataA,
+            OwnedMonsterData parentB,
+            MonsterDataSO parentMonsterDataB)
+        {
+            return "配合には親2体とも最大Lvが必要です。 " +
+                BuildLevelProgressText("親1", parentA, parentMonsterDataA) +
+                " / " +
+                BuildLevelProgressText("親2", parentB, parentMonsterDataB);
+        }
+
+        private static string BuildLevelProgressText(string label, OwnedMonsterData parent, MonsterDataSO monsterData)
+        {
+            int level = MonsterLevelService.ClampLevelToMax(parent != null ? parent.Level : 1, monsterData);
+            int maxLevel = MonsterLevelService.GetMaxLevel(monsterData);
+            return $"{label} Lv.{level}/{maxLevel}";
         }
 
         private static FusionInheritedStats CalculateInheritedStats(

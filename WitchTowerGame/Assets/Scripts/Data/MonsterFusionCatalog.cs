@@ -12,6 +12,8 @@ namespace WitchTower.Data
         Golem = 3,
         Swordsman = 4,
         Mage = 5,
+        Angel = 6,
+        Spirit = 7,
         Special = 99
     }
 
@@ -21,6 +23,7 @@ namespace WitchTower.Data
         Lower = 1,
         Middle = 2,
         Upper = 3,
+        Class4 = 4,
         Special = 99
     }
 
@@ -115,6 +118,8 @@ namespace WitchTower.Data
         public const string RockKnightGaiusId = "monster_rock_knight_gaius";
         public const string AstralEclipseGolemId = "monster_astral_eclipse_golem";
         public const string MagicSwordSaintLucielId = "monster_magic_sword_saint_luciel";
+        public const string SeraphMichaelId = "monster_seraph_michael";
+        public const string SpiritQueenTitaniaId = "monster_spirit_queen_titania";
 
         private static readonly MonsterFusionMonsterDefinition[] MonsterDefinitions =
         {
@@ -138,16 +143,18 @@ namespace WitchTower.Data
             new MonsterFusionMonsterDefinition(DarkRobeCurseMageNoahId, "黒衣の呪術師ノア", MonsterRace.Mage, MonsterClass.Middle),
             new MonsterFusionMonsterDefinition(AbyssGrandMageSeraphisId, "深淵大魔導セラフィス", MonsterRace.Mage, MonsterClass.Upper),
 
-            new MonsterFusionMonsterDefinition(MechaDragonValdrakeId, "機竜ヴァルドレイク", MonsterRace.Special, MonsterClass.Special),
-            new MonsterFusionMonsterDefinition(DragGaiaId, "竜岩巨兵ドラグガイア", MonsterRace.Special, MonsterClass.Special),
-            new MonsterFusionMonsterDefinition(DragonSwordSaintAgitoId, "竜剣聖アギト", MonsterRace.Special, MonsterClass.Special),
-            new MonsterFusionMonsterDefinition(AbyssDragonMageValflareId, "深淵竜魔導ヴァルフレア", MonsterRace.Special, MonsterClass.Special),
-            new MonsterFusionMonsterDefinition(FortressMachineGigafortId, "要塞機兵ギガフォート", MonsterRace.Special, MonsterClass.Special),
-            new MonsterFusionMonsterDefinition(MechaSwordSaintGransaberId, "機甲剣聖グランセイバー", MonsterRace.Special, MonsterClass.Special),
-            new MonsterFusionMonsterDefinition(DarkMagicMachineGodMerchionId, "暗黒魔導機神メルキオン", MonsterRace.Special, MonsterClass.Special),
-            new MonsterFusionMonsterDefinition(RockKnightGaiusId, "巨岩騎士ガイアス", MonsterRace.Special, MonsterClass.Special),
-            new MonsterFusionMonsterDefinition(AstralEclipseGolemId, "星蝕魔像アストラルゴーレム", MonsterRace.Special, MonsterClass.Special),
-            new MonsterFusionMonsterDefinition(MagicSwordSaintLucielId, "魔剣聖ルシエル", MonsterRace.Special, MonsterClass.Special)
+            new MonsterFusionMonsterDefinition(MechaDragonValdrakeId, "機竜ヴァルドレイク", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(DragGaiaId, "竜岩巨兵ドラグガイア", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(DragonSwordSaintAgitoId, "竜剣聖アギト", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(AbyssDragonMageValflareId, "深淵竜魔導ヴァルフレア", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(FortressMachineGigafortId, "要塞機兵ギガフォート", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(MechaSwordSaintGransaberId, "機甲剣聖グランセイバー", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(DarkMagicMachineGodMerchionId, "暗黒魔導機神メルキオン", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(RockKnightGaiusId, "巨岩騎士ガイアス", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(AstralEclipseGolemId, "星蝕魔像アストラルゴーレム", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(MagicSwordSaintLucielId, "魔剣聖ルシエル", MonsterRace.Special, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(SeraphMichaelId, "熾天使ミカエル", MonsterRace.Angel, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition(SpiritQueenTitaniaId, "精霊女王ティターニア", MonsterRace.Spirit, MonsterClass.Class4)
         };
 
         private static readonly MonsterFusionRecipeDefinition[] Recipes =
@@ -262,6 +269,7 @@ namespace WitchTower.Data
             bool sameRace = string.Equals(firstParentData.raceId, secondParentData.raceId, StringComparison.OrdinalIgnoreCase);
             bool sameClass = firstClassRank == secondClassRank;
             bool classUp = sameRace && sameClass;
+            // 通常配合は異種族・クラス違いも許可する。結果は親1の種族で、高い方のクラスにそろえる。
             int resultClassRank = classUp
                 ? firstClassRank + 1
                 : Math.Max(firstClassRank, secondClassRank);

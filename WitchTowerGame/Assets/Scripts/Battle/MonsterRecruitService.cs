@@ -33,19 +33,18 @@ namespace WitchTower.Battle
                     summary: "保有上限に達していたため、このバトルでは仲間化抽選は発生しません。");
             }
 
-            FloorDataSO floorData = MasterDataManager.Instance?.GetFloorData(floor);
-            if (floorData == null)
-            {
-                return new MonsterRecruitResult(true, false, false, string.Empty, string.Empty, "この階には仲間化候補データがありません。");
-            }
-
-            List<MonsterDataSO> recruitableMonsters = CollectRecruitableMonsters(floorData);
+            List<MonsterDataSO> recruitableMonsters = CollectRecruitableMonsters(floor);
             if (recruitableMonsters.Count == 0)
             {
                 return new MonsterRecruitResult(true, false, false, string.Empty, string.Empty, "この階には仲間化候補モンスターがいません。");
             }
 
-            float recruitChance = floorData.monsterRecruitChance > 0f ? floorData.monsterRecruitChance : DefaultRecruitChance;
+            float recruitChance = BattleDungeonCatalog.ResolveRecruitChance(floor);
+            if (recruitChance <= 0f)
+            {
+                recruitChance = DefaultRecruitChance;
+            }
+
             bool recruited = Random.value <= Mathf.Clamp01(recruitChance);
             if (!recruited)
             {
@@ -70,15 +69,16 @@ namespace WitchTower.Battle
                 summary: $"{recruitedMonster.monsterName} が仲間になりました。");
         }
 
-        private static List<MonsterDataSO> CollectRecruitableMonsters(FloorDataSO floorData)
+        private static List<MonsterDataSO> CollectRecruitableMonsters(int floor)
         {
             var results = new List<MonsterDataSO>();
-            if (floorData == null || floorData.recruitableMonsterIds == null)
+            string[] monsterIds = BattleDungeonCatalog.ResolveRecruitableMonsterIds(floor);
+            if (monsterIds == null || monsterIds.Length == 0)
             {
                 return results;
             }
 
-            foreach (string monsterId in floorData.recruitableMonsterIds)
+            foreach (string monsterId in monsterIds)
             {
                 if (string.IsNullOrEmpty(monsterId))
                 {
@@ -98,7 +98,7 @@ namespace WitchTower.Battle
         private static int CalculateRecruitLevel(int floor, MonsterDataSO monsterData)
         {
             int rarityBonus = monsterData != null ? (int)monsterData.rarity - 1 : 0;
-            return Mathf.Clamp(floor + rarityBonus, 1, 99);
+            return MonsterLevelService.ClampLevelToMax(floor + rarityBonus, monsterData);
         }
     }
 }

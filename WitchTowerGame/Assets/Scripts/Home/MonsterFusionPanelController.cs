@@ -7,6 +7,7 @@ using WitchTower.Data;
 using WitchTower.Managers;
 using WitchTower.MasterData;
 using WitchTower.Save;
+using WitchTower.UI;
 
 namespace WitchTower.Home
 {
@@ -30,6 +31,12 @@ namespace WitchTower.Home
         private const string RosterFrameSpritePath = "UI/FusionPage/FusionRosterFrame";
         private const string ConfirmButtonSpritePath = "UI/FusionPage/FusionConfirmButton";
         private const string SmallButtonSpritePath = "UI/FusionPage/FusionSmallButton";
+        private const string MagicCircleSpritePath = "UI/FusionPage/FusionMagicCircle";
+        private const string SlotGlowSpritePath = "UI/FusionPage/Effects/FusionSlotGlow";
+        private const string EnergyStreamSpriteBasePath = "UI/FusionPage/Effects/FusionEnergyStream_";
+        private const string BirthBurstSpriteBasePath = "UI/FusionPage/Effects/FusionBirthBurst_";
+        private const int CeremonyFrameCount = 8;
+        private const float BirthEffectDuration = 1.28f;
 
         private static readonly Color PageTint = new Color(0.01f, 0.02f, 0.025f, 0.96f);
         private static readonly Color MainPanelColor = new Color(0.04f, 0.075f, 0.08f, 0.96f);
@@ -58,6 +65,25 @@ namespace WitchTower.Home
         private string parentAInstanceId;
         private string parentBInstanceId;
         private bool isBuilt;
+        private bool previewCanFuse;
+        private float ceremonyTime;
+        private float birthEffectTimer;
+        private Image magicCircleImage;
+        private Image parentAGlowImage;
+        private Image parentBGlowImage;
+        private Image resultGlowImage;
+        private Image streamAImage;
+        private Image streamBImage;
+        private Image birthBurstImage;
+        private RectTransform magicCircleRect;
+        private RectTransform parentAGlowRect;
+        private RectTransform parentBGlowRect;
+        private RectTransform resultGlowRect;
+        private RectTransform streamARect;
+        private RectTransform streamBRect;
+        private RectTransform birthBurstRect;
+        private Sprite[] energyStreamSprites;
+        private Sprite[] birthBurstSprites;
 
         public void Show(Action closeCallback)
         {
@@ -70,8 +96,27 @@ namespace WitchTower.Home
             gameObject.SetActive(true);
             parentAInstanceId = string.Empty;
             parentBInstanceId = string.Empty;
+            previewCanFuse = false;
+            birthEffectTimer = 0f;
             RefreshRoster();
             RefreshPreview();
+        }
+
+        private void Update()
+        {
+            if (!isBuilt)
+            {
+                return;
+            }
+
+            float deltaTime = Application.isPlaying ? Time.unscaledDeltaTime : 0f;
+            ceremonyTime += deltaTime;
+            if (birthEffectTimer > 0f)
+            {
+                birthEffectTimer = Mathf.Max(0f, birthEffectTimer - deltaTime);
+            }
+
+            AnimateCeremonyEffects();
         }
 
         private void Hide()
@@ -103,7 +148,7 @@ namespace WitchTower.Home
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, -48f), new Vector2(500f, 62f), TextAnchor.MiddleCenter, AccentGold);
 
-            CreateText("RuleHint", panel.transform, "通常配合: 同種族・同クラスは次クラスへ進化。それ以外は高い方のクラスで親1の種族になります。", 21, FontStyle.Bold,
+            CreateText("RuleHint", panel.transform, "配合条件: 親2体とも最大Lvが必要。通常配合は同種族・同クラスなら次クラス、それ以外は高い方のクラスで親1の種族になります。", 20, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, -112f), new Vector2(880f, 42f), TextAnchor.MiddleCenter, TextSub);
 
@@ -118,6 +163,8 @@ namespace WitchTower.Home
             CreateText("RitualTitle", ritualPanel.transform, "配合の間", 28, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, -30f), new Vector2(360f, 40f), TextAnchor.MiddleCenter, TextMain);
+
+            CreateCeremonyEffects(ritualPanel.transform);
 
             parentASlot = CreateFusionSlot("ParentASlot", ritualPanel.transform, "親1", ParentSlotSpritePath, SlotColor, new Vector2(-300f, -234f));
             parentBSlot = CreateFusionSlot("ParentBSlot", ritualPanel.transform, "親2", ParentSlotSpritePath, SlotColor, new Vector2(0f, -234f));
@@ -169,6 +216,7 @@ namespace WitchTower.Home
             scrollRect.movementType = ScrollRect.MovementType.Clamped;
 
             isBuilt = true;
+            AnimateCeremonyEffects();
         }
 
         private FusionSlotView CreateFusionSlot(string name, Transform parent, string title, string spritePath, Color color, Vector2 anchoredPosition)
@@ -264,6 +312,9 @@ namespace WitchTower.Home
             GameObject row = CreatePanel("FusionMonsterRow_" + index, rosterContent, null,
                 new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, -index * (RosterRowHeight + RosterRowSpacing)), new Vector2(0f, RosterRowHeight), rowColor);
+            Button detailButton = row.AddComponent<Button>();
+            detailButton.targetGraphic = row.GetComponent<Image>();
+            detailButton.onClick.AddListener(() => ShowMonsterDetail(monster, monsterData));
 
             string classText = monsterData != null ? "C" + Mathf.Max(1, monsterData.classRank) : "C?";
             string raceText = monsterData != null ? ResolveRaceName(monsterData.raceId) : "不明";
@@ -284,7 +335,7 @@ namespace WitchTower.Home
                 new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
                 new Vector2(114f, 19f), new Vector2(450f, 34f), TextAnchor.MiddleLeft, TextMain);
 
-            CreateText("Sub", row.transform, $"Lv.{Mathf.Max(1, monster.Level)} / {raceText} / {classText}{BuildFusionBonusShort(monster)}", 17, FontStyle.Bold,
+            CreateText("Sub", row.transform, $"{BuildMonsterLevelProgressText(monster, monsterData)} / IV{MonsterIndividualValueService.GetAverage(monster)} / {raceText} / {classText}{BuildFusionBonusShort(monster)}", 17, FontStyle.Bold,
                 new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
                 new Vector2(114f, -20f), new Vector2(480f, 28f), TextAnchor.MiddleLeft, TextSub);
 
@@ -324,6 +375,12 @@ namespace WitchTower.Home
             RefreshPreview();
         }
 
+        private void ShowMonsterDetail(OwnedMonsterData monster, MonsterDataSO monsterData)
+        {
+            PlayerProfile profile = GameManager.Instance?.PlayerProfile;
+            MonsterStatusDetailPopup.Show(transform, profile, monster, monsterData);
+        }
+
         private void SwapParents()
         {
             (parentAInstanceId, parentBInstanceId) = (parentBInstanceId, parentAInstanceId);
@@ -345,7 +402,8 @@ namespace WitchTower.Home
 
             MonsterFusionResult preview = MonsterFusionService.PreviewFusion(profile, parentAInstanceId, parentBInstanceId, masterDataManager);
             bool hasFavoriteParent = HasFavoriteParent(profile);
-            fuseButton.interactable = preview.CanFuse && !hasFavoriteParent;
+            previewCanFuse = preview.CanFuse && !hasFavoriteParent;
+            fuseButton.interactable = previewCanFuse;
 
             if (preview.CanFuse)
             {
@@ -353,11 +411,13 @@ namespace WitchTower.Home
                 SetStatus(hasFavoriteParent
                     ? "お気に入り登録中の親は配合できません。必要なら先にお気に入りを外してください。"
                     : preview.Message);
+                AnimateCeremonyEffects();
                 return;
             }
 
             BindResultSlot(null);
             SetStatus(preview.Message);
+            AnimateCeremonyEffects();
         }
 
         private void BindSlot(FusionSlotView slot, OwnedMonsterData monster, MonsterDataSO monsterData, string title, string emptyName)
@@ -377,7 +437,7 @@ namespace WitchTower.Home
             }
 
             slot.NameLabel.text = monsterData.monsterName;
-            slot.DetailLabel.text = $"Lv.{Mathf.Max(1, monster.Level)} / {ResolveRaceName(monsterData.raceId)} / C{Mathf.Max(1, monsterData.classRank)}\n{BuildFusionBonusLong(monster)}";
+            slot.DetailLabel.text = $"{BuildMonsterLevelProgressText(monster, monsterData)} / IV{MonsterIndividualValueService.GetAverage(monster)} / {ResolveRaceName(monsterData.raceId)} / C{Mathf.Max(1, monsterData.classRank)}\n{BuildFusionBonusLong(monster)}";
             SetPortrait(slot.Portrait, GetPortraitResourcePath(monsterData));
         }
 
@@ -414,13 +474,202 @@ namespace WitchTower.Home
             }
 
             string successMessage = result.Message;
+            MonsterDataSO bornMonsterData = result.ResultMonsterData;
             SaveManager.Instance?.SaveCurrentGame();
             parentAInstanceId = string.Empty;
             parentBInstanceId = string.Empty;
+            StartBirthEffect();
             RefreshRoster();
             RefreshPreview();
+            BindResultSlot(bornMonsterData);
             SetStatus(successMessage);
             FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
+        }
+
+        private void CreateCeremonyEffects(Transform parent)
+        {
+            energyStreamSprites = LoadSpriteSequence(EnergyStreamSpriteBasePath, CeremonyFrameCount);
+            birthBurstSprites = LoadSpriteSequence(BirthBurstSpriteBasePath, CeremonyFrameCount);
+
+            magicCircleImage = CreateEffectImage("FusionMagicCircleEffect", parent, MagicCircleSpritePath,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -242f), new Vector2(520f, 520f));
+            magicCircleRect = magicCircleImage.GetComponent<RectTransform>();
+
+            parentAGlowImage = CreateEffectImage("ParentAGlow", parent, SlotGlowSpritePath,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(-300f, -234f), new Vector2(300f, 300f));
+            parentAGlowRect = parentAGlowImage.GetComponent<RectTransform>();
+
+            parentBGlowImage = CreateEffectImage("ParentBGlow", parent, SlotGlowSpritePath,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -234f), new Vector2(300f, 300f));
+            parentBGlowRect = parentBGlowImage.GetComponent<RectTransform>();
+
+            resultGlowImage = CreateEffectImage("ResultGlow", parent, SlotGlowSpritePath,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(300f, -234f), new Vector2(330f, 330f));
+            resultGlowRect = resultGlowImage.GetComponent<RectTransform>();
+
+            streamAImage = CreateEffectImage("ParentAToResultStream", parent, EnergyStreamSpriteBasePath + "0",
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -234f), new Vector2(620f, 118f), false);
+            streamARect = streamAImage.GetComponent<RectTransform>();
+
+            streamBImage = CreateEffectImage("ParentBToResultStream", parent, EnergyStreamSpriteBasePath + "0",
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(150f, -180f), new Vector2(330f, 92f), false);
+            streamBRect = streamBImage.GetComponent<RectTransform>();
+            streamBRect.localEulerAngles = new Vector3(0f, 0f, -5f);
+
+            birthBurstImage = CreateEffectImage("FusionBirthBurst", parent, BirthBurstSpriteBasePath + "0",
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(300f, -234f), new Vector2(430f, 430f));
+            birthBurstRect = birthBurstImage.GetComponent<RectTransform>();
+        }
+
+        private Image CreateEffectImage(
+            string objectName,
+            Transform parent,
+            string spritePath,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 pivot,
+            Vector2 anchoredPosition,
+            Vector2 size,
+            bool preserveAspect = true)
+        {
+            GameObject effectObject = CreateUiObject(objectName, parent);
+            RectTransform rect = effectObject.GetComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = pivot;
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = size;
+
+            Image image = effectObject.AddComponent<Image>();
+            image.sprite = LoadSprite(spritePath);
+            image.color = Color.clear;
+            image.preserveAspect = preserveAspect;
+            image.raycastTarget = false;
+            image.enabled = false;
+            return image;
+        }
+
+        private void AnimateCeremonyEffects()
+        {
+            bool hasParentA = !string.IsNullOrEmpty(parentAInstanceId);
+            bool hasParentB = !string.IsNullOrEmpty(parentBInstanceId);
+            bool isCharged = previewCanFuse || birthEffectTimer > 0f;
+            float pulse = 0.5f + 0.5f * Mathf.Sin(ceremonyTime * 4.6f);
+            float slowPulse = 0.5f + 0.5f * Mathf.Sin(ceremonyTime * 2.2f);
+
+            AnimateGlow(parentAGlowImage, parentAGlowRect, hasParentA, 0.18f + pulse * 0.18f, 0.98f + slowPulse * 0.05f);
+            AnimateGlow(parentBGlowImage, parentBGlowRect, hasParentB, 0.18f + pulse * 0.18f, 0.98f + (1f - slowPulse) * 0.05f);
+            AnimateGlow(resultGlowImage, resultGlowRect, isCharged, isCharged ? 0.22f + pulse * 0.28f : 0f, 1.02f + pulse * 0.08f);
+
+            float circleAlpha = isCharged
+                ? 0.34f + slowPulse * 0.22f
+                : hasParentA || hasParentB ? 0.12f + pulse * 0.08f : 0f;
+            SetImageAlpha(magicCircleImage, circleAlpha);
+            if (magicCircleRect != null)
+            {
+                float circleScale = isCharged ? 1.02f + slowPulse * 0.04f : 0.96f + slowPulse * 0.02f;
+                magicCircleRect.localScale = Vector3.one * circleScale;
+                magicCircleRect.localEulerAngles = new Vector3(0f, 0f, ceremonyTime * 16f);
+            }
+
+            AnimateStream(streamAImage, streamARect, hasParentA && isCharged, 0.18f + pulse * 0.42f, 1f + pulse * 0.025f, false);
+            AnimateStream(streamBImage, streamBRect, hasParentB && isCharged, 0.16f + (1f - pulse) * 0.38f, 1f + (1f - pulse) * 0.025f, true);
+            AnimateBirthBurst();
+        }
+
+        private void AnimateGlow(Image image, RectTransform rect, bool visible, float alpha, float scale)
+        {
+            SetImageAlpha(image, visible ? alpha : 0f);
+            if (rect != null)
+            {
+                rect.localScale = Vector3.one * scale;
+            }
+        }
+
+        private void AnimateStream(Image image, RectTransform rect, bool visible, float alpha, float scale, bool isSecondary)
+        {
+            if (image != null && energyStreamSprites != null && energyStreamSprites.Length > 0)
+            {
+                int offset = isSecondary ? 3 : 0;
+                int index = Mathf.FloorToInt(ceremonyTime * 13f + offset) % energyStreamSprites.Length;
+                image.sprite = energyStreamSprites[Mathf.Clamp(index, 0, energyStreamSprites.Length - 1)];
+            }
+
+            SetImageAlpha(image, visible ? alpha : 0f);
+            if (rect != null)
+            {
+                rect.localScale = new Vector3(scale, scale, 1f);
+            }
+        }
+
+        private void AnimateBirthBurst()
+        {
+            if (birthBurstImage == null)
+            {
+                return;
+            }
+
+            if (birthEffectTimer <= 0f)
+            {
+                SetImageAlpha(birthBurstImage, 0f);
+                return;
+            }
+
+            float progress = Mathf.Clamp01(1f - birthEffectTimer / BirthEffectDuration);
+            if (birthBurstSprites != null && birthBurstSprites.Length > 0)
+            {
+                int index = Mathf.Clamp(Mathf.FloorToInt(progress * birthBurstSprites.Length), 0, birthBurstSprites.Length - 1);
+                birthBurstImage.sprite = birthBurstSprites[index];
+            }
+
+            float alpha = Mathf.Sin(progress * Mathf.PI) * 0.95f;
+            SetImageAlpha(birthBurstImage, alpha);
+            if (birthBurstRect != null)
+            {
+                float scale = 0.72f + progress * 0.62f;
+                birthBurstRect.localScale = Vector3.one * scale;
+                birthBurstRect.localEulerAngles = new Vector3(0f, 0f, -progress * 18f);
+            }
+        }
+
+        private void StartBirthEffect()
+        {
+            birthEffectTimer = BirthEffectDuration;
+            if (birthBurstImage != null)
+            {
+                birthBurstImage.transform.SetAsLastSibling();
+            }
+        }
+
+        private Sprite[] LoadSpriteSequence(string basePath, int count)
+        {
+            Sprite[] sprites = new Sprite[Mathf.Max(0, count)];
+            for (int i = 0; i < sprites.Length; i += 1)
+            {
+                sprites[i] = LoadSprite(basePath + i);
+            }
+
+            return sprites;
+        }
+
+        private static void SetImageAlpha(Image image, float alpha)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            Color color = image.color;
+            color.a = Mathf.Clamp01(alpha);
+            image.color = color;
+            image.enabled = image.sprite != null && color.a > 0.01f;
         }
 
         private bool HasFavoriteParent(PlayerProfile profile)
@@ -454,6 +703,9 @@ namespace WitchTower.Home
                 "golem" => "ゴーレム",
                 "swordsman" => "剣士",
                 "mage" => "魔法使い",
+                "angel" => "天使",
+                "spirit" => "精霊",
+                "special" => "特殊",
                 _ => string.IsNullOrEmpty(raceId) ? "不明" : raceId
             };
         }
@@ -486,7 +738,8 @@ namespace WitchTower.Home
                 Mathf.Max(0, monster.FusionBonusWisdom) +
                 Mathf.Max(0, monster.FusionBonusDefense) +
                 Mathf.Max(0, monster.FusionBonusMagicDefense);
-            return totalBonus > 0 ? $" / 継承+{totalBonus}" : string.Empty;
+            string inheritedText = totalBonus > 0 ? $" / 継承+{totalBonus}" : string.Empty;
+            return inheritedText;
         }
 
         private static string BuildFusionBonusLong(OwnedMonsterData monster)
@@ -502,7 +755,22 @@ namespace WitchTower.Home
                 Mathf.Max(0, monster.FusionBonusWisdom) +
                 Mathf.Max(0, monster.FusionBonusDefense) +
                 Mathf.Max(0, monster.FusionBonusMagicDefense);
-            return totalBonus > 0 ? $"継承ボーナス +{totalBonus}" : "継承なし";
+            string fusionText = totalBonus > 0 ? $"継承ボーナス +{totalBonus}" : "継承なし";
+            return $"{fusionText}\n{MonsterIndividualValueService.BuildSummary(monster)}";
+        }
+
+        private static string BuildMonsterLevelProgressText(OwnedMonsterData monster, MonsterDataSO monsterData)
+        {
+            int level = MonsterLevelService.ClampLevelToMax(monster != null ? monster.Level : 1, monsterData);
+            int maxLevel = MonsterLevelService.GetMaxLevel(monsterData);
+            if (level >= maxLevel)
+            {
+                return $"Lv.{level}/{maxLevel} MAX";
+            }
+
+            int requiredExp = MonsterLevelService.GetRequiredExpForNextLevel(monster, monsterData);
+            int currentExp = Mathf.Max(0, monster != null ? monster.Exp : 0);
+            return $"Lv.{level}/{maxLevel} EXP {currentExp}/{Mathf.Max(1, requiredExp)}";
         }
 
         private RectTransform EnsureRootRect()

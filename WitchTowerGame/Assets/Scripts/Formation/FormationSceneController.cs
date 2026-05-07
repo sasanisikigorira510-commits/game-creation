@@ -8,6 +8,7 @@ using WitchTower.Data;
 using WitchTower.Managers;
 using WitchTower.MasterData;
 using WitchTower.Save;
+using WitchTower.UI;
 
 namespace WitchTower.Formation
 {
@@ -20,17 +21,21 @@ namespace WitchTower.Formation
             public string Name;
             public string ResourcePath;
             public int Level;
+            public int MaxLevel;
             public int ClassRank;
+            public int IndividualAverage;
             public int AcquiredOrder;
             public bool IsFavorite;
 
-            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int classRank, int acquiredOrder, bool isFavorite)
+            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int maxLevel, int classRank, int individualAverage, int acquiredOrder, bool isFavorite)
             {
                 InstanceId = instanceId;
                 Name = name;
                 ResourcePath = resourcePath;
                 Level = level;
+                MaxLevel = maxLevel;
                 ClassRank = classRank;
+                IndividualAverage = individualAverage;
                 AcquiredOrder = acquiredOrder;
                 IsFavorite = isFavorite;
             }
@@ -278,8 +283,10 @@ namespace WitchTower.Formation
                     ownedMonster.InstanceId,
                     monsterData.monsterName,
                     GetPortraitResourcePath(monsterData),
-                    Mathf.Max(1, ownedMonster.Level),
+                    MonsterLevelService.ClampLevelToMax(ownedMonster.Level, monsterData),
+                    MonsterLevelService.GetMaxLevel(monsterData),
                     Mathf.Max(1, monsterData.classRank),
+                    MonsterIndividualValueService.GetAverage(ownedMonster),
                     ownedMonster.AcquiredOrder,
                     ownedMonster.IsFavorite);
 
@@ -343,11 +350,11 @@ namespace WitchTower.Formation
 
         private void SeedFallbackRoster()
         {
-            roster.Add(new MonsterEntry("dragon_whelp_a", "ヒナドラ", "FamilyMonsterCards/Dragon/dragon_whelp", 14, 1, 9, false));
-            roster.Add(new MonsterEntry("chibi_gear_a", "チビギア", "FamilyMonsterCards/Robot/chibi_gear", 12, 1, 8, false));
-            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "FamilyMonsterCards/Golem/rock_golem", 18, 1, 7, false));
-            roster.Add(new MonsterEntry("apprentice_swordsman_a", "見習い剣士", "FamilyMonsterCards/Swordsman/apprentice_swordsman", 20, 1, 6, false));
-            roster.Add(new MonsterEntry("apprentice_mage_a", "見習い魔導士", "FamilyMonsterCards/Mage/apprentice_mage", 22, 1, 5, false));
+            roster.Add(new MonsterEntry("dragon_whelp_a", "ヒナドラ", "FamilyMonsterCards/Dragon/dragon_whelp", 14, 20, 1, 50, 9, false));
+            roster.Add(new MonsterEntry("chibi_gear_a", "チビギア", "FamilyMonsterCards/Robot/chibi_gear", 12, 20, 1, 50, 8, false));
+            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "FamilyMonsterCards/Golem/rock_golem", 18, 20, 1, 50, 7, false));
+            roster.Add(new MonsterEntry("apprentice_swordsman_a", "見習い剣士", "FamilyMonsterCards/Swordsman/apprentice_swordsman", 20, 20, 1, 50, 6, false));
+            roster.Add(new MonsterEntry("apprentice_mage_a", "見習い魔導士", "FamilyMonsterCards/Mage/apprentice_mage", 20, 20, 1, 50, 5, false));
 
             selectedMonsters.Add(roster[0]);
             selectedMonsters.Add(roster[1]);
@@ -836,7 +843,11 @@ namespace WitchTower.Formation
 
             Button cardButton = card.AddComponent<Button>();
             cardButton.targetGraphic = cardImage;
-            cardButton.onClick.AddListener(() => ToggleSelection(entry));
+            cardButton.onClick.AddListener(() =>
+            {
+                ToggleSelection(entry);
+                ShowMonsterDetail(entry);
+            });
 
             GameObject frameObject = CreateUiObject("FrameArt", card.transform);
             RectTransform frameRect = frameObject.GetComponent<RectTransform>();
@@ -901,9 +912,9 @@ namespace WitchTower.Formation
             nameLabel.resizeTextMinSize = 10;
             nameLabel.resizeTextMaxSize = 15;
 
-            CreateText("LevelLabel", body.transform, runtimeFont, "Lv." + entry.Level, 14, FontStyle.Bold,
+            CreateText("LevelLabel", body.transform, runtimeFont, $"Lv.{entry.Level}/{entry.MaxLevel}  IV{entry.IndividualAverage}", 13, FontStyle.Bold,
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(12f, 10f), new Vector2(62f, 20f), TextAnchor.MiddleLeft,
+                new Vector2(12f, 10f), new Vector2(130f, 20f), TextAnchor.MiddleLeft,
                 new Color(0.98f, 0.91f, 0.66f, 1f));
 
             GameObject favoriteButton = CreateActionButton("FavoriteButton", body.transform, runtimeFont,
@@ -1051,6 +1062,23 @@ namespace WitchTower.Formation
             entry.IsFavorite = !entry.IsFavorite;
             SyncProfileFavorite(entry);
             RefreshView();
+        }
+
+        private void ShowMonsterDetail(MonsterEntry entry)
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            PlayerProfile profile = GameManager.Instance?.PlayerProfile;
+            MasterDataManager masterDataManager = MasterDataManager.Instance;
+            masterDataManager?.Initialize();
+            OwnedMonsterData ownedMonster = profile?.GetOwnedMonster(entry.InstanceId);
+            MonsterDataSO monsterData = ownedMonster != null && masterDataManager != null
+                ? masterDataManager.GetMonsterData(ownedMonster.MonsterId)
+                : null;
+            MonsterStatusDetailPopup.Show(transform, profile, ownedMonster, monsterData);
         }
 
         private void OnSlotPressed(int slotIndex)

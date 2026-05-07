@@ -84,9 +84,17 @@ namespace WitchTower.Battle
         private const float AttackLungeDistance = 22f;
         private const float RangedAttackLungeDistance = 10f;
         private const float AttackEffectGlobalScale = 1.28f;
-        private sealed class DragonAttackEffectDefinition
+        private enum MonsterAttackEffectPlacement
+        {
+            Projectile = 0,
+            TargetBurst = 1,
+            CasterBurst = 2
+        }
+
+        private sealed class MonsterAttackEffectDefinition
         {
             public string ResourcePath;
+            public MonsterAttackEffectPlacement Placement = MonsterAttackEffectPlacement.Projectile;
             public float Scale = 1f;
             public float Duration = 0.32f;
             public float StartDelay;
@@ -97,13 +105,13 @@ namespace WitchTower.Battle
             public Color Tint = Color.white;
         }
 
-        private static readonly Dictionary<string, DragonAttackEffectDefinition> DragonAttackEffects = new Dictionary<string, DragonAttackEffectDefinition>
+        private static readonly Dictionary<string, MonsterAttackEffectDefinition> MonsterAttackEffects = new Dictionary<string, MonsterAttackEffectDefinition>
         {
             {
                 "monster_dragon_whelp",
-                new DragonAttackEffectDefinition
+                new MonsterAttackEffectDefinition
                 {
-                    ResourcePath = "BattleEffects/Dragon/fx_dragon_whelp_attack",
+                    ResourcePath = "BattleEffects/Monster/fx_dragon_whelp_attack",
                     Scale = 1.24f,
                     Duration = 0.34f,
                     StartOffset = new Vector2(22f, 8f),
@@ -114,9 +122,9 @@ namespace WitchTower.Battle
             },
             {
                 "monster_flare_drake",
-                new DragonAttackEffectDefinition
+                new MonsterAttackEffectDefinition
                 {
-                    ResourcePath = "BattleEffects/Dragon/fx_flare_drake_attack",
+                    ResourcePath = "BattleEffects/Monster/fx_flare_drake_attack",
                     Scale = 1.10f,
                     Duration = 0.42f,
                     StartOffset = new Vector2(30f, 12f),
@@ -127,9 +135,9 @@ namespace WitchTower.Battle
             },
             {
                 "monster_abyss_dragon",
-                new DragonAttackEffectDefinition
+                new MonsterAttackEffectDefinition
                 {
-                    ResourcePath = "BattleEffects/Dragon/fx_abyss_dragon_attack",
+                    ResourcePath = "BattleEffects/Monster/fx_abyss_dragon_attack",
                     Scale = 1.34f,
                     Duration = 0.50f,
                     StartOffset = new Vector2(36f, 15f),
@@ -137,8 +145,96 @@ namespace WitchTower.Battle
                     ArcHeight = 10f,
                     FadeOutScale = 1.24f
                 }
-            }
+            },
+            { "monster_chibi_gear", PunchImpactEffect("BattleEffects/Monster/fx_chibi_gear_attack", 0.84f, 0.18f, -16f, 0f, 0.94f) },
+            { "monster_armed_droid", PunchImpactEffect("BattleEffects/Monster/fx_armed_droid_attack", 1.00f, 0.22f, -18f, 2f, 1.02f) },
+            { "monster_omega_leon", PunchImpactEffect("BattleEffects/Monster/fx_omega_leon_attack", 1.18f, 0.26f, -20f, 6f, 1.10f) },
+            { "monster_rock_golem", PunchImpactEffect("BattleEffects/Monster/fx_rock_golem_attack", 0.96f, 0.22f, -18f, -2f, 0.98f) },
+            { "monster_ore_giant_garm", PunchImpactEffect("BattleEffects/Monster/fx_ore_giant_garm_attack", 1.14f, 0.28f, -22f, 0f, 1.08f) },
+            { "monster_cosmic_ore_fortress_golem", PunchImpactEffect("BattleEffects/Monster/fx_cosmic_ore_fortress_golem_attack", 1.34f, 0.34f, -24f, 4f, 1.18f) },
+            { "monster_apprentice_swordsman", SwordSlashEffect("BattleEffects/Monster/fx_apprentice_swordsman_attack", 0.90f, 0.18f, -10f, 6f, 0.90f) },
+            { "monster_holy_armor_leon", SwordSlashEffect("BattleEffects/Monster/fx_holy_armor_leon_attack", 1.04f, 0.22f, -8f, 8f, 0.96f) },
+            { "monster_sword_saint_alvarez", SwordSlashEffect("BattleEffects/Monster/fx_sword_saint_alvarez_attack", 1.24f, 0.26f, -6f, 10f, 1.06f) },
+            { "monster_apprentice_mage", ProjectileEffect("BattleEffects/Monster/fx_apprentice_mage_attack", 0.92f, 0.34f, 18f, 18f, 16f, 1.04f) },
+            { "monster_dark_robe_curse_mage_noah", ProjectileEffect("BattleEffects/Monster/fx_dark_robe_curse_mage_noah_attack", 1.08f, 0.40f, 22f, 22f, 22f, 1.12f) },
+            { "monster_abyss_grand_mage_seraphis", TargetBurstEffect("BattleEffects/Monster/fx_abyss_grand_mage_seraphis_attack", 1.30f, 0.42f, 0f, 24f, 1.20f) },
+            { "monster_mecha_dragon_valdrake", ProjectileEffect("BattleEffects/Monster/fx_mecha_dragon_valdrake_attack", 1.26f, 0.42f, 34f, 16f, 8f, 1.18f) },
+            { "monster_drag_gaia", PunchImpactEffect("BattleEffects/Monster/fx_drag_gaia_attack", 1.44f, 0.36f, -26f, 6f, 1.22f) },
+            { "monster_dragon_sword_saint_agito", SwordSlashEffect("BattleEffects/Monster/fx_dragon_sword_saint_agito_attack", 1.30f, 0.26f, -10f, 12f, 1.12f) },
+            { "monster_abyss_dragon_mage_valflare", ProjectileEffect("BattleEffects/Monster/fx_abyss_dragon_mage_valflare_attack", 1.42f, 0.50f, 38f, 24f, 18f, 1.26f) },
+            { "monster_fortress_machine_gigafort", ProjectileEffect("BattleEffects/Monster/fx_fortress_machine_gigafort_attack", 1.32f, 0.34f, 36f, 10f, 4f, 1.18f) },
+            { "monster_mecha_sword_saint_gransaber", SwordSlashEffect("BattleEffects/Monster/fx_mecha_sword_saint_gransaber_attack", 1.28f, 0.24f, -8f, 10f, 1.10f) },
+            { "monster_dark_magic_machine_god_merchion", ProjectileEffect("BattleEffects/Monster/fx_dark_magic_machine_god_merchion_attack", 1.38f, 0.44f, 34f, 20f, 12f, 1.24f) },
+            { "monster_rock_knight_gaius", PunchImpactEffect("BattleEffects/Monster/fx_rock_knight_gaius_attack", 1.30f, 0.30f, -24f, 4f, 1.14f) },
+            { "monster_astral_eclipse_golem", TargetBurstEffect("BattleEffects/Monster/fx_astral_eclipse_golem_attack", 1.42f, 0.44f, 0f, 20f, 1.24f) },
+            { "monster_magic_sword_saint_luciel", SwordSlashEffect("BattleEffects/Monster/fx_magic_sword_saint_luciel_attack", 1.32f, 0.28f, -8f, 12f, 1.14f) },
+            { "monster_seraph_michael", TargetBurstEffect("BattleEffects/Monster/fx_seraph_michael_attack", 1.36f, 0.40f, 0f, 28f, 1.22f) },
+            { "monster_spirit_queen_titania", ProjectileEffect("BattleEffects/Monster/fx_spirit_queen_titania_attack", 1.20f, 0.42f, 22f, 22f, 20f, 1.16f) }
         };
+
+        private static MonsterAttackEffectDefinition ProjectileEffect(
+            string resourcePath,
+            float scale,
+            float duration,
+            float startX,
+            float startY,
+            float arcHeight,
+            float fadeOutScale)
+        {
+            return new MonsterAttackEffectDefinition
+            {
+                ResourcePath = resourcePath,
+                Placement = MonsterAttackEffectPlacement.Projectile,
+                Scale = scale,
+                Duration = duration,
+                StartOffset = new Vector2(startX, startY),
+                TargetOffset = new Vector2(8f, startY * 0.55f),
+                ArcHeight = arcHeight,
+                FadeOutScale = fadeOutScale
+            };
+        }
+
+        private static MonsterAttackEffectDefinition TargetBurstEffect(
+            string resourcePath,
+            float scale,
+            float duration,
+            float targetX,
+            float targetY,
+            float fadeOutScale)
+        {
+            return new MonsterAttackEffectDefinition
+            {
+                ResourcePath = resourcePath,
+                Placement = MonsterAttackEffectPlacement.TargetBurst,
+                Scale = scale,
+                Duration = duration,
+                TargetOffset = new Vector2(targetX, targetY),
+                ArcHeight = 0f,
+                FadeOutScale = fadeOutScale
+            };
+        }
+
+        private static MonsterAttackEffectDefinition SwordSlashEffect(
+            string resourcePath,
+            float scale,
+            float duration,
+            float targetX,
+            float targetY,
+            float fadeOutScale)
+        {
+            return TargetBurstEffect(resourcePath, scale, duration, targetX, targetY, fadeOutScale);
+        }
+
+        private static MonsterAttackEffectDefinition PunchImpactEffect(
+            string resourcePath,
+            float scale,
+            float duration,
+            float targetX,
+            float targetY,
+            float fadeOutScale)
+        {
+            return TargetBurstEffect(resourcePath, scale, duration, targetX, targetY, fadeOutScale);
+        }
 
         private static readonly string[] MinimalHiddenObjectNames =
         {
@@ -404,7 +500,7 @@ namespace WitchTower.Battle
         private const float CombatLoopDuration = 1.8f;
         private const float EnemyCountCommitDelay = 0.12f;
         private const float KnockbackDuration = 0.16f;
-        private const float AttackVisualDuration = 0.48f;
+        private const float AttackVisualDuration = 0.62f;
         private const float AllyKnockbackDistance = 0.016f;
         private const float EnemyKnockbackDistance = 0.028f;
         private const float AllyDefeatVanishDuration = 0.28f;
@@ -674,7 +770,32 @@ namespace WitchTower.Battle
             var reward = BattleRewardCalculator.Calculate(currentFloor, profile.HighestFloor);
             profile.AddGold(reward.Gold);
             profile.AddExp(reward.Exp);
+            ApplyPartyMonsterExp(profile, reward.Exp);
             lastReward = reward;
+        }
+
+        private void ApplyPartyMonsterExp(PlayerProfile profile, int exp)
+        {
+            if (profile == null || exp <= 0)
+            {
+                return;
+            }
+
+            MasterDataManager masterDataManager = MasterDataManager.Instance;
+            masterDataManager?.Initialize();
+            List<OwnedMonsterData> partyMonsters = BattleVisualResolver.ResolvePartyOwnedMonsters(profile, 5);
+            foreach (OwnedMonsterData monster in partyMonsters)
+            {
+                if (monster == null)
+                {
+                    continue;
+                }
+
+                MonsterDataSO monsterData = masterDataManager != null
+                    ? masterDataManager.GetMonsterData(monster.MonsterId)
+                    : null;
+                MonsterLevelService.AddExperience(monster, monsterData, exp);
+            }
         }
 
         private void ApplyMonsterRecruitment()
@@ -781,7 +902,12 @@ namespace WitchTower.Battle
             BattleSimulator simulator = stateMachine != null ? stateMachine.Simulator : null;
             EnemyDataSO enemyData = simulator != null
                 ? simulator.CurrentEnemyData
-                : MasterDataManager.Instance?.GetFloorData(floor)?.enemyData;
+                : null;
+            if (enemyData == null)
+            {
+                enemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, MasterDataManager.Instance)
+                    ?? MasterDataManager.Instance?.GetFloorData(floor)?.enemyData;
+            }
 
             EnsureMonsterPreviewRoot();
             allyIdleSprites.Clear();
@@ -1048,6 +1174,12 @@ namespace WitchTower.Battle
             if (isBossFloor && !string.IsNullOrEmpty(bossBackdropResourcePath))
             {
                 return bossBackdropResourcePath;
+            }
+
+            string dungeonBackdropPath = BattleDungeonCatalog.ResolveBattleBackdropResourcePath(floor);
+            if (!string.IsNullOrEmpty(dungeonBackdropPath))
+            {
+                return dungeonBackdropPath;
             }
 
             if (normalBackdropResourcePaths == null || normalBackdropResourcePaths.Length == 0)
@@ -1954,8 +2086,8 @@ namespace WitchTower.Battle
                 return;
             }
 
-            DragonAttackEffectDefinition dragonEffect = ResolveDragonAttackEffect(hitInfo);
-            if (dragonEffect == null && !IsRangedAttackHit(hitInfo))
+            MonsterAttackEffectDefinition monsterEffect = ResolveMonsterAttackEffect(hitInfo);
+            if (monsterEffect == null && !IsRangedAttackHit(hitInfo))
             {
                 return;
             }
@@ -1963,13 +2095,13 @@ namespace WitchTower.Battle
             EnsureMinimalCanvas();
             EnsureRangedEffectRoot();
 
-            BattleAttackEffectProfileSO profile = dragonEffect != null ? null : ResolveAttackEffectProfile(hitInfo);
+            BattleAttackEffectProfileSO profile = monsterEffect != null ? null : ResolveAttackEffectProfile(hitInfo);
             if (!TryResolveRangedAttackEndpoints(hitInfo, profile, out Vector2 startPosition, out Vector2 endPosition))
             {
                 return;
             }
 
-            if (dragonEffect != null && SpawnDragonAttackEffect(dragonEffect, startPosition, endPosition, hitInfo.TargetIsPlayer))
+            if (monsterEffect != null && SpawnMonsterAttackEffect(monsterEffect, startPosition, endPosition, hitInfo.TargetIsPlayer))
             {
                 return;
             }
@@ -2161,7 +2293,7 @@ namespace WitchTower.Battle
             activeRangedAttackEffects.Clear();
         }
 
-        private DragonAttackEffectDefinition ResolveDragonAttackEffect(BattleHitInfo hitInfo)
+        private MonsterAttackEffectDefinition ResolveMonsterAttackEffect(BattleHitInfo hitInfo)
         {
             if (hitInfo.TargetIsPlayer || hitInfo.AttackerIndex < 0 || hitInfo.AttackerIndex >= allyPreviewMonsterData.Count)
             {
@@ -2174,12 +2306,12 @@ namespace WitchTower.Battle
                 return null;
             }
 
-            return DragonAttackEffects.TryGetValue(attackerData.monsterId, out DragonAttackEffectDefinition definition)
+            return MonsterAttackEffects.TryGetValue(attackerData.monsterId, out MonsterAttackEffectDefinition definition)
                 ? definition
                 : null;
         }
 
-        private bool SpawnDragonAttackEffect(DragonAttackEffectDefinition definition, Vector2 startPosition, Vector2 endPosition, bool targetIsPlayer)
+        private bool SpawnMonsterAttackEffect(MonsterAttackEffectDefinition definition, Vector2 startPosition, Vector2 endPosition, bool targetIsPlayer)
         {
             if (definition == null || string.IsNullOrEmpty(definition.ResourcePath))
             {
@@ -2195,6 +2327,33 @@ namespace WitchTower.Battle
             float direction = targetIsPlayer ? -1f : 1f;
             Vector2 projectileStart = startPosition + new Vector2(definition.StartOffset.x * direction, definition.StartOffset.y);
             Vector2 projectileEnd = endPosition + new Vector2(definition.TargetOffset.x * direction, definition.TargetOffset.y);
+            float baseSize = ResolveSpriteBaseSize(frames[0], definition.Scale, 92f);
+            if (definition.Placement == MonsterAttackEffectPlacement.TargetBurst)
+            {
+                SpawnAnimatedStaticRangedAttackEffect(
+                    frames,
+                    definition.Tint,
+                    projectileEnd,
+                    definition.StartDelay,
+                    baseSize,
+                    definition.Duration,
+                    definition.FadeOutScale);
+                return true;
+            }
+
+            if (definition.Placement == MonsterAttackEffectPlacement.CasterBurst)
+            {
+                SpawnAnimatedStaticRangedAttackEffect(
+                    frames,
+                    definition.Tint,
+                    projectileStart,
+                    definition.StartDelay,
+                    baseSize,
+                    definition.Duration,
+                    definition.FadeOutScale);
+                return true;
+            }
+
             SpawnAnimatedMovingRangedAttackEffect(
                 frames,
                 definition.Tint,
@@ -2202,7 +2361,7 @@ namespace WitchTower.Battle
                 projectileEnd,
                 definition.StartDelay,
                 definition.ArcHeight,
-                ResolveSpriteBaseSize(frames[0], definition.Scale, 92f),
+                baseSize,
                 definition.Duration,
                 definition.FadeOutScale);
             return true;

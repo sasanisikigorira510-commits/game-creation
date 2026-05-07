@@ -47,6 +47,7 @@ namespace WitchTower.Data
             PartyMonsterInstanceIds = saveData.PartyMonsterInstanceIds ?? new List<string>();
             MissionProgressList = saveData.MissionProgressList ?? new List<MissionProgressData>();
             NormalizeMonsterPlusValues();
+            NormalizeMonsterIndividualValues();
             InitializeEquipmentState(saveData);
         }
 
@@ -152,12 +153,14 @@ namespace WitchTower.Data
                 FusionBonusDefense = 0,
                 FusionBonusMagicDefense = 0,
                 FusionBonusAttackSpeed = 0f,
+                HasIndividualValues = false,
                 IsFavorite = isFavorite,
                 AcquiredOrder = acquiredOrder,
                 EquippedWeaponInstanceId = string.Empty,
                 EquippedArmorInstanceId = string.Empty,
                 EquippedAccessoryInstanceId = string.Empty
             };
+            MonsterIndividualValueService.Apply(newMonster, MonsterIndividualValueService.Roll());
 
             OwnedMonsters.Add(newMonster);
             MarkMonsterDexOwned(monsterId);
@@ -237,6 +240,14 @@ namespace WitchTower.Data
                     monster.PlusDefense = monster.PlusValue;
                     monster.PlusMagicDefense = monster.PlusValue;
                 }
+            }
+        }
+
+        private void NormalizeMonsterIndividualValues()
+        {
+            foreach (OwnedMonsterData monster in OwnedMonsters)
+            {
+                MonsterIndividualValueService.EnsureInitialized(monster);
             }
         }
 

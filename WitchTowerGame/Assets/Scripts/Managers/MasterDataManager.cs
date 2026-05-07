@@ -149,16 +149,20 @@ namespace WitchTower.Managers
                 }
             }
 
+            if (MonsterFusionCatalog.TryResolveRecipe(firstMonsterId, secondMonsterId, out MonsterFusionRecipeDefinition catalogRecipe, true))
+            {
+                MonsterDataSO catalogResult = GetMonsterData(catalogRecipe.ResultMonsterId);
+                if (catalogResult != null)
+                {
+                    return catalogResult;
+                }
+            }
+
             MonsterDataSO firstMonsterData = GetMonsterData(firstMonsterId);
             MonsterDataSO secondMonsterData = GetMonsterData(secondMonsterId);
             if (MonsterFusionCatalog.TryResolveNormalRecipe(firstMonsterData, secondMonsterData, monsterDataList, out _, out MonsterDataSO normalFusionResult))
             {
                 return normalFusionResult;
-            }
-
-            if (MonsterFusionCatalog.TryResolveRecipe(firstMonsterId, secondMonsterId, out MonsterFusionRecipeDefinition catalogRecipe, false))
-            {
-                return GetMonsterData(catalogRecipe.ResultMonsterId);
             }
 
             return null;

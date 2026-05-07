@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_seraph_michael
+  m_EditorClassIdentifier: 
+  monsterId: monster_seraph_michael
+  monsterName: "熾天使ミカエル"
+  encyclopediaNumber: 26
+  raceId: angel
+  classRank: 4
+  rarity: 4
+  element: 4
+  rangeType: 1
+  damageType: 1
+  baseStats:
+    maxHp: 170
+    attack: 24
+    magicAttack: 82
+    defense: 36
+    magicDefense: 66
+    attackSpeed: 0.86
+  attackRange: 2.6
+  normalAttackTargetCount: 3
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 2
+    magicAttackPerPlus: 4
+    defensePerPlus: 4
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.05
+    attackCoefficient: 0.75
+    magicAttackCoefficient: 1.65
+    defenseCoefficient: 1
+    magicDefenseCoefficient: 1.65
+    attackSpeedCoefficient: 0.85
+  fusionExclusive: 1
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsterCards/Class4/seraph_michael
+  illustrationResourcePath: FamilyMonsters/Class4/seraph_michael
+  battleIdleResourcePath: MonsterBattle/mon_seraph_michael_idle
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_seraph_michael_move
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_seraph_michael_attack
+  battleAttackFacing: 0
+  description: "天使系の神話級個体。聖なる光で敵を浄化する。"

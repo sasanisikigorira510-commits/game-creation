@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_astral_eclipse_golem
+  m_EditorClassIdentifier: 
+  monsterId: monster_astral_eclipse_golem
+  monsterName: "星蝕魔像アストラルゴーレム"
+  encyclopediaNumber: 24
+  raceId: special
+  classRank: 4
+  rarity: 4
+  element: 5
+  rangeType: 1
+  damageType: 1
+  baseStats:
+    maxHp: 230
+    attack: 12
+    magicAttack: 78
+    defense: 62
+    magicDefense: 66
+    attackSpeed: 0.62
+  attackRange: 2.45
+  normalAttackTargetCount: 3
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 2
+    magicAttackPerPlus: 4
+    defensePerPlus: 4
+    magicDefensePerPlus: 1
+    attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.45
+    attackCoefficient: 0.35
+    magicAttackCoefficient: 1.55
+    defenseCoefficient: 1.65
+    magicDefenseCoefficient: 1.75
+    attackSpeedCoefficient: 0.55
+  fusionExclusive: 1
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsterCards/Class4/astral_eclipse_golem
+  illustrationResourcePath: FamilyMonsters/Class4/astral_eclipse_golem
+  battleIdleResourcePath: MonsterBattle/mon_astral_eclipse_golem_idle
+  battleIdleFacing: 0
+  battleMoveResourcePath: MonsterBattle/mon_astral_eclipse_golem_move
+  battleMoveFacing: 0
+  battleAttackResourcePath: MonsterBattle/mon_astral_eclipse_golem_attack
+  battleAttackFacing: 0
+  description: "星蝕の魔力を宿した魔像。高耐久と範囲魔法を両立する。"
