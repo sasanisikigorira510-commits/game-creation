@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 1.3
+    attackCoefficient: 0.95
+    magicAttackCoefficient: 0.58
+    defenseCoefficient: 1.34
+    magicDefenseCoefficient: 0.88
+    attackSpeedCoefficient: 0.7
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_rock_golem_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.05
   description: "岩でできた下位ゴーレム。動きは遅いが、前線で敵を受け止める。"

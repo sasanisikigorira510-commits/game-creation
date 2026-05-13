@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 3
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.12
+    attackCoefficient: 1.45
+    magicAttackCoefficient: 0.62
+    defenseCoefficient: 1.12
+    magicDefenseCoefficient: 0.98
+    attackSpeedCoefficient: 1.04
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_sword_saint_alvarez_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.06
   description: "極めた剣技で敵を斬り伏せる上位剣士。高い物理火力を持つ。"

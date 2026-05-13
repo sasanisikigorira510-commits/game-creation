@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 0
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 0.88
+    attackCoefficient: 0.7
+    magicAttackCoefficient: 1.28
+    defenseCoefficient: 0.76
+    magicDefenseCoefficient: 1.18
+    attackSpeedCoefficient: 1.02
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -46,4 +53,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_family_mage_2_attack
   battleAttackFacing: 0
+  battleVisualScale: 0.96
   description: A water-aligned caster that controls the field with serpent sorcery.

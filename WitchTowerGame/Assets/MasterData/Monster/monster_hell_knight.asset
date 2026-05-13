@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.2
+    attackCoefficient: 1.36
+    magicAttackCoefficient: 0.74
+    defenseCoefficient: 1.2
+    magicDefenseCoefficient: 0.88
+    attackSpeedCoefficient: 0.92
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -42,4 +49,5 @@ MonoBehaviour:
   illustrationResourcePath: 
   battleIdleResourcePath: 
   battleAttackResourcePath: 
+  battleVisualScale: 1.08
   description: A high-rarity frontliner with crushing blows.

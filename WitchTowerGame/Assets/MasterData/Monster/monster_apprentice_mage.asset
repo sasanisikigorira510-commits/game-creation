@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 0.82
+    attackCoefficient: 0.52
+    magicAttackCoefficient: 1.3
+    defenseCoefficient: 0.72
+    magicDefenseCoefficient: 1.18
+    attackSpeedCoefficient: 1.02
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_apprentice_mage_attack
   battleAttackFacing: 0
+  battleVisualScale: 0.88
   description: "魔力の扱いを覚えた下位魔導士。遠距離から魔法攻撃を放つ。"

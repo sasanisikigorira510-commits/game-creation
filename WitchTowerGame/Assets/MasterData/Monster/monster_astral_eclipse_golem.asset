@@ -59,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_astral_eclipse_golem_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.24
   description: "星蝕の魔力を宿した魔像。高耐久と範囲魔法を両立する。"

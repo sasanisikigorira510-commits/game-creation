@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 0.86
+    attackCoefficient: 1.12
+    magicAttackCoefficient: 0.5
+    defenseCoefficient: 0.82
+    magicDefenseCoefficient: 0.62
+    attackSpeedCoefficient: 1.08
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -42,4 +49,5 @@ MonoBehaviour:
   illustrationResourcePath: 
   battleIdleResourcePath: 
   battleAttackResourcePath: 
+  battleVisualScale: 0.86
   description: A reckless fighter that charges first.

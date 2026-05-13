@@ -60,6 +60,18 @@ namespace WitchTower.Managers
             Save(GameManager.Instance.PlayerProfile.ToSaveData(GameManager.Instance.CurrentFloor));
         }
 
+        public void SaveAfterDungeonStageClear(int clearedFloor)
+        {
+            if (GameManager.Instance?.PlayerProfile == null)
+            {
+                return;
+            }
+
+            GameManager.Instance.PlayerProfile.LastActiveAt = System.DateTime.Now.ToString("O");
+            SaveCurrentGame();
+            Debug.Log($"[SaveManager] Auto-saved after dungeon stage clear. clearedFloor={Mathf.Max(1, clearedFloor)}, currentFloor={GameManager.Instance.CurrentFloor}");
+        }
+
         public void SaveForSuspend()
         {
             if (GameManager.Instance?.PlayerProfile == null)

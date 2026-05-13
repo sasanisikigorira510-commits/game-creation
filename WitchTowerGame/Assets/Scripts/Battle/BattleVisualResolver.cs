@@ -15,6 +15,35 @@ namespace WitchTower.Battle
         Attack = 2
     }
 
+    public readonly struct BattleSpriteVisualMetrics
+    {
+        public readonly float SpriteWidth;
+        public readonly float SpriteHeight;
+        public readonly float OpaqueWidth;
+        public readonly float OpaqueHeight;
+        public readonly Vector2 OpaqueBottomCenterFromSpriteCenter;
+        public readonly bool HasOpaquePixels;
+        public readonly bool IsReadable;
+
+        public BattleSpriteVisualMetrics(
+            float spriteWidth,
+            float spriteHeight,
+            float opaqueWidth,
+            float opaqueHeight,
+            Vector2 opaqueBottomCenterFromSpriteCenter,
+            bool hasOpaquePixels,
+            bool isReadable)
+        {
+            SpriteWidth = spriteWidth;
+            SpriteHeight = spriteHeight;
+            OpaqueWidth = opaqueWidth;
+            OpaqueHeight = opaqueHeight;
+            OpaqueBottomCenterFromSpriteCenter = opaqueBottomCenterFromSpriteCenter;
+            HasOpaquePixels = hasOpaquePixels;
+            IsReadable = isReadable;
+        }
+    }
+
     public static class BattleVisualResolver
     {
         private static readonly string[] FallbackPartySpritePaths =
@@ -46,6 +75,7 @@ namespace WitchTower.Battle
 
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
         private static readonly Dictionary<string, List<Sprite>> SpriteFramesCache = new Dictionary<string, List<Sprite>>();
+        private static readonly Dictionary<Sprite, BattleSpriteVisualMetrics> SpriteVisualMetricsCache = new Dictionary<Sprite, BattleSpriteVisualMetrics>();
 
         public static OwnedMonsterData ResolveLeadOwnedMonster(PlayerProfile profile)
         {
@@ -241,7 +271,11 @@ namespace WitchTower.Battle
 
             if (!string.IsNullOrEmpty(monsterData.battleIdleResourcePath))
             {
-                return LoadSprite(monsterData.battleIdleResourcePath);
+                Sprite battleIdleSprite = LoadSprite(monsterData.battleIdleResourcePath);
+                if (battleIdleSprite != null)
+                {
+                    return battleIdleSprite;
+                }
             }
 
             if (!string.IsNullOrEmpty(monsterData.portraitResourcePath))
@@ -361,7 +395,20 @@ namespace WitchTower.Battle
 
             if (!string.IsNullOrEmpty(monsterData.battleIdleResourcePath))
             {
-                return LoadSpriteFrames(monsterData.battleIdleResourcePath);
+                List<Sprite> frames = LoadSpriteFrames(monsterData.battleIdleResourcePath);
+                if (frames.Count > 0)
+                {
+                    return frames;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.battleMoveResourcePath))
+            {
+                List<Sprite> frames = LoadSpriteFrames(monsterData.battleMoveResourcePath);
+                if (frames.Count > 0)
+                {
+                    return frames;
+                }
             }
 
             return BuildSingleSpriteList(ResolveMonsterIdleSprite(monsterData));
@@ -408,6 +455,110 @@ namespace WitchTower.Battle
         public static List<Sprite> ResolveSpriteFramesFromResourcePath(string resourcePath)
         {
             return LoadSpriteFrames(resourcePath);
+        }
+
+        public static BattleSpriteVisualMetrics ResolveSpriteVisualMetrics(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return new BattleSpriteVisualMetrics(0f, 0f, 0f, 0f, Vector2.zero, false, false);
+            }
+
+            if (SpriteVisualMetricsCache.TryGetValue(sprite, out BattleSpriteVisualMetrics cachedMetrics))
+            {
+                return cachedMetrics;
+            }
+
+            Rect spriteRect = sprite.rect;
+            var fallbackMetrics = new BattleSpriteVisualMetrics(
+                spriteRect.width,
+                spriteRect.height,
+                spriteRect.width,
+                spriteRect.height,
+                new Vector2(0f, -spriteRect.height * 0.5f),
+                true,
+                false);
+
+            Texture2D texture = sprite.texture;
+            if (texture == null || spriteRect.width <= 0f || spriteRect.height <= 0f)
+            {
+                SpriteVisualMetricsCache[sprite] = fallbackMetrics;
+                return fallbackMetrics;
+            }
+
+            Color32[] pixels;
+            try
+            {
+                pixels = texture.GetPixels32();
+            }
+            catch (System.Exception)
+            {
+                SpriteVisualMetricsCache[sprite] = fallbackMetrics;
+                return fallbackMetrics;
+            }
+
+            int textureWidth = texture.width;
+            int xMin = Mathf.Clamp(Mathf.FloorToInt(spriteRect.xMin), 0, texture.width);
+            int yMin = Mathf.Clamp(Mathf.FloorToInt(spriteRect.yMin), 0, texture.height);
+            int xMax = Mathf.Clamp(Mathf.CeilToInt(spriteRect.xMax), xMin, texture.width);
+            int yMax = Mathf.Clamp(Mathf.CeilToInt(spriteRect.yMax), yMin, texture.height);
+            int opaqueMinX = xMax;
+            int opaqueMaxX = xMin - 1;
+            int opaqueMinY = yMax;
+            int opaqueMaxY = yMin - 1;
+
+            for (int y = yMin; y < yMax; y += 1)
+            {
+                int rowOffset = y * textureWidth;
+                for (int x = xMin; x < xMax; x += 1)
+                {
+                    if (pixels[rowOffset + x].a <= 8)
+                    {
+                        continue;
+                    }
+
+                    opaqueMinX = Mathf.Min(opaqueMinX, x);
+                    opaqueMaxX = Mathf.Max(opaqueMaxX, x);
+                    opaqueMinY = Mathf.Min(opaqueMinY, y);
+                    opaqueMaxY = Mathf.Max(opaqueMaxY, y);
+                }
+            }
+
+            if (opaqueMaxX < opaqueMinX || opaqueMaxY < opaqueMinY)
+            {
+                var emptyMetrics = new BattleSpriteVisualMetrics(
+                    spriteRect.width,
+                    spriteRect.height,
+                    spriteRect.width,
+                    spriteRect.height,
+                    new Vector2(0f, -spriteRect.height * 0.5f),
+                    false,
+                    true);
+                SpriteVisualMetricsCache[sprite] = emptyMetrics;
+                return emptyMetrics;
+            }
+
+            float localOpaqueMinX = opaqueMinX - spriteRect.xMin;
+            float localOpaqueMaxX = opaqueMaxX + 1f - spriteRect.xMin;
+            float localOpaqueMinY = opaqueMinY - spriteRect.yMin;
+            float localOpaqueMaxY = opaqueMaxY + 1f - spriteRect.yMin;
+            float opaqueWidth = Mathf.Max(1f, localOpaqueMaxX - localOpaqueMinX);
+            float opaqueHeight = Mathf.Max(1f, localOpaqueMaxY - localOpaqueMinY);
+            Vector2 spriteCenter = new Vector2(spriteRect.width * 0.5f, spriteRect.height * 0.5f);
+            Vector2 opaqueBottomCenter = new Vector2(
+                (localOpaqueMinX + localOpaqueMaxX) * 0.5f,
+                localOpaqueMinY);
+
+            var metrics = new BattleSpriteVisualMetrics(
+                spriteRect.width,
+                spriteRect.height,
+                opaqueWidth,
+                opaqueHeight,
+                opaqueBottomCenter - spriteCenter,
+                true,
+                true);
+            SpriteVisualMetricsCache[sprite] = metrics;
+            return metrics;
         }
 
         public static string BuildMonsterRoleText(MonsterDataSO monsterData)

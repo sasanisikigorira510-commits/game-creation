@@ -96,6 +96,17 @@ func strokePath(points: [CGPoint], color: NSColor, width: CGFloat) {
     path.stroke()
 }
 
+func strokeCurve(start: CGPoint, control1: CGPoint, control2: CGPoint, end: CGPoint, color: NSColor, width: CGFloat) {
+    let path = NSBezierPath()
+    path.move(to: start)
+    path.curve(to: end, controlPoint1: control1, controlPoint2: control2)
+    path.lineCapStyle = .round
+    path.lineJoinStyle = .round
+    path.lineWidth = width
+    color.setStroke()
+    path.stroke()
+}
+
 func drawSpark(center: CGPoint, color: NSColor, size: CGFloat) {
     strokePath(points: [CGPoint(x: center.x - size, y: center.y), CGPoint(x: center.x + size, y: center.y)], color: color, width: max(1.0, size * 0.22))
     strokePath(points: [CGPoint(x: center.x, y: center.y - size), CGPoint(x: center.x, y: center.y + size)], color: color, width: max(1.0, size * 0.22))
@@ -103,7 +114,7 @@ func drawSpark(center: CGPoint, color: NSColor, size: CGFloat) {
 
 func drawProjectile(frame: Int, spec: EffectSpec, isFlame: Bool, isLaser: Bool = false) {
     let t = CGFloat(frame) / 3.0
-    let headX = isLaser ? 160 + (t * 22) : 116 + (t * 36)
+    let headX = isLaser ? 160 + (t * 22) : 144 + (t * 8)
     let y = CGFloat(canvasSize) * 0.52 + sin(t * .pi) * 8
     let tailX: CGFloat = isLaser ? 44 : 46
     let wave = sin((t + 0.18) * .pi)
@@ -116,28 +127,51 @@ func drawProjectile(frame: Int, spec: EffectSpec, isFlame: Bool, isLaser: Bool =
         return
     }
 
-    strokePath(points: [
-        CGPoint(x: tailX, y: y - 9),
-        CGPoint(x: (tailX + headX) * 0.50, y: y + wave * 15),
-        CGPoint(x: headX, y: y)
-    ], color: spec.primary.withAlphaComponent(0.28), width: isFlame ? 34 : 24)
-    strokePath(points: [
-        CGPoint(x: tailX + 12, y: y - 3),
-        CGPoint(x: (tailX + headX) * 0.55, y: y + wave * 8),
-        CGPoint(x: headX, y: y)
-    ], color: spec.primary.withAlphaComponent(0.72), width: isFlame ? 17 : 13)
-    strokePath(points: [
-        CGPoint(x: tailX + 24, y: y),
-        CGPoint(x: headX, y: y + wave * 2)
-    ], color: spec.secondary.withAlphaComponent(0.88), width: isFlame ? 6 : 5)
+    let head = CGPoint(x: headX + 14, y: y)
+    let tail = CGPoint(x: head.x - 62, y: y - 5)
+    let mid = CGPoint(x: head.x - 30, y: y + wave * 7)
+    let haloRadiusX: CGFloat = isFlame ? 58 : 52
+    let haloRadiusY: CGFloat = isFlame ? 58 : 52
+    let coreRadiusX: CGFloat = isFlame ? 38 : 34
+    let coreRadiusY: CGFloat = isFlame ? 37 : 34
 
-    drawGlowOval(center: CGPoint(x: headX + 14, y: y), radiusX: isFlame ? 30 : 24, radiusY: isFlame ? 23 : 22, color: spec.primary.withAlphaComponent(0.86), layers: 6)
-    drawGlowOval(center: CGPoint(x: headX + 14, y: y), radiusX: isFlame ? 13 : 10, radiusY: isFlame ? 10 : 10, color: spec.secondary.withAlphaComponent(1.0), layers: 3)
+    drawGlowOval(center: mid, radiusX: isFlame ? 38 : 34, radiusY: isFlame ? 36 : 33, color: spec.primary.withAlphaComponent(0.24), layers: 5)
+    drawGlowOval(center: head, radiusX: haloRadiusX, radiusY: haloRadiusY, color: spec.primary.withAlphaComponent(0.40), layers: 7)
+    strokeCurve(
+        start: tail,
+        control1: CGPoint(x: tail.x + 16, y: tail.y - 18),
+        control2: CGPoint(x: head.x - 36, y: head.y + 24),
+        end: head,
+        color: spec.primary.withAlphaComponent(0.28),
+        width: isFlame ? 13 : 11)
+    strokeCurve(
+        start: CGPoint(x: tail.x + 10, y: tail.y + 10),
+        control1: CGPoint(x: tail.x + 24, y: tail.y + 24),
+        control2: CGPoint(x: head.x - 34, y: head.y - 19),
+        end: CGPoint(x: head.x + 1, y: head.y),
+        color: spec.primary.withAlphaComponent(0.62),
+        width: isFlame ? 10 : 8)
+    strokeCurve(
+        start: CGPoint(x: tail.x + 24, y: tail.y + 5),
+        control1: CGPoint(x: mid.x - 8, y: mid.y + 4),
+        control2: CGPoint(x: head.x - 20, y: head.y + wave * 3),
+        end: CGPoint(x: head.x + 4, y: head.y + wave * 2),
+        color: spec.secondary.withAlphaComponent(0.88),
+        width: isFlame ? 5 : 5)
+
+    drawGlowOval(center: head, radiusX: coreRadiusX, radiusY: coreRadiusY, color: spec.primary.withAlphaComponent(0.90), layers: 5)
+    drawGlowOval(center: head, radiusX: isFlame ? 16 : 14, radiusY: isFlame ? 15 : 14, color: spec.secondary.withAlphaComponent(1.0), layers: 3)
+
+    let ringRadius: CGFloat = isFlame ? 36 : 31
+    let ring = NSBezierPath(ovalIn: NSRect(x: head.x - ringRadius, y: head.y - ringRadius, width: ringRadius * 2, height: ringRadius * 2))
+    ring.lineWidth = isFlame ? 3.0 : 4.0
+    spec.secondary.withAlphaComponent(isFlame ? 0.30 : 0.62).setStroke()
+    ring.stroke()
 
     for i in 0..<5 {
         let offset = CGFloat(i)
         drawSpark(
-            center: CGPoint(x: headX - 54 + offset * 18, y: y + ((i % 2 == 0) ? -23 : 22) * (0.65 + t * 0.3)),
+            center: CGPoint(x: head.x - 58 + offset * 22, y: y + ((i % 2 == 0) ? -45 : 43) * (0.62 + t * 0.24)),
             color: spec.primary.withAlphaComponent(0.58),
             size: 3.5 + t * 2.0)
     }
@@ -171,38 +205,43 @@ func drawStoneImpact(frame: Int, spec: EffectSpec, cosmic: Bool = false) {
 
 func drawPunchImpact(frame: Int, spec: EffectSpec) {
     let t = CGFloat(frame) / 3.0
-    let center = CGPoint(x: 118 + t * 8, y: 126)
-    let forward = CGPoint(x: 176 + t * 12, y: 126 + sin(t * .pi) * 5)
+    let center = CGPoint(x: 152 + t * 10, y: 126 + sin(t * .pi) * 4)
 
     strokePath(points: [
-        CGPoint(x: 42, y: 120),
-        CGPoint(x: center.x - 18, y: center.y - 2),
-        forward
-    ], color: spec.primary.withAlphaComponent(0.18), width: 46 - t * 8)
+        CGPoint(x: 58, y: 108),
+        CGPoint(x: center.x - 42, y: center.y - 14),
+        CGPoint(x: center.x - 12, y: center.y - 5)
+    ], color: spec.primary.withAlphaComponent(0.24), width: 15 - t * 3)
     strokePath(points: [
-        CGPoint(x: 58, y: 126),
-        CGPoint(x: center.x + 6, y: center.y),
-        forward
-    ], color: spec.primary.withAlphaComponent(0.48), width: 20 - t * 4)
+        CGPoint(x: 52, y: 136),
+        CGPoint(x: center.x - 46, y: center.y + 11),
+        CGPoint(x: center.x - 15, y: center.y + 4)
+    ], color: spec.primary.withAlphaComponent(0.32), width: 12 - t * 2)
     strokePath(points: [
-        CGPoint(x: center.x + 16, y: center.y),
-        forward
-    ], color: spec.secondary.withAlphaComponent(0.76), width: 6)
+        CGPoint(x: 78, y: 126),
+        CGPoint(x: center.x - 16, y: center.y)
+    ], color: spec.secondary.withAlphaComponent(0.66), width: 5)
 
-    drawGlowOval(center: forward, radiusX: 24 + t * 38, radiusY: 18 + t * 26, color: spec.primary.withAlphaComponent(0.58 - t * 0.12), layers: 6)
-    drawGlowOval(center: forward, radiusX: 9 + t * 10, radiusY: 8 + t * 9, color: spec.secondary.withAlphaComponent(0.90 - t * 0.18), layers: 3)
+    drawGlowOval(center: center, radiusX: 38 + t * 34, radiusY: 36 + t * 32, color: spec.primary.withAlphaComponent(0.58 - t * 0.12), layers: 7)
+    drawGlowOval(center: center, radiusX: 16 + t * 10, radiusY: 15 + t * 10, color: spec.secondary.withAlphaComponent(0.90 - t * 0.18), layers: 3)
+
+    let ringRadius = 27 + t * 39
+    let ring = NSBezierPath(ovalIn: NSRect(x: center.x - ringRadius, y: center.y - ringRadius, width: ringRadius * 2, height: ringRadius * 2))
+    ring.lineWidth = 4.5 - t * 1.5
+    spec.secondary.withAlphaComponent(0.58 - t * 0.26).setStroke()
+    ring.stroke()
 
     for i in 0..<8 {
         let angle = (CGFloat(i) / 8.0) * .pi * 2.0 + t * 0.22
-        let inner = CGPoint(x: forward.x + cos(angle) * (10 + t * 10), y: forward.y + sin(angle) * (8 + t * 8))
-        let outer = CGPoint(x: forward.x + cos(angle) * (34 + t * 42), y: forward.y + sin(angle) * (23 + t * 32))
+        let inner = CGPoint(x: center.x + cos(angle) * (15 + t * 10), y: center.y + sin(angle) * (14 + t * 10))
+        let outer = CGPoint(x: center.x + cos(angle) * (44 + t * 38), y: center.y + sin(angle) * (42 + t * 36))
         strokePath(points: [inner, outer], color: spec.secondary.withAlphaComponent(0.72 - t * 0.38), width: 4.0 - t * 1.4)
     }
 
     for i in 0..<5 {
         let angle = CGFloat(i) * 1.27 + t * .pi
         drawSpark(
-            center: CGPoint(x: forward.x + cos(angle) * (38 + t * 18), y: forward.y + sin(angle) * (25 + t * 15)),
+            center: CGPoint(x: center.x + cos(angle) * (44 + t * 20), y: center.y + sin(angle) * (42 + t * 18)),
             color: spec.primary.withAlphaComponent(0.72),
             size: 4.0 + t * 2.5)
     }

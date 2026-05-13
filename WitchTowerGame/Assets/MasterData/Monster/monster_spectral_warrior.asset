@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 1.02
+    attackCoefficient: 1.24
+    magicAttackCoefficient: 0.82
+    defenseCoefficient: 1.02
+    magicDefenseCoefficient: 0.96
+    attackSpeedCoefficient: 1.04
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -46,4 +53,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_family_robot_3
   battleAttackFacing: 0
+  battleVisualScale: 0.98
   description: A luminous spectral swordsman with balanced melee stats.

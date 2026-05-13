@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 0
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 0.8
+    attackCoefficient: 0.58
+    magicAttackCoefficient: 1.34
+    defenseCoefficient: 0.72
+    magicDefenseCoefficient: 1.22
+    attackSpeedCoefficient: 1
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -46,4 +53,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_family_mage_2_attack
   battleAttackFacing: 0
+  battleVisualScale: 0.94
   description: A fragile caster with high dark magic power.

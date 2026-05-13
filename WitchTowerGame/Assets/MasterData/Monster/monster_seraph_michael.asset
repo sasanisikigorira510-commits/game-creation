@@ -59,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_seraph_michael_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.14
   description: "天使系の神話級個体。聖なる光で敵を浄化する。"

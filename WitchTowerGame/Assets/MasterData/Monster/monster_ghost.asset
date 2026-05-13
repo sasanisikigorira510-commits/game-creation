@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 0
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 0.74
+    attackCoefficient: 0.5
+    magicAttackCoefficient: 1.16
+    defenseCoefficient: 0.62
+    magicDefenseCoefficient: 1.3
+    attackSpeedCoefficient: 1.22
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -42,4 +49,5 @@ MonoBehaviour:
   illustrationResourcePath: 
   battleIdleResourcePath: 
   battleAttackResourcePath: 
+  battleVisualScale: 0.82
   description: A drifting spirit that attacks from the back line with dark magic.

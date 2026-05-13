@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 0
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 0.76
+    attackCoefficient: 1.18
+    magicAttackCoefficient: 0.96
+    defenseCoefficient: 0.68
+    magicDefenseCoefficient: 1.08
+    attackSpeedCoefficient: 1.34
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -42,4 +49,5 @@ MonoBehaviour:
   illustrationResourcePath: 
   battleIdleResourcePath: 
   battleAttackResourcePath: 
+  battleVisualScale: 0.86
   description: A swift dark attacker that slips through gaps.

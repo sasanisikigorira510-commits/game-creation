@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 0.92
+    attackCoefficient: 1.02
+    magicAttackCoefficient: 0.46
+    defenseCoefficient: 0.88
+    magicDefenseCoefficient: 0.54
+    attackSpeedCoefficient: 0.86
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -46,4 +53,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_family_slime_1
   battleAttackFacing: 0
+  battleVisualScale: 0.72
   description: A simple creeping monster with sturdy early-game stats.

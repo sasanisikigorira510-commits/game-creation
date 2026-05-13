@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 0.98
+    attackCoefficient: 1.05
+    magicAttackCoefficient: 0.7
+    defenseCoefficient: 1.18
+    magicDefenseCoefficient: 0.88
+    attackSpeedCoefficient: 1.08
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_chibi_gear_attack
   battleAttackFacing: 0
+  battleVisualScale: 0.9
   description: "小さな歯車機兵。軽快な動きで前線を支えるロボット系の下位個体。"

@@ -65,8 +65,17 @@ namespace WitchTower.Battle
         private static readonly Vector2 EnemyPreviewSpawnOffset = new Vector2(0f, 0.01f);
         private static readonly Vector2 EnemyPreviewSize = new Vector2(196f, 196f);
         private static readonly Vector2 BossPreviewSize = new Vector2(272f, 272f);
+        private static readonly Dictionary<string, float> EnemyPreviewScaleOverrides = new Dictionary<string, float>
+        {
+            { "enemy_class1_dragon_whelp", 0.94f },
+            { "enemy_class1_chibi_gear", 0.90f },
+            { "enemy_class1_rock_golem", 1.05f },
+            { "enemy_class1_apprentice_swordsman", 0.92f },
+            { "enemy_class1_apprentice_mage", 0.88f }
+        };
         private static Sprite fallbackRangedAttackEffectSprite;
         private static BattleAttackEffectProfileSO builtInFireProjectileEffectProfile;
+        private static readonly Dictionary<Sprite, BattleSpriteVisualMetrics> MageBodyVisualMetricsCache = new Dictionary<Sprite, BattleSpriteVisualMetrics>();
         private const float BattlefieldMinX = 0.06f;
         private const float BattlefieldMaxX = 0.95f;
         private const float BattlefieldMinY = 0.14f;
@@ -83,12 +92,21 @@ namespace WitchTower.Battle
         private const float AttackHopAmplitude = 7f;
         private const float AttackLungeDistance = 22f;
         private const float RangedAttackLungeDistance = 10f;
+        private const float PreviewVisualTargetHeightRatio = 0.86f;
+        private const float PreviewVisualBaselineRatio = 0.43f;
+        private const float PreviewVisualMaxWidthMultiplier = 2.2f;
         private const float AttackEffectGlobalScale = 1.28f;
         private enum MonsterAttackEffectPlacement
         {
             Projectile = 0,
             TargetBurst = 1,
             CasterBurst = 2
+        }
+
+        private enum PreviewMeasurementMode
+        {
+            FullSprite = 0,
+            MageBody = 1
         }
 
         private sealed class MonsterAttackEffectDefinition
@@ -112,7 +130,7 @@ namespace WitchTower.Battle
                 new MonsterAttackEffectDefinition
                 {
                     ResourcePath = "BattleEffects/Monster/fx_dragon_whelp_attack",
-                    Scale = 1.24f,
+                    Scale = 1.86f,
                     Duration = 0.34f,
                     StartOffset = new Vector2(22f, 8f),
                     TargetOffset = new Vector2(8f, 12f),
@@ -683,7 +701,7 @@ namespace WitchTower.Battle
             var profile = GameManager.Instance.PlayerProfile;
             MissionService.RecordBattleWin(profile);
             MissionService.RecordHighestFloor(profile, profile.HighestFloor);
-            SaveManager.Instance.SaveCurrentGame();
+            SaveManager.Instance?.SaveAfterDungeonStageClear(currentFloor);
             if (!minimalMonsterPresentation)
             {
                 stateMachine.ShowResultPanel(new BattleResultViewData(true, lastReward.Gold, lastReward.Exp, GameManager.Instance.CurrentFloor, lastRecruitResult.Summary));
@@ -1227,7 +1245,7 @@ namespace WitchTower.Battle
                 : new List<Sprite>();
         }
 
-        private Sprite SelectAllyPreviewSprite(int index, float allyApproachT)
+        private Sprite SelectAllyPreviewSprite(int index, float allyApproachT, bool isCloseCombatEngaged)
         {
             if (index >= 0 && index < allyAttackVisualRemainings.Count && allyAttackVisualRemainings[index] > 0f)
             {
@@ -1236,6 +1254,16 @@ namespace WitchTower.Battle
                 if (attackSprite != null)
                 {
                     return attackSprite;
+                }
+            }
+
+            if (isCloseCombatEngaged)
+            {
+                List<Sprite> attackSprites = index < allyAttackSprites.Count ? allyAttackSprites[index] : null;
+                Sprite engagedSprite = SelectAnimatedFrame(attackSprites, 6f, index * 0.17f);
+                if (engagedSprite != null)
+                {
+                    return engagedSprite;
                 }
             }
 
@@ -1253,9 +1281,14 @@ namespace WitchTower.Battle
             return SelectAnimatedFrame(idleSprites, 4f, index * 0.13f);
         }
 
-        private BattleVisualPose ResolveAllyPreviewPose(int index, float allyApproachT)
+        private BattleVisualPose ResolveAllyPreviewPose(int index, float allyApproachT, bool isCloseCombatEngaged)
         {
             if (index >= 0 && index < allyAttackVisualRemainings.Count && allyAttackVisualRemainings[index] > 0f)
+            {
+                return BattleVisualPose.Attack;
+            }
+
+            if (isCloseCombatEngaged)
             {
                 return BattleVisualPose.Attack;
             }
@@ -1268,7 +1301,7 @@ namespace WitchTower.Battle
             return BattleVisualPose.Idle;
         }
 
-        private Sprite SelectEnemyPreviewSprite(int index, bool isMoving)
+        private Sprite SelectEnemyPreviewSprite(int index, bool isMoving, bool isCloseCombatEngaged)
         {
             if (index >= 0 && index < enemyAttackVisualRemainings.Count && enemyAttackVisualRemainings[index] > 0f)
             {
@@ -1276,6 +1309,15 @@ namespace WitchTower.Battle
                 if (attackSprite != null)
                 {
                     return attackSprite;
+                }
+            }
+
+            if (isCloseCombatEngaged)
+            {
+                Sprite engagedSprite = SelectAnimatedFrame(enemyAttackSprites, 6f, index * 0.11f);
+                if (engagedSprite != null)
+                {
+                    return engagedSprite;
                 }
             }
 
@@ -1291,9 +1333,14 @@ namespace WitchTower.Battle
             return SelectAnimatedFrame(enemyIdleSprites, 4f, index * 0.09f);
         }
 
-        private BattleVisualPose ResolveEnemyPreviewPose(int index, bool isMoving)
+        private BattleVisualPose ResolveEnemyPreviewPose(int index, bool isMoving, bool isCloseCombatEngaged)
         {
             if (index >= 0 && index < enemyAttackVisualRemainings.Count && enemyAttackVisualRemainings[index] > 0f)
+            {
+                return BattleVisualPose.Attack;
+            }
+
+            if (isCloseCombatEngaged)
             {
                 return BattleVisualPose.Attack;
             }
@@ -1304,6 +1351,69 @@ namespace WitchTower.Battle
             }
 
             return BattleVisualPose.Idle;
+        }
+
+        private IReadOnlyList<Sprite> ResolveAllyPreviewReferenceSprites(int index, BattleVisualPose pose)
+        {
+            switch (pose)
+            {
+                case BattleVisualPose.Attack:
+                    return index >= 0 && index < allyAttackSprites.Count && allyAttackSprites[index] != null && allyAttackSprites[index].Count > 0
+                        ? allyAttackSprites[index]
+                        : ResolveAllyPreviewReferenceSprites(index, BattleVisualPose.Idle);
+                case BattleVisualPose.Move:
+                    return index >= 0 && index < allyMoveSprites.Count && allyMoveSprites[index] != null && allyMoveSprites[index].Count > 0
+                        ? allyMoveSprites[index]
+                        : ResolveAllyPreviewReferenceSprites(index, BattleVisualPose.Idle);
+                case BattleVisualPose.Idle:
+                default:
+                    return index >= 0 && index < allyIdleSprites.Count
+                        ? allyIdleSprites[index]
+                        : null;
+            }
+        }
+
+        private IReadOnlyList<Sprite> ResolveEnemyPreviewReferenceSprites(BattleVisualPose pose)
+        {
+            switch (pose)
+            {
+                case BattleVisualPose.Attack:
+                    return enemyAttackSprites != null && enemyAttackSprites.Count > 0
+                        ? enemyAttackSprites
+                        : ResolveEnemyPreviewReferenceSprites(BattleVisualPose.Idle);
+                case BattleVisualPose.Move:
+                    return enemyMoveSprites != null && enemyMoveSprites.Count > 0
+                        ? enemyMoveSprites
+                        : ResolveEnemyPreviewReferenceSprites(BattleVisualPose.Idle);
+                case BattleVisualPose.Idle:
+                default:
+                    return enemyIdleSprites;
+            }
+        }
+
+        private static PreviewMeasurementMode ResolveAllyPreviewMeasurementMode(MonsterDataSO monsterData, BattleVisualPose pose)
+        {
+            if (pose == BattleVisualPose.Attack &&
+                monsterData != null &&
+                string.Equals(monsterData.raceId, "mage", System.StringComparison.Ordinal))
+            {
+                return PreviewMeasurementMode.MageBody;
+            }
+
+            return PreviewMeasurementMode.FullSprite;
+        }
+
+        private static PreviewMeasurementMode ResolveEnemyPreviewMeasurementMode(EnemyDataSO enemyData, BattleVisualPose pose)
+        {
+            if (pose == BattleVisualPose.Attack &&
+                enemyData != null &&
+                !string.IsNullOrEmpty(enemyData.enemyId) &&
+                enemyData.enemyId.Contains("mage"))
+            {
+                return PreviewMeasurementMode.MageBody;
+            }
+
+            return PreviewMeasurementMode.FullSprite;
         }
 
         private static Vector3 ResolveFacingScale(BattleFacingDirection sourceFacing, BattleFacingDirection desiredFacing)
@@ -1382,27 +1492,230 @@ namespace WitchTower.Battle
 
         private static float ResolveMonsterPreviewScale(MonsterDataSO monsterData, BattleVisualPose pose)
         {
-            return ResolveCharacterPreviewScale(monsterData != null ? monsterData.monsterId : null, pose);
+            if (monsterData == null)
+            {
+                return 1f;
+            }
+
+            return Mathf.Clamp(monsterData.battleVisualScale > 0f ? monsterData.battleVisualScale : 1f, 0.55f, 1.55f);
         }
 
         private static float ResolveEnemyPreviewScale(EnemyDataSO enemyData, BattleVisualPose pose)
         {
-            return ResolveCharacterPreviewScale(enemyData != null ? enemyData.enemyId : null, pose);
-        }
+            if (enemyData != null && !string.IsNullOrEmpty(enemyData.enemyId) && EnemyPreviewScaleOverrides.TryGetValue(enemyData.enemyId, out float scale))
+            {
+                return scale;
+            }
 
-        private static float ResolveCharacterPreviewScale(string characterId, BattleVisualPose pose)
-        {
             return 1f;
         }
 
-        private static void ApplyPreviewMotion(Image image, Vector2 motionOffset)
+        private static void ApplyPreviewVisualLayout(
+            Image image,
+            Vector2 baseSize,
+            Vector2 motionOffset,
+            IReadOnlyList<Sprite> referenceSprites = null,
+            PreviewMeasurementMode measurementMode = PreviewMeasurementMode.FullSprite)
         {
             if (image == null)
             {
                 return;
             }
 
-            image.rectTransform.anchoredPosition = motionOffset;
+            RectTransform rect = image.rectTransform;
+            Sprite sprite = image.sprite;
+            if (sprite == null || baseSize.x <= 0f || baseSize.y <= 0f)
+            {
+                rect.sizeDelta = baseSize;
+                rect.anchoredPosition = motionOffset;
+                return;
+            }
+
+            BattleSpriteVisualMetrics metrics = ResolvePreviewVisualMetrics(sprite, measurementMode);
+            if (!metrics.HasOpaquePixels || metrics.OpaqueHeight <= 0f || metrics.SpriteWidth <= 0f || metrics.SpriteHeight <= 0f)
+            {
+                rect.sizeDelta = baseSize;
+                rect.anchoredPosition = motionOffset;
+                return;
+            }
+
+            ResolvePreviewReferenceMetrics(sprite, referenceSprites, measurementMode, out float referenceOpaqueHeight, out float referenceWidthForClamp);
+
+            float targetOpaqueHeight = Mathf.Max(1f, baseSize.y * PreviewVisualTargetHeightRatio);
+            float imageScale = targetOpaqueHeight / referenceOpaqueHeight;
+            Vector2 resolvedSize = new Vector2(metrics.SpriteWidth * imageScale, metrics.SpriteHeight * imageScale);
+            float maxWidth = Mathf.Max(baseSize.x, baseSize.x * PreviewVisualMaxWidthMultiplier);
+            float referenceWidth = measurementMode == PreviewMeasurementMode.MageBody
+                ? Mathf.Max(metrics.OpaqueWidth, referenceWidthForClamp)
+                : Mathf.Max(metrics.SpriteWidth, referenceWidthForClamp);
+            if (referenceWidth * imageScale > maxWidth)
+            {
+                float widthClamp = maxWidth / (referenceWidth * imageScale);
+                imageScale *= widthClamp;
+                resolvedSize *= widthClamp;
+            }
+
+            Vector2 baselineOffset = new Vector2(0f, -baseSize.y * PreviewVisualBaselineRatio);
+            Vector2 bottomCenterOffset = metrics.OpaqueBottomCenterFromSpriteCenter * imageScale;
+            if (rect.localScale.x < 0f)
+            {
+                bottomCenterOffset.x *= -1f;
+            }
+
+            rect.sizeDelta = resolvedSize;
+            rect.anchoredPosition = motionOffset + baselineOffset - bottomCenterOffset;
+        }
+
+        private static void ResolvePreviewReferenceMetrics(
+            Sprite currentSprite,
+            IReadOnlyList<Sprite> referenceSprites,
+            PreviewMeasurementMode measurementMode,
+            out float referenceOpaqueHeight,
+            out float referenceWidthForClamp)
+        {
+            BattleSpriteVisualMetrics currentMetrics = ResolvePreviewVisualMetrics(currentSprite, measurementMode);
+            referenceOpaqueHeight = Mathf.Max(1f, currentMetrics.OpaqueHeight);
+            referenceWidthForClamp = ResolveReferenceWidthForClamp(currentMetrics, measurementMode);
+
+            if (referenceSprites == null || referenceSprites.Count == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < referenceSprites.Count; i += 1)
+            {
+                Sprite referenceSprite = referenceSprites[i];
+                if (referenceSprite == null)
+                {
+                    continue;
+                }
+
+                BattleSpriteVisualMetrics referenceMetrics = ResolvePreviewVisualMetrics(referenceSprite, measurementMode);
+                if (!referenceMetrics.HasOpaquePixels || referenceMetrics.OpaqueHeight <= 0f)
+                {
+                    continue;
+                }
+
+                referenceOpaqueHeight = Mathf.Max(referenceOpaqueHeight, referenceMetrics.OpaqueHeight);
+                referenceWidthForClamp = Mathf.Max(referenceWidthForClamp, ResolveReferenceWidthForClamp(referenceMetrics, measurementMode));
+            }
+        }
+
+        private static float ResolveReferenceWidthForClamp(BattleSpriteVisualMetrics metrics, PreviewMeasurementMode measurementMode)
+        {
+            return measurementMode == PreviewMeasurementMode.MageBody
+                ? Mathf.Max(1f, metrics.OpaqueWidth)
+                : Mathf.Max(1f, metrics.SpriteWidth);
+        }
+
+        private static BattleSpriteVisualMetrics ResolvePreviewVisualMetrics(Sprite sprite, PreviewMeasurementMode measurementMode)
+        {
+            if (measurementMode != PreviewMeasurementMode.MageBody)
+            {
+                return BattleVisualResolver.ResolveSpriteVisualMetrics(sprite);
+            }
+
+            if (sprite != null && MageBodyVisualMetricsCache.TryGetValue(sprite, out BattleSpriteVisualMetrics cachedMetrics))
+            {
+                return cachedMetrics;
+            }
+
+            BattleSpriteVisualMetrics bodyMetrics = ResolveCroppedSpriteVisualMetrics(sprite, 0.34f, 0.88f);
+            BattleSpriteVisualMetrics resolvedMetrics = bodyMetrics.HasOpaquePixels
+                ? bodyMetrics
+                : BattleVisualResolver.ResolveSpriteVisualMetrics(sprite);
+            if (sprite != null)
+            {
+                MageBodyVisualMetricsCache[sprite] = resolvedMetrics;
+            }
+
+            return resolvedMetrics;
+        }
+
+        private static BattleSpriteVisualMetrics ResolveCroppedSpriteVisualMetrics(Sprite sprite, float normalizedMinX, float normalizedMaxX)
+        {
+            if (sprite == null)
+            {
+                return new BattleSpriteVisualMetrics(0f, 0f, 0f, 0f, Vector2.zero, false, false);
+            }
+
+            Rect spriteRect = sprite.rect;
+            Texture2D texture = sprite.texture;
+            if (texture == null || spriteRect.width <= 0f || spriteRect.height <= 0f)
+            {
+                return BattleVisualResolver.ResolveSpriteVisualMetrics(sprite);
+            }
+
+            Color32[] pixels;
+            try
+            {
+                pixels = texture.GetPixels32();
+            }
+            catch (System.Exception)
+            {
+                return BattleVisualResolver.ResolveSpriteVisualMetrics(sprite);
+            }
+
+            int textureWidth = texture.width;
+            float clampedMinX = Mathf.Clamp01(normalizedMinX);
+            float clampedMaxX = Mathf.Clamp(normalizedMaxX, clampedMinX, 1f);
+            int xMin = Mathf.Clamp(Mathf.FloorToInt(spriteRect.xMin + (spriteRect.width * clampedMinX)), 0, texture.width);
+            int xMax = Mathf.Clamp(Mathf.CeilToInt(spriteRect.xMin + (spriteRect.width * clampedMaxX)), xMin, texture.width);
+            int yMin = Mathf.Clamp(Mathf.FloorToInt(spriteRect.yMin), 0, texture.height);
+            int yMax = Mathf.Clamp(Mathf.CeilToInt(spriteRect.yMax), yMin, texture.height);
+            int opaqueMinX = xMax;
+            int opaqueMaxX = xMin - 1;
+            int opaqueMinY = yMax;
+            int opaqueMaxY = yMin - 1;
+
+            for (int y = yMin; y < yMax; y += 1)
+            {
+                int rowOffset = y * textureWidth;
+                for (int x = xMin; x < xMax; x += 1)
+                {
+                    if (pixels[rowOffset + x].a <= 8)
+                    {
+                        continue;
+                    }
+
+                    opaqueMinX = Mathf.Min(opaqueMinX, x);
+                    opaqueMaxX = Mathf.Max(opaqueMaxX, x);
+                    opaqueMinY = Mathf.Min(opaqueMinY, y);
+                    opaqueMaxY = Mathf.Max(opaqueMaxY, y);
+                }
+            }
+
+            if (opaqueMaxX < opaqueMinX || opaqueMaxY < opaqueMinY)
+            {
+                return new BattleSpriteVisualMetrics(
+                    spriteRect.width,
+                    spriteRect.height,
+                    spriteRect.width,
+                    spriteRect.height,
+                    new Vector2(0f, -spriteRect.height * 0.5f),
+                    false,
+                    true);
+            }
+
+            float localOpaqueMinX = opaqueMinX - spriteRect.xMin;
+            float localOpaqueMaxX = opaqueMaxX + 1f - spriteRect.xMin;
+            float localOpaqueMinY = opaqueMinY - spriteRect.yMin;
+            float localOpaqueMaxY = opaqueMaxY + 1f - spriteRect.yMin;
+            float opaqueWidth = Mathf.Max(1f, localOpaqueMaxX - localOpaqueMinX);
+            float opaqueHeight = Mathf.Max(1f, localOpaqueMaxY - localOpaqueMinY);
+            Vector2 spriteCenter = new Vector2(spriteRect.width * 0.5f, spriteRect.height * 0.5f);
+            Vector2 opaqueBottomCenter = new Vector2(
+                (localOpaqueMinX + localOpaqueMaxX) * 0.5f,
+                localOpaqueMinY);
+
+            return new BattleSpriteVisualMetrics(
+                spriteRect.width,
+                spriteRect.height,
+                opaqueWidth,
+                opaqueHeight,
+                opaqueBottomCenter - spriteCenter,
+                true,
+                true);
         }
 
         private static void SetImageSprite(Image image, Sprite sprite)
@@ -1416,12 +1729,15 @@ namespace WitchTower.Battle
             {
                 image.sprite = sprite;
                 image.color = Color.white;
-                image.preserveAspect = true;
+                image.type = Image.Type.Simple;
+                image.preserveAspect = false;
+                image.useSpriteMesh = false;
                 return;
             }
 
             image.sprite = null;
             image.color = new Color(1f, 1f, 1f, 0f);
+            image.useSpriteMesh = false;
         }
 
         private static Image ResolveImageByName(string objectName)
@@ -1606,7 +1922,7 @@ namespace WitchTower.Battle
                 float allyScale = allyAlive
                     ? 1f
                     : Mathf.Lerp(1f, 0.24f, allyVanishT);
-                BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT);
+                BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT, false);
                 Vector2 allyPreviewSize = AllyPreviewSize * (allyScale * ResolveMonsterPreviewScale(allyData, allyPose));
                 ApplyPreviewImageLayout(
                     allyPreviewImages[i],
@@ -1614,13 +1930,13 @@ namespace WitchTower.Battle
                     allyPreviewSize);
                 if (allyPreviewImages[i] != null)
                 {
-                    Sprite allySprite = SelectAllyPreviewSprite(i, allyApproachT);
+                    Sprite allySprite = SelectAllyPreviewSprite(i, allyApproachT, false);
                     float allyAttackRemaining = i < allyAttackVisualRemainings.Count ? allyAttackVisualRemainings[i] : 0f;
                     Vector2 allyMotionOffset = ResolvePresentationMotionOffset(i, true, allyPose, allyAttackRemaining, allyRange >= RangedAttackThreshold);
                     SetImageSprite(allyPreviewImages[i], allySprite);
                     BattleFacingDirection allySourceFacing = BattleVisualResolver.ResolveMonsterFacing(allyData, allyPose);
                     allyPreviewImages[i].rectTransform.localScale = ResolveFacingScale(allySourceFacing, BattleFacingDirection.Right);
-                    ApplyPreviewMotion(allyPreviewImages[i], allyMotionOffset);
+                    ApplyPreviewVisualLayout(allyPreviewImages[i], allyPreviewSize, allyMotionOffset, ResolveAllyPreviewReferenceSprites(i, allyPose), ResolveAllyPreviewMeasurementMode(allyData, allyPose));
                     Color allyColor = allyPreviewImages[i].color;
                     allyColor.a = allyAlive ? 1f : Mathf.Clamp01(1f - allyVanishT);
                     allyPreviewImages[i].color = allyColor;
@@ -1674,7 +1990,7 @@ namespace WitchTower.Battle
                         : 0f;
                     float bossScale = Mathf.Lerp(1f, 0.24f, enemyVanishT);
                     bool bossMoving = contactT < 1f;
-                    BattleVisualPose bossPose = ResolveEnemyPreviewPose(0, bossMoving);
+                    BattleVisualPose bossPose = ResolveEnemyPreviewPose(0, bossMoving, false);
                     Vector2 bossPreviewSize = BossPreviewSize * (bossScale * ResolveEnemyPreviewScale(currentPreviewEnemyData, bossPose));
                     ApplyPreviewImageLayout(
                         enemyPreviewImages[0],
@@ -1682,10 +1998,10 @@ namespace WitchTower.Battle
                         bossPreviewSize);
                     float bossAttackRemaining = enemyAttackVisualRemainings.Count > 0 ? enemyAttackVisualRemainings[0] : 0f;
                     Vector2 bossMotionOffset = ResolvePresentationMotionOffset(0, false, bossPose, bossAttackRemaining, enemyAttackRange >= RangedAttackThreshold);
-                    SetImageSprite(enemyPreviewImages[0], SelectEnemyPreviewSprite(0, bossMoving));
+                    SetImageSprite(enemyPreviewImages[0], SelectEnemyPreviewSprite(0, bossMoving, false));
                     BattleFacingDirection bossSourceFacing = BattleVisualResolver.ResolveEnemyFacing(currentPreviewEnemyData, bossPose);
                     enemyPreviewImages[0].rectTransform.localScale = ResolveFacingScale(bossSourceFacing, BattleFacingDirection.Left);
-                    ApplyPreviewMotion(enemyPreviewImages[0], bossMotionOffset);
+                    ApplyPreviewVisualLayout(enemyPreviewImages[0], bossPreviewSize, bossMotionOffset, ResolveEnemyPreviewReferenceSprites(bossPose), ResolveEnemyPreviewMeasurementMode(currentPreviewEnemyData, bossPose));
                     Color bossColor = enemyPreviewImages[0].color;
                     bossColor.a = 1f - enemyVanishT;
                     enemyPreviewImages[0].color = bossColor;
@@ -1796,7 +2112,7 @@ namespace WitchTower.Battle
                 }
 
                 bool enemyMoving = slotProgress < combatStartProgress;
-                BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving);
+                BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving, false);
                 Vector2 enemyPreviewSize = EnemyPreviewSize * (scale * ResolveEnemyPreviewScale(currentPreviewEnemyData, enemyPose));
                 ApplyPreviewImageLayout(
                     image,
@@ -1804,10 +2120,10 @@ namespace WitchTower.Battle
                     enemyPreviewSize);
                 float enemyAttackRemaining = i < enemyAttackVisualRemainings.Count ? enemyAttackVisualRemainings[i] : 0f;
                 Vector2 enemyMotionOffset = ResolvePresentationMotionOffset(i, false, enemyPose, enemyAttackRemaining, enemyAttackRange >= RangedAttackThreshold);
-                SetImageSprite(image, SelectEnemyPreviewSprite(i, enemyMoving));
+                SetImageSprite(image, SelectEnemyPreviewSprite(i, enemyMoving, false));
                 BattleFacingDirection enemySourceFacing = BattleVisualResolver.ResolveEnemyFacing(currentPreviewEnemyData, enemyPose);
                 image.rectTransform.localScale = ResolveFacingScale(enemySourceFacing, BattleFacingDirection.Left);
-                ApplyPreviewMotion(image, enemyMotionOffset);
+                ApplyPreviewVisualLayout(image, enemyPreviewSize, enemyMotionOffset, ResolveEnemyPreviewReferenceSprites(enemyPose), ResolveEnemyPreviewMeasurementMode(currentPreviewEnemyData, enemyPose));
 
                 Color color = image.color;
                 color.a = alpha;
@@ -1845,7 +2161,9 @@ namespace WitchTower.Battle
 
             Image image = go.GetComponent<Image>();
             image.color = Color.white;
+            image.type = Image.Type.Simple;
             image.preserveAspect = true;
+            image.useSpriteMesh = false;
             go.transform.SetAsLastSibling();
             return image;
         }
@@ -1875,21 +2193,22 @@ namespace WitchTower.Battle
                 float allyScale = allyAlive ? 1f : Mathf.Lerp(1f, 0.24f, allyVanishT);
                 MonsterDataSO allyData = i < allyPreviewMonsterData.Count ? allyPreviewMonsterData[i] : null;
                 float allyApproachT = allyMoving ? 0f : 1f;
-                BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT);
+                bool allyCloseCombatEngaged = allyAlive && simulator.IsAllyCloseCombatEngaged(i);
+                BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT, allyCloseCombatEngaged);
                 Vector2 allyPreviewSize = AllyPreviewSize * (allyScale * ResolveMonsterPreviewScale(allyData, allyPose));
                 ApplyPreviewImageLayout(
                     allyPreviewImages[i],
                     MapBattlefieldAnchor(allyAnchor),
                     allyPreviewSize);
 
-                Sprite allySprite = SelectAllyPreviewSprite(i, allyApproachT);
+                Sprite allySprite = SelectAllyPreviewSprite(i, allyApproachT, allyCloseCombatEngaged);
                 SetImageSprite(allyPreviewImages[i], allySprite);
                 float allyAttackRemaining = i < allyAttackVisualRemainings.Count ? allyAttackVisualRemainings[i] : 0f;
                 float allyAttackRange = i < allyAttackRanges.Count ? allyAttackRanges[i] : 1f;
                 Vector2 allyMotionOffset = ResolvePresentationMotionOffset(i, true, allyPose, allyAttackRemaining, allyAttackRange >= RangedAttackThreshold);
                 BattleFacingDirection allySourceFacing = BattleVisualResolver.ResolveMonsterFacing(allyData, allyPose);
                 allyPreviewImages[i].rectTransform.localScale = ResolveFacingScale(allySourceFacing, BattleFacingDirection.Right);
-                ApplyPreviewMotion(allyPreviewImages[i], allyMotionOffset);
+                ApplyPreviewVisualLayout(allyPreviewImages[i], allyPreviewSize, allyMotionOffset, ResolveAllyPreviewReferenceSprites(i, allyPose), ResolveAllyPreviewMeasurementMode(allyData, allyPose));
                 Color allyColor = allyPreviewImages[i].color;
                 allyColor.a = allyAlive ? 1f : Mathf.Clamp01(1f - allyVanishT);
                 allyPreviewImages[i].color = allyColor;
@@ -1929,17 +2248,18 @@ namespace WitchTower.Battle
                     ? 1f - Mathf.Clamp01(enemyDefeatRemaining / EnemyDefeatVanishDuration)
                     : 0f;
                 float scale = Mathf.Lerp(1f, 0.24f, enemyVanishT);
-                BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving);
+                bool enemyCloseCombatEngaged = simulator.IsEnemyCloseCombatEngaged(i);
+                BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving, enemyCloseCombatEngaged);
                 float enemyPreviewScale = ResolveEnemyPreviewScale(currentPreviewEnemyData, enemyPose);
                 Vector2 previewSize = (simulator.IsBossWave && i == 0 ? BossPreviewSize : EnemyPreviewSize) * (scale * enemyPreviewScale);
                 ApplyPreviewImageLayout(image, MapBattlefieldAnchor(enemyAnchor), previewSize);
 
-                SetImageSprite(image, SelectEnemyPreviewSprite(i, enemyMoving));
+                SetImageSprite(image, SelectEnemyPreviewSprite(i, enemyMoving, enemyCloseCombatEngaged));
                 float enemyAttackRemaining = i < enemyAttackVisualRemainings.Count ? enemyAttackVisualRemainings[i] : 0f;
                 Vector2 enemyMotionOffset = ResolvePresentationMotionOffset(i, false, enemyPose, enemyAttackRemaining, enemyAttackRange >= RangedAttackThreshold);
                 BattleFacingDirection enemySourceFacing = BattleVisualResolver.ResolveEnemyFacing(currentPreviewEnemyData, enemyPose);
                 image.rectTransform.localScale = ResolveFacingScale(enemySourceFacing, BattleFacingDirection.Left);
-                ApplyPreviewMotion(image, enemyMotionOffset);
+                ApplyPreviewVisualLayout(image, previewSize, enemyMotionOffset, ResolveEnemyPreviewReferenceSprites(enemyPose), ResolveEnemyPreviewMeasurementMode(currentPreviewEnemyData, enemyPose));
                 Color color = image.color;
                 color.a = 1f - enemyVanishT;
                 image.color = color;
@@ -2261,7 +2581,7 @@ namespace WitchTower.Battle
                 float pulseStrength = effect.UseArcMovement ? 0.12f : 0.22f;
                 float pulseScale = 1f + (Mathf.Sin(normalized * Mathf.PI) * pulseStrength);
                 float resolvedSize = Mathf.Lerp(effect.BaseSize, effect.BaseSize * effect.FadeOutScale, fadeProgress) * pulseScale;
-                effect.RectTransform.sizeDelta = Vector2.one * resolvedSize;
+                effect.RectTransform.sizeDelta = ResolveRangedAttackEffectSizeDelta(effect.Image.sprite, resolvedSize);
 
                 float glow = 1f - Mathf.Abs((normalized * 2f) - 1f);
                 Color color = effect.BaseColor;
@@ -2682,6 +3002,28 @@ namespace WitchTower.Battle
             image.enabled = false;
             effectObject.transform.SetAsLastSibling();
             return image;
+        }
+
+        private static Vector2 ResolveRangedAttackEffectSizeDelta(Sprite sprite, float longestSide)
+        {
+            float safeLongestSide = Mathf.Max(1f, longestSide);
+            if (sprite == null)
+            {
+                return Vector2.one * safeLongestSide;
+            }
+
+            Rect rect = sprite.rect;
+            if (rect.width <= 0f || rect.height <= 0f)
+            {
+                return Vector2.one * safeLongestSide;
+            }
+
+            if (rect.width >= rect.height)
+            {
+                return new Vector2(safeLongestSide, safeLongestSide * rect.height / rect.width);
+            }
+
+            return new Vector2(safeLongestSide * rect.width / rect.height, safeLongestSide);
         }
 
         private static float ResolveSpriteBaseSize(Sprite sprite, float scale, float fallbackSize)

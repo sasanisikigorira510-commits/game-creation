@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 4
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.02
+    attackCoefficient: 0.86
+    magicAttackCoefficient: 1.68
+    defenseCoefficient: 0.92
+    magicDefenseCoefficient: 1.36
+    attackSpeedCoefficient: 0.88
   fusionExclusive: 1
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_abyss_dragon_mage_valflare_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.18
   description: "深淵竜と大魔導の力が重なった特殊魔導竜。広範囲に暗黒炎を放つ。"

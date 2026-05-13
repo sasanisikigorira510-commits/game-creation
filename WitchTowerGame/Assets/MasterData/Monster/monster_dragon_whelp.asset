@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 1.05
+    attackCoefficient: 0.95
+    magicAttackCoefficient: 1.1
+    defenseCoefficient: 0.9
+    magicDefenseCoefficient: 0.85
+    attackSpeedCoefficient: 1.12
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_dragon_whelp_attack
   battleAttackFacing: 0
+  battleVisualScale: 0.94
   description: "炎の息を覚え始めた幼いドラゴン。素早く動き、序盤の万能アタッカーとして扱いやすい。"

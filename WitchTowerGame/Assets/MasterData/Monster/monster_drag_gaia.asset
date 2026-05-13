@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 4
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.62
+    attackCoefficient: 1.24
+    magicAttackCoefficient: 0.78
+    defenseCoefficient: 1.58
+    magicDefenseCoefficient: 1.02
+    attackSpeedCoefficient: 0.55
   fusionExclusive: 1
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_drag_gaia_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.34
   description: "竜骨と巨岩が一体化した特殊巨兵。巨大な体で敵群を受け止める。"

@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 0
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 0.78
+    attackCoefficient: 0.58
+    magicAttackCoefficient: 1.22
+    defenseCoefficient: 0.7
+    magicDefenseCoefficient: 1.28
+    attackSpeedCoefficient: 1.16
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -46,4 +53,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_family_mage_3
   battleAttackFacing: 0
+  battleVisualScale: 0.9
   description: A dark spirit that favors magic strikes.

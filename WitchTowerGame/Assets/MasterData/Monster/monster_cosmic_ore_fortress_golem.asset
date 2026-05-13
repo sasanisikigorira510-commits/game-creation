@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 3
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.58
+    attackCoefficient: 1.12
+    magicAttackCoefficient: 0.6
+    defenseCoefficient: 1.62
+    magicDefenseCoefficient: 1.08
+    attackSpeedCoefficient: 0.54
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_cosmic_ore_fortress_golem_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.3
   description: "宇宙鉱石で構成された要塞級ゴーレム。圧倒的な耐久力を誇る。"

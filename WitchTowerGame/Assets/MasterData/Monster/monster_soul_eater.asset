@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.08
+    attackCoefficient: 0.92
+    magicAttackCoefficient: 1.34
+    defenseCoefficient: 1.02
+    magicDefenseCoefficient: 1.14
+    attackSpeedCoefficient: 0.96
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -42,4 +49,5 @@ MonoBehaviour:
   illustrationResourcePath: 
   battleIdleResourcePath: 
   battleAttackResourcePath: 
+  battleVisualScale: 1.1
   description: A terrifying devourer that rends souls at close range.

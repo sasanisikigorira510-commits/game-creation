@@ -820,7 +820,103 @@ NativeFormatImporter:
     return guid
 }
 
-func monsterAssetYaml(for entry: MonsterEntry) -> String {
+func extractScalar(from yaml: String?, key: String) -> String? {
+    guard let yaml else { return nil }
+    let prefix = "  \(key): "
+    for line in yaml.components(separatedBy: .newlines) {
+        if line.hasPrefix(prefix) {
+            return String(line.dropFirst(prefix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+    }
+
+    return nil
+}
+
+func extractYamlBlock(from yaml: String?, key: String) -> String? {
+    guard let yaml else { return nil }
+    let lines = yaml.components(separatedBy: .newlines)
+    guard let start = lines.firstIndex(where: { $0 == "  \(key):" }) else {
+        return nil
+    }
+
+    var block = [lines[start]]
+    var index = start + 1
+    while index < lines.count {
+        let line = lines[index]
+        if line.hasPrefix("  ") && !line.hasPrefix("    ") && !line.trimmingCharacters(in: .whitespaces).isEmpty {
+            break
+        }
+
+        if !line.trimmingCharacters(in: .whitespaces).isEmpty {
+            block.append(line)
+        }
+
+        index += 1
+    }
+
+    return block.count > 1 ? block.joined(separator: "\n") : nil
+}
+
+func defaultBattleVisualScale(for entry: MonsterEntry) -> String {
+    let overrides: [String: String] = [
+        "monster_dragon_whelp": "0.94",
+        "monster_flare_drake": "1.04",
+        "monster_abyss_dragon": "1.14",
+        "monster_chibi_gear": "0.9",
+        "monster_armed_droid": "1.02",
+        "monster_omega_leon": "1.13",
+        "monster_rock_golem": "1.05",
+        "monster_ore_giant_garm": "1.18",
+        "monster_cosmic_ore_fortress_golem": "1.3",
+        "monster_apprentice_swordsman": "0.92",
+        "monster_holy_armor_leon": "1",
+        "monster_sword_saint_alvarez": "1.06",
+        "monster_apprentice_mage": "0.88",
+        "monster_dark_robe_curse_mage_noah": "0.96",
+        "monster_abyss_grand_mage_seraphis": "1.05",
+        "monster_mecha_dragon_valdrake": "1.22",
+        "monster_drag_gaia": "1.34",
+        "monster_dragon_sword_saint_agito": "1.08",
+        "monster_abyss_dragon_mage_valflare": "1.18",
+        "monster_fortress_machine_gigafort": "1.32",
+        "monster_mecha_sword_saint_gransaber": "1.08",
+        "monster_dark_magic_machine_god_merchion": "1.18",
+        "monster_rock_knight_gaius": "1.26",
+        "monster_astral_eclipse_golem": "1.24",
+        "monster_magic_sword_saint_luciel": "1.03",
+        "monster_seraph_michael": "1.14",
+        "monster_spirit_queen_titania": "1.04"
+    ]
+
+    if let override = overrides[entry.monsterId] {
+        return override
+    }
+
+    switch entry.classRank {
+    case 1:
+        return "0.94"
+    case 2:
+        return "1.04"
+    case 3:
+        return "1.14"
+    default:
+        return "1.2"
+    }
+}
+
+func defaultLevelGrowthYaml() -> String {
+    return """
+  levelGrowth:
+    maxHpCoefficient: 1
+    attackCoefficient: 1
+    magicAttackCoefficient: 1
+    defenseCoefficient: 1
+    magicDefenseCoefficient: 1
+    attackSpeedCoefficient: 1
+"""
+}
+
+func monsterAssetYaml(for entry: MonsterEntry, existingAssetText: String?) -> String {
     let rarity = max(1, min(6, entry.classRank))
     let plusHp = entry.classRank == 1 ? 1 : 2
     let plusAttack = entry.classRank == 1 ? 1 : 2
@@ -828,6 +924,8 @@ func monsterAssetYaml(for entry: MonsterEntry) -> String {
     let plusDefense = max(1, entry.classRank)
     let plusMagicDefense = entry.classRank >= 2 ? 1 : 0
     let attackSpeedGrowth = entry.classRank == 1 ? "0.003" : "0.002"
+    let levelGrowthYaml = extractYamlBlock(from: existingAssetText, key: "levelGrowth") ?? defaultLevelGrowthYaml()
+    let battleVisualScale = extractScalar(from: existingAssetText, key: "battleVisualScale") ?? defaultBattleVisualScale(for: entry)
 
     return """
 %YAML 1.1
@@ -872,6 +970,7 @@ MonoBehaviour:
     defensePerPlus: \(plusDefense)
     magicDefensePerPlus: \(plusMagicDefense)
     attackSpeedPerPlus: \(attackSpeedGrowth)
+\(levelGrowthYaml)
   fusionExclusive: \(entry.fusionExclusive)
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -884,6 +983,7 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_\(entry.outputKey)_attack
   battleAttackFacing: 0
+  battleVisualScale: \(battleVisualScale)
   description: \(yamlString(entry.description))
 
 """
@@ -995,7 +1095,10 @@ for entry in entries {
     }
 
     let assetPath = "\(monsterAssetRoot)/\(entry.monsterId).asset"
-    try monsterAssetYaml(for: entry).write(toFile: assetPath, atomically: true, encoding: .utf8)
+    let existingAssetText = FileManager.default.fileExists(atPath: assetPath)
+        ? try? String(contentsOfFile: assetPath, encoding: .utf8)
+        : nil
+    try monsterAssetYaml(for: entry, existingAssetText: existingAssetText).write(toFile: assetPath, atomically: true, encoding: .utf8)
     let guid = try ensureAssetMeta(assetPath: assetPath)
     monsterGuids.append(guid)
 }

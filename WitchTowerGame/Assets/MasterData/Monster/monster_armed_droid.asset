@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 2
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.08
+    attackCoefficient: 1.18
+    magicAttackCoefficient: 0.65
+    defenseCoefficient: 1.3
+    magicDefenseCoefficient: 0.92
+    attackSpeedCoefficient: 0.94
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_armed_droid_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.02
   description: "武装を増設した中位ドロイド。耐久と物理攻撃のバランスに優れる。"

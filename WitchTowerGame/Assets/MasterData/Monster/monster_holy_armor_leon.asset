@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 2
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.1
+    attackCoefficient: 1.3
+    magicAttackCoefficient: 0.55
+    defenseCoefficient: 1.18
+    magicDefenseCoefficient: 0.92
+    attackSpeedCoefficient: 1.08
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_holy_armor_leon_attack
   battleAttackFacing: 0
+  battleVisualScale: 1
   description: "聖鎧をまとった中位剣士。攻守のバランスがよく、前線で安定して戦える。"

@@ -123,6 +123,7 @@ namespace WitchTower.MasterData
         public BattleFacingDirection battleMoveFacing = BattleFacingDirection.Left;
         public string battleAttackResourcePath;
         public BattleFacingDirection battleAttackFacing = BattleFacingDirection.Left;
+        [Min(0.1f)] public float battleVisualScale = 1f;
 
         [Header("Compendium")]
         [TextArea] public string description;

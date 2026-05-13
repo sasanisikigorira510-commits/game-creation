@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 2
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.28
+    attackCoefficient: 1.1
+    magicAttackCoefficient: 0.62
+    defenseCoefficient: 1.42
+    magicDefenseCoefficient: 1.08
+    attackSpeedCoefficient: 0.78
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -46,4 +53,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_family_robot_2
   battleAttackFacing: 0
+  battleVisualScale: 1.08
   description: An elite guardian built to hold the front line under pressure.

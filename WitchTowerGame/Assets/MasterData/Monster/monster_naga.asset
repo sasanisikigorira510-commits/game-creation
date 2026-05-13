@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 1
+    attackCoefficient: 1.1
+    magicAttackCoefficient: 0.88
+    defenseCoefficient: 0.92
+    magicDefenseCoefficient: 0.92
+    attackSpeedCoefficient: 1.06
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -42,4 +49,5 @@ MonoBehaviour:
   illustrationResourcePath: 
   battleIdleResourcePath: 
   battleAttackResourcePath: 
+  battleVisualScale: 0.98
   description: A durable serpent warrior of the water line.

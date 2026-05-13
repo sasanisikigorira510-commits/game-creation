@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 4
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.72
+    attackCoefficient: 1.18
+    magicAttackCoefficient: 0.58
+    defenseCoefficient: 1.74
+    magicDefenseCoefficient: 1.08
+    attackSpeedCoefficient: 0.48
   fusionExclusive: 1
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_fortress_machine_gigafort_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.32
   description: "要塞級の装甲を持つ機械兵。圧倒的な防御力で戦線を固定する。"

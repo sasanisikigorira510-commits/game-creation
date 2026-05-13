@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 2
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 0.88
+    attackCoefficient: 0.56
+    magicAttackCoefficient: 1.45
+    defenseCoefficient: 0.78
+    magicDefenseCoefficient: 1.34
+    attackSpeedCoefficient: 0.96
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_dark_robe_curse_mage_noah_attack
   battleAttackFacing: 0
+  battleVisualScale: 0.96
   description: "黒衣をまとった中位呪術師。高い魔力で後衛から敵を削る。"

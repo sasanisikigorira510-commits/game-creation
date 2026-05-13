@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 2
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.42
+    attackCoefficient: 1.06
+    magicAttackCoefficient: 0.55
+    defenseCoefficient: 1.48
+    magicDefenseCoefficient: 0.96
+    attackSpeedCoefficient: 0.62
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_ore_giant_garm_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.18
   description: "鉱石を核に成長した巨人。高い防御力で長く戦場に残る。"

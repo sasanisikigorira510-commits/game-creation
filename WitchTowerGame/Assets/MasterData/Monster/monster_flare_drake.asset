@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 2
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.1
+    attackCoefficient: 1.05
+    magicAttackCoefficient: 1.18
+    defenseCoefficient: 0.95
+    magicDefenseCoefficient: 0.92
+    attackSpeedCoefficient: 1
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_flare_drake_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.04
   description: "火炎をまとって飛ぶ成長期の竜。中距離からブレスで敵を焼き払う。"

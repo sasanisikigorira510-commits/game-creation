@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 1.12
+    attackCoefficient: 1.24
+    magicAttackCoefficient: 0.72
+    defenseCoefficient: 1.02
+    magicDefenseCoefficient: 0.88
+    attackSpeedCoefficient: 1.18
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -42,4 +49,5 @@ MonoBehaviour:
   illustrationResourcePath: 
   battleIdleResourcePath: 
   battleAttackResourcePath: 
+  battleVisualScale: 1.06
   description: A swift archer that excels at steady damage.

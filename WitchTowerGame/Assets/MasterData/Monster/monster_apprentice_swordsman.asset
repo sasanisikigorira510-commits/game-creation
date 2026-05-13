@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 0
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 1
+    attackCoefficient: 1.22
+    magicAttackCoefficient: 0.48
+    defenseCoefficient: 1.02
+    magicDefenseCoefficient: 0.78
+    attackSpeedCoefficient: 1.18
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_apprentice_swordsman_attack
   battleAttackFacing: 0
+  battleVisualScale: 0.92
   description: "剣を学び始めた下位剣士。手数が多く、扱いやすい近接アタッカー。"

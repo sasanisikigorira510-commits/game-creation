@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 4
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.56
+    attackCoefficient: 1.34
+    magicAttackCoefficient: 0.48
+    defenseCoefficient: 1.68
+    magicDefenseCoefficient: 0.94
+    attackSpeedCoefficient: 0.62
   fusionExclusive: 1
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_rock_knight_gaius_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.26
   description: "岩の肉体に騎士の剣技を宿した特殊個体。重い一撃で敵を粉砕する。"

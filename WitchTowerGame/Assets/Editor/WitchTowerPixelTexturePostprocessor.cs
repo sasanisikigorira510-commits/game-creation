@@ -13,11 +13,13 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
         {
             "Assets/Resources/FamilyMonsterCards",
             "Assets/Resources/FamilyMonsters",
+            "Assets/Resources/MonsterBattle",
             "Assets/Resources/BattleEffects",
             "Assets/Resources/MonsterCardFrames",
             "Assets/Resources/EquipmentFrames",
             "Assets/Resources/UI/HomeMenu",
-            "Assets/Resources/UI/FusionPage"
+            "Assets/Resources/UI/FusionPage",
+            "Assets/Resources/UI/GachaPage"
         };
 
         List<string> existingFolders = new List<string>();
@@ -41,6 +43,7 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
             if (ConfigureImporter(path, importer))
             {
                 importer.SaveAndReimport();
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
             }
         }
 
@@ -59,8 +62,9 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
     private static bool ConfigureImporter(string assetPath, TextureImporter importer)
     {
         string normalizedPath = assetPath.Replace('\\', '/');
+        bool isMonsterBattleTexture = normalizedPath.StartsWith("Assets/Resources/MonsterBattle/");
         bool isBattlePixelArt =
-            normalizedPath.StartsWith("Assets/Resources/MonsterBattle/") ||
+            isMonsterBattleTexture ||
             normalizedPath.StartsWith("Assets/Resources/BattleEffects/");
         bool isCardPortrait = normalizedPath.StartsWith("Assets/Resources/FamilyMonsterCards/");
         bool isLegacyPortrait = normalizedPath.StartsWith("Assets/Resources/FamilyMonsters/");
@@ -69,8 +73,9 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
             normalizedPath.StartsWith("Assets/Resources/EquipmentFrames/");
         bool isHomeMenuTexture = normalizedPath.StartsWith("Assets/Resources/UI/HomeMenu/");
         bool isFusionPageTexture = normalizedPath.StartsWith("Assets/Resources/UI/FusionPage/");
+        bool isGachaPageTexture = normalizedPath.StartsWith("Assets/Resources/UI/GachaPage/");
 
-        if (!isBattlePixelArt && !isCardPortrait && !isLegacyPortrait && !isFrameTexture && !isHomeMenuTexture && !isFusionPageTexture)
+        if (!isBattlePixelArt && !isCardPortrait && !isLegacyPortrait && !isFrameTexture && !isHomeMenuTexture && !isFusionPageTexture && !isGachaPageTexture)
         {
             return false;
         }
@@ -79,10 +84,11 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
         importer.spriteImportMode = SpriteImportMode.Single;
         importer.wrapMode = TextureWrapMode.Clamp;
         importer.npotScale = TextureImporterNPOTScale.None;
-        importer.filterMode = (isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture) ? FilterMode.Trilinear : FilterMode.Point;
-        importer.mipmapEnabled = isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture;
+        importer.filterMode = (isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture || isGachaPageTexture) ? FilterMode.Trilinear : FilterMode.Point;
+        importer.mipmapEnabled = isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture || isGachaPageTexture;
         importer.textureCompression = TextureImporterCompression.Uncompressed;
         importer.alphaIsTransparency = true;
+        importer.isReadable = isMonsterBattleTexture;
         return true;
     }
 }

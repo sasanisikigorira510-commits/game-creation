@@ -59,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_spirit_queen_titania_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.04
   description: "精霊系の神話級個体。自然の魔力を操り、後衛から戦場を支配する。"

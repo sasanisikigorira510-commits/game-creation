@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 4
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.1
+    attackCoefficient: 1.66
+    magicAttackCoefficient: 0.58
+    defenseCoefficient: 1.28
+    magicDefenseCoefficient: 0.84
+    attackSpeedCoefficient: 1.08
   fusionExclusive: 1
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_mecha_sword_saint_gransaber_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.08
   description: "機械装甲で剣技を増幅する特殊剣聖。鋭い連撃で敵を削る。"

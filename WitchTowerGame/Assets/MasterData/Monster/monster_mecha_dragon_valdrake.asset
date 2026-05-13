@@ -40,6 +40,13 @@ MonoBehaviour:
     defensePerPlus: 4
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.14
+    attackCoefficient: 1.16
+    magicAttackCoefficient: 1.36
+    defenseCoefficient: 1.1
+    magicDefenseCoefficient: 1
+    attackSpeedCoefficient: 0.9
   fusionExclusive: 1
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -52,4 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_mecha_dragon_valdrake_attack
   battleAttackFacing: 0
+  battleVisualScale: 1.22
   description: "竜の魔力と機械装甲が融合した特殊個体。中距離から機械竜の砲撃を放つ。"

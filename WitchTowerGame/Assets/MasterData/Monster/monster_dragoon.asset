@@ -34,6 +34,13 @@ MonoBehaviour:
     defensePerPlus: 1
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 1.14
+    attackCoefficient: 1.28
+    magicAttackCoefficient: 0.82
+    defenseCoefficient: 1.04
+    magicDefenseCoefficient: 0.94
+    attackSpeedCoefficient: 1.1
   fusionExclusive: 0
   fusionRecipes: []
   portraitSprite: {fileID: 0}
@@ -43,4 +50,5 @@ MonoBehaviour:
   battleIdleResourcePath: MonsterBattle/mon_dragoon_idle
   battleMoveResourcePath: MonsterBattle/mon_dragoon_move
   battleAttackResourcePath: MonsterBattle/mon_dragoon_attack
+  battleVisualScale: 1.08
   description: A lancer that balances offense and durability.
