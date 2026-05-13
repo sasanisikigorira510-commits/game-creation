@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using WitchTower.Data;
 using WitchTower.Managers;
 using WitchTower.MasterData;
+using WitchTower.Save;
 
 namespace WitchTower.Home
 {
@@ -21,6 +22,24 @@ namespace WitchTower.Home
         private const string RosterFrameSpritePath = "UI/FusionPage/FusionRosterFrame";
         private const string SmallButtonSpritePath = "UI/FusionPage/FusionSmallButton";
         private const string CardFrameBasePath = "MonsterCardFrames/monster_class_";
+
+        private readonly struct DexClassLevelGrowth
+        {
+            public DexClassLevelGrowth(float hp, float attack, float wisdom, float defense, float magicDefense)
+            {
+                Hp = hp;
+                Attack = attack;
+                Wisdom = wisdom;
+                Defense = defense;
+                MagicDefense = magicDefense;
+            }
+
+            public float Hp { get; }
+            public float Attack { get; }
+            public float Wisdom { get; }
+            public float Defense { get; }
+            public float MagicDefense { get; }
+        }
 
         private static readonly Color PageTint = new Color(0.005f, 0.012f, 0.018f, 0.97f);
         private static readonly Color PanelColor = new Color(0.025f, 0.045f, 0.055f, 0.98f);
@@ -44,6 +63,8 @@ namespace WitchTower.Home
         private Text selectedStatsLabel;
         private Text selectedDescriptionLabel;
         private Text counterLabel;
+        private RectTransform recipeContentRoot;
+        private Text recipeEmptyLabel;
         private string selectedMonsterId;
         private bool isBuilt;
 
@@ -75,7 +96,7 @@ namespace WitchTower.Home
             MasterDataManager masterDataManager = MasterDataManager.Instance;
             masterDataManager?.Initialize();
             MonsterDataSO[] allMonsterData = masterDataManager != null ? masterDataManager.GetAllMonsterData() : null;
-            List<MonsterDataSO> monsters = SortMonsters(allMonsterData);
+            List<MonsterDataSO> monsters = SortMonsters(FilterUnlockedMonsters(allMonsterData));
 
             if (string.IsNullOrEmpty(selectedMonsterId) || monsters.All(monster => monster.monsterId != selectedMonsterId))
             {
@@ -85,7 +106,8 @@ namespace WitchTower.Home
             RebuildCards(monsters);
             MonsterDataSO selectedMonster = monsters.FirstOrDefault(monster => monster.monsterId == selectedMonsterId);
             int selectedIndex = selectedMonster != null ? monsters.IndexOf(selectedMonster) + 1 : 0;
-            BindDetail(selectedMonster, selectedIndex);
+            BindDetail(selectedMonster, selectedIndex, allMonsterData);
+            BindFusionRecipes(selectedMonster, allMonsterData);
             UpdateCounter(monsters);
         }
 
@@ -122,6 +144,7 @@ namespace WitchTower.Home
                 new Vector2(-38f, -44f), new Vector2(150f, 66f), SmallButtonSpritePath, new Color(0.34f, 0.2f, 0.16f, 1f), Hide);
 
             BuildDetailPanel(panel.transform);
+            BuildRecipePanel(panel.transform);
             BuildCardGrid(panel.transform);
             isBuilt = true;
         }
@@ -133,35 +156,58 @@ namespace WitchTower.Home
                 new Vector2(0f, -330f), new Vector2(920f, 360f), DetailColor);
 
             selectedFrame = CreatePanel("SelectedFrame", detailPanel.transform, null,
-                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(150f, 0f), new Vector2(250f, 310f), CardFallbackColor).GetComponent<Image>();
+                new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(-150f, 0f), new Vector2(250f, 310f), CardFallbackColor).GetComponent<Image>();
 
             selectedPortrait = CreateImage("SelectedPortrait", selectedFrame.transform, string.Empty,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, 22f), new Vector2(188f, 188f));
+                new Vector2(0f, 18f), new Vector2(224f, 224f));
 
             selectedNameLabel = CreateText("SelectedName", detailPanel.transform, "-", 30, FontStyle.Bold,
-                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(160f, -38f), new Vector2(600f, 44f), TextAnchor.MiddleLeft, TextMain);
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(46f, -38f), new Vector2(560f, 44f), TextAnchor.MiddleLeft, TextMain);
 
             selectedInfoLabel = CreateText("SelectedInfo", detailPanel.transform, "-", 21, FontStyle.Bold,
-                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(160f, -86f), new Vector2(600f, 40f), TextAnchor.MiddleLeft, AccentCyan);
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(46f, -86f), new Vector2(560f, 40f), TextAnchor.MiddleLeft, AccentCyan);
 
             selectedStatsLabel = CreateText("SelectedStats", detailPanel.transform, "-", 17, FontStyle.Bold,
-                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(160f, -164f), new Vector2(600f, 96f), TextAnchor.UpperLeft, TextSub);
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(46f, -132f), new Vector2(560f, 116f), TextAnchor.UpperLeft, TextSub);
 
             selectedDescriptionLabel = CreateText("SelectedDescription", detailPanel.transform, "-", 18, FontStyle.Bold,
-                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(160f, 40f), new Vector2(600f, 74f), TextAnchor.UpperLeft, TextMain);
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(46f, 34f), new Vector2(560f, 74f), TextAnchor.UpperLeft, TextMain);
+        }
+
+        private void BuildRecipePanel(Transform parent)
+        {
+            GameObject recipePanel = CreatePanel("DexFusionRecipePanel", parent, RosterFrameSpritePath,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -635f), new Vector2(920f, 230f), new Color(0.018f, 0.035f, 0.044f, 0.98f));
+
+            CreateText("RecipeTitle", recipePanel.transform, "配合表", 24, FontStyle.Bold,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -30f), new Vector2(420f, 34f), TextAnchor.MiddleCenter, AccentGold);
+
+            GameObject content = CreateUiObject("RecipeContent", recipePanel.transform);
+            recipeContentRoot = content.GetComponent<RectTransform>();
+            recipeContentRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            recipeContentRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            recipeContentRoot.pivot = new Vector2(0.5f, 0.5f);
+            recipeContentRoot.anchoredPosition = new Vector2(0f, -22f);
+            recipeContentRoot.sizeDelta = new Vector2(840f, 150f);
+
+            recipeEmptyLabel = CreateText("RecipeEmpty", recipePanel.transform, "このモンスターを生み出す配合はまだ登録されていません。", 19, FontStyle.Bold,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -18f), new Vector2(720f, 42f), TextAnchor.MiddleCenter, TextSub);
         }
 
         private void BuildCardGrid(Transform parent)
         {
             GameObject gridPanel = CreatePanel("DexGridPanel", parent, RosterFrameSpritePath,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -1112f), new Vector2(920f, 1040f), new Color(0.016f, 0.033f, 0.04f, 0.98f));
+                new Vector2(0f, -1220f), new Vector2(920f, 820f), new Color(0.016f, 0.033f, 0.04f, 0.98f));
 
             counterLabel = CreateText("Counter", gridPanel.transform, "", 22, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -169,7 +215,7 @@ namespace WitchTower.Home
 
             GameObject viewport = CreatePanel("Viewport", gridPanel.transform, null,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, 34f), new Vector2(860f, 918f), new Color(0f, 0f, 0f, 0.18f));
+                new Vector2(0f, 34f), new Vector2(860f, 698f), new Color(0f, 0f, 0f, 0.18f));
             viewport.AddComponent<RectMask2D>();
 
             GameObject content = CreateUiObject("Content", viewport.transform);
@@ -284,7 +330,7 @@ namespace WitchTower.Home
             Refresh();
         }
 
-        private void BindDetail(MonsterDataSO monsterData, int fallbackIndex)
+        private void BindDetail(MonsterDataSO monsterData, int fallbackIndex, MonsterDataSO[] allMonsterData)
         {
             if (monsterData == null)
             {
@@ -293,6 +339,12 @@ namespace WitchTower.Home
                 if (selectedInfoLabel != null) selectedInfoLabel.text = "-";
                 if (selectedStatsLabel != null) selectedStatsLabel.text = "-";
                 if (selectedDescriptionLabel != null) selectedDescriptionLabel.text = "マスターデータを読み込めませんでした。";
+                ClearRecipeContent();
+                if (recipeEmptyLabel != null)
+                {
+                    recipeEmptyLabel.text = "表示できるモンスターがまだ登録されていません。";
+                    recipeEmptyLabel.gameObject.SetActive(true);
+                }
                 return;
             }
 
@@ -302,7 +354,7 @@ namespace WitchTower.Home
                 selectedFrame.color = selectedFrame.sprite != null ? Color.white : CardFallbackColor;
             }
 
-            SetPortrait(selectedPortrait, GetPortraitResourcePath(monsterData));
+            SetPortrait(selectedPortrait, GetDetailPortraitResourcePath(monsterData));
             if (selectedNameLabel != null)
             {
                 selectedNameLabel.text = monsterData.monsterName;
@@ -316,12 +368,11 @@ namespace WitchTower.Home
             if (selectedStatsLabel != null)
             {
                 MonsterBaseStats stats = monsterData.baseStats;
-                MonsterLevelGrowthCoefficients growth = monsterData.levelGrowth;
                 selectedStatsLabel.text =
-                    $"HP {stats.maxHp}    攻撃 {stats.attack}    魔力 {stats.magicAttack}\n" +
-                    $"防御 {stats.defense}    魔防 {stats.magicDefense}    攻速 {stats.attackSpeed:0.##}\n" +
+                    $"基礎傾向 HP {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.maxHp)}    攻撃 {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.attack)}    魔力 {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.magicAttack)}\n" +
+                    $"防御 {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.defense)}    魔防 {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.magicDefense)}    攻速 {stats.attackSpeed:0.##}\n" +
                     $"攻撃範囲 {monsterData.attackRange:0.##}    対象数 {Mathf.Max(1, monsterData.normalAttackTargetCount)}    {ResolveDamageName(monsterData.damageType)}\n" +
-                    $"成長 HPx{ResolveGrowthCoefficient(growth.maxHpCoefficient):0.##} 攻x{ResolveGrowthCoefficient(growth.attackCoefficient):0.##} 魔x{ResolveGrowthCoefficient(growth.magicAttackCoefficient):0.##} 防x{ResolveGrowthCoefficient(growth.defenseCoefficient):0.##} 魔防x{ResolveGrowthCoefficient(growth.magicDefenseCoefficient):0.##}";
+                    $"成長しやすさ HP {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Hp, x => x.levelGrowth.maxHpCoefficient)}    攻 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Attack, x => x.levelGrowth.attackCoefficient)}    魔 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Wisdom, x => x.levelGrowth.magicAttackCoefficient)}    防 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Defense, x => x.levelGrowth.defenseCoefficient)}    魔防 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.MagicDefense, x => x.levelGrowth.magicDefenseCoefficient)}";
             }
 
             if (selectedDescriptionLabel != null)
@@ -331,6 +382,91 @@ namespace WitchTower.Home
                     : monsterData.description;
                 selectedDescriptionLabel.text = $"{BuildOwnedText(monsterData)}\n{description}";
             }
+        }
+
+        private void BindFusionRecipes(MonsterDataSO selectedMonster, MonsterDataSO[] allMonsterData)
+        {
+            ClearRecipeContent();
+            if (recipeContentRoot == null || recipeEmptyLabel == null)
+            {
+                return;
+            }
+
+            if (selectedMonster == null || allMonsterData == null)
+            {
+                recipeEmptyLabel.gameObject.SetActive(true);
+                return;
+            }
+
+            Dictionary<string, MonsterDataSO> monsterById = allMonsterData
+                .Where(monster => monster != null && !string.IsNullOrEmpty(monster.monsterId))
+                .GroupBy(monster => monster.monsterId)
+                .ToDictionary(group => group.Key, group => group.First());
+
+            List<MonsterFusionRecipeDefinition> recipes = MonsterFusionCatalog.GetRecipes()
+                .Where(recipe => recipe != null && recipe.ResultMonsterId == selectedMonster.monsterId)
+                .Take(3)
+                .ToList();
+
+            recipeEmptyLabel.gameObject.SetActive(recipes.Count == 0);
+            recipeEmptyLabel.text = recipes.Count == 0
+                ? "このモンスターを生み出す配合はまだ登録されていません。"
+                : string.Empty;
+
+            float rowWidth = 260f;
+            float gap = 20f;
+            float totalWidth = recipes.Count * rowWidth + Mathf.Max(0, recipes.Count - 1) * gap;
+            float startX = -totalWidth * 0.5f + rowWidth * 0.5f;
+
+            for (int i = 0; i < recipes.Count; i += 1)
+            {
+                MonsterFusionRecipeDefinition recipe = recipes[i];
+                monsterById.TryGetValue(recipe.ParentMonsterIdA, out MonsterDataSO parentA);
+                monsterById.TryGetValue(recipe.ParentMonsterIdB, out MonsterDataSO parentB);
+                monsterById.TryGetValue(recipe.ResultMonsterId, out MonsterDataSO result);
+                CreateRecipeView(recipeContentRoot, recipe, parentA, parentB, result, new Vector2(startX + i * (rowWidth + gap), 0f), rowWidth);
+            }
+        }
+
+        private void ClearRecipeContent()
+        {
+            if (recipeContentRoot == null)
+            {
+                return;
+            }
+
+            for (int i = recipeContentRoot.childCount - 1; i >= 0; i -= 1)
+            {
+                DestroyObject(recipeContentRoot.GetChild(i).gameObject);
+            }
+        }
+
+        private void CreateRecipeView(RectTransform parent, MonsterFusionRecipeDefinition recipe, MonsterDataSO parentA, MonsterDataSO parentB, MonsterDataSO result, Vector2 anchoredPosition, float width)
+        {
+            GameObject root = CreatePanel("Recipe_" + (result != null ? result.monsterId : "Unknown"), parent, null,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                anchoredPosition, new Vector2(width, 144f), new Color(0.032f, 0.05f, 0.06f, 0.94f));
+
+            CreateRecipeMonsterCell(root.transform, "ParentA", parentA, new Vector2(-86f, 10f));
+            CreateText("Plus", root.transform, "+", 19, FontStyle.Bold,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(-36f, 16f), new Vector2(20f, 28f), TextAnchor.MiddleCenter, AccentGold);
+            CreateRecipeMonsterCell(root.transform, "ParentB", parentB, new Vector2(17f, 10f));
+            CreateText("Arrow", root.transform, ">", 19, FontStyle.Bold,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(69f, 16f), new Vector2(22f, 28f), TextAnchor.MiddleCenter, AccentCyan);
+            CreateRecipeMonsterCell(root.transform, "Result", result, new Vector2(112f, 10f));
+        }
+
+        private void CreateRecipeMonsterCell(Transform parent, string name, MonsterDataSO monsterData, Vector2 anchoredPosition)
+        {
+            GameObject cell = CreatePanel(name + "Cell", parent, ResolveCardFramePath(monsterData),
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                anchoredPosition, new Vector2(84f, 106f), CardFallbackColor);
+
+            CreateImage("Icon", cell.transform, GetPortraitResourcePath(monsterData),
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(72f, 72f));
         }
 
         private void UpdateCounter(List<MonsterDataSO> monsters)
@@ -347,24 +483,53 @@ namespace WitchTower.Home
 
             if (counterLabel != null)
             {
-                counterLabel.text = $"登録モンスター {monsters.Count}体 / 所持済み {ownedKinds}種";
+                counterLabel.text = $"図鑑登録 {monsters.Count}体 / 現在所持 {ownedKinds}種";
             }
+        }
+
+        private static IEnumerable<MonsterDataSO> FilterUnlockedMonsters(MonsterDataSO[] monsters)
+        {
+            if (monsters == null)
+            {
+                return Array.Empty<MonsterDataSO>();
+            }
+
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            if (profile == null)
+            {
+                return Array.Empty<MonsterDataSO>();
+            }
+
+            HashSet<string> unlockedIds = new HashSet<string>(
+                profile.MonsterDexEntries
+                    .Where(entry => entry != null && entry.IsUnlocked && !string.IsNullOrEmpty(entry.MonsterId))
+                    .Select(entry => entry.MonsterId));
+
+            foreach (OwnedMonsterData ownedMonster in profile.OwnedMonsters)
+            {
+                if (ownedMonster != null && !string.IsNullOrEmpty(ownedMonster.MonsterId))
+                {
+                    unlockedIds.Add(ownedMonster.MonsterId);
+                }
+            }
+
+            return monsters.Where(monster => monster != null && unlockedIds.Contains(monster.monsterId));
         }
 
         private static List<MonsterDataSO> SortMonsters(MonsterDataSO[] monsters)
         {
-            if (monsters == null)
-            {
-                return new List<MonsterDataSO>();
-            }
+            return SortMonsters(monsters as IEnumerable<MonsterDataSO>);
+        }
 
-            return monsters
-                .Where(monster => monster != null && !string.IsNullOrEmpty(monster.monsterId))
-                .OrderBy(monster => Mathf.Max(1, monster.classRank))
-                .ThenBy(monster => ResolveRaceOrder(monster.raceId))
-                .ThenBy(monster => monster.encyclopediaNumber > 0 ? monster.encyclopediaNumber : int.MaxValue)
-                .ThenBy(monster => monster.monsterName)
-                .ToList();
+        private static List<MonsterDataSO> SortMonsters(IEnumerable<MonsterDataSO> monsters)
+        {
+            return (monsters ?? Array.Empty<MonsterDataSO>())
+                    .Where(monster => monster != null && !string.IsNullOrEmpty(monster.monsterId))
+                    .OrderBy(monster => Mathf.Max(1, monster.classRank))
+                    .ThenBy(monster => ResolveRaceOrder(monster.raceId))
+                    .ThenBy(monster => monster.encyclopediaNumber > 0 ? monster.encyclopediaNumber : int.MaxValue)
+                    .ThenBy(monster => monster.monsterName)
+                    .ToList();
         }
 
         private static int ResolveRaceOrder(string raceId)
@@ -427,6 +592,75 @@ namespace WitchTower.Home
             return coefficient > 0f ? coefficient : 1f;
         }
 
+        private static string ResolveStatRank(MonsterDataSO monsterData, MonsterDataSO[] allMonsterData, Func<MonsterDataSO, float> selector)
+        {
+            return ResolveRelativeRank(monsterData, allMonsterData, selector, value => value);
+        }
+
+        private static string ResolveGrowthRank(
+            MonsterDataSO monsterData,
+            MonsterDataSO[] allMonsterData,
+            Func<DexClassLevelGrowth, float> classGrowthSelector,
+            Func<MonsterDataSO, float> coefficientSelector)
+        {
+            return ResolveRelativeRank(
+                monsterData,
+                allMonsterData,
+                candidate =>
+                {
+                    DexClassLevelGrowth classGrowth = ResolveClassLevelGrowth(candidate.classRank);
+                    return classGrowthSelector(classGrowth) * ResolveGrowthCoefficient(coefficientSelector(candidate));
+                },
+                value => value);
+        }
+
+        private static DexClassLevelGrowth ResolveClassLevelGrowth(int classRank)
+        {
+            return Mathf.Max(1, classRank) switch
+            {
+                1 => new DexClassLevelGrowth(5.0f, 1.10f, 1.10f, 0.70f, 0.70f),
+                2 => new DexClassLevelGrowth(7.0f, 1.70f, 1.70f, 1.05f, 1.05f),
+                3 => new DexClassLevelGrowth(10.0f, 2.35f, 2.35f, 1.45f, 1.45f),
+                4 => new DexClassLevelGrowth(13.0f, 3.00f, 3.00f, 1.90f, 1.90f),
+                _ => new DexClassLevelGrowth(15.0f, 3.45f, 3.45f, 2.20f, 2.20f)
+            };
+        }
+
+        private static string ResolveRelativeRank(
+            MonsterDataSO monsterData,
+            MonsterDataSO[] allMonsterData,
+            Func<MonsterDataSO, float> selector,
+            Func<float, float> normalize)
+        {
+            if (monsterData == null || selector == null)
+            {
+                return "-";
+            }
+
+            float selectedValue = normalize != null ? normalize(selector(monsterData)) : selector(monsterData);
+            List<float> values = (allMonsterData ?? Array.Empty<MonsterDataSO>())
+                .Where(candidate => candidate != null && !string.IsNullOrEmpty(candidate.monsterId))
+                .Select(candidate => normalize != null ? normalize(selector(candidate)) : selector(candidate))
+                .Where(value => value >= 0f)
+                .OrderBy(value => value)
+                .ToList();
+
+            if (values.Count == 0)
+            {
+                return "-";
+            }
+
+            int lowerCount = values.Count(value => value < selectedValue);
+            int sameCount = values.Count(value => Mathf.Approximately(value, selectedValue));
+            float percentile = (lowerCount + sameCount * 0.5f) / values.Count;
+            if (percentile >= 0.90f) return "S";
+            if (percentile >= 0.72f) return "A";
+            if (percentile >= 0.55f) return "B";
+            if (percentile >= 0.38f) return "C";
+            if (percentile >= 0.20f) return "D";
+            return "E";
+        }
+
         private static string BuildNumberText(MonsterDataSO monsterData, int fallbackIndex)
         {
             int number = monsterData != null && monsterData.encyclopediaNumber > 0 ? monsterData.encyclopediaNumber : fallbackIndex;
@@ -437,7 +671,7 @@ namespace WitchTower.Home
         {
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             int ownedCount = profile != null && monsterData != null ? profile.GetOwnedMonsterCount(monsterData.monsterId) : 0;
-            return ownedCount > 0 ? $"所持 {ownedCount}体" : "未所持";
+            return ownedCount > 0 ? $"所持 {ownedCount}体" : "登録済み / 現在未所持";
         }
 
         private static string GetPortraitResourcePath(MonsterDataSO monsterData)
@@ -453,6 +687,21 @@ namespace WitchTower.Home
             }
 
             return monsterData.illustrationResourcePath ?? string.Empty;
+        }
+
+        private static string GetDetailPortraitResourcePath(MonsterDataSO monsterData)
+        {
+            if (monsterData == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.illustrationResourcePath))
+            {
+                return monsterData.illustrationResourcePath;
+            }
+
+            return monsterData.portraitResourcePath ?? string.Empty;
         }
 
         private static string ResolveCardFramePath(MonsterDataSO monsterData)

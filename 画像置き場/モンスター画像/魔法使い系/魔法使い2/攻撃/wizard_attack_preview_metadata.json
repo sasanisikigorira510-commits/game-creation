@@ -1,0 +1,35 @@
+{
+  "delayMs" : 120,
+  "frameCount" : 4,
+  "frameHeight" : 627,
+  "frameSpecs" : [
+    {
+      "destX" : 66,
+      "index" : 0,
+      "srcWidth" : 627,
+      "srcX" : 0
+    },
+    {
+      "destX" : 66,
+      "index" : 1,
+      "srcWidth" : 560,
+      "srcX" : 627
+    },
+    {
+      "destX" : 0,
+      "index" : 2,
+      "srcWidth" : 760,
+      "srcX" : 1120
+    },
+    {
+      "destX" : 66,
+      "index" : 3,
+      "srcWidth" : 627,
+      "srcX" : 1881
+    }
+  ],
+  "frameWidth" : 760,
+  "note" : "widened frame canvas so frame 3 contains both projectile and full body",
+  "output" : "\/Users\/andou\/Desktop\/あ\/game-creation\/画像置き場\/モンスター画像\/魔法使い系\/魔法使い2\/攻撃\/攻撃.png",
+  "source" : "\/Users\/andou\/Desktop\/あ\/game-creation\/画像置き場\/モンスター画像\/魔法使い系\/魔法使い2\/攻撃\/攻撃_original.png"
+}

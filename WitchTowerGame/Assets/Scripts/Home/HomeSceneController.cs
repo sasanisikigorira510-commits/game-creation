@@ -27,6 +27,7 @@ namespace WitchTower.Home
         [SerializeField] private DungeonSelectionPanelController dungeonSelectionPanelController;
         [SerializeField] private string battleSceneName = "BattleScene";
         [SerializeField] private string fusionSceneName = "FusionScene";
+        [SerializeField] private string gachaSceneName = "GachaScene";
         private static readonly string[] LegacyHomeObjectNames =
         {
             "ContentRoot",
@@ -293,12 +294,18 @@ namespace WitchTower.Home
             Sprite formationSprite = Resources.Load<Sprite>("UI/HomeMenu/FormationButton");
             Sprite equipmentSprite = Resources.Load<Sprite>("UI/HomeMenu/EquipmentButton");
             Sprite fusionSprite = Resources.Load<Sprite>("UI/HomeMenu/FusionButton");
+            Sprite gachaSprite = Resources.Load<Sprite>("UI/HomeMenu/GachaButton");
             if (battleSprite != null && formationSprite != null && equipmentSprite != null && fusionSprite != null)
             {
-                CreateSpriteButton("BattleButton", unifiedMenuRoot.transform, battleSprite, new Vector2(-272f, 520f), new Vector2(500f, 330f), StartBattle);
-                CreateSpriteButton("FormationButton", unifiedMenuRoot.transform, formationSprite, new Vector2(272f, 520f), new Vector2(500f, 330f), OpenFormationMenu);
-                CreateSpriteButton("EquipmentButton", unifiedMenuRoot.transform, equipmentSprite, new Vector2(-272f, 185f), new Vector2(500f, 330f), OpenEquipmentMenu);
-                CreateSpriteButton("FusionButton", unifiedMenuRoot.transform, fusionSprite, new Vector2(272f, 185f), new Vector2(500f, 330f), OpenFusionMenu);
+                bool hasGachaSprite = gachaSprite != null;
+                CreateSpriteButton("BattleButton", unifiedMenuRoot.transform, battleSprite, new Vector2(-272f, 555f), new Vector2(500f, 300f), StartBattle);
+                CreateSpriteButton("FormationButton", unifiedMenuRoot.transform, formationSprite, new Vector2(272f, 555f), new Vector2(500f, 300f), OpenFormationMenu);
+                CreateSpriteButton("EquipmentButton", unifiedMenuRoot.transform, equipmentSprite, new Vector2(-272f, 250f), new Vector2(500f, 300f), OpenEquipmentMenu);
+                CreateSpriteButton("FusionButton", unifiedMenuRoot.transform, fusionSprite, new Vector2(272f, 250f), new Vector2(500f, 300f), OpenFusionMenu);
+                if (hasGachaSprite)
+                {
+                    CreateSpriteButton("GachaButton", unifiedMenuRoot.transform, gachaSprite, new Vector2(0f, -55f), new Vector2(500f, 300f), OpenGachaMenu);
+                }
                 EnsureMonsterDexButton(unifiedMenuRoot.transform);
                 return;
             }
@@ -340,6 +347,16 @@ namespace WitchTower.Home
             }
 
             SceneManager.LoadScene(fusionSceneName);
+        }
+
+        public void OpenGachaMenu()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            SceneManager.LoadScene(gachaSceneName);
         }
 
         private void OpenMonsterDexMenu()

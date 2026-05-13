@@ -1,0 +1,4 @@
+mode,assetPath,characterKey,pose,oldRatio,scale,oldCanvasWidth,oldCanvasHeight,newCanvasWidth,newCanvasHeight,oldOpaqueWidth,oldOpaqueHeight,newOpaqueWidth,newOpaqueHeight
+apply,Assets/Resources/MonsterBattle/mon_rock_golem_move_0.png,rock_golem,move,0.918,1.089,627,627,627,627,426,449,464,489
+apply,Assets/Resources/MonsterBattle/mon_rock_golem_move_2.png,rock_golem,move,0.910,1.099,627,627,627,627,425,445,467,489
+apply,Assets/Resources/MonsterBattle/mon_rock_golem_move_3.png,rock_golem,move,0.889,1.125,627,627,627,627,402,435,452,489

@@ -1,0 +1,10 @@
+{
+  "cellHeight" : 64,
+  "cellWidth" : 64,
+  "delayMs" : 120,
+  "frameCount" : 4,
+  "insetX" : 0,
+  "prefix" : "dragon_hdref_move_4frame",
+  "source" : "256 transparent reference",
+  "type" : "ai-redraw-hdref"
+}

@@ -1,0 +1,9 @@
+{
+  "type": "ai-redraw-pose-faithful",
+  "prefix": "dragon_ai_posefaithful_attack_4frame",
+  "frameCount": 4,
+  "cellWidth": 64,
+  "cellHeight": 64,
+  "insetX": 0,
+  "delayMs": 120
+}

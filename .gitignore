@@ -6,6 +6,7 @@ gcm-diagnose.log
 .dotnet_cli_home/
 temp/
 tmp_*.png
+tmp/swift-module-cache/
 
 # External source materials kept outside the Unity project
 画像置き場/*

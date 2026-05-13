@@ -1,0 +1,25 @@
+Unity Editor version:    6000.3.11f1 (3000ef702840)
+Branch:                  6000.3/staging
+Build type:              Release
+Batch mode:              YES
+macOS version:           Version 26.4 (Build 25E246)
+Darwin version:          25.4.0
+Architecture:            arm64
+Running under Rosetta:   NO
+Available memory:        32768 MB
+Date:                    2026-05-11T09:07:13Z
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-andou" at "2026-05-11T09:07:13.719918Z"
+Launching external process: /Applications/Unity/Unity-6000.3.11f1/Unity.app/Contents/Resources/PackageManager/Server/UnityPackageManager
+
+COMMAND LINE ARGUMENTS:
+/Applications/Unity/Unity-6000.3.11f1/Unity.app/Contents/MacOS/Unity
+-batchmode
+-quit
+-projectPath
+/Users/andou/Desktop/あ/game-creation/WitchTowerGame
+-logFile
+/Users/andou/Desktop/あ/game-creation/tools/reports/unity_monster_dex_update.log
+Successfully changed project path to: /Users/andou/Desktop/あ/game-creation/WitchTowerGame
+/Users/andou/Desktop/あ/game-creation/WitchTowerGame
+[Package Manager] Server process was shutdown

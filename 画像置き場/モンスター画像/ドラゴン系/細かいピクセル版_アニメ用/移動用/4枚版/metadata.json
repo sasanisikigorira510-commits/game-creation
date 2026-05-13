@@ -1,0 +1,15 @@
+{
+  "cellSize" : {
+    "height" : 64,
+    "width" : 96
+  },
+  "delayMs" : 120,
+  "frameCount" : 4,
+  "frameSize" : {
+    "height" : 64,
+    "width" : 64
+  },
+  "insetX" : 16,
+  "prefix" : "dragon_detail_move_4frame",
+  "spritesheet" : "dragon_detail_move_4frame_spritesheet.png"
+}

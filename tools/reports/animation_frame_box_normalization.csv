@@ -1,0 +1,5 @@
+mode,characterKey,pose,frame,path,oldWidth,oldHeight,newWidth,newHeight,xScale,yScale
+dry-run,apprentice_mage,attack,0,/Users/andou/Desktop/あ/game-creation/WitchTowerGame/Assets/Resources/MonsterBattle/mon_apprentice_mage_attack_0.png,370,427,1,1,0.003,0.002
+dry-run,apprentice_mage,attack,1,/Users/andou/Desktop/あ/game-creation/WitchTowerGame/Assets/Resources/MonsterBattle/mon_apprentice_mage_attack_1.png,370,427,1,1,0.003,0.002
+dry-run,apprentice_mage,attack,2,/Users/andou/Desktop/あ/game-creation/WitchTowerGame/Assets/Resources/MonsterBattle/mon_apprentice_mage_attack_2.png,560,427,1,1,0.002,0.002
+dry-run,apprentice_mage,attack,3,/Users/andou/Desktop/あ/game-creation/WitchTowerGame/Assets/Resources/MonsterBattle/mon_apprentice_mage_attack_3.png,370,427,1,1,0.003,0.002

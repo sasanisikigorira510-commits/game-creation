@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>move preview</title>
+<style>
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #111827;
+  color: #e5e7eb;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.wrap {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+.sprite {
+  width: 1254px;
+  height: 1254px;
+  background-image: url('./移動.png');
+  background-repeat: no-repeat;
+  background-size: 5016px 1254px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.note {
+  font-size: 14px;
+  opacity: 0.8;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sprite" id="sprite"></div>
+  <div class="note">move / 4 frames / 120ms</div>
+</div>
+<script>
+const frameCount = 4;
+const cellWidth = 1254;
+const delay = 120;
+const sprite = document.getElementById('sprite');
+let index = 0;
+function tick() {
+  sprite.style.backgroundPosition = `${-index * cellWidth}px 0px`;
+  index = (index + 1) % frameCount;
+}
+tick();
+setInterval(tick, delay);
+</script>
+</body>
+</html>

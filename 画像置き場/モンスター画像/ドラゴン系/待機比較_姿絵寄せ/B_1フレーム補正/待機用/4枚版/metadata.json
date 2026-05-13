@@ -1,0 +1,9 @@
+{
+  "type": "frame-fix-comparison",
+  "prefix": "dragon_framefix_idle_4frame",
+  "frameCount": 4,
+  "cellWidth": 64,
+  "cellHeight": 64,
+  "insetX": 0,
+  "delayMs": 100
+}

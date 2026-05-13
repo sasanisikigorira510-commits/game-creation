@@ -59,6 +59,7 @@ namespace WitchTower.Core
         [SerializeField] private string formationSceneName = "FormationScene";
         [SerializeField] private string equipmentSceneName = "EquipmentScene";
         [SerializeField] private string fusionSceneName = "FusionScene";
+        [SerializeField] private string gachaSceneName = "GachaScene";
 
         private static readonly string[] TitleOverlayObjectNames =
         {
@@ -268,6 +269,12 @@ namespace WitchTower.Core
         {
             EnsureRuntimeState();
             SceneManager.LoadScene(fusionSceneName);
+        }
+
+        public void OpenGacha()
+        {
+            EnsureRuntimeState();
+            SceneManager.LoadScene(gachaSceneName);
         }
 
         public void CloseFormation()

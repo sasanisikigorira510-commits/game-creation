@@ -1,0 +1,9 @@
+{
+  "cellHeight" : 64,
+  "cellWidth" : 96,
+  "delayMs" : 100,
+  "frameCount" : 4,
+  "insetX" : 16,
+  "prefix" : "dragon_pose_idle_4frame",
+  "type" : "pose-faithful"
+}

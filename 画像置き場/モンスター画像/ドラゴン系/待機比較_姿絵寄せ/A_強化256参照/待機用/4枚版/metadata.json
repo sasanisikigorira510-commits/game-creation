@@ -1,0 +1,9 @@
+{
+  "type": "strong-256-reference-comparison",
+  "prefix": "dragon_compareA_idle",
+  "frameCount": 4,
+  "cellWidth": 64,
+  "cellHeight": 64,
+  "insetX": 0,
+  "delayMs": 100
+}

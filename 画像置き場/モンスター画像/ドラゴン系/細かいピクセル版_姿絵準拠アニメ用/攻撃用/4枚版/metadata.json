@@ -1,0 +1,9 @@
+{
+  "cellHeight" : 64,
+  "cellWidth" : 96,
+  "delayMs" : 120,
+  "frameCount" : 4,
+  "insetX" : 16,
+  "prefix" : "dragon_pose_attack_4frame",
+  "type" : "pose-faithful"
+}

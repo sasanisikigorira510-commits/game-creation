@@ -18,6 +18,7 @@ public static class UnityMcpSceneBuilder
     private const string FormationScenePath = "Assets/Scenes/FormationScene.unity";
     private const string EquipmentScenePath = "Assets/Scenes/EquipmentScene.unity";
     private const string FusionScenePath = "Assets/Scenes/FusionScene.unity";
+    private const string GachaScenePath = "Assets/Scenes/GachaScene.unity";
     private const string BattleScenePath = "Assets/Scenes/BattleScene.unity";
     private const string UiPresentationCameraName = "UiPresentationCamera";
     private const string WitchSpritePath = "Assets/Art/External/Derived/witch_idle.png";
@@ -41,6 +42,7 @@ public static class UnityMcpSceneBuilder
         RebuildMinimalTitleScene();
         RebuildMinimalHomeScene();
         RebuildFusionScene();
+        RebuildGachaScene();
         RebuildMinimalBattleScene();
     }
 
@@ -60,7 +62,8 @@ public static class UnityMcpSceneBuilder
             HomeScenePath,
             FormationScenePath,
             EquipmentScenePath,
-            FusionScenePath
+            FusionScenePath,
+            GachaScenePath
         };
 
         foreach (string scenePath in scenePaths)
@@ -499,6 +502,46 @@ public static class UnityMcpSceneBuilder
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene, FusionScenePath);
         EnsureSceneInBuildSettings(FusionScenePath);
+        AssetDatabase.SaveAssets();
+    }
+
+    [MenuItem("Tools/MCP/Rebuild Gacha Scene")]
+    public static void RebuildGachaScene()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            Debug.LogWarning("[UnityMcpSceneBuilder] Gacha scene rebuild skipped during play mode.");
+            return;
+        }
+
+        Scene scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(GachaScenePath) != null
+            ? EditorSceneManager.OpenScene(GachaScenePath, OpenSceneMode.Single)
+            : EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        ClearScene(scene);
+
+        EnsureEventSystem();
+        Canvas canvas = CreateCanvas("GachaCanvas");
+
+        GameObject panelObject = new GameObject("GachaScenePanel", typeof(RectTransform), typeof(Image), typeof(GachaPanelController));
+        panelObject.transform.SetParent(canvas.transform, false);
+        RectTransform panelRect = panelObject.GetComponent<RectTransform>();
+        panelRect.anchorMin = Vector2.zero;
+        panelRect.anchorMax = Vector2.one;
+        panelRect.offsetMin = Vector2.zero;
+        panelRect.offsetMax = Vector2.zero;
+        panelRect.localScale = Vector3.one;
+
+        Image panelImage = panelObject.GetComponent<Image>();
+        panelImage.color = new Color(0f, 0f, 0f, 0.001f);
+
+        GachaPanelController panel = panelObject.GetComponent<GachaPanelController>();
+        GameObject controllerRoot = new GameObject("GachaSceneRoot");
+        controllerRoot.AddComponent<GachaSceneController>();
+        panel.Show(null);
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene, GachaScenePath);
+        EnsureSceneInBuildSettings(GachaScenePath);
         AssetDatabase.SaveAssets();
     }
 
