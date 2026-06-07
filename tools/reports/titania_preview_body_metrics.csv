@@ -1,0 +1,13 @@
+﻿pose,frame,bodyWidth,bodyHeight,referenceBodyHeight,previewBodyHeightRatio,referenceWidth
+idle,0,493,501,501,1,498
+idle,1,498,498,498,1,498
+idle,2,490,507,507,1,498
+idle,3,459,498,498,1,498
+move,0,500,510,510,1,500
+move,1,491,511,511,1,500
+move,2,500,489,489,1,500
+move,3,494,509,509,1,500
+attack,0,500,481,481,1,500
+attack,1,500,398,398,1,500
+attack,2,399,474,474,1,498
+attack,3,500,507,507,1,500

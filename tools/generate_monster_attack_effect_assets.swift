@@ -21,6 +21,15 @@ struct EffectSpec {
     let kind: EffectKind
     let primary: NSColor
     let secondary: NSColor
+    let tier: Int
+
+    init(key: String, kind: EffectKind, primary: NSColor, secondary: NSColor, tier: Int = 1) {
+        self.key = key
+        self.kind = kind
+        self.primary = primary
+        self.secondary = secondary
+        self.tier = tier
+    }
 }
 
 let projectRoot = "/Users/andou/Desktop/あ/game-creation/WitchTowerGame"
@@ -37,31 +46,31 @@ func color(_ hex: UInt32, alpha: CGFloat = 1.0) -> NSColor {
 let specs: [EffectSpec] = [
     EffectSpec(key: "dragon_whelp", kind: .flameProjectile, primary: color(0xff7a18), secondary: color(0xfff2a8)),
     EffectSpec(key: "flare_drake", kind: .flameProjectile, primary: color(0xff3d00), secondary: color(0xffdd55)),
-    EffectSpec(key: "abyss_dragon", kind: .abyssProjectile, primary: color(0x12d8ff), secondary: color(0x09113d)),
+    EffectSpec(key: "abyss_dragon", kind: .abyssProjectile, primary: color(0x12d8ff), secondary: color(0x8f4dff), tier: 3),
     EffectSpec(key: "chibi_gear", kind: .punchImpact, primary: color(0x7ef7ff), secondary: color(0xffffff)),
     EffectSpec(key: "armed_droid", kind: .punchImpact, primary: color(0x31a8ff), secondary: color(0xe6fbff)),
-    EffectSpec(key: "omega_leon", kind: .punchImpact, primary: color(0xff3158), secondary: color(0xffffff)),
+    EffectSpec(key: "omega_leon", kind: .punchImpact, primary: color(0xff3158), secondary: color(0xffffff), tier: 3),
     EffectSpec(key: "rock_golem", kind: .punchImpact, primary: color(0xb28a52), secondary: color(0xffdf9b)),
     EffectSpec(key: "ore_giant_garm", kind: .punchImpact, primary: color(0xd2a85f), secondary: color(0x8affd2)),
-    EffectSpec(key: "cosmic_ore_fortress_golem", kind: .punchImpact, primary: color(0x8058ff), secondary: color(0xffdf7a)),
+    EffectSpec(key: "cosmic_ore_fortress_golem", kind: .punchImpact, primary: color(0x8058ff), secondary: color(0xffdf7a), tier: 3),
     EffectSpec(key: "apprentice_swordsman", kind: .swordSlash, primary: color(0xdbe9ff), secondary: color(0xffffff)),
     EffectSpec(key: "holy_armor_leon", kind: .swordSlash, primary: color(0xffdf6f), secondary: color(0xffffff)),
-    EffectSpec(key: "sword_saint_alvarez", kind: .swordSlash, primary: color(0x8feaff), secondary: color(0xffffff)),
+    EffectSpec(key: "sword_saint_alvarez", kind: .swordSlash, primary: color(0x8feaff), secondary: color(0xffffff), tier: 3),
     EffectSpec(key: "apprentice_mage", kind: .magicProjectile, primary: color(0xb05cff), secondary: color(0xffffff)),
     EffectSpec(key: "dark_robe_curse_mage_noah", kind: .magicProjectile, primary: color(0x8134ff), secondary: color(0xff7dff)),
-    EffectSpec(key: "abyss_grand_mage_seraphis", kind: .magicCircle, primary: color(0x6d35ff), secondary: color(0xf3d0ff)),
-    EffectSpec(key: "mecha_dragon_valdrake", kind: .plasmaProjectile, primary: color(0x28f5ff), secondary: color(0xff5c2b)),
-    EffectSpec(key: "drag_gaia", kind: .punchImpact, primary: color(0xb88d4c), secondary: color(0x38ffbb)),
-    EffectSpec(key: "dragon_sword_saint_agito", kind: .swordSlash, primary: color(0xff6532), secondary: color(0xffefc0)),
-    EffectSpec(key: "abyss_dragon_mage_valflare", kind: .abyssProjectile, primary: color(0x26e7ff), secondary: color(0xbf35ff)),
-    EffectSpec(key: "fortress_machine_gigafort", kind: .laserProjectile, primary: color(0x45d5ff), secondary: color(0xffffff)),
-    EffectSpec(key: "mecha_sword_saint_gransaber", kind: .swordSlash, primary: color(0x6eeeff), secondary: color(0xfff19c)),
-    EffectSpec(key: "dark_magic_machine_god_merchion", kind: .plasmaProjectile, primary: color(0x9b35ff), secondary: color(0x39f6ff)),
-    EffectSpec(key: "rock_knight_gaius", kind: .punchImpact, primary: color(0xd5aa63), secondary: color(0xffffff)),
-    EffectSpec(key: "astral_eclipse_golem", kind: .cosmicImpact, primary: color(0x7855ff), secondary: color(0xf6e38a)),
-    EffectSpec(key: "magic_sword_saint_luciel", kind: .swordSlash, primary: color(0xb346ff), secondary: color(0xffffff)),
-    EffectSpec(key: "seraph_michael", kind: .holyBurst, primary: color(0xffef88), secondary: color(0xffffff)),
-    EffectSpec(key: "spirit_queen_titania", kind: .natureProjectile, primary: color(0x5cff9a), secondary: color(0xfff5a3))
+    EffectSpec(key: "abyss_grand_mage_seraphis", kind: .magicCircle, primary: color(0x6d35ff), secondary: color(0xf3d0ff), tier: 3),
+    EffectSpec(key: "mecha_dragon_valdrake", kind: .plasmaProjectile, primary: color(0x28f5ff), secondary: color(0xff5c2b), tier: 4),
+    EffectSpec(key: "drag_gaia", kind: .punchImpact, primary: color(0xb88d4c), secondary: color(0x38ffbb), tier: 4),
+    EffectSpec(key: "dragon_sword_saint_agito", kind: .swordSlash, primary: color(0xff6532), secondary: color(0xffefc0), tier: 4),
+    EffectSpec(key: "abyss_dragon_mage_valflare", kind: .abyssProjectile, primary: color(0x26e7ff), secondary: color(0xbf35ff), tier: 4),
+    EffectSpec(key: "fortress_machine_gigafort", kind: .laserProjectile, primary: color(0x45d5ff), secondary: color(0xffffff), tier: 4),
+    EffectSpec(key: "mecha_sword_saint_gransaber", kind: .swordSlash, primary: color(0x6eeeff), secondary: color(0xfff19c), tier: 4),
+    EffectSpec(key: "dark_magic_machine_god_merchion", kind: .plasmaProjectile, primary: color(0x9b35ff), secondary: color(0x39f6ff), tier: 4),
+    EffectSpec(key: "rock_knight_gaius", kind: .punchImpact, primary: color(0xd5aa63), secondary: color(0xffffff), tier: 4),
+    EffectSpec(key: "astral_eclipse_golem", kind: .cosmicImpact, primary: color(0x7855ff), secondary: color(0xf6e38a), tier: 4),
+    EffectSpec(key: "magic_sword_saint_luciel", kind: .swordSlash, primary: color(0xb346ff), secondary: color(0xffffff), tier: 4),
+    EffectSpec(key: "seraph_michael", kind: .holyBurst, primary: color(0xffef88), secondary: color(0xffffff), tier: 4),
+    EffectSpec(key: "spirit_queen_titania", kind: .natureProjectile, primary: color(0x5cff9a), secondary: color(0xfff5a3), tier: 4)
 ]
 
 func drawGlowOval(center: CGPoint, radiusX: CGFloat, radiusY: CGFloat, color: NSColor, layers: Int = 5) {
@@ -304,6 +313,47 @@ func drawMagicCircle(frame: Int, spec: EffectSpec, holy: Bool = false, nature: B
     }
 }
 
+func drawClass3Overdrive(frame: Int, spec: EffectSpec) {
+    let t = CGFloat(frame) / 3.0
+    let center = CGPoint(x: 128, y: 126)
+    let bloomRadius = 62 + t * 46
+    drawGlowOval(center: center, radiusX: bloomRadius * 1.22, radiusY: bloomRadius * 0.82, color: spec.primary.withAlphaComponent(0.30), layers: 8)
+    drawGlowOval(center: center, radiusX: bloomRadius * 0.80, radiusY: bloomRadius * 0.52, color: spec.secondary.withAlphaComponent(0.18), layers: 6)
+
+    for i in 0..<3 {
+        let radius = CGFloat(48 + i * 21) + t * CGFloat(18 + i * 4)
+        let ring = NSBezierPath(ovalIn: NSRect(
+            x: center.x - radius,
+            y: center.y - radius * 0.62,
+            width: radius * 2,
+            height: radius * 1.24))
+        ring.lineWidth = 4.8 - CGFloat(i) + t * 0.6
+        (i == 0 ? spec.secondary : spec.primary).withAlphaComponent(0.52 - t * 0.12).setStroke()
+        ring.stroke()
+    }
+
+    for i in 0..<14 {
+        let angle = CGFloat(i) * (.pi * 2.0 / 14.0) + t * 0.58
+        let inner = CGPoint(
+            x: center.x + cos(angle) * (18 + t * 8),
+            y: center.y + sin(angle) * (13 + t * 6))
+        let outer = CGPoint(
+            x: center.x + cos(angle) * (84 + t * 34),
+            y: center.y + sin(angle) * (55 + t * 20))
+        strokePath(points: [inner, outer], color: spec.secondary.withAlphaComponent(0.50 - t * 0.16), width: 3.8 - t * 0.8)
+    }
+
+    for i in 0..<9 {
+        let angle = CGFloat(i) * 0.82 - t * 1.2
+        drawSpark(
+            center: CGPoint(
+                x: center.x + cos(angle) * (62 + t * 34),
+                y: center.y + sin(angle) * (42 + t * 22)),
+            color: (i % 2 == 0 ? spec.secondary : spec.primary).withAlphaComponent(0.86 - t * 0.24),
+            size: 5.5 + t * 4.0)
+    }
+}
+
 func drawEffect(frame: Int, spec: EffectSpec) {
     switch spec.kind {
     case .flameProjectile:
@@ -332,6 +382,10 @@ func drawEffect(frame: Int, spec: EffectSpec) {
         drawMagicCircle(frame: min(frame, 2), spec: spec, nature: true)
     case .cosmicImpact:
         drawStoneImpact(frame: frame, spec: spec, cosmic: true)
+    }
+
+    if spec.tier >= 3 {
+        drawClass3Overdrive(frame: frame, spec: spec)
     }
 }
 
@@ -477,13 +531,24 @@ TextureImporter:
 
 try FileManager.default.createDirectory(atPath: outputRoot, withIntermediateDirectories: true)
 
+var generatedFrameCount = 0
+var preservedImageGeneratedFrameCount = 0
 for spec in specs {
+    if spec.tier >= 3 {
+        // Class 3+ effects are bespoke ChatGPT Image generated bitmaps imported by
+        // import_image_generated_class*_attack_effects.py. Keep this deterministic
+        // generator from replacing those higher-detail assets.
+        preservedImageGeneratedFrameCount += 4
+        continue
+    }
+
     for frame in 0..<4 {
         let rep = try render(spec: spec, frame: frame)
         let path = "\(outputRoot)/fx_\(spec.key)_attack_\(frame).png"
         try savePNG(rep, to: path)
         try ensureSpriteMeta(for: path)
+        generatedFrameCount += 1
     }
 }
 
-print("Generated \(specs.count * 4) monster attack effect frames in \(outputRoot)")
+print("Generated \(generatedFrameCount) monster attack effect frames in \(outputRoot); preserved \(preservedImageGeneratedFrameCount) image-generated class 3+ frames.")

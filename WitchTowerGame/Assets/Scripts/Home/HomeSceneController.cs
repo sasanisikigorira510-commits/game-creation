@@ -26,8 +26,18 @@ namespace WitchTower.Home
         [SerializeField] private MonsterDexPanelController monsterDexPanelController;
         [SerializeField] private DungeonSelectionPanelController dungeonSelectionPanelController;
         [SerializeField] private string battleSceneName = "BattleScene";
+        [SerializeField] private string formationSceneName = "FormationScene";
+        [SerializeField] private string equipmentSceneName = "EquipmentScene";
         [SerializeField] private string fusionSceneName = "FusionScene";
         [SerializeField] private string gachaSceneName = "GachaScene";
+        private static readonly Vector2 HomeMenuButtonSize = new Vector2(480f, 250f);
+        private static readonly Vector2 HomeMenuLeftTopPosition = new Vector2(-260f, 715f);
+        private static readonly Vector2 HomeMenuRightTopPosition = new Vector2(260f, 715f);
+        private static readonly Vector2 HomeMenuLeftMiddlePosition = new Vector2(-260f, 445f);
+        private static readonly Vector2 HomeMenuRightMiddlePosition = new Vector2(260f, 445f);
+        private static readonly Vector2 HomeMenuBottomPosition = new Vector2(0f, 175f);
+        private static readonly Vector2 MonsterDexButtonPosition = new Vector2(0f, 950f);
+        private static readonly Vector2 MonsterDexButtonSize = new Vector2(430f, 136f);
         private static readonly string[] LegacyHomeObjectNames =
         {
             "ContentRoot",
@@ -86,6 +96,17 @@ namespace WitchTower.Home
         {
             NormalizeCanvasScales();
             HideLegacyHomeUi();
+            RebuildUnifiedMenu();
+        }
+
+        private void RebuildUnifiedMenu()
+        {
+            if (unifiedMenuRoot != null)
+            {
+                DestroySceneObject(unifiedMenuRoot);
+                unifiedMenuRoot = null;
+            }
+
             BuildUnifiedMenu();
         }
 
@@ -246,7 +267,7 @@ namespace WitchTower.Home
             {
                 if (Application.isPlaying && !unifiedMenuRuntimeBound)
                 {
-                    Destroy(unifiedMenuRoot);
+                    DestroySceneObject(unifiedMenuRoot);
                     unifiedMenuRoot = null;
                 }
                 else
@@ -268,14 +289,7 @@ namespace WitchTower.Home
             Transform existingMenu = canvas.transform.Find("UnifiedHomeMenu");
             if (existingMenu != null)
             {
-                if (!Application.isPlaying)
-                {
-                    DestroyImmediate(existingMenu.gameObject);
-                }
-                else
-                {
-                    Destroy(existingMenu.gameObject);
-                }
+                DestroySceneObject(existingMenu.gameObject);
             }
 
             Sprite backgroundSprite = Resources.Load<Sprite>("UI/HomeMenu/HomeMenuBackground");
@@ -298,13 +312,13 @@ namespace WitchTower.Home
             if (battleSprite != null && formationSprite != null && equipmentSprite != null && fusionSprite != null)
             {
                 bool hasGachaSprite = gachaSprite != null;
-                CreateSpriteButton("BattleButton", unifiedMenuRoot.transform, battleSprite, new Vector2(-272f, 555f), new Vector2(500f, 300f), StartBattle);
-                CreateSpriteButton("FormationButton", unifiedMenuRoot.transform, formationSprite, new Vector2(272f, 555f), new Vector2(500f, 300f), OpenFormationMenu);
-                CreateSpriteButton("EquipmentButton", unifiedMenuRoot.transform, equipmentSprite, new Vector2(-272f, 250f), new Vector2(500f, 300f), OpenEquipmentMenu);
-                CreateSpriteButton("FusionButton", unifiedMenuRoot.transform, fusionSprite, new Vector2(272f, 250f), new Vector2(500f, 300f), OpenFusionMenu);
+                CreateSpriteButton("BattleButton", unifiedMenuRoot.transform, battleSprite, HomeMenuLeftTopPosition, HomeMenuButtonSize, StartBattle);
+                CreateSpriteButton("FormationButton", unifiedMenuRoot.transform, formationSprite, HomeMenuRightTopPosition, HomeMenuButtonSize, OpenFormationMenu);
+                CreateSpriteButton("EquipmentButton", unifiedMenuRoot.transform, equipmentSprite, HomeMenuLeftMiddlePosition, HomeMenuButtonSize, OpenEquipmentMenu);
+                CreateSpriteButton("FusionButton", unifiedMenuRoot.transform, fusionSprite, HomeMenuRightMiddlePosition, HomeMenuButtonSize, OpenFusionMenu);
                 if (hasGachaSprite)
                 {
-                    CreateSpriteButton("GachaButton", unifiedMenuRoot.transform, gachaSprite, new Vector2(0f, -55f), new Vector2(500f, 300f), OpenGachaMenu);
+                    CreateSpriteButton("GachaButton", unifiedMenuRoot.transform, gachaSprite, HomeMenuBottomPosition, HomeMenuButtonSize, OpenGachaMenu);
                 }
                 EnsureMonsterDexButton(unifiedMenuRoot.transform);
                 return;
@@ -327,16 +341,24 @@ namespace WitchTower.Home
             EnsureMonsterDexButton(unifiedMenuRoot.transform);
         }
 
-        private void OpenFormationMenu()
+        public void OpenFormationMenu()
         {
-            OpenHome();
-            HideUnifiedMenu();
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            SceneManager.LoadScene(formationSceneName);
         }
 
-        private void OpenEquipmentMenu()
+        public void OpenEquipmentMenu()
         {
-            OpenEquipment();
-            HideUnifiedMenu();
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            SceneManager.LoadScene(equipmentSceneName);
         }
 
         public void OpenFusionMenu()
@@ -458,7 +480,7 @@ namespace WitchTower.Home
             }
 
             Sprite buttonSprite = Resources.Load<Sprite>("UI/FusionPage/FusionSmallButton");
-            CreateTextSpriteButton("MonsterDexButton", menuRoot, buttonSprite, "図鑑", new Vector2(0f, 850f), new Vector2(430f, 136f), OpenMonsterDexMenu);
+            CreateTextSpriteButton("MonsterDexButton", menuRoot, buttonSprite, "図鑑", MonsterDexButtonPosition, MonsterDexButtonSize, OpenMonsterDexMenu);
         }
 
         private static void NormalizeCanvasScales()
@@ -522,6 +544,23 @@ namespace WitchTower.Home
             rectTransform.offsetMin = Vector2.zero;
             rectTransform.offsetMax = Vector2.zero;
             return root;
+        }
+
+        private static void DestroySceneObject(GameObject target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            if (!Application.isPlaying)
+            {
+                DestroyImmediate(target);
+            }
+            else
+            {
+                Destroy(target);
+            }
         }
 
         private static Image CreateMenuImage(string name, Transform parent, Sprite sprite, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 size, bool preserveAspect)

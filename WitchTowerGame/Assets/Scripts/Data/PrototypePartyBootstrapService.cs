@@ -10,15 +10,8 @@ namespace WitchTower.Data
     public static class PrototypePartyBootstrapService
     {
         private const int DefaultPartySize = 5;
-        private static readonly string[] RequiredPreviewMonsterIds =
-        {
-            "monster_dragon_whelp",
-            "monster_chibi_gear",
-            "monster_rock_golem",
-            "monster_apprentice_swordsman",
-            "monster_apprentice_mage"
-        };
-
+        private const int DefaultStorageLimit = 100;
+        private static readonly bool UnlockAllImplementedMonstersForPreview = true;
         private static readonly string[] PrototypePartyMonsterIds =
         {
             "monster_dragon_whelp",
@@ -62,9 +55,14 @@ namespace WitchTower.Data
                 return false;
             }
 
-            bool changed = false;
-            List<string> validPartyIds = ResolveValidPartyIds(profile);
-            if (profile.OwnedMonsters.Count == 0)
+            bool changed = RemoveOwnedMonstersMissingFromCurrentMaster(profile, masterDataManager);
+            List<string> validPartyIds = ResolveValidPartyIds(profile, targetCount);
+            if (UnlockAllImplementedMonstersForPreview)
+            {
+                changed |= EnsureAllImplementedMonstersOwned(profile, masterDataManager);
+                validPartyIds = ResolveValidPartyIds(profile, targetCount);
+            }
+            else if (profile.OwnedMonsters.Count == 0)
             {
                 foreach (string monsterId in PrototypeOwnedMonsterIds)
                 {
@@ -76,10 +74,10 @@ namespace WitchTower.Data
                     }
                 }
 
-                validPartyIds = ResolveValidPartyIds(profile);
+                validPartyIds = ResolveValidPartyIds(profile, targetCount);
             }
 
-            if (profile.OwnedMonsters.Count < targetCount || validPartyIds.Count < targetCount)
+            if (profile.OwnedMonsters.Count < targetCount)
             {
                 MonsterDataSO[] allMonsterData = masterDataManager.GetAllMonsterData();
                 if (allMonsterData != null)
@@ -88,7 +86,7 @@ namespace WitchTower.Data
                                  .Where(data => data != null && !string.IsNullOrEmpty(data.monsterId))
                                  .OrderBy(data => data.encyclopediaNumber))
                     {
-                        if (profile.OwnedMonsters.Count >= targetCount && validPartyIds.Count >= targetCount)
+                        if (profile.OwnedMonsters.Count >= targetCount)
                         {
                             break;
                         }
@@ -102,11 +100,16 @@ namespace WitchTower.Data
                     }
                 }
 
-                validPartyIds = ResolveValidPartyIds(profile);
+                validPartyIds = ResolveValidPartyIds(profile, targetCount);
             }
 
-            bool shouldPrioritizePreviewParty = IsMissingRequiredPreviewMonster(profile, validPartyIds);
-            List<string> resolvedPartyIds = BuildResolvedPartyIds(profile, validPartyIds, targetCount, shouldPrioritizePreviewParty);
+            bool shouldPrioritizePreviewParty = CountValidPartySlots(validPartyIds) == 0;
+            List<string> resolvedPartyIds = BuildResolvedPartyIds(
+                profile,
+                validPartyIds,
+                targetCount,
+                shouldPrioritizePreviewParty,
+                fillOpenSlots: shouldPrioritizePreviewParty);
             if (!profile.PartyMonsterInstanceIds.SequenceEqual(resolvedPartyIds))
             {
                 profile.SetPartyMonsterIds(resolvedPartyIds);
@@ -116,15 +119,172 @@ namespace WitchTower.Data
             return changed;
         }
 
-        private static List<string> ResolveValidPartyIds(PlayerProfile profile)
+        private static bool RemoveOwnedMonstersMissingFromCurrentMaster(PlayerProfile profile, MasterDataManager masterDataManager)
+        {
+            if (profile?.OwnedMonsters == null || masterDataManager == null)
+            {
+                return false;
+            }
+
+            MonsterDataSO[] allMonsterData = masterDataManager.GetAllMonsterData();
+            if (allMonsterData == null || allMonsterData.Length == 0)
+            {
+                return false;
+            }
+
+            var currentMonsterIds = new HashSet<string>(
+                allMonsterData
+                    .Where(data => data != null && !string.IsNullOrEmpty(data.monsterId))
+                    .Select(data => data.monsterId));
+            if (currentMonsterIds.Count == 0)
+            {
+                return false;
+            }
+
+            var removedInstanceIds = new HashSet<string>();
+            bool changed = false;
+            for (int i = profile.OwnedMonsters.Count - 1; i >= 0; i -= 1)
+            {
+                OwnedMonsterData ownedMonster = profile.OwnedMonsters[i];
+                bool shouldRemove = ownedMonster == null ||
+                    string.IsNullOrEmpty(ownedMonster.MonsterId) ||
+                    !currentMonsterIds.Contains(ownedMonster.MonsterId);
+                if (!shouldRemove)
+                {
+                    continue;
+                }
+
+                if (ownedMonster != null && !string.IsNullOrEmpty(ownedMonster.InstanceId))
+                {
+                    removedInstanceIds.Add(ownedMonster.InstanceId);
+                }
+
+                profile.OwnedMonsters.RemoveAt(i);
+                changed = true;
+            }
+
+            if (removedInstanceIds.Count > 0)
+            {
+                ClearRemovedPartyReferences(profile, removedInstanceIds);
+                ClearRemovedEquipmentReferences(profile, removedInstanceIds);
+            }
+
+            if (profile.MonsterDexEntries != null)
+            {
+                for (int i = profile.MonsterDexEntries.Count - 1; i >= 0; i -= 1)
+                {
+                    MonsterDexEntryData dexEntry = profile.MonsterDexEntries[i];
+                    bool shouldRemove = dexEntry == null ||
+                        string.IsNullOrEmpty(dexEntry.MonsterId) ||
+                        !currentMonsterIds.Contains(dexEntry.MonsterId);
+                    if (!shouldRemove)
+                    {
+                        continue;
+                    }
+
+                    profile.MonsterDexEntries.RemoveAt(i);
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+
+        private static void ClearRemovedPartyReferences(PlayerProfile profile, HashSet<string> removedInstanceIds)
+        {
+            if (profile?.PartyMonsterInstanceIds == null || removedInstanceIds == null || removedInstanceIds.Count == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < profile.PartyMonsterInstanceIds.Count; i += 1)
+            {
+                if (removedInstanceIds.Contains(profile.PartyMonsterInstanceIds[i]))
+                {
+                    profile.PartyMonsterInstanceIds[i] = string.Empty;
+                }
+            }
+        }
+
+        private static void ClearRemovedEquipmentReferences(PlayerProfile profile, HashSet<string> removedInstanceIds)
+        {
+            if (profile?.OwnedEquipments == null || removedInstanceIds == null || removedInstanceIds.Count == 0)
+            {
+                return;
+            }
+
+            foreach (OwnedEquipmentData equipment in profile.OwnedEquipments)
+            {
+                if (equipment != null && removedInstanceIds.Contains(equipment.EquippedMonsterInstanceId))
+                {
+                    equipment.EquippedMonsterInstanceId = string.Empty;
+                    equipment.IsEquipped = false;
+                }
+            }
+        }
+
+        private static bool EnsureAllImplementedMonstersOwned(PlayerProfile profile, MasterDataManager masterDataManager)
+        {
+            if (profile == null || masterDataManager == null)
+            {
+                return false;
+            }
+
+            MonsterDataSO[] allMonsterData = masterDataManager.GetAllMonsterData();
+            if (allMonsterData == null || allMonsterData.Length == 0)
+            {
+                return false;
+            }
+
+            var implementedMonsterIds = allMonsterData
+                .Where(data => data != null && !string.IsNullOrEmpty(data.monsterId))
+                .OrderBy(data => Math.Max(1, data.classRank))
+                .ThenBy(data => data.encyclopediaNumber)
+                .Select(data => data.monsterId)
+                .Distinct()
+                .ToList();
+
+            if (implementedMonsterIds.Count == 0)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            int missingMonsterCount = implementedMonsterIds.Count(monsterId => ResolveOwnedMonsterByMonsterId(profile, monsterId) == null);
+            int requiredStorageLimit = Math.Max(DefaultStorageLimit, profile.OwnedMonsters.Count + missingMonsterCount);
+            if (profile.MonsterStorageLimit < requiredStorageLimit)
+            {
+                profile.MonsterStorageLimit = requiredStorageLimit;
+                changed = true;
+            }
+
+            foreach (string monsterId in implementedMonsterIds)
+            {
+                OwnedMonsterData ensuredMonster = EnsureOwnedMonster(profile, masterDataManager, monsterId, out bool addedMonster);
+                changed |= addedMonster;
+                if (ensuredMonster != null)
+                {
+                    profile.MarkMonsterDexOwned(ensuredMonster.MonsterId);
+                }
+            }
+
+            return changed;
+        }
+
+        private static List<string> ResolveValidPartyIds(PlayerProfile profile, int targetCount)
         {
             var result = new List<string>();
             var seenInstanceIds = new HashSet<string>();
-            foreach (string instanceId in profile.PartyMonsterInstanceIds)
+            int safeTargetCount = Math.Min(DefaultPartySize, Math.Max(1, targetCount));
+            for (int i = 0; i < safeTargetCount; i += 1)
             {
+                string instanceId = profile.PartyMonsterInstanceIds != null && i < profile.PartyMonsterInstanceIds.Count
+                    ? profile.PartyMonsterInstanceIds[i]
+                    : string.Empty;
                 OwnedMonsterData ownedMonster = profile.GetOwnedMonster(instanceId);
                 if (ownedMonster == null || string.IsNullOrEmpty(ownedMonster.InstanceId) || !seenInstanceIds.Add(ownedMonster.InstanceId))
                 {
+                    result.Add(string.Empty);
                     continue;
                 }
 
@@ -134,45 +294,81 @@ namespace WitchTower.Data
             return result;
         }
 
-        private static bool IsMissingRequiredPreviewMonster(PlayerProfile profile, List<string> validPartyIds)
+        private static int CountValidPartySlots(List<string> partyIds)
         {
-            if (profile == null)
-            {
-                return false;
-            }
-
-            var selectedMonsterIds = new HashSet<string>();
-            foreach (string instanceId in validPartyIds)
-            {
-                OwnedMonsterData ownedMonster = profile.GetOwnedMonster(instanceId);
-                if (ownedMonster != null && !string.IsNullOrEmpty(ownedMonster.MonsterId))
-                {
-                    selectedMonsterIds.Add(ownedMonster.MonsterId);
-                }
-            }
-
-            return RequiredPreviewMonsterIds.Any(monsterId => !selectedMonsterIds.Contains(monsterId));
+            return partyIds != null ? partyIds.Count(instanceId => !string.IsNullOrEmpty(instanceId)) : 0;
         }
 
-        private static List<string> BuildResolvedPartyIds(PlayerProfile profile, List<string> validPartyIds, int targetCount, bool prioritizePreviewParty)
+        private static List<string> BuildResolvedPartyIds(
+            PlayerProfile profile,
+            List<string> validPartyIds,
+            int targetCount,
+            bool prioritizePreviewParty,
+            bool fillOpenSlots)
         {
             var resolvedIds = new List<string>();
             var seenInstanceIds = new HashSet<string>();
 
-            void AddPartyInstance(string instanceId)
+            bool TryResolvePartyInstance(string instanceId, out string resolvedInstanceId)
             {
-                if (string.IsNullOrEmpty(instanceId) || resolvedIds.Count >= targetCount)
+                resolvedInstanceId = string.Empty;
+                if (string.IsNullOrEmpty(instanceId))
                 {
-                    return;
+                    return false;
                 }
 
                 OwnedMonsterData ownedMonster = profile.GetOwnedMonster(instanceId);
                 if (ownedMonster == null || string.IsNullOrEmpty(ownedMonster.InstanceId) || !seenInstanceIds.Add(ownedMonster.InstanceId))
                 {
+                    return false;
+                }
+
+                resolvedInstanceId = ownedMonster.InstanceId;
+                return true;
+            }
+
+            void EnsureSlotCount()
+            {
+                while (resolvedIds.Count < targetCount)
+                {
+                    resolvedIds.Add(string.Empty);
+                }
+
+                if (resolvedIds.Count > targetCount)
+                {
+                    resolvedIds.RemoveRange(targetCount, resolvedIds.Count - targetCount);
+                }
+            }
+
+            void AddPartyInstance(string instanceId)
+            {
+                if (!TryResolvePartyInstance(instanceId, out string resolvedInstanceId))
+                {
                     return;
                 }
 
-                resolvedIds.Add(ownedMonster.InstanceId);
+                int emptySlotIndex = resolvedIds.FindIndex(string.IsNullOrEmpty);
+                if (emptySlotIndex >= 0)
+                {
+                    resolvedIds[emptySlotIndex] = resolvedInstanceId;
+                    return;
+                }
+
+                if (resolvedIds.Count < targetCount)
+                {
+                    resolvedIds.Add(resolvedInstanceId);
+                }
+            }
+
+            if (!prioritizePreviewParty)
+            {
+                for (int i = 0; i < targetCount; i += 1)
+                {
+                    string instanceId = validPartyIds != null && i < validPartyIds.Count ? validPartyIds[i] : string.Empty;
+                    resolvedIds.Add(TryResolvePartyInstance(instanceId, out string resolvedInstanceId)
+                        ? resolvedInstanceId
+                        : string.Empty);
+                }
             }
 
             if (prioritizePreviewParty)
@@ -192,7 +388,7 @@ namespace WitchTower.Data
                 AddPartyInstance(instanceId);
             }
 
-            if (!prioritizePreviewParty)
+            if (!prioritizePreviewParty && fillOpenSlots)
             {
                 foreach (string monsterId in PrototypePartyMonsterIds)
                 {
@@ -204,13 +400,17 @@ namespace WitchTower.Data
                 }
             }
 
-            foreach (OwnedMonsterData ownedMonster in profile.OwnedMonsters
-                         .Where(monster => monster != null && !string.IsNullOrEmpty(monster.InstanceId))
-                         .OrderByDescending(monster => monster.AcquiredOrder))
+            if (fillOpenSlots)
             {
-                AddPartyInstance(ownedMonster.InstanceId);
+                foreach (OwnedMonsterData ownedMonster in profile.OwnedMonsters
+                             .Where(monster => monster != null && !string.IsNullOrEmpty(monster.InstanceId))
+                             .OrderByDescending(monster => monster.AcquiredOrder))
+                {
+                    AddPartyInstance(ownedMonster.InstanceId);
+                }
             }
 
+            EnsureSlotCount();
             return resolvedIds;
         }
 

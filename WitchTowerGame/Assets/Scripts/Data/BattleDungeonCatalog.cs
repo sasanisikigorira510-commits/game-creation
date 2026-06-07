@@ -70,52 +70,143 @@ namespace WitchTower.Data
         {
             new BattleDungeonDefinition(
                 "blight_cavern",
-                "瘴牙の洞穴",
-                "瘴気と牙跡が残る浅層洞窟。序盤の下位モンスターが群れで現れる。",
+                "見習いの五門洞",
+                "五つの小門が並ぶ浅層洞窟。全階層でクラス1剣士系の見習い剣士を捕獲できる。",
                 "UI/DungeonSelect/DungeonCard_BlightCavern",
                 "BattleBackgrounds/dungeon1_1170x2532",
                 1,
-                new[]
-                {
-                    new BattleDungeonFloorDefinition(1, "粘る入口", "monster_rock_golem", 0.46f, 10),
-                    new BattleDungeonFloorDefinition(2, "焦げた横穴", "monster_dragon_whelp", 0.44f, 14),
-                    new BattleDungeonFloorDefinition(3, "落石の小道", "monster_rock_golem", 0.42f, 18),
-                    new BattleDungeonFloorDefinition(4, "小竜の巣", "monster_dragon_whelp", 0.40f, 20),
-                    new BattleDungeonFloorDefinition(5, "瘴牙の奥", "monster_apprentice_swordsman", 0.38f, 24)
-                }),
+                BuildDungeonFloors(
+                    "monster_apprentice_swordsman",
+                    0.46f,
+                    10,
+                    4,
+                    false,
+                    "木剣の入口",
+                    "石床の稽古場",
+                    "盾の小門",
+                    "剣灯の回廊",
+                    "五門の奥稽古")),
             new BattleDungeonDefinition(
                 "gear_crypt",
-                "機骸の廃工場",
-                "壊れた機械と番兵が残る地下工場。金属系と剣士系の敵が前線を押してくる。",
+                "中位魔獣の廃工廠",
+                "炉心と鉱石炉が残る中層工廠。全階層でクラス2ゴーレム系の鉱石巨人ガルムを捕獲できる。",
                 "UI/DungeonSelect/DungeonCard_GearCrypt",
                 "BattleBackgrounds/dungeon2_1170x2532",
                 6,
-                new[]
-                {
-                    new BattleDungeonFloorDefinition(1, "錆びた搬入口", "monster_chibi_gear", 0.42f, 18),
-                    new BattleDungeonFloorDefinition(2, "歯車通路", "monster_chibi_gear", 0.40f, 22),
-                    new BattleDungeonFloorDefinition(3, "警備兵の詰所", "monster_apprentice_swordsman", 0.38f, 22),
-                    new BattleDungeonFloorDefinition(4, "炉心前線", "monster_rock_golem", 0.36f, 24),
-                    new BattleDungeonFloorDefinition(5, "機骸炉", "monster_chibi_gear", 0.34f, 30)
-                }),
+                BuildDungeonFloors(
+                    "monster_ore_giant_garm",
+                    0.36f,
+                    18,
+                    3,
+                    false,
+                    "錆びた搬入口",
+                    "鉱石運搬路",
+                    "結晶整備室",
+                    "炉心採掘線",
+                    "ガルムの鉱炉")),
             new BattleDungeonDefinition(
                 "curse_library",
-                "呪灯の地下書庫",
-                "呪いの灯が消えない地下書庫。魔導士と幼竜が遠距離から圧をかける。",
+                "上位召喚の地下書庫",
+                "上位個体の契約書が封じられた地下書庫。全階層でクラス3魔導士系の深淵大魔導を捕獲できる。",
                 "UI/DungeonSelect/DungeonCard_CurseLibrary",
                 "BattleBackgrounds/dungeon3_1170x2532",
                 11,
-                new[]
-                {
-                    new BattleDungeonFloorDefinition(1, "呪灯の棚道", "monster_apprentice_mage", 0.40f, 26),
-                    new BattleDungeonFloorDefinition(2, "古文書の回廊", "monster_apprentice_mage", 0.38f, 28),
-                    new BattleDungeonFloorDefinition(3, "黒煙の閲覧室", "monster_dragon_whelp", 0.36f, 30),
-                    new BattleDungeonFloorDefinition(4, "封印された階段", "monster_apprentice_swordsman", 0.34f, 32),
-                    new BattleDungeonFloorDefinition(5, "地下書庫の心臓", "monster_apprentice_mage", 0.32f, 34)
-                })
+                BuildDungeonFloors(
+                    "monster_abyss_grand_mage_seraphis",
+                    0.30f,
+                    38,
+                    4,
+                    false,
+                    "封印書架",
+                    "召喚円の閲覧室",
+                    "鎖の禁書橋",
+                    "紫灯の契約庫",
+                    "深淵大魔導の奥書")),
+            new BattleDungeonDefinition(
+                "ember_drake_pass",
+                "紅蓮竜道",
+                "溶岩脈に沿って続く竜の通り道。全階層でクラス4竜系の機竜ヴァルドレイクを捕獲できる。",
+                "UI/DungeonSelect/DungeonCard_EmberDrakePass",
+                "BattleBackgrounds/dungeon4_1170x2532",
+                16,
+                BuildDungeonFloors(
+                    "monster_mecha_dragon_valdrake",
+                    0.22f,
+                    58,
+                    4,
+                    true,
+                    "火口の入口",
+                    "紅蓮の石橋",
+                    "竜鱗の回廊",
+                    "機竜の滑走路",
+                    "紅蓮竜道の頂")),
+            new BattleDungeonDefinition(
+                "star_ore_citadel",
+                "星鉱の巨殿",
+                "星を含んだ鉱石が鳴る巨大殿堂。全階層でクラス4ゴーレム系の星蝕魔像を捕獲できる。",
+                "UI/DungeonSelect/DungeonCard_StarOreCitadel",
+                "BattleBackgrounds/dungeon5_1170x2532",
+                21,
+                BuildDungeonFloors(
+                    "monster_astral_eclipse_golem",
+                    0.18f,
+                    72,
+                    2,
+                    true,
+                    "星鉱の外郭",
+                    "結晶橋の広間",
+                    "巨殿の採掘路",
+                    "星光の玉座",
+                    "星蝕魔像の炉心")),
+            new BattleDungeonDefinition(
+                "abyssal_grimoire_spire",
+                "深淵魔導塔",
+                "深淵の術式が空間を歪める魔導塔。全階層でクラス4天使系の熾天使ミカエルを捕獲できる。",
+                "UI/DungeonSelect/DungeonCard_AbyssalGrimoireSpire",
+                "BattleBackgrounds/dungeon6_1170x2532",
+                26,
+                BuildDungeonFloors(
+                    "monster_seraph_michael",
+                    0.13f,
+                    80,
+                    2,
+                    true,
+                    "深淵塔の入口",
+                    "浮遊階段",
+                    "紫光の魔導室",
+                    "熾天使の天窓",
+                    "深淵塔の頂"))
         };
 
         public static IReadOnlyList<BattleDungeonDefinition> Dungeons => DungeonDefinitions;
+
+        private static BattleDungeonFloorDefinition[] BuildDungeonFloors(
+            string enemyMonsterId,
+            float firstRecruitChance,
+            int firstEnemyCount,
+            int enemyCountStep,
+            bool finalFloorIsBoss,
+            params string[] floorNames)
+        {
+            BattleDungeonFloorDefinition[] floors = new BattleDungeonFloorDefinition[FloorsPerDungeon];
+            for (int i = 0; i < floors.Length; i += 1)
+            {
+                bool isFinalBossFloor = finalFloorIsBoss && i == floors.Length - 1;
+                int enemyCount = isFinalBossFloor ? 1 : firstEnemyCount + i * Mathf.Max(0, enemyCountStep);
+                string floorName = i < floorNames.Length && !string.IsNullOrEmpty(floorNames[i])
+                    ? floorNames[i]
+                    : "第" + (i + 1) + "層";
+                floors[i] = new BattleDungeonFloorDefinition(
+                    i + 1,
+                    floorName,
+                    enemyMonsterId,
+                    Mathf.Max(0.01f, firstRecruitChance - i * 0.01f),
+                    enemyCount,
+                    isFinalBossFloor);
+            }
+
+            return floors;
+        }
 
         public static BattleDungeonDefinition GetDungeon(string dungeonId)
         {

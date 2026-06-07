@@ -28,7 +28,7 @@ MonoBehaviour:
     defense: 9
     magicDefense: 8
     attackSpeed: 1.08
-  attackRange: 1.55
+  attackRange: 2.80
   normalAttackTargetCount: 1
   normalAttackAppliesKnockback: 0
   normalAttackKnockbackDuration: 0.18

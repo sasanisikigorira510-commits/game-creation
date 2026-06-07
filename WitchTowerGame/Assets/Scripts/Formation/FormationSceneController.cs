@@ -45,6 +45,8 @@ namespace WitchTower.Formation
         {
             public Image Background;
             public RawImage FrameArt;
+            public Image RoleBand;
+            public Text RoleLabel;
             public Image Portrait;
             public Text NameLabel;
             public Text StatusLabel;
@@ -77,6 +79,15 @@ namespace WitchTower.Formation
         private const int MaxPartySize = 5;
         private const int DefaultStorageLimit = 100;
         private const int GridColumnCount = 4;
+        private const float RosterPanelWidth = 1000f;
+        private const float RosterPanelTopInset = 870f;
+        private const float RosterPanelBottomInset = 56f;
+        private const float RosterViewportHorizontalInset = 26f;
+        private const float RosterViewportTopInset = 44f;
+        private const float RosterViewportBottomInset = 34f;
+        private const float SelectedSlotWidth = 180f;
+        private const float SelectedSlotHeight = 182f;
+        private const float SelectedSlotSpacing = 28f;
 
         private static readonly string[] HiddenObjectNames =
         {
@@ -135,6 +146,7 @@ namespace WitchTower.Formation
         private bool scaffoldCreated;
         private SortMode currentSortMode = SortMode.Favorite;
         private FilterMode currentFilterMode = FilterMode.All;
+        private int activeSlotIndex;
 
         private void OnEnable()
         {
@@ -296,22 +308,27 @@ namespace WitchTower.Formation
 
             roster.Sort(CompareByAcquired);
 
-            foreach (string instanceId in profile.PartyMonsterInstanceIds)
+            EnsureSelectedSlotCapacity();
+            for (int i = 0; i < MaxPartySize; i += 1)
             {
+                string instanceId = profile.PartyMonsterInstanceIds != null && i < profile.PartyMonsterInstanceIds.Count
+                    ? profile.PartyMonsterInstanceIds[i]
+                    : string.Empty;
                 if (!string.IsNullOrEmpty(instanceId) && entryLookup.TryGetValue(instanceId, out MonsterEntry entry))
                 {
-                    selectedMonsters.Add(entry);
+                    selectedMonsters[i] = entry;
                 }
             }
 
-            if (selectedMonsters.Count == 0)
+            if (CountSelectedSlots() == 0)
             {
                 for (int i = 0; i < roster.Count && i < MaxPartySize; i++)
                 {
-                    selectedMonsters.Add(roster[i]);
+                    selectedMonsters[i] = roster[i];
                 }
             }
 
+            activeSlotIndex = ResolveDefaultActiveSlotIndex();
             return roster.Count > 0;
         }
 
@@ -356,11 +373,13 @@ namespace WitchTower.Formation
             roster.Add(new MonsterEntry("apprentice_swordsman_a", "見習い剣士", "FamilyMonsterCards/Swordsman/apprentice_swordsman", 20, 20, 1, 50, 6, false));
             roster.Add(new MonsterEntry("apprentice_mage_a", "見習い魔導士", "FamilyMonsterCards/Mage/apprentice_mage", 20, 20, 1, 50, 5, false));
 
-            selectedMonsters.Add(roster[0]);
-            selectedMonsters.Add(roster[1]);
-            selectedMonsters.Add(roster[2]);
-            selectedMonsters.Add(roster[3]);
-            selectedMonsters.Add(roster[4]);
+            EnsureSelectedSlotCapacity();
+            selectedMonsters[0] = roster[0];
+            selectedMonsters[1] = roster[1];
+            selectedMonsters[2] = roster[2];
+            selectedMonsters[3] = roster[3];
+            selectedMonsters[4] = roster[4];
+            activeSlotIndex = ResolveDefaultActiveSlotIndex();
         }
 
         private void EnsureScaffold()
@@ -422,17 +441,16 @@ namespace WitchTower.Formation
                 new Vector2(0f, -22f), new Vector2(420f, 36f), TextAnchor.MiddleCenter,
                 new Color(0.93f, 0.96f, 0.99f, 1f));
 
-            float slotWidth = 180f;
-            float slotHeight = 182f;
-            float slotSpacing = 28f;
-            float totalWidth = (slotWidth * MaxPartySize) + (slotSpacing * (MaxPartySize - 1));
-            float startX = -totalWidth * 0.5f + (slotWidth * 0.5f);
+            EnsureSelectedPanelRoleGuides(teamPanel.transform);
+
+            float totalWidth = (SelectedSlotWidth * MaxPartySize) + (SelectedSlotSpacing * (MaxPartySize - 1));
+            float startX = -totalWidth * 0.5f + (SelectedSlotWidth * 0.5f);
 
             for (int i = 0; i < MaxPartySize; i++)
             {
                 GameObject slotObject = CreatePanel("SelectedSlot" + i, teamPanel.transform,
                     new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(startX + i * (slotWidth + slotSpacing), -48f), new Vector2(slotWidth, slotHeight),
+                    new Vector2(startX + i * (SelectedSlotWidth + SelectedSlotSpacing), -48f), new Vector2(SelectedSlotWidth, SelectedSlotHeight),
                     new Color(0.07f, 0.1f, 0.14f, 0.82f));
 
                 FormationSlotView slotView = new FormationSlotView();
@@ -450,13 +468,15 @@ namespace WitchTower.Formation
                 slotView.FrameArt.raycastTarget = false;
                 slotFrameObject.transform.SetAsFirstSibling();
 
+                EnsureSlotRoleChrome(slotView, slotObject.transform, i);
+
                 GameObject portraitObject = CreateUiObject("Portrait", slotObject.transform);
                 RectTransform portraitRect = portraitObject.GetComponent<RectTransform>();
                 portraitRect.anchorMin = new Vector2(0.5f, 1f);
                 portraitRect.anchorMax = new Vector2(0.5f, 1f);
                 portraitRect.pivot = new Vector2(0.5f, 1f);
-                portraitRect.anchoredPosition = new Vector2(0f, -22f);
-                portraitRect.sizeDelta = new Vector2(84f, 84f);
+                portraitRect.anchoredPosition = new Vector2(0f, -48f);
+                portraitRect.sizeDelta = new Vector2(78f, 78f);
                 slotView.Portrait = portraitObject.AddComponent<Image>();
                 slotView.Portrait.preserveAspect = true;
 
@@ -502,11 +522,18 @@ namespace WitchTower.Formation
 
             GameObject rosterPanel = CreatePanel("RosterPanel", root.transform,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -870f), new Vector2(1000f, 1650f), new Color(0.03f, 0.06f, 0.1f, 0.82f));
+                new Vector2(0f, -RosterPanelTopInset), new Vector2(RosterPanelWidth, 990f), new Color(0.03f, 0.06f, 0.1f, 0.82f));
+            SetCenteredVerticalStretchRect(rosterPanel.transform, RosterPanelWidth, RosterPanelTopInset, RosterPanelBottomInset);
 
             GameObject viewport = CreatePanel("Viewport", rosterPanel.transform,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, -4f), new Vector2(948f, 1560f), new Color(0.02f, 0.04f, 0.07f, 0.38f));
+                Vector2.zero, new Vector2(948f, 912f), new Color(0.02f, 0.04f, 0.07f, 0.38f));
+            SetInsetStretchRect(
+                viewport.transform,
+                RosterViewportHorizontalInset,
+                RosterViewportTopInset,
+                RosterViewportHorizontalInset,
+                RosterViewportBottomInset);
             viewport.AddComponent<RectMask2D>();
 
             GameObject content = CreateUiObject("Content", viewport.transform);
@@ -545,6 +572,9 @@ namespace WitchTower.Formation
             runtimeFont = GetRuntimeFont();
 
             Transform root = rootObject.transform;
+            Transform selectedPanel = root.Find("SelectedPanel");
+            EnsureSelectedPanelRoleGuides(selectedPanel);
+
             summaryText = FindText(root, "FormationHeader/SummaryText");
             sortModeLabel = FindText(root, "ControlPanel/SortButton/Label");
             filterModeLabel = FindText(root, "ControlPanel/FilterButton/Label");
@@ -571,6 +601,8 @@ namespace WitchTower.Formation
                 {
                     Background = slotTransform.GetComponent<Image>(),
                     FrameArt = FindRawImage(slotTransform, "FrameArt"),
+                    RoleBand = FindImage(slotTransform, "RoleBand"),
+                    RoleLabel = FindText(slotTransform, "RoleBand/RoleLabel"),
                     Portrait = FindImage(slotTransform, "Portrait"),
                     NameLabel = FindText(slotTransform, "NameLabel"),
                     StatusLabel = FindText(slotTransform, "StatusLabel"),
@@ -595,6 +627,8 @@ namespace WitchTower.Formation
                 {
                     slotView.FrameArt.transform.SetAsFirstSibling();
                 }
+
+                EnsureSlotRoleChrome(slotView, slotTransform, i);
 
                 if (slotView.Background == null || slotView.FrameArt == null || slotView.Portrait == null || slotView.NameLabel == null || slotView.StatusLabel == null)
                 {
@@ -652,22 +686,148 @@ namespace WitchTower.Formation
             }
         }
 
+        private void EnsureSelectedPanelRoleGuides(Transform selectedPanel)
+        {
+            if (selectedPanel == null)
+            {
+                return;
+            }
+
+            EnsureRoleGuidePanel(selectedPanel, "FrontLaneGuide", "前衛", ResolveSlotRoleColor(0, 0.76f));
+            EnsureRoleGuidePanel(selectedPanel, "MidLaneGuide", "中衛", ResolveSlotRoleColor(2, 0.76f));
+            EnsureRoleGuidePanel(selectedPanel, "RearLaneGuide", "後衛", ResolveSlotRoleColor(3, 0.76f));
+            SetRoleGuideLayout(selectedPanel);
+        }
+
+        private void EnsureRoleGuidePanel(Transform selectedPanel, string objectName, string label, Color color)
+        {
+            Transform guideTransform = selectedPanel.Find(objectName);
+            GameObject guideObject;
+            Image guideImage;
+            if (guideTransform == null)
+            {
+                guideObject = CreatePanel(objectName, selectedPanel,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                    Vector2.zero, new Vector2(180f, 30f), color);
+                guideImage = guideObject.GetComponent<Image>();
+            }
+            else
+            {
+                guideObject = guideTransform.gameObject;
+                guideImage = guideObject.GetComponent<Image>();
+                if (guideImage == null)
+                {
+                    guideImage = guideObject.AddComponent<Image>();
+                }
+                guideImage.color = color;
+            }
+
+            guideImage.raycastTarget = false;
+            Text guideLabel = FindText(guideObject.transform, "Label");
+            if (guideLabel == null)
+            {
+                guideLabel = CreateText("Label", guideObject.transform, runtimeFont, label, 17, FontStyle.Bold,
+                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                    Vector2.zero, new Vector2(120f, 24f), TextAnchor.MiddleCenter,
+                    Color.white);
+            }
+
+            guideLabel.text = label;
+            guideLabel.font = runtimeFont;
+            guideLabel.fontSize = 17;
+            guideLabel.fontStyle = FontStyle.Bold;
+            guideLabel.alignment = TextAnchor.MiddleCenter;
+            guideLabel.color = Color.white;
+            guideLabel.raycastTarget = false;
+            guideObject.transform.SetAsFirstSibling();
+        }
+
+        private void EnsureSlotRoleChrome(FormationSlotView slotView, Transform slotTransform, int slotIndex)
+        {
+            if (slotView == null || slotTransform == null)
+            {
+                return;
+            }
+
+            if (slotView.RoleBand == null)
+            {
+                Transform existingBand = slotTransform.Find("RoleBand");
+                if (existingBand != null)
+                {
+                    slotView.RoleBand = existingBand.GetComponent<Image>();
+                    if (slotView.RoleBand == null)
+                    {
+                        slotView.RoleBand = existingBand.gameObject.AddComponent<Image>();
+                    }
+                }
+                else
+                {
+                    GameObject roleBandObject = CreatePanel("RoleBand", slotTransform,
+                        new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                        new Vector2(0f, -6f), new Vector2(146f, 30f), ResolveSlotRoleColor(slotIndex, 0.96f));
+                    slotView.RoleBand = roleBandObject.GetComponent<Image>();
+                }
+            }
+
+            slotView.RoleBand.raycastTarget = false;
+
+            if (slotView.RoleLabel == null)
+            {
+                slotView.RoleLabel = FindText(slotTransform, "RoleBand/RoleLabel");
+                if (slotView.RoleLabel == null)
+                {
+                    slotView.RoleLabel = CreateText("RoleLabel", slotView.RoleBand.transform, runtimeFont, string.Empty, 16, FontStyle.Bold,
+                        new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                        Vector2.zero, new Vector2(132f, 22f), TextAnchor.MiddleCenter,
+                        Color.white);
+                }
+            }
+
+            slotView.RoleLabel.font = runtimeFont;
+            slotView.RoleLabel.fontSize = 16;
+            slotView.RoleLabel.fontStyle = FontStyle.Bold;
+            slotView.RoleLabel.alignment = TextAnchor.MiddleCenter;
+            slotView.RoleLabel.text = ResolveSlotRoleLabel(slotIndex);
+            slotView.RoleLabel.color = Color.white;
+            slotView.RoleLabel.raycastTarget = false;
+            ApplySlotRoleStyle(slotView, slotIndex, true);
+            SetSlotRoleLayout(slotTransform, slotIndex);
+
+            if (slotView.FrameArt != null)
+            {
+                slotView.FrameArt.transform.SetAsFirstSibling();
+            }
+        }
+
+        private static void ApplySlotRoleStyle(FormationSlotView slotView, int slotIndex, bool strong)
+        {
+            if (slotView?.RoleBand == null)
+            {
+                return;
+            }
+
+            slotView.RoleBand.color = ResolveSlotRoleColor(slotIndex, strong ? 0.96f : 0.68f);
+        }
+
         private static void ApplyScaffoldLayout(Transform root)
         {
             SetRect(root.Find("FormationHeader"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -122f), new Vector2(980f, 176f));
             SetRect(root.Find("ReturnButton"), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(54f, -160f), new Vector2(220f, 88f));
             SetRect(root.Find("SelectedPanel"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -404f), new Vector2(1000f, 300f));
             SetRect(root.Find("ControlPanel"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -734f), new Vector2(1000f, 124f));
-            SetRect(root.Find("RosterPanel"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -870f), new Vector2(1000f, 1650f));
-            SetRect(root.Find("RosterPanel/Viewport"), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -4f), new Vector2(948f, 1560f));
+            SetCenteredVerticalStretchRect(root.Find("RosterPanel"), RosterPanelWidth, RosterPanelTopInset, RosterPanelBottomInset);
+            SetInsetStretchRect(
+                root.Find("RosterPanel/Viewport"),
+                RosterViewportHorizontalInset,
+                RosterViewportTopInset,
+                RosterViewportHorizontalInset,
+                RosterViewportBottomInset);
             SetRect(root.Find("FormationHeader/SummaryText"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -100f), new Vector2(760f, 32f));
             SetRect(root.Find("SelectedPanel/SelectedTitle"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(420f, 36f));
+            SetRoleGuideLayout(root.Find("SelectedPanel"));
 
-            const float slotWidth = 180f;
-            const float slotHeight = 182f;
-            const float slotSpacing = 28f;
-            float totalWidth = (slotWidth * MaxPartySize) + (slotSpacing * (MaxPartySize - 1));
-            float startX = -totalWidth * 0.5f + (slotWidth * 0.5f);
+            float totalWidth = (SelectedSlotWidth * MaxPartySize) + (SelectedSlotSpacing * (MaxPartySize - 1));
+            float startX = -totalWidth * 0.5f + (SelectedSlotWidth * 0.5f);
 
             for (int i = 0; i < MaxPartySize; i++)
             {
@@ -676,8 +836,8 @@ namespace WitchTower.Formation
                     new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f),
-                    new Vector2(startX + i * (slotWidth + slotSpacing), -48f),
-                    new Vector2(slotWidth, slotHeight));
+                    new Vector2(startX + i * (SelectedSlotWidth + SelectedSlotSpacing), -48f),
+                    new Vector2(SelectedSlotWidth, SelectedSlotHeight));
 
                 SetRect(root.Find("SelectedPanel/SelectedSlot" + i + "/FrameArt"),
                     new Vector2(0.5f, 0.5f),
@@ -686,12 +846,14 @@ namespace WitchTower.Formation
                     Vector2.zero,
                     new Vector2(188f, 188f));
 
+                SetSlotRoleLayout(root.Find("SelectedPanel/SelectedSlot" + i), i);
+
                 SetRect(root.Find("SelectedPanel/SelectedSlot" + i + "/Portrait"),
                     new Vector2(0.5f, 1f),
                     new Vector2(0.5f, 1f),
                     new Vector2(0.5f, 1f),
-                    new Vector2(0f, -22f),
-                    new Vector2(84f, 84f));
+                    new Vector2(0f, -48f),
+                    new Vector2(78f, 78f));
             }
 
             Transform guideText = root.Find("FormationHeader/GuideText");
@@ -724,6 +886,168 @@ namespace WitchTower.Formation
             }
         }
 
+        private static void SetRoleGuideLayout(Transform selectedPanel)
+        {
+            if (selectedPanel == null)
+            {
+                return;
+            }
+
+            SetRect(selectedPanel.Find("FrontLaneGuide"),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(-312f, -64f),
+                new Vector2(388f, 30f));
+            SetRect(selectedPanel.Find("FrontLaneGuide/Label"),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(150f, 24f));
+
+            SetRect(selectedPanel.Find("MidLaneGuide"),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -64f),
+                new Vector2(180f, 30f));
+            SetRect(selectedPanel.Find("MidLaneGuide/Label"),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(120f, 24f));
+
+            SetRect(selectedPanel.Find("RearLaneGuide"),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(312f, -64f),
+                new Vector2(388f, 30f));
+            SetRect(selectedPanel.Find("RearLaneGuide/Label"),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(150f, 24f));
+        }
+
+        private static void SetSlotRoleLayout(Transform slotTransform, int slotIndex)
+        {
+            if (slotTransform == null)
+            {
+                return;
+            }
+
+            SetRect(slotTransform.Find("RoleBand"),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -6f),
+                new Vector2(146f, 30f));
+            SetRect(slotTransform.Find("RoleBand/RoleLabel"),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(132f, 22f));
+
+            Text roleLabel = FindText(slotTransform, "RoleBand/RoleLabel");
+            if (roleLabel != null)
+            {
+                roleLabel.text = ResolveSlotRoleLabel(slotIndex);
+            }
+        }
+
+        private static string ResolveSlotRoleLabel(int slotIndex)
+        {
+            if (slotIndex <= 1)
+            {
+                return "前衛 " + (slotIndex + 1);
+            }
+
+            if (slotIndex == 2)
+            {
+                return "中衛";
+            }
+
+            return "後衛 " + (slotIndex - 2);
+        }
+
+        private static Color ResolveSlotRoleColor(int slotIndex, float alpha)
+        {
+            if (slotIndex <= 1)
+            {
+                return new Color(0.82f, 0.20f, 0.13f, alpha);
+            }
+
+            if (slotIndex == 2)
+            {
+                return new Color(0.86f, 0.58f, 0.16f, alpha);
+            }
+
+            return new Color(0.12f, 0.46f, 0.68f, alpha);
+        }
+
+        private void EnsureSelectedSlotCapacity()
+        {
+            while (selectedMonsters.Count < MaxPartySize)
+            {
+                selectedMonsters.Add(null);
+            }
+
+            if (selectedMonsters.Count > MaxPartySize)
+            {
+                selectedMonsters.RemoveRange(MaxPartySize, selectedMonsters.Count - MaxPartySize);
+            }
+        }
+
+        private int CountSelectedSlots()
+        {
+            EnsureSelectedSlotCapacity();
+            int count = 0;
+            for (int i = 0; i < selectedMonsters.Count; i += 1)
+            {
+                if (selectedMonsters[i] != null)
+                {
+                    count += 1;
+                }
+            }
+
+            return count;
+        }
+
+        private int FindFirstEmptySlot()
+        {
+            EnsureSelectedSlotCapacity();
+            for (int i = 0; i < selectedMonsters.Count; i += 1)
+            {
+                if (selectedMonsters[i] == null)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private int ResolveDefaultActiveSlotIndex()
+        {
+            int emptySlot = FindFirstEmptySlot();
+            return emptySlot >= 0 ? emptySlot : 0;
+        }
+
+        private static bool IsValidSlotIndex(int slotIndex)
+        {
+            return slotIndex >= 0 && slotIndex < MaxPartySize;
+        }
+
+        private bool IsRosterEntrySelected(MonsterEntry entry)
+        {
+            return entry != null && selectedMonsters.Contains(entry);
+        }
+
         private void RefreshView()
         {
             if (!scaffoldCreated)
@@ -733,7 +1057,7 @@ namespace WitchTower.Formation
 
             if (summaryText != null)
             {
-                summaryText.text = $"保有 {roster.Count}/{GetStorageLimit()}   出撃 {selectedMonsters.Count}/{MaxPartySize}";
+                summaryText.text = $"保有 {roster.Count}/{GetStorageLimit()}   出撃 {CountSelectedSlots()}/{MaxPartySize}";
             }
 
             if (sortModeLabel != null)
@@ -752,14 +1076,23 @@ namespace WitchTower.Formation
 
         private void RefreshSelectedSlots()
         {
+            EnsureSelectedSlotCapacity();
             for (int i = 0; i < slotViews.Count; i++)
             {
                 FormationSlotView view = slotViews[i];
                 MonsterEntry entry = i < selectedMonsters.Count ? selectedMonsters[i] : null;
+                bool isActiveSlot = i == activeSlotIndex;
+                ApplySlotRoleStyle(view, i, entry != null || isActiveSlot);
+                if (view.RoleLabel != null)
+                {
+                    view.RoleLabel.text = ResolveSlotRoleLabel(i);
+                }
 
                 if (entry != null)
                 {
-                    view.Background.color = new Color(0.09f, 0.15f, 0.12f, 0.72f);
+                    view.Background.color = isActiveSlot
+                        ? new Color(0.12f, 0.21f, 0.16f, 0.82f)
+                        : new Color(0.09f, 0.15f, 0.12f, 0.72f);
                     if (view.FrameArt != null)
                     {
                         view.FrameArt.texture = LoadFrameTexture(ResolveMonsterSlotFrameTexturePath(entry.ClassRank));
@@ -768,21 +1101,25 @@ namespace WitchTower.Formation
                     view.Portrait.sprite = LoadPortrait(entry.ResourcePath);
                     view.Portrait.color = Color.white;
                     view.NameLabel.text = entry.Name;
-                    view.StatusLabel.text = "タップで外す";
+                    view.StatusLabel.text = isActiveSlot ? "配置先 / 外す" : "タップで外す";
                     view.StatusLabel.color = new Color(0.68f, 0.94f, 0.78f, 0.96f);
                 }
                 else
                 {
-                    view.Background.color = new Color(0.06f, 0.09f, 0.13f, 0.66f);
+                    view.Background.color = isActiveSlot
+                        ? new Color(0.10f, 0.16f, 0.21f, 0.78f)
+                        : new Color(0.06f, 0.09f, 0.13f, 0.66f);
                     if (view.FrameArt != null)
                     {
                         view.FrameArt.texture = LoadFrameTexture(ResolveMonsterSlotFrameTexturePath(1));
-                        view.FrameArt.color = new Color(1f, 1f, 1f, 0.48f);
+                        view.FrameArt.color = isActiveSlot
+                            ? new Color(1f, 1f, 1f, 0.72f)
+                            : new Color(1f, 1f, 1f, 0.48f);
                     }
                     view.Portrait.sprite = null;
                     view.Portrait.color = new Color(1f, 1f, 1f, 0f);
-                    view.NameLabel.text = "空きスロット";
-                    view.StatusLabel.text = "一覧から選択";
+                    view.NameLabel.text = isActiveSlot ? "配置先" : "空きスロット";
+                    view.StatusLabel.text = isActiveSlot ? "一覧から配置" : "一覧から選択";
                     view.StatusLabel.color = new Color(0.82f, 0.89f, 0.95f, 0.78f);
                 }
             }
@@ -830,7 +1167,7 @@ namespace WitchTower.Formation
 
         private MonsterCardView CreateMonsterCard(MonsterEntry entry, Vector2 anchoredPosition, Vector2 size)
         {
-            bool isSelected = selectedMonsters.Contains(entry);
+            bool isSelected = IsRosterEntrySelected(entry);
 
             GameObject card = CreatePanel("Card_" + entry.InstanceId, rosterContent,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
@@ -974,9 +1311,9 @@ namespace WitchTower.Formation
                 case FilterMode.Favorite:
                     return entry.IsFavorite;
                 case FilterMode.Selected:
-                    return selectedMonsters.Contains(entry);
+                    return IsRosterEntrySelected(entry);
                 case FilterMode.Unselected:
-                    return !selectedMonsters.Contains(entry);
+                    return !IsRosterEntrySelected(entry);
                 default:
                     return true;
             }
@@ -1043,14 +1380,28 @@ namespace WitchTower.Formation
 
         private void ToggleSelection(MonsterEntry entry)
         {
+            if (entry == null)
+            {
+                return;
+            }
+
+            EnsureSelectedSlotCapacity();
             int index = selectedMonsters.IndexOf(entry);
             if (index >= 0)
             {
-                selectedMonsters.RemoveAt(index);
+                selectedMonsters[index] = null;
+                activeSlotIndex = index;
             }
-            else if (selectedMonsters.Count < MaxPartySize)
+            else
             {
-                selectedMonsters.Add(entry);
+                int targetSlot = IsValidSlotIndex(activeSlotIndex) ? activeSlotIndex : FindFirstEmptySlot();
+                if (!IsValidSlotIndex(targetSlot))
+                {
+                    targetSlot = 0;
+                }
+
+                selectedMonsters[targetSlot] = entry;
+                activeSlotIndex = targetSlot;
             }
 
             SyncProfileSelection();
@@ -1083,13 +1434,19 @@ namespace WitchTower.Formation
 
         private void OnSlotPressed(int slotIndex)
         {
-            if (slotIndex < 0 || slotIndex >= selectedMonsters.Count)
+            EnsureSelectedSlotCapacity();
+            if (!IsValidSlotIndex(slotIndex))
             {
                 return;
             }
 
-            selectedMonsters.RemoveAt(slotIndex);
-            SyncProfileSelection();
+            activeSlotIndex = slotIndex;
+            if (selectedMonsters[slotIndex] != null)
+            {
+                selectedMonsters[slotIndex] = null;
+                SyncProfileSelection();
+            }
+
             RefreshView();
         }
 
@@ -1107,12 +1464,13 @@ namespace WitchTower.Formation
             }
 
             var selectedIds = new List<string>();
-            foreach (var monster in selectedMonsters)
+            EnsureSelectedSlotCapacity();
+            for (int i = 0; i < MaxPartySize; i += 1)
             {
-                if (monster != null && !string.IsNullOrEmpty(monster.InstanceId))
-                {
-                    selectedIds.Add(monster.InstanceId);
-                }
+                MonsterEntry monster = selectedMonsters[i];
+                selectedIds.Add(monster != null && !string.IsNullOrEmpty(monster.InstanceId)
+                    ? monster.InstanceId
+                    : string.Empty);
             }
 
             profile.SetPartyMonsterIds(selectedIds);
@@ -1390,6 +1748,34 @@ namespace WitchTower.Formation
             rect.pivot = pivot;
             rect.anchoredPosition = anchoredPosition;
             rect.sizeDelta = size;
+        }
+
+        private static void SetCenteredVerticalStretchRect(Transform target, float width, float topInset, float bottomInset)
+        {
+            if (!(target is RectTransform rect))
+            {
+                return;
+            }
+
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = new Vector2(-width * 0.5f, bottomInset);
+            rect.offsetMax = new Vector2(width * 0.5f, -topInset);
+        }
+
+        private static void SetInsetStretchRect(Transform target, float leftInset, float topInset, float rightInset, float bottomInset)
+        {
+            if (!(target is RectTransform rect))
+            {
+                return;
+            }
+
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = new Vector2(leftInset, bottomInset);
+            rect.offsetMax = new Vector2(-rightInset, -topInset);
         }
 
         private static Font GetRuntimeFont()

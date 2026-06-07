@@ -19,7 +19,7 @@ MonoBehaviour:
   classRank: 4
   rarity: 4
   element: 5
-  rangeType: 1
+  rangeType: 0
   damageType: 1
   baseStats:
     maxHp: 178
@@ -28,8 +28,8 @@ MonoBehaviour:
     defense: 42
     magicDefense: 48
     attackSpeed: 0.74
-  attackRange: 2.65
-  normalAttackTargetCount: 3
+  attackRange: 1.24
+  normalAttackTargetCount: 2
   normalAttackAppliesKnockback: 0
   normalAttackKnockbackDuration: 0.18
   plusValueCap: 99
@@ -60,4 +60,4 @@ MonoBehaviour:
   battleAttackResourcePath: MonsterBattle/mon_dark_magic_machine_god_merchion_attack
   battleAttackFacing: 0
   battleVisualScale: 1.18
-  description: "暗黒魔導を内蔵した機神。遠距離から敵群を魔力砲で焼き払う。"
+  description: "暗黒魔導を内蔵した機神。機械の巨体と魔力で前線を焼き払う。"

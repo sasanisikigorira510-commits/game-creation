@@ -118,12 +118,29 @@ namespace WitchTower.Home
             Canvas canvas = FindObjectOfType<Canvas>(true);
             if (canvas == null)
             {
-                GameObject canvasObject = new GameObject("GachaCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-                canvas = canvasObject.GetComponent<Canvas>();
+                GameObject canvasObject = new GameObject("GachaCanvas", typeof(RectTransform));
+                RectTransform canvasRect = canvasObject.GetComponent<RectTransform>();
+                canvasRect.localScale = Vector3.one;
+                canvasRect.sizeDelta = new Vector2(1080f, 1920f);
+                canvas = canvasObject.AddComponent<Canvas>();
+                canvasObject.AddComponent<CanvasScaler>();
+                canvasObject.AddComponent<GraphicRaycaster>();
             }
 
             canvas.transform.localScale = Vector3.one;
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            Camera uiCamera = FindObjectOfType<Camera>(true);
+            if (uiCamera != null)
+            {
+                uiCamera.cullingMask = ~0;
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = uiCamera;
+                canvas.planeDistance = 100f;
+            }
+            else
+            {
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.worldCamera = null;
+            }
 
             CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
             if (scaler == null)

@@ -103,6 +103,13 @@ namespace WitchTower.Battle
 
         public static List<OwnedMonsterData> ResolvePartyOwnedMonsters(PlayerProfile profile, int maxCount = 5)
         {
+            return ResolvePartyOwnedMonsterSlots(profile, maxCount)
+                .Where(ownedMonster => ownedMonster != null)
+                .ToList();
+        }
+
+        public static List<OwnedMonsterData> ResolvePartyOwnedMonsterSlots(PlayerProfile profile, int maxCount = 5)
+        {
             var result = new List<OwnedMonsterData>();
             if (profile == null || maxCount <= 0)
             {
@@ -118,20 +125,25 @@ namespace WitchTower.Battle
 
             if (profile.PartyMonsterInstanceIds != null)
             {
-                foreach (string instanceId in profile.PartyMonsterInstanceIds)
+                for (int i = 0; i < maxCount; i += 1)
                 {
+                    string instanceId = i < profile.PartyMonsterInstanceIds.Count
+                        ? profile.PartyMonsterInstanceIds[i]
+                        : string.Empty;
                     OwnedMonsterData ownedMonster = profile.GetOwnedMonster(instanceId);
                     if (ownedMonster == null || string.IsNullOrEmpty(ownedMonster.InstanceId) || !seenInstanceIds.Add(ownedMonster.InstanceId))
                     {
+                        result.Add(null);
                         continue;
                     }
 
                     result.Add(ownedMonster);
-                    if (result.Count >= maxCount)
-                    {
-                        return result;
-                    }
                 }
+            }
+
+            while (result.Count < maxCount)
+            {
+                result.Add(null);
             }
 
             if (profile.OwnedMonsters == null)
@@ -139,6 +151,12 @@ namespace WitchTower.Battle
                 return result;
             }
 
+            if (result.Any(ownedMonster => ownedMonster != null))
+            {
+                return result;
+            }
+
+            int fallbackSlotIndex = 0;
             foreach (OwnedMonsterData ownedMonster in profile.OwnedMonsters)
             {
                 if (ownedMonster == null || string.IsNullOrEmpty(ownedMonster.InstanceId) || !seenInstanceIds.Add(ownedMonster.InstanceId))
@@ -146,8 +164,9 @@ namespace WitchTower.Battle
                     continue;
                 }
 
-                result.Add(ownedMonster);
-                if (result.Count >= maxCount)
+                result[fallbackSlotIndex] = ownedMonster;
+                fallbackSlotIndex += 1;
+                if (fallbackSlotIndex >= maxCount)
                 {
                     break;
                 }
@@ -232,6 +251,16 @@ namespace WitchTower.Battle
                 return LoadSprite(resourcePath);
             }
 
+            MonsterDataSO monsterData = ResolveEnemyMonsterData(enemyData);
+            if (monsterData != null)
+            {
+                Sprite monsterSprite = ResolveMonsterIdleSprite(monsterData);
+                if (monsterSprite != null)
+                {
+                    return monsterSprite;
+                }
+            }
+
             return LoadSprite("FormationMonsters/HellKnight");
         }
 
@@ -243,6 +272,16 @@ namespace WitchTower.Battle
                 return frame != null ? frame : ResolveEnemyIdleSprite(enemyData);
             }
 
+            MonsterDataSO monsterData = ResolveEnemyMonsterData(enemyData);
+            if (monsterData != null)
+            {
+                Sprite monsterSprite = ResolveMonsterMoveSprite(monsterData);
+                if (monsterSprite != null)
+                {
+                    return monsterSprite;
+                }
+            }
+
             return ResolveEnemyIdleSprite(enemyData);
         }
 
@@ -252,6 +291,16 @@ namespace WitchTower.Battle
             {
                 Sprite frame = LoadSprite($"{battleBasePath}_attack_0");
                 return frame != null ? frame : ResolveEnemyIdleSprite(enemyData);
+            }
+
+            MonsterDataSO monsterData = ResolveEnemyMonsterData(enemyData);
+            if (monsterData != null)
+            {
+                Sprite monsterSprite = ResolveMonsterAttackSprite(monsterData);
+                if (monsterSprite != null)
+                {
+                    return monsterSprite;
+                }
             }
 
             return ResolveEnemyIdleSprite(enemyData);
@@ -323,6 +372,16 @@ namespace WitchTower.Battle
                 return LoadSpriteFrames($"{battleBasePath}_idle");
             }
 
+            MonsterDataSO monsterData = ResolveEnemyMonsterData(enemyData);
+            if (monsterData != null)
+            {
+                List<Sprite> frames = ResolveMonsterIdleSprites(monsterData);
+                if (frames.Count > 0)
+                {
+                    return frames;
+                }
+            }
+
             return BuildSingleSpriteList(ResolveEnemyIdleSprite(enemyData));
         }
 
@@ -334,6 +393,16 @@ namespace WitchTower.Battle
                 return frames.Count > 0 ? frames : ResolveEnemyIdleSprites(enemyData);
             }
 
+            MonsterDataSO monsterData = ResolveEnemyMonsterData(enemyData);
+            if (monsterData != null)
+            {
+                List<Sprite> frames = ResolveMonsterMoveSprites(monsterData);
+                if (frames.Count > 0)
+                {
+                    return frames;
+                }
+            }
+
             return BuildSingleSpriteList(ResolveEnemyMoveSprite(enemyData));
         }
 
@@ -343,6 +412,16 @@ namespace WitchTower.Battle
             {
                 List<Sprite> frames = LoadSpriteFrames($"{battleBasePath}_attack");
                 return frames.Count > 0 ? frames : ResolveEnemyIdleSprites(enemyData);
+            }
+
+            MonsterDataSO monsterData = ResolveEnemyMonsterData(enemyData);
+            if (monsterData != null)
+            {
+                List<Sprite> frames = ResolveMonsterAttackSprites(monsterData);
+                if (frames.Count > 0)
+                {
+                    return frames;
+                }
             }
 
             return BuildSingleSpriteList(ResolveEnemyAttackSprite(enemyData));
@@ -633,7 +712,12 @@ namespace WitchTower.Battle
 
             if (SpriteFramesCache.TryGetValue(resourcePath, out List<Sprite> cachedFrames))
             {
-                return cachedFrames;
+                if (cachedFrames.Count > 0)
+                {
+                    return cachedFrames;
+                }
+
+                SpriteFramesCache.Remove(resourcePath);
             }
 
             var frames = new List<Sprite>();
@@ -657,8 +741,29 @@ namespace WitchTower.Battle
                 }
             }
 
-            SpriteFramesCache[resourcePath] = frames;
+            if (frames.Count > 0)
+            {
+                SpriteFramesCache[resourcePath] = frames;
+            }
+
             return frames;
+        }
+
+        private static MonsterDataSO ResolveEnemyMonsterData(EnemyDataSO enemyData)
+        {
+            if (enemyData == null || string.IsNullOrEmpty(enemyData.enemyId))
+            {
+                return null;
+            }
+
+            string monsterId = BattleDungeonCatalog.ResolveMonsterIdFromEnemyId(enemyData.enemyId);
+            if (string.IsNullOrEmpty(monsterId))
+            {
+                return null;
+            }
+
+            MasterDataManager.Instance?.Initialize();
+            return MasterDataManager.Instance?.GetMonsterData(monsterId);
         }
 
         private static List<Sprite> BuildSingleSpriteList(Sprite sprite)

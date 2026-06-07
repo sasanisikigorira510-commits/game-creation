@@ -26,6 +26,7 @@ MonoBehaviour:
     defense: 8
     magicDefense: 14
     attackSpeed: 0.94
+  attackRange: 3.20
   plusValueCap: 99
   plusGrowth:
     maxHpPerPlus: 1

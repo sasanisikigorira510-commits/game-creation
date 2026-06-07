@@ -13,6 +13,7 @@ namespace WitchTower.Home
     public sealed class DungeonSelectionPanelController : MonoBehaviour
     {
         private const string BackgroundPath = "UI/DungeonSelect/DungeonSelectBackground";
+        private const string DungeonCardFramePath = "UI/DungeonSelect/DungeonCardFrame_Elite";
         private const string FloorNodeUnlockedPath = "UI/DungeonSelect/FloorNodeUnlocked";
         private const string FloorNodeSelectedPath = "UI/DungeonSelect/FloorNodeSelected";
         private const string FloorNodeLockedPath = "UI/DungeonSelect/FloorNodeLocked";
@@ -47,6 +48,8 @@ namespace WitchTower.Home
         {
             battleSceneName = string.IsNullOrEmpty(targetBattleSceneName) ? "BattleScene" : targetBattleSceneName;
             closeCallback = onClose;
+            ManagerFactory.EnsureMasterDataManager();
+            MasterDataManager.Instance?.Initialize();
             EnsurePanel();
             if (panelRoot == null)
             {
@@ -127,27 +130,27 @@ namespace WitchTower.Home
             dungeonListRoot.anchorMin = new Vector2(0.5f, 1f);
             dungeonListRoot.anchorMax = new Vector2(0.5f, 1f);
             dungeonListRoot.pivot = new Vector2(0.5f, 1f);
-            dungeonListRoot.anchoredPosition = new Vector2(0f, -164f);
-            dungeonListRoot.sizeDelta = new Vector2(820f, 810f);
+            dungeonListRoot.anchoredPosition = new Vector2(0f, -156f);
+            dungeonListRoot.sizeDelta = new Vector2(820f, 650f);
 
             dungeonDescriptionText = CreateText("DungeonDescription", panel.transform, string.Empty, 21, FontStyle.Bold,
                 TextAnchor.UpperCenter, new Color(0.92f, 0.87f, 0.72f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -986f), new Vector2(820f, 82f));
+                new Vector2(0.5f, 1f), new Vector2(0f, -820f), new Vector2(820f, 96f));
 
             floorListRoot = CreateUiObject("FloorList", panel.transform).GetComponent<RectTransform>();
             floorListRoot.anchorMin = new Vector2(0.5f, 1f);
             floorListRoot.anchorMax = new Vector2(0.5f, 1f);
             floorListRoot.pivot = new Vector2(0.5f, 1f);
-            floorListRoot.anchoredPosition = new Vector2(0f, -1086f);
-            floorListRoot.sizeDelta = new Vector2(820f, 210f);
+            floorListRoot.anchoredPosition = new Vector2(0f, -948f);
+            floorListRoot.sizeDelta = new Vector2(820f, 180f);
 
             floorDescriptionText = CreateText("FloorDescription", panel.transform, string.Empty, 20, FontStyle.Bold,
                 TextAnchor.UpperCenter, new Color(0.78f, 0.92f, 0.98f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -1300f), new Vector2(820f, 54f));
+                new Vector2(0.5f, 1f), new Vector2(0f, -1132f), new Vector2(820f, 54f));
 
             enemyPreviewText = CreateText("EnemyPreview", panel.transform, string.Empty, 22, FontStyle.Bold,
                 TextAnchor.MiddleCenter, new Color(1f, 0.86f, 0.56f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -1370f), new Vector2(820f, 44f));
+                new Vector2(0.5f, 1f), new Vector2(0f, -1200f), new Vector2(820f, 44f));
 
             CreateTextButton("StartBattleButton", panel.transform, "この階層へ挑む",
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
@@ -163,6 +166,11 @@ namespace WitchTower.Home
             ClearChildren(dungeonListRoot);
             dungeonCardFrames.Clear();
             IReadOnlyList<BattleDungeonDefinition> dungeons = BattleDungeonCatalog.Dungeons;
+            const int columns = 2;
+            const float cardWidth = 392f;
+            const float cardHeight = 194f;
+            const float columnGap = 26f;
+            const float rowGap = 22f;
             for (int i = 0; i < dungeons.Count; i += 1)
             {
                 BattleDungeonDefinition dungeon = dungeons[i];
@@ -171,8 +179,12 @@ namespace WitchTower.Home
                 cardRect.anchorMin = new Vector2(0.5f, 1f);
                 cardRect.anchorMax = new Vector2(0.5f, 1f);
                 cardRect.pivot = new Vector2(0.5f, 1f);
-                cardRect.anchoredPosition = new Vector2(0f, -i * 258f);
-                cardRect.sizeDelta = new Vector2(790f, 232f);
+                int row = i / columns;
+                int column = i % columns;
+                float x = (column - 0.5f) * (cardWidth + columnGap);
+                float y = -row * (cardHeight + rowGap);
+                cardRect.anchoredPosition = new Vector2(x, y);
+                cardRect.sizeDelta = new Vector2(cardWidth, cardHeight);
 
                 Image hitArea = card.AddComponent<Image>();
                 hitArea.color = new Color(1f, 1f, 1f, 0.001f);
@@ -181,23 +193,20 @@ namespace WitchTower.Home
                 string capturedDungeonId = dungeon.DungeonId;
                 button.onClick.AddListener(() => SelectDungeon(capturedDungeonId));
 
+                Image art = CreateImage("Art", card.transform, LoadSprite(dungeon.CardResourcePath),
+                    Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(-14f, -14f), false);
+                art.raycastTarget = false;
+
                 Image frame = CreateImage("Frame", card.transform, null,
                     Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, false);
-                frame.color = new Color(0.03f, 0.045f, 0.07f, 0.78f);
+                frame.sprite = LoadSprite(DungeonCardFramePath);
+                frame.color = new Color(0.70f, 0.78f, 0.92f, 0.74f);
                 frame.raycastTarget = false;
                 dungeonCardFrames.Add(frame);
 
-                Image art = CreateImage("Art", card.transform, LoadSprite(dungeon.CardResourcePath),
-                    Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(-18f, -18f), true);
-                art.raycastTarget = false;
-
-                CreateText("DungeonName", card.transform, dungeon.DungeonName, 34, FontStyle.Bold,
+                CreateText("DungeonName", card.transform, dungeon.DungeonName, 23, FontStyle.Bold,
                     TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                    new Vector2(0f, 1f), new Vector2(42f, -30f), new Vector2(-84f, 42f));
-
-                CreateText("DungeonMeta", card.transform, $"全{dungeon.Floors.Count}階層 / クラス1敵のみ", 18, FontStyle.Bold,
-                    TextAnchor.MiddleLeft, new Color(1f, 0.86f, 0.54f), new Vector2(0f, 0f), new Vector2(1f, 0f),
-                    new Vector2(0f, 0f), new Vector2(42f, 28f), new Vector2(-84f, 32f));
+                    new Vector2(0f, 1f), new Vector2(24f, -18f), new Vector2(-48f, 34f));
             }
         }
 
@@ -213,8 +222,8 @@ namespace WitchTower.Home
                 rect.anchorMin = new Vector2(0f, 0.5f);
                 rect.anchorMax = new Vector2(0f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(84f + i * 164f, 0f);
-                rect.sizeDelta = new Vector2(142f, 142f);
+                rect.anchoredPosition = new Vector2(92f + i * 159f, 0f);
+                rect.sizeDelta = new Vector2(128f, 128f);
 
                 Image hitArea = node.AddComponent<Image>();
                 hitArea.color = new Color(1f, 1f, 1f, 0.001f);
@@ -228,7 +237,7 @@ namespace WitchTower.Home
                 visual.raycastTarget = false;
                 floorNodeImages.Add(visual);
 
-                Text label = CreateText("Label", node.transform, (i + 1).ToString(), 34, FontStyle.Bold,
+                Text label = CreateText("Label", node.transform, (i + 1).ToString(), 30, FontStyle.Bold,
                     TextAnchor.MiddleCenter, Color.white, Vector2.zero, Vector2.one,
                     new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
                 floorNodeLabels.Add(label);
@@ -266,13 +275,13 @@ namespace WitchTower.Home
                 bool selected = i < BattleDungeonCatalog.Dungeons.Count &&
                     BattleDungeonCatalog.Dungeons[i].DungeonId == dungeon.DungeonId;
                 dungeonCardFrames[i].color = selected
-                    ? new Color(0.95f, 0.76f, 0.38f, 0.38f)
-                    : new Color(0.03f, 0.045f, 0.07f, 0.78f);
+                    ? new Color(1f, 0.86f, 0.44f, 1f)
+                    : new Color(0.70f, 0.78f, 0.92f, 0.74f);
             }
 
             if (dungeonDescriptionText != null)
             {
-                dungeonDescriptionText.text = dungeon.Description;
+                dungeonDescriptionText.text = string.Empty;
             }
 
             for (int i = 0; i < floorNodeImages.Count; i += 1)
@@ -282,25 +291,14 @@ namespace WitchTower.Home
                 floorNodeLabels[i].color = selected ? new Color(0.08f, 0.12f, 0.09f) : Color.white;
             }
 
-            BattleDungeonFloorDefinition floor = BattleDungeonCatalog.GetFloor(dungeon.DungeonId, selectedLocalFloor);
-            int globalFloor = BattleDungeonCatalog.ResolveGlobalFloor(dungeon.DungeonId, selectedLocalFloor);
-            MonsterDataSO enemyMonster = MasterDataManager.Instance != null && floor != null
-                ? MasterDataManager.Instance.GetMonsterData(floor.EnemyMonsterId)
-                : null;
-
             if (floorDescriptionText != null)
             {
-                floorDescriptionText.text = floor != null
-                    ? $"第{selectedLocalFloor}階層: {floor.FloorName} / 内部階層 {globalFloor}"
-                    : $"第{selectedLocalFloor}階層";
+                floorDescriptionText.text = string.Empty;
             }
 
             if (enemyPreviewText != null)
             {
-                int enemyCount = floor != null ? Mathf.Max(1, floor.EnemyCount) : 0;
-                enemyPreviewText.text = enemyMonster != null
-                    ? $"出現敵: {enemyMonster.monsterName}  クラス{Mathf.Max(1, enemyMonster.classRank)}  敵数{enemyCount}"
-                    : "出現敵: 未設定";
+                enemyPreviewText.text = string.Empty;
             }
         }
 

@@ -161,7 +161,17 @@ namespace WitchTower.Data
             }
 
             profile.OwnedMonsters.Remove(parent);
-            profile.PartyMonsterInstanceIds.Remove(parent.InstanceId);
+            if (profile.PartyMonsterInstanceIds != null)
+            {
+                for (int i = 0; i < profile.PartyMonsterInstanceIds.Count; i += 1)
+                {
+                    if (string.Equals(profile.PartyMonsterInstanceIds[i], parent.InstanceId, StringComparison.Ordinal))
+                    {
+                        profile.PartyMonsterInstanceIds[i] = string.Empty;
+                    }
+                }
+            }
+
             ClearEquipmentReference(profile, parent.EquippedWeaponInstanceId);
             ClearEquipmentReference(profile, parent.EquippedArmorInstanceId);
             ClearEquipmentReference(profile, parent.EquippedAccessoryInstanceId);
@@ -197,7 +207,7 @@ namespace WitchTower.Data
             OwnedMonsterData parentB,
             MonsterDataSO parentMonsterDataB)
         {
-            return "配合には親2体とも最大Lvが必要です。 " +
+            return "配合には親2体とも最大レベルが必要です。 " +
                 BuildLevelProgressText("親1", parentA, parentMonsterDataA) +
                 " / " +
                 BuildLevelProgressText("親2", parentB, parentMonsterDataB);

@@ -1,0 +1,5352 @@
+{
+  "ok": true,
+  "summary": {
+    "targetMonsterId": "monster_holy_armor_leon",
+    "sampleCount": 100,
+    "targetSampleCount": 100,
+    "transitions": [
+      {
+        "t": 0.099,
+        "pose": "move",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "targetEnemyIndex": 0,
+          "currentHp": 232,
+          "maxHp": 232,
+          "position": {
+            "x": 0.315,
+            "y": 0.496
+          },
+          "monsterId": "monster_holy_armor_leon",
+          "attackTimer": 0.294,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.085,
+          "searchReachAnchor": 0.78,
+          "combatRadius": 0.035,
+          "homePosition": {
+            "x": 0.24,
+            "y": 0.5
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        },
+        "enemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "targetAllyIndex": 1,
+          "currentHp": 424,
+          "maxHp": 424,
+          "position": {
+            "x": 0.998,
+            "y": 0.459
+          },
+          "enemyId": "enemy_class1_astral_eclipse_golem",
+          "attackTimer": 0,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.215,
+          "combatRadius": 0.034,
+          "homePosition": {
+            "x": 1.04,
+            "y": 0.46
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        }
+      },
+      {
+        "t": 0.8,
+        "pose": "idle",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": false,
+          "targetEnemyIndex": 0,
+          "currentHp": 232,
+          "maxHp": 232,
+          "position": {
+            "x": 0.49,
+            "y": 0.485
+          },
+          "monsterId": "monster_holy_armor_leon",
+          "attackTimer": 0.928,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.085,
+          "searchReachAnchor": 0.78,
+          "combatRadius": 0.035,
+          "homePosition": {
+            "x": 0.24,
+            "y": 0.5
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        },
+        "enemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "targetAllyIndex": 1,
+          "currentHp": 424,
+          "maxHp": 424,
+          "position": {
+            "x": 0.898,
+            "y": 0.456
+          },
+          "enemyId": "enemy_class1_astral_eclipse_golem",
+          "attackTimer": 0,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.215,
+          "combatRadius": 0.034,
+          "homePosition": {
+            "x": 1.04,
+            "y": 0.46
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        }
+      },
+      {
+        "t": 4.001,
+        "pose": "attack_engaged",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": false,
+          "targetEnemyIndex": 0,
+          "currentHp": 125,
+          "maxHp": 232,
+          "position": {
+            "x": 0.49,
+            "y": 0.488
+          },
+          "monsterId": "monster_holy_armor_leon",
+          "attackTimer": 0.928,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.085,
+          "searchReachAnchor": 0.78,
+          "combatRadius": 0.035,
+          "homePosition": {
+            "x": 0.24,
+            "y": 0.5
+          },
+          "closeCombatEngaged": true,
+          "attackVisualRemaining": 0
+        },
+        "enemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "targetAllyIndex": 4,
+          "currentHp": 368,
+          "maxHp": 424,
+          "position": {
+            "x": 0.835,
+            "y": 0.47
+          },
+          "enemyId": "enemy_class1_astral_eclipse_golem",
+          "attackTimer": 0,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.215,
+          "combatRadius": 0.034,
+          "homePosition": {
+            "x": 1.04,
+            "y": 0.46
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        }
+      },
+      {
+        "t": 4.301,
+        "pose": "attack_visual",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": false,
+          "targetEnemyIndex": 0,
+          "currentHp": 125,
+          "maxHp": 232,
+          "position": {
+            "x": 0.49,
+            "y": 0.493
+          },
+          "monsterId": "monster_holy_armor_leon",
+          "attackTimer": 0.074,
+          "attackMotionLockRemaining": 0.34,
+          "attackReachAnchor": 0.085,
+          "searchReachAnchor": 0.78,
+          "combatRadius": 0.035,
+          "homePosition": {
+            "x": 0.24,
+            "y": 0.5
+          },
+          "closeCombatEngaged": true,
+          "attackVisualRemaining": 0.517
+        },
+        "enemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "targetAllyIndex": 4,
+          "currentHp": 285,
+          "maxHp": 424,
+          "position": {
+            "x": 0.794,
+            "y": 0.483
+          },
+          "enemyId": "enemy_class1_astral_eclipse_golem",
+          "attackTimer": 0.203,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.215,
+          "combatRadius": 0.034,
+          "homePosition": {
+            "x": 1.04,
+            "y": 0.46
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        }
+      },
+      {
+        "t": 4.901,
+        "pose": "attack_engaged",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": false,
+          "targetEnemyIndex": 0,
+          "currentHp": 18,
+          "maxHp": 232,
+          "position": {
+            "x": 0.49,
+            "y": 0.5
+          },
+          "monsterId": "monster_holy_armor_leon",
+          "attackTimer": 0.672,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.085,
+          "searchReachAnchor": 0.78,
+          "combatRadius": 0.035,
+          "homePosition": {
+            "x": 0.24,
+            "y": 0.5
+          },
+          "closeCombatEngaged": true,
+          "attackVisualRemaining": 0
+        },
+        "enemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "targetAllyIndex": 4,
+          "currentHp": 285,
+          "maxHp": 424,
+          "position": {
+            "x": 0.749,
+            "y": 0.485
+          },
+          "enemyId": "enemy_class1_astral_eclipse_golem",
+          "attackTimer": 0.8,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.215,
+          "combatRadius": 0.034,
+          "homePosition": {
+            "x": 1.04,
+            "y": 0.46
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        }
+      },
+      {
+        "t": 5.2,
+        "pose": "attack_visual",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": false,
+          "targetEnemyIndex": 0,
+          "currentHp": 18,
+          "maxHp": 232,
+          "position": {
+            "x": 0.49,
+            "y": 0.485
+          },
+          "monsterId": "monster_holy_armor_leon",
+          "attackTimer": 0.015,
+          "attackMotionLockRemaining": 0.34,
+          "attackReachAnchor": 0.085,
+          "searchReachAnchor": 0.78,
+          "combatRadius": 0.035,
+          "homePosition": {
+            "x": 0.24,
+            "y": 0.5
+          },
+          "closeCombatEngaged": true,
+          "attackVisualRemaining": 0.519
+        },
+        "enemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "targetAllyIndex": 4,
+          "currentHp": 202,
+          "maxHp": 424,
+          "position": {
+            "x": 0.736,
+            "y": 0.451
+          },
+          "enemyId": "enemy_class1_astral_eclipse_golem",
+          "attackTimer": 1.101,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.215,
+          "combatRadius": 0.034,
+          "homePosition": {
+            "x": 1.04,
+            "y": 0.46
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        }
+      },
+      {
+        "t": 5.701,
+        "pose": "idle",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": false,
+          "moving": false,
+          "targetEnemyIndex": -1,
+          "currentHp": 0,
+          "maxHp": 232,
+          "position": {
+            "x": 0.49,
+            "y": 0.492
+          },
+          "monsterId": "monster_holy_armor_leon",
+          "attackTimer": 0,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.085,
+          "searchReachAnchor": 0.78,
+          "combatRadius": 0.035,
+          "homePosition": {
+            "x": 0.24,
+            "y": 0.5
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        },
+        "enemy": null
+      }
+    ],
+    "firstIdle": {
+      "t": 0.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 5,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.898,
+          "y": 0.456
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    "firstAttackEngaged": {
+      "t": 4.001,
+      "flowState": "Fighting",
+      "activeEnemyCount": 14,
+      "engagedEnemyCount": 3,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.488
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.835,
+          "y": 0.47
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    "firstAttackVisual": {
+      "t": 4.301,
+      "flowState": "Fighting",
+      "activeEnemyCount": 15,
+      "engagedEnemyCount": 8,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.074,
+        "attackMotionLockRemaining": 0.34,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.517
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 285,
+        "maxHp": 424,
+        "position": {
+          "x": 0.794,
+          "y": 0.483
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.203,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    "idleToAttackWindows": [
+      {
+        "idleStartT": 0.8,
+        "attackT": 4.001,
+        "duration": 3.2010000000000005,
+        "idleStart": {
+          "t": 0.8,
+          "flowState": "Fighting",
+          "activeEnemyCount": 5,
+          "engagedEnemyCount": 0,
+          "pose": "idle",
+          "ally": {
+            "index": 4,
+            "hasRuntime": true,
+            "alive": true,
+            "moving": false,
+            "targetEnemyIndex": 0,
+            "currentHp": 232,
+            "maxHp": 232,
+            "position": {
+              "x": 0.49,
+              "y": 0.485
+            },
+            "monsterId": "monster_holy_armor_leon",
+            "attackTimer": 0.928,
+            "attackMotionLockRemaining": 0,
+            "attackReachAnchor": 0.085,
+            "searchReachAnchor": 0.78,
+            "combatRadius": 0.035,
+            "homePosition": {
+              "x": 0.24,
+              "y": 0.5
+            },
+            "closeCombatEngaged": false,
+            "attackVisualRemaining": 0
+          },
+          "targetEnemy": {
+            "index": 0,
+            "hasRuntime": true,
+            "alive": true,
+            "moving": true,
+            "targetAllyIndex": 1,
+            "currentHp": 424,
+            "maxHp": 424,
+            "position": {
+              "x": 0.898,
+              "y": 0.456
+            },
+            "enemyId": "enemy_class1_astral_eclipse_golem",
+            "attackTimer": 0,
+            "attackMotionLockRemaining": 0,
+            "attackReachAnchor": 0.215,
+            "combatRadius": 0.034,
+            "homePosition": {
+              "x": 1.04,
+              "y": 0.46
+            },
+            "closeCombatEngaged": false,
+            "attackVisualRemaining": 0
+          }
+        },
+        "attackStart": {
+          "t": 4.001,
+          "flowState": "Fighting",
+          "activeEnemyCount": 14,
+          "engagedEnemyCount": 3,
+          "pose": "attack_engaged",
+          "ally": {
+            "index": 4,
+            "hasRuntime": true,
+            "alive": true,
+            "moving": false,
+            "targetEnemyIndex": 0,
+            "currentHp": 125,
+            "maxHp": 232,
+            "position": {
+              "x": 0.49,
+              "y": 0.488
+            },
+            "monsterId": "monster_holy_armor_leon",
+            "attackTimer": 0.928,
+            "attackMotionLockRemaining": 0,
+            "attackReachAnchor": 0.085,
+            "searchReachAnchor": 0.78,
+            "combatRadius": 0.035,
+            "homePosition": {
+              "x": 0.24,
+              "y": 0.5
+            },
+            "closeCombatEngaged": true,
+            "attackVisualRemaining": 0
+          },
+          "targetEnemy": {
+            "index": 0,
+            "hasRuntime": true,
+            "alive": true,
+            "moving": true,
+            "targetAllyIndex": 4,
+            "currentHp": 368,
+            "maxHp": 424,
+            "position": {
+              "x": 0.835,
+              "y": 0.47
+            },
+            "enemyId": "enemy_class1_astral_eclipse_golem",
+            "attackTimer": 0,
+            "attackMotionLockRemaining": 0,
+            "attackReachAnchor": 0.215,
+            "combatRadius": 0.034,
+            "homePosition": {
+              "x": 1.04,
+              "y": 0.46
+            },
+            "closeCombatEngaged": false,
+            "attackVisualRemaining": 0
+          }
+        }
+      }
+    ],
+    "longestIdleToAttackWindow": {
+      "idleStartT": 0.8,
+      "attackT": 4.001,
+      "duration": 3.2010000000000005,
+      "idleStart": {
+        "t": 0.8,
+        "flowState": "Fighting",
+        "activeEnemyCount": 5,
+        "engagedEnemyCount": 0,
+        "pose": "idle",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": false,
+          "targetEnemyIndex": 0,
+          "currentHp": 232,
+          "maxHp": 232,
+          "position": {
+            "x": 0.49,
+            "y": 0.485
+          },
+          "monsterId": "monster_holy_armor_leon",
+          "attackTimer": 0.928,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.085,
+          "searchReachAnchor": 0.78,
+          "combatRadius": 0.035,
+          "homePosition": {
+            "x": 0.24,
+            "y": 0.5
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        },
+        "targetEnemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "targetAllyIndex": 1,
+          "currentHp": 424,
+          "maxHp": 424,
+          "position": {
+            "x": 0.898,
+            "y": 0.456
+          },
+          "enemyId": "enemy_class1_astral_eclipse_golem",
+          "attackTimer": 0,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.215,
+          "combatRadius": 0.034,
+          "homePosition": {
+            "x": 1.04,
+            "y": 0.46
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        }
+      },
+      "attackStart": {
+        "t": 4.001,
+        "flowState": "Fighting",
+        "activeEnemyCount": 14,
+        "engagedEnemyCount": 3,
+        "pose": "attack_engaged",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": false,
+          "targetEnemyIndex": 0,
+          "currentHp": 125,
+          "maxHp": 232,
+          "position": {
+            "x": 0.49,
+            "y": 0.488
+          },
+          "monsterId": "monster_holy_armor_leon",
+          "attackTimer": 0.928,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.085,
+          "searchReachAnchor": 0.78,
+          "combatRadius": 0.035,
+          "homePosition": {
+            "x": 0.24,
+            "y": 0.5
+          },
+          "closeCombatEngaged": true,
+          "attackVisualRemaining": 0
+        },
+        "targetEnemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "targetAllyIndex": 4,
+          "currentHp": 368,
+          "maxHp": 424,
+          "position": {
+            "x": 0.835,
+            "y": 0.47
+          },
+          "enemyId": "enemy_class1_astral_eclipse_golem",
+          "attackTimer": 0,
+          "attackMotionLockRemaining": 0,
+          "attackReachAnchor": 0.215,
+          "combatRadius": 0.034,
+          "homePosition": {
+            "x": 1.04,
+            "y": 0.46
+          },
+          "closeCombatEngaged": false,
+          "attackVisualRemaining": 0
+        }
+      }
+    }
+  },
+  "samples": [
+    {
+      "t": 0.099,
+      "flowState": "Fighting",
+      "activeEnemyCount": 3,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.315,
+          "y": 0.496
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.294,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.998,
+          "y": 0.459
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 0.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 4,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.34,
+          "y": 0.494
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.393,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.984,
+          "y": 0.459
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 0.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 4,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.366,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.494,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.97,
+          "y": 0.459
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 0.4,
+      "flowState": "Fighting",
+      "activeEnemyCount": 4,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.391,
+          "y": 0.492
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.594,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.955,
+          "y": 0.458
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 0.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 4,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.417,
+          "y": 0.49
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.694,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.941,
+          "y": 0.458
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 0.6,
+      "flowState": "Fighting",
+      "activeEnemyCount": 5,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.442,
+          "y": 0.489
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.794,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.927,
+          "y": 0.457
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 0.7,
+      "flowState": "Fighting",
+      "activeEnemyCount": 5,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.468,
+          "y": 0.487
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.893,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.912,
+          "y": 0.457
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 0.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 5,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.898,
+          "y": 0.456
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 0.899,
+      "flowState": "Fighting",
+      "activeEnemyCount": 6,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.456
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.0,
+      "flowState": "Fighting",
+      "activeEnemyCount": 6,
+      "engagedEnemyCount": 2,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.87,
+          "y": 0.455
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.1,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.1,
+      "flowState": "Fighting",
+      "activeEnemyCount": 6,
+      "engagedEnemyCount": 3,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.867,
+          "y": 0.454
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.203,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.199,
+      "flowState": "Fighting",
+      "activeEnemyCount": 6,
+      "engagedEnemyCount": 3,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.484
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.881,
+          "y": 0.454
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.3,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 7,
+      "engagedEnemyCount": 4,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.484
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.895,
+          "y": 0.454
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.399,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.4,
+      "flowState": "Fighting",
+      "activeEnemyCount": 7,
+      "engagedEnemyCount": 4,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.484
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.454
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.5,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.499,
+      "flowState": "Fighting",
+      "activeEnemyCount": 7,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.484
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.454
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.6,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.601,
+      "flowState": "Fighting",
+      "activeEnemyCount": 8,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.484
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.894,
+          "y": 0.464
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.699,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 8,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.488
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.8,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 8,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.491
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.879,
+          "y": 0.48
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.9,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 1.9,
+      "flowState": "Fighting",
+      "activeEnemyCount": 8,
+      "engagedEnemyCount": 6,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.889,
+          "y": 0.47
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.0,
+      "flowState": "Fighting",
+      "activeEnemyCount": 9,
+      "engagedEnemyCount": 6,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.49
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.899,
+          "y": 0.459
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.1,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.1,
+      "flowState": "Fighting",
+      "activeEnemyCount": 9,
+      "engagedEnemyCount": 6,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.486
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.2,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 9,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.454
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.299,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 10,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.484
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.894,
+          "y": 0.464
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.4,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.4,
+      "flowState": "Fighting",
+      "activeEnemyCount": 10,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.488
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.5,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 10,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.491
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.895,
+          "y": 0.465
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.6,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.601,
+      "flowState": "Fighting",
+      "activeEnemyCount": 10,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.488
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.7,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 11,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 396,
+        "maxHp": 424,
+        "position": {
+          "x": 0.894,
+          "y": 0.465
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.8,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.801,
+      "flowState": "Fighting",
+      "activeEnemyCount": 11,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.488
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.9,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 2.9,
+      "flowState": "Fighting",
+      "activeEnemyCount": 11,
+      "engagedEnemyCount": 9,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.492
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 1,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.894,
+          "y": 0.465
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 2,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 3.001,
+      "flowState": "Fighting",
+      "activeEnemyCount": 12,
+      "engagedEnemyCount": 9,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.488
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 2.1,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 3.1,
+      "flowState": "Fighting",
+      "activeEnemyCount": 12,
+      "engagedEnemyCount": 9,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.001,
+        "attackMotionLockRemaining": 0.34,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0.52
+      }
+    },
+    {
+      "t": 3.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 12,
+      "engagedEnemyCount": 9,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.101,
+        "attackMotionLockRemaining": 0.24,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0.42
+      }
+    },
+    {
+      "t": 3.301,
+      "flowState": "Fighting",
+      "activeEnemyCount": 12,
+      "engagedEnemyCount": 9,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 1,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.2,
+        "attackMotionLockRemaining": 0.14,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0.32
+      }
+    },
+    {
+      "t": 3.401,
+      "flowState": "Fighting",
+      "activeEnemyCount": 13,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 4,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.301,
+        "attackMotionLockRemaining": 0.04,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0.219
+      }
+    },
+    {
+      "t": 3.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 13,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 4,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0.12
+      }
+    },
+    {
+      "t": 3.6,
+      "flowState": "Fighting",
+      "activeEnemyCount": 13,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.89,
+          "y": 0.453
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0.02
+      }
+    },
+    {
+      "t": 3.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 14,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.484
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.876,
+          "y": 0.457
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 3.801,
+      "flowState": "Fighting",
+      "activeEnemyCount": 14,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.863,
+          "y": 0.461
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 3.901,
+      "flowState": "Fighting",
+      "activeEnemyCount": 14,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.487
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.849,
+          "y": 0.465
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.001,
+      "flowState": "Fighting",
+      "activeEnemyCount": 14,
+      "engagedEnemyCount": 3,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.488
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.835,
+          "y": 0.47
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.101,
+      "flowState": "Fighting",
+      "activeEnemyCount": 15,
+      "engagedEnemyCount": 5,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.49
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 368,
+        "maxHp": 424,
+        "position": {
+          "x": 0.822,
+          "y": 0.474
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 15,
+      "engagedEnemyCount": 7,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.491
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.928,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 324,
+        "maxHp": 424,
+        "position": {
+          "x": 0.808,
+          "y": 0.478
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.1,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.301,
+      "flowState": "Fighting",
+      "activeEnemyCount": 15,
+      "engagedEnemyCount": 8,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.074,
+        "attackMotionLockRemaining": 0.34,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.517
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 285,
+        "maxHp": 424,
+        "position": {
+          "x": 0.794,
+          "y": 0.483
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.203,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.401,
+      "flowState": "Fighting",
+      "activeEnemyCount": 16,
+      "engagedEnemyCount": 8,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.172,
+        "attackMotionLockRemaining": 0.242,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.419
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 285,
+        "maxHp": 424,
+        "position": {
+          "x": 0.781,
+          "y": 0.487
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.301,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 16,
+      "engagedEnemyCount": 8,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.272,
+        "attackMotionLockRemaining": 0.142,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.32
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 285,
+        "maxHp": 424,
+        "position": {
+          "x": 0.767,
+          "y": 0.491
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.4,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.601,
+      "flowState": "Fighting",
+      "activeEnemyCount": 16,
+      "engagedEnemyCount": 8,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.371,
+        "attackMotionLockRemaining": 0.043,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.22
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 285,
+        "maxHp": 424,
+        "position": {
+          "x": 0.754,
+          "y": 0.496
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.5,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 16,
+      "engagedEnemyCount": 8,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.471,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.12
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 4,
+        "currentHp": 285,
+        "maxHp": 424,
+        "position": {
+          "x": 0.749,
+          "y": 0.498
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.6,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.801,
+      "flowState": "Fighting",
+      "activeEnemyCount": 17,
+      "engagedEnemyCount": 9,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.499
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.571,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.02
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetAllyIndex": 4,
+        "currentHp": 285,
+        "maxHp": 424,
+        "position": {
+          "x": 0.749,
+          "y": 0.5
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.7,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 4.901,
+      "flowState": "Fighting",
+      "activeEnemyCount": 17,
+      "engagedEnemyCount": 9,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.672,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 285,
+        "maxHp": 424,
+        "position": {
+          "x": 0.749,
+          "y": 0.485
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.8,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 5.001,
+      "flowState": "Fighting",
+      "activeEnemyCount": 17,
+      "engagedEnemyCount": 10,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.495
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.772,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 285,
+        "maxHp": 424,
+        "position": {
+          "x": 0.749,
+          "y": 0.471
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 0.9,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 5.101,
+      "flowState": "Fighting",
+      "activeEnemyCount": 18,
+      "engagedEnemyCount": 10,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.49
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.871,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 241,
+        "maxHp": 424,
+        "position": {
+          "x": 0.749,
+          "y": 0.457
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 5.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 18,
+      "engagedEnemyCount": 11,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.015,
+        "attackMotionLockRemaining": 0.34,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.519
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 202,
+        "maxHp": 424,
+        "position": {
+          "x": 0.736,
+          "y": 0.451
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.101,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 5.301,
+      "flowState": "Fighting",
+      "activeEnemyCount": 18,
+      "engagedEnemyCount": 11,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.114,
+        "attackMotionLockRemaining": 0.241,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.42
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 202,
+        "maxHp": 424,
+        "position": {
+          "x": 0.727,
+          "y": 0.462
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.2,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 5.401,
+      "flowState": "Fighting",
+      "activeEnemyCount": 18,
+      "engagedEnemyCount": 11,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.215,
+        "attackMotionLockRemaining": 0.14,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.32
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 202,
+        "maxHp": 424,
+        "position": {
+          "x": 0.735,
+          "y": 0.474
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.3,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 5.501,
+      "flowState": "Fighting",
+      "activeEnemyCount": 19,
+      "engagedEnemyCount": 11,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.315,
+        "attackMotionLockRemaining": 0.041,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.22
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 202,
+        "maxHp": 424,
+        "position": {
+          "x": 0.743,
+          "y": 0.486
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.4,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 5.601,
+      "flowState": "Fighting",
+      "activeEnemyCount": 19,
+      "engagedEnemyCount": 11,
+      "pose": "attack_visual",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.485
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0.415,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": true,
+        "attackVisualRemaining": 0.12
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "targetAllyIndex": 4,
+        "currentHp": 202,
+        "maxHp": 424,
+        "position": {
+          "x": 0.732,
+          "y": 0.476
+        },
+        "enemyId": "enemy_class1_astral_eclipse_golem",
+        "attackTimer": 1.5,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.215,
+        "combatRadius": 0.034,
+        "homePosition": {
+          "x": 1.04,
+          "y": 0.46
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      }
+    },
+    {
+      "t": 5.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 19,
+      "engagedEnemyCount": 15,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.49,
+          "y": 0.492
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.801,
+      "flowState": "Fighting",
+      "activeEnemyCount": 19,
+      "engagedEnemyCount": 15,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.478,
+          "y": 0.492
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.901,
+      "flowState": "Fighting",
+      "activeEnemyCount": 20,
+      "engagedEnemyCount": 15,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.467,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.001,
+      "flowState": "Fighting",
+      "activeEnemyCount": 20,
+      "engagedEnemyCount": 14,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.455,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.101,
+      "flowState": "Fighting",
+      "activeEnemyCount": 20,
+      "engagedEnemyCount": 15,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.444,
+          "y": 0.493
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.202,
+      "flowState": "Fighting",
+      "activeEnemyCount": 20,
+      "engagedEnemyCount": 3,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.432,
+          "y": 0.494
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.301,
+      "flowState": "Fighting",
+      "activeEnemyCount": 21,
+      "engagedEnemyCount": 3,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.421,
+          "y": 0.494
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.402,
+      "flowState": "Fighting",
+      "activeEnemyCount": 21,
+      "engagedEnemyCount": 3,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.409,
+          "y": 0.494
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.501,
+      "flowState": "Fighting",
+      "activeEnemyCount": 21,
+      "engagedEnemyCount": 4,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.397,
+          "y": 0.495
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.601,
+      "flowState": "Fighting",
+      "activeEnemyCount": 21,
+      "engagedEnemyCount": 4,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.386,
+          "y": 0.495
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 21,
+      "engagedEnemyCount": 4,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.374,
+          "y": 0.496
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 22,
+      "engagedEnemyCount": 4,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.363,
+          "y": 0.496
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.9,
+      "flowState": "Fighting",
+      "activeEnemyCount": 22,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.351,
+          "y": 0.496
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.0,
+      "flowState": "Fighting",
+      "activeEnemyCount": 22,
+      "engagedEnemyCount": 4,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.34,
+          "y": 0.497
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.104,
+      "flowState": "Fighting",
+      "activeEnemyCount": 22,
+      "engagedEnemyCount": 6,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.328,
+          "y": 0.497
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.201,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.316,
+          "y": 0.497
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.301,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.305,
+          "y": 0.498
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.402,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.293,
+          "y": 0.498
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.282,
+          "y": 0.499
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.601,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.271,
+          "y": 0.499
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 24,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.259,
+          "y": 0.499
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.801,
+      "flowState": "Fighting",
+      "activeEnemyCount": 24,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.247,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.901,
+      "flowState": "Fighting",
+      "activeEnemyCount": 24,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.001,
+      "flowState": "Fighting",
+      "activeEnemyCount": 24,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.102,
+      "flowState": "Fighting",
+      "activeEnemyCount": 24,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.201,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.301,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.401,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.502,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.601,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.899,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.0,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.1,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.4,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.501,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.601,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.801,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.905,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 10.001,
+      "flowState": "Fighting",
+      "activeEnemyCount": 25,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "monsterId": "monster_holy_armor_leon",
+        "attackTimer": 0,
+        "attackMotionLockRemaining": 0,
+        "attackReachAnchor": 0.085,
+        "searchReachAnchor": 0.78,
+        "combatRadius": 0.035,
+        "homePosition": {
+          "x": 0.24,
+          "y": 0.5
+        },
+        "closeCombatEngaged": false,
+        "attackVisualRemaining": 0
+      },
+      "targetEnemy": null
+    }
+  ]
+}

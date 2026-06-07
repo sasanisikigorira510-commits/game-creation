@@ -19,7 +19,7 @@ MonoBehaviour:
   classRank: 4
   rarity: 4
   element: 4
-  rangeType: 1
+  rangeType: 0
   damageType: 1
   baseStats:
     maxHp: 170
@@ -28,8 +28,8 @@ MonoBehaviour:
     defense: 36
     magicDefense: 66
     attackSpeed: 0.86
-  attackRange: 2.6
-  normalAttackTargetCount: 3
+  attackRange: 1.28
+  normalAttackTargetCount: 2
   normalAttackAppliesKnockback: 0
   normalAttackKnockbackDuration: 0.18
   plusValueCap: 99
@@ -59,5 +59,5 @@ MonoBehaviour:
   battleMoveFacing: 0
   battleAttackResourcePath: MonsterBattle/mon_seraph_michael_attack
   battleAttackFacing: 0
-  battleVisualScale: 1.14
-  description: "天使系の神話級個体。聖なる光で敵を浄化する。"
+  battleVisualScale: 1.2
+  description: "天使系の神話級個体。聖剣と聖なる光で前線を切り開く。"

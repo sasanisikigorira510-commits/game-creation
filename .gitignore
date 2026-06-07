@@ -4,6 +4,8 @@ gcm-diagnose.log
 
 # Local caches and temporary work files
 .dotnet_cli_home/
+__pycache__/
+*.pyc
 temp/
 tmp_*.png
 tmp/swift-module-cache/

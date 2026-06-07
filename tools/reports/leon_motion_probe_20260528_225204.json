@@ -1,0 +1,2963 @@
+{
+  "ok": true,
+  "summary": {
+    "targetMonsterId": "monster_holy_armor_leon",
+    "targetAllyIndexFallback": 4,
+    "sampleCount": 101,
+    "targetSampleCount": 101,
+    "transitions": [
+      {
+        "t": 0.099,
+        "pose": "move",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "closeCombatEngaged": false,
+          "targetEnemyIndex": 0,
+          "currentHp": 232,
+          "maxHp": 232,
+          "position": {
+            "x": 0.315,
+            "y": 0.498
+          }
+        },
+        "enemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "closeCombatEngaged": false,
+          "targetAllyIndex": 1,
+          "currentHp": 424,
+          "maxHp": 424,
+          "position": {
+            "x": 0.998,
+            "y": 0.459
+          }
+        }
+      },
+      {
+        "t": 0.999,
+        "pose": "attack_engaged",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "closeCombatEngaged": true,
+          "targetEnemyIndex": 0,
+          "currentHp": 232,
+          "maxHp": 232,
+          "position": {
+            "x": 0.544,
+            "y": 0.489
+          }
+        },
+        "enemy": {
+          "index": 0,
+          "hasRuntime": true,
+          "alive": true,
+          "moving": true,
+          "closeCombatEngaged": false,
+          "targetAllyIndex": 1,
+          "currentHp": 424,
+          "maxHp": 424,
+          "position": {
+            "x": 0.87,
+            "y": 0.455
+          }
+        }
+      },
+      {
+        "t": 4.599,
+        "pose": "idle",
+        "ally": {
+          "index": 4,
+          "hasRuntime": true,
+          "alive": false,
+          "moving": false,
+          "closeCombatEngaged": false,
+          "targetEnemyIndex": -1,
+          "currentHp": 0,
+          "maxHp": 232,
+          "position": {
+            "x": 0.66,
+            "y": 0.493
+          }
+        },
+        "enemy": null
+      }
+    ],
+    "firstIdle": {
+      "t": 4.599,
+      "flowState": "Fighting",
+      "activeEnemyCount": 16,
+      "engagedEnemyCount": 2,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.493
+        }
+      },
+      "targetEnemy": null
+    },
+    "firstAttackEngaged": {
+      "t": 0.999,
+      "flowState": "Fighting",
+      "activeEnemyCount": 6,
+      "engagedEnemyCount": 2,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.544,
+          "y": 0.489
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.87,
+          "y": 0.455
+        }
+      }
+    },
+    "firstAttackVisual": null,
+    "idleToAttackWindows": [],
+    "longestIdleToAttackWindow": null
+  },
+  "samples": [
+    {
+      "t": 0.099,
+      "flowState": "Fighting",
+      "activeEnemyCount": 3,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.315,
+          "y": 0.498
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.998,
+          "y": 0.459
+        }
+      }
+    },
+    {
+      "t": 0.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 4,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.34,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.984,
+          "y": 0.459
+        }
+      }
+    },
+    {
+      "t": 0.299,
+      "flowState": "Fighting",
+      "activeEnemyCount": 4,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.366,
+          "y": 0.496
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.97,
+          "y": 0.459
+        }
+      }
+    },
+    {
+      "t": 0.399,
+      "flowState": "Fighting",
+      "activeEnemyCount": 4,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.391,
+          "y": 0.495
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.955,
+          "y": 0.458
+        }
+      }
+    },
+    {
+      "t": 0.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 4,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.417,
+          "y": 0.494
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.941,
+          "y": 0.458
+        }
+      }
+    },
+    {
+      "t": 0.599,
+      "flowState": "Fighting",
+      "activeEnemyCount": 5,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.442,
+          "y": 0.493
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.927,
+          "y": 0.457
+        }
+      }
+    },
+    {
+      "t": 0.699,
+      "flowState": "Fighting",
+      "activeEnemyCount": 5,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.468,
+          "y": 0.492
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.913,
+          "y": 0.457
+        }
+      }
+    },
+    {
+      "t": 0.799,
+      "flowState": "Fighting",
+      "activeEnemyCount": 5,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.493,
+          "y": 0.491
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.898,
+          "y": 0.456
+        }
+      }
+    },
+    {
+      "t": 0.899,
+      "flowState": "Fighting",
+      "activeEnemyCount": 6,
+      "engagedEnemyCount": 0,
+      "pose": "move",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.519,
+          "y": 0.49
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.456
+        }
+      }
+    },
+    {
+      "t": 0.999,
+      "flowState": "Fighting",
+      "activeEnemyCount": 6,
+      "engagedEnemyCount": 2,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.544,
+          "y": 0.489
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 424,
+        "maxHp": 424,
+        "position": {
+          "x": 0.87,
+          "y": 0.455
+        }
+      }
+    },
+    {
+      "t": 1.099,
+      "flowState": "Fighting",
+      "activeEnemyCount": 6,
+      "engagedEnemyCount": 4,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.57,
+          "y": 0.488
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 385,
+        "maxHp": 424,
+        "position": {
+          "x": 0.866,
+          "y": 0.454
+        }
+      }
+    },
+    {
+      "t": 1.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 6,
+      "engagedEnemyCount": 4,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.57,
+          "y": 0.488
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 385,
+        "maxHp": 424,
+        "position": {
+          "x": 0.88,
+          "y": 0.454
+        }
+      }
+    },
+    {
+      "t": 1.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 7,
+      "engagedEnemyCount": 5,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.57,
+          "y": 0.488
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 385,
+        "maxHp": 424,
+        "position": {
+          "x": 0.895,
+          "y": 0.454
+        }
+      }
+    },
+    {
+      "t": 1.399,
+      "flowState": "Fighting",
+      "activeEnemyCount": 7,
+      "engagedEnemyCount": 5,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.57,
+          "y": 0.488
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 385,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.454
+        }
+      }
+    },
+    {
+      "t": 1.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 7,
+      "engagedEnemyCount": 5,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.57,
+          "y": 0.488
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 385,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.454
+        }
+      }
+    },
+    {
+      "t": 1.6,
+      "flowState": "Fighting",
+      "activeEnemyCount": 8,
+      "engagedEnemyCount": 5,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.595,
+          "y": 0.487
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 385,
+        "maxHp": 424,
+        "position": {
+          "x": 0.894,
+          "y": 0.464
+        }
+      }
+    },
+    {
+      "t": 1.7,
+      "flowState": "Fighting",
+      "activeEnemyCount": 8,
+      "engagedEnemyCount": 6,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.621,
+          "y": 0.487
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 357,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        }
+      }
+    },
+    {
+      "t": 1.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 8,
+      "engagedEnemyCount": 6,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.646,
+          "y": 0.49
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 357,
+        "maxHp": 424,
+        "position": {
+          "x": 0.879,
+          "y": 0.48
+        }
+      }
+    },
+    {
+      "t": 1.899,
+      "flowState": "Fighting",
+      "activeEnemyCount": 8,
+      "engagedEnemyCount": 7,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.493
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 357,
+        "maxHp": 424,
+        "position": {
+          "x": 0.889,
+          "y": 0.47
+        }
+      }
+    },
+    {
+      "t": 1.999,
+      "flowState": "Fighting",
+      "activeEnemyCount": 9,
+      "engagedEnemyCount": 7,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.49
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.899,
+          "y": 0.46
+        }
+      }
+    },
+    {
+      "t": 2.1,
+      "flowState": "Fighting",
+      "activeEnemyCount": 9,
+      "engagedEnemyCount": 7,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.49
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        }
+      }
+    },
+    {
+      "t": 2.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 9,
+      "engagedEnemyCount": 8,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.49
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.454
+        }
+      }
+    },
+    {
+      "t": 2.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 10,
+      "engagedEnemyCount": 8,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.49
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.894,
+          "y": 0.464
+        }
+      }
+    },
+    {
+      "t": 2.399,
+      "flowState": "Fighting",
+      "activeEnemyCount": 10,
+      "engagedEnemyCount": 9,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.49
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        }
+      }
+    },
+    {
+      "t": 2.499,
+      "flowState": "Fighting",
+      "activeEnemyCount": 10,
+      "engagedEnemyCount": 9,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.485
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.454
+        }
+      }
+    },
+    {
+      "t": 2.599,
+      "flowState": "Fighting",
+      "activeEnemyCount": 10,
+      "engagedEnemyCount": 9,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.484
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.894,
+          "y": 0.464
+        }
+      }
+    },
+    {
+      "t": 2.7,
+      "flowState": "Fighting",
+      "activeEnemyCount": 11,
+      "engagedEnemyCount": 9,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.488
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        }
+      }
+    },
+    {
+      "t": 2.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 11,
+      "engagedEnemyCount": 9,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.491
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.895,
+          "y": 0.465
+        }
+      }
+    },
+    {
+      "t": 2.9,
+      "flowState": "Fighting",
+      "activeEnemyCount": 11,
+      "engagedEnemyCount": 10,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.488
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 318,
+        "maxHp": 424,
+        "position": {
+          "x": 0.904,
+          "y": 0.455
+        }
+      }
+    },
+    {
+      "t": 3.001,
+      "flowState": "Fighting",
+      "activeEnemyCount": 12,
+      "engagedEnemyCount": 10,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.485
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 279,
+        "maxHp": 424,
+        "position": {
+          "x": 0.894,
+          "y": 0.465
+        }
+      }
+    },
+    {
+      "t": 3.099,
+      "flowState": "Fighting",
+      "activeEnemyCount": 12,
+      "engagedEnemyCount": 10,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 232,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.485
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 251,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        }
+      }
+    },
+    {
+      "t": 3.2,
+      "flowState": "Fighting",
+      "activeEnemyCount": 12,
+      "engagedEnemyCount": 10,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.485
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 251,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        }
+      }
+    },
+    {
+      "t": 3.299,
+      "flowState": "Fighting",
+      "activeEnemyCount": 12,
+      "engagedEnemyCount": 10,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.485
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 1,
+        "currentHp": 251,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        }
+      }
+    },
+    {
+      "t": 3.399,
+      "flowState": "Fighting",
+      "activeEnemyCount": 13,
+      "engagedEnemyCount": 11,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.485
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 251,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        }
+      }
+    },
+    {
+      "t": 3.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 13,
+      "engagedEnemyCount": 11,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.492
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 251,
+        "maxHp": 424,
+        "position": {
+          "x": 0.884,
+          "y": 0.475
+        }
+      }
+    },
+    {
+      "t": 3.599,
+      "flowState": "Fighting",
+      "activeEnemyCount": 13,
+      "engagedEnemyCount": 11,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.492
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 251,
+        "maxHp": 424,
+        "position": {
+          "x": 0.899,
+          "y": 0.475
+        }
+      }
+    },
+    {
+      "t": 3.7,
+      "flowState": "Fighting",
+      "activeEnemyCount": 14,
+      "engagedEnemyCount": 11,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 125,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.491
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 251,
+        "maxHp": 424,
+        "position": {
+          "x": 0.908,
+          "y": 0.485
+        }
+      }
+    },
+    {
+      "t": 3.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 14,
+      "engagedEnemyCount": 10,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.495
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 251,
+        "maxHp": 424,
+        "position": {
+          "x": 0.896,
+          "y": 0.493
+        }
+      }
+    },
+    {
+      "t": 3.9,
+      "flowState": "Fighting",
+      "activeEnemyCount": 14,
+      "engagedEnemyCount": 10,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 212,
+        "maxHp": 424,
+        "position": {
+          "x": 0.909,
+          "y": 0.496
+        }
+      }
+    },
+    {
+      "t": 4.0,
+      "flowState": "Fighting",
+      "activeEnemyCount": 14,
+      "engagedEnemyCount": 5,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 212,
+        "maxHp": 424,
+        "position": {
+          "x": 0.9,
+          "y": 0.486
+        }
+      }
+    },
+    {
+      "t": 4.1,
+      "flowState": "Fighting",
+      "activeEnemyCount": 15,
+      "engagedEnemyCount": 5,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 212,
+        "maxHp": 424,
+        "position": {
+          "x": 0.907,
+          "y": 0.473
+        }
+      }
+    },
+    {
+      "t": 4.199,
+      "flowState": "Fighting",
+      "activeEnemyCount": 15,
+      "engagedEnemyCount": 6,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 212,
+        "maxHp": 424,
+        "position": {
+          "x": 0.913,
+          "y": 0.46
+        }
+      }
+    },
+    {
+      "t": 4.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 15,
+      "engagedEnemyCount": 7,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 212,
+        "maxHp": 424,
+        "position": {
+          "x": 0.901,
+          "y": 0.454
+        }
+      }
+    },
+    {
+      "t": 4.398,
+      "flowState": "Fighting",
+      "activeEnemyCount": 16,
+      "engagedEnemyCount": 7,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.484
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 212,
+        "maxHp": 424,
+        "position": {
+          "x": 0.906,
+          "y": 0.467
+        }
+      }
+    },
+    {
+      "t": 4.498,
+      "flowState": "Fighting",
+      "activeEnemyCount": 16,
+      "engagedEnemyCount": 7,
+      "pose": "attack_engaged",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": false,
+        "closeCombatEngaged": true,
+        "targetEnemyIndex": 0,
+        "currentHp": 18,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.489
+        }
+      },
+      "targetEnemy": {
+        "index": 0,
+        "hasRuntime": true,
+        "alive": true,
+        "moving": true,
+        "closeCombatEngaged": false,
+        "targetAllyIndex": 4,
+        "currentHp": 212,
+        "maxHp": 424,
+        "position": {
+          "x": 0.912,
+          "y": 0.48
+        }
+      }
+    },
+    {
+      "t": 4.599,
+      "flowState": "Fighting",
+      "activeEnemyCount": 16,
+      "engagedEnemyCount": 2,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.66,
+          "y": 0.493
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 4.699,
+      "flowState": "Fighting",
+      "activeEnemyCount": 16,
+      "engagedEnemyCount": 2,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.648,
+          "y": 0.493
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 4.799,
+      "flowState": "Fighting",
+      "activeEnemyCount": 17,
+      "engagedEnemyCount": 3,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.637,
+          "y": 0.494
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 4.899,
+      "flowState": "Fighting",
+      "activeEnemyCount": 17,
+      "engagedEnemyCount": 3,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.625,
+          "y": 0.494
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 4.999,
+      "flowState": "Fighting",
+      "activeEnemyCount": 17,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.614,
+          "y": 0.494
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.1,
+      "flowState": "Fighting",
+      "activeEnemyCount": 17,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.602,
+          "y": 0.494
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.199,
+      "flowState": "Fighting",
+      "activeEnemyCount": 18,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.59,
+          "y": 0.494
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 18,
+      "engagedEnemyCount": 7,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.579,
+          "y": 0.494
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.399,
+      "flowState": "Fighting",
+      "activeEnemyCount": 18,
+      "engagedEnemyCount": 9,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.567,
+          "y": 0.495
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 18,
+      "engagedEnemyCount": 9,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.556,
+          "y": 0.495
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.601,
+      "flowState": "Fighting",
+      "activeEnemyCount": 19,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.544,
+          "y": 0.495
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.7,
+      "flowState": "Fighting",
+      "activeEnemyCount": 19,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.532,
+          "y": 0.495
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.798,
+      "flowState": "Fighting",
+      "activeEnemyCount": 19,
+      "engagedEnemyCount": 8,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.521,
+          "y": 0.495
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 5.9,
+      "flowState": "Fighting",
+      "activeEnemyCount": 19,
+      "engagedEnemyCount": 9,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.51,
+          "y": 0.496
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.0,
+      "flowState": "Fighting",
+      "activeEnemyCount": 20,
+      "engagedEnemyCount": 9,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.498,
+          "y": 0.496
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.1,
+      "flowState": "Fighting",
+      "activeEnemyCount": 20,
+      "engagedEnemyCount": 10,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.486,
+          "y": 0.496
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.199,
+      "flowState": "Fighting",
+      "activeEnemyCount": 20,
+      "engagedEnemyCount": 10,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.475,
+          "y": 0.496
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 20,
+      "engagedEnemyCount": 11,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.463,
+          "y": 0.496
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.4,
+      "flowState": "Fighting",
+      "activeEnemyCount": 21,
+      "engagedEnemyCount": 10,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.452,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 21,
+      "engagedEnemyCount": 10,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.44,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.6,
+      "flowState": "Fighting",
+      "activeEnemyCount": 21,
+      "engagedEnemyCount": 10,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.429,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.699,
+      "flowState": "Fighting",
+      "activeEnemyCount": 21,
+      "engagedEnemyCount": 11,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.417,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.799,
+      "flowState": "Fighting",
+      "activeEnemyCount": 22,
+      "engagedEnemyCount": 11,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.406,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 6.899,
+      "flowState": "Fighting",
+      "activeEnemyCount": 22,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.394,
+          "y": 0.497
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.0,
+      "flowState": "Fighting",
+      "activeEnemyCount": 22,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.382,
+          "y": 0.498
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.101,
+      "flowState": "Fighting",
+      "activeEnemyCount": 22,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.371,
+          "y": 0.498
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.201,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.359,
+          "y": 0.498
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.3,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.348,
+          "y": 0.498
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.4,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 5,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.336,
+          "y": 0.498
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.598,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.7,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 7.9,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.0,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.099,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.199,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.299,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.399,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.5,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.599,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.699,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.799,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.899,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 8.998,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.099,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.199,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.299,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.399,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.499,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.6,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.701,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.8,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.9,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 9.999,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    },
+    {
+      "t": 10.1,
+      "flowState": "Fighting",
+      "activeEnemyCount": 23,
+      "engagedEnemyCount": 0,
+      "pose": "idle",
+      "ally": {
+        "index": 4,
+        "hasRuntime": true,
+        "alive": false,
+        "moving": false,
+        "closeCombatEngaged": false,
+        "targetEnemyIndex": -1,
+        "currentHp": 0,
+        "maxHp": 232,
+        "position": {
+          "x": 0.325,
+          "y": 0.499
+        }
+      },
+      "targetEnemy": null
+    }
+  ]
+}

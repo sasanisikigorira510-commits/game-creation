@@ -1,0 +1,452 @@
+[
+  {
+    "key": "spirit_queen_titania",
+    "pose": "idle",
+    "source": "/Users/andou/Desktop/あ/モンスター一覧/4クラス/精霊女王ティターニア/待機.png",
+    "source_width": 2508,
+    "source_height": 627,
+    "frame_count": 4,
+    "frames": [
+      {
+        "index": 0,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          104,
+          27,
+          626,
+          607,
+          523,
+          581
+        ],
+        "source_edge_flags": "R",
+        "source_edge_margins": [
+          104,
+          27,
+          0,
+          19
+        ],
+        "opaque_bounds": [
+          128,
+          51,
+          650,
+          631,
+          523,
+          581
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          128,
+          51,
+          24,
+          43
+        ]
+      },
+      {
+        "index": 1,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          4,
+          27,
+          594,
+          606,
+          591,
+          580
+        ],
+        "source_edge_flags": "-",
+        "source_edge_margins": [
+          4,
+          27,
+          32,
+          20
+        ],
+        "opaque_bounds": [
+          28,
+          51,
+          618,
+          630,
+          591,
+          580
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          28,
+          51,
+          56,
+          44
+        ]
+      },
+      {
+        "index": 2,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          51,
+          32,
+          586,
+          603,
+          536,
+          572
+        ],
+        "source_edge_flags": "-",
+        "source_edge_margins": [
+          51,
+          32,
+          40,
+          23
+        ],
+        "opaque_bounds": [
+          75,
+          56,
+          610,
+          627,
+          536,
+          572
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          75,
+          56,
+          64,
+          47
+        ]
+      },
+      {
+        "index": 3,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          24,
+          27,
+          555,
+          607,
+          532,
+          581
+        ],
+        "source_edge_flags": "-",
+        "source_edge_margins": [
+          24,
+          27,
+          71,
+          19
+        ],
+        "opaque_bounds": [
+          48,
+          51,
+          579,
+          631,
+          532,
+          581
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          48,
+          51,
+          95,
+          43
+        ]
+      }
+    ]
+  },
+  {
+    "key": "spirit_queen_titania",
+    "pose": "move",
+    "source": "/Users/andou/Desktop/あ/モンスター一覧/4クラス/精霊女王ティターニア/移動.png",
+    "source_width": 2508,
+    "source_height": 627,
+    "frame_count": 4,
+    "frames": [
+      {
+        "index": 0,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          74,
+          33,
+          626,
+          598,
+          553,
+          566
+        ],
+        "source_edge_flags": "R",
+        "source_edge_margins": [
+          74,
+          33,
+          0,
+          28
+        ],
+        "opaque_bounds": [
+          98,
+          57,
+          650,
+          622,
+          553,
+          566
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          98,
+          57,
+          24,
+          52
+        ]
+      },
+      {
+        "index": 1,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          69,
+          17,
+          587,
+          605,
+          519,
+          589
+        ],
+        "source_edge_flags": "-",
+        "source_edge_margins": [
+          69,
+          17,
+          39,
+          21
+        ],
+        "opaque_bounds": [
+          93,
+          41,
+          611,
+          629,
+          519,
+          589
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          93,
+          41,
+          63,
+          45
+        ]
+      },
+      {
+        "index": 2,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          21,
+          33,
+          597,
+          600,
+          577,
+          568
+        ],
+        "source_edge_flags": "-",
+        "source_edge_margins": [
+          21,
+          33,
+          29,
+          26
+        ],
+        "opaque_bounds": [
+          45,
+          57,
+          621,
+          624,
+          577,
+          568
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          45,
+          57,
+          53,
+          50
+        ]
+      },
+      {
+        "index": 3,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          46,
+          36,
+          590,
+          608,
+          545,
+          573
+        ],
+        "source_edge_flags": "-",
+        "source_edge_margins": [
+          46,
+          36,
+          36,
+          18
+        ],
+        "opaque_bounds": [
+          70,
+          60,
+          614,
+          632,
+          545,
+          573
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          70,
+          60,
+          60,
+          42
+        ]
+      }
+    ]
+  },
+  {
+    "key": "spirit_queen_titania",
+    "pose": "attack",
+    "source": "/Users/andou/Desktop/あ/モンスター一覧/4クラス/精霊女王ティターニア/攻撃.png",
+    "source_width": 2508,
+    "source_height": 627,
+    "frame_count": 4,
+    "frames": [
+      {
+        "index": 0,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          77,
+          92,
+          602,
+          577,
+          526,
+          486
+        ],
+        "source_edge_flags": "-",
+        "source_edge_margins": [
+          77,
+          92,
+          24,
+          49
+        ],
+        "opaque_bounds": [
+          38,
+          50,
+          666,
+          630,
+          629,
+          581
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          38,
+          50,
+          8,
+          44
+        ]
+      },
+      {
+        "index": 1,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          55,
+          23,
+          611,
+          579,
+          557,
+          557
+        ],
+        "source_edge_flags": "-",
+        "source_edge_margins": [
+          55,
+          23,
+          15,
+          47
+        ],
+        "opaque_bounds": [
+          90,
+          29,
+          666,
+          630,
+          577,
+          602
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          90,
+          29,
+          8,
+          44
+        ]
+      },
+      {
+        "index": 2,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          0,
+          169,
+          626,
+          571,
+          627,
+          403
+        ],
+        "source_edge_flags": "LR",
+        "source_edge_margins": [
+          0,
+          169,
+          0,
+          55
+        ],
+        "opaque_bounds": [
+          138,
+          50,
+          536,
+          630,
+          399,
+          581
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          138,
+          50,
+          138,
+          44
+        ]
+      },
+      {
+        "index": 3,
+        "width": 675,
+        "height": 675,
+        "source_opaque_bounds": [
+          60,
+          162,
+          560,
+          580,
+          501,
+          419
+        ],
+        "source_edge_flags": "-",
+        "source_edge_margins": [
+          60,
+          162,
+          66,
+          46
+        ],
+        "opaque_bounds": [
+          8,
+          64,
+          666,
+          630,
+          659,
+          567
+        ],
+        "edge_flags": "-",
+        "edge_margins": [
+          8,
+          64,
+          8,
+          44
+        ]
+      }
+    ]
+  }
+]

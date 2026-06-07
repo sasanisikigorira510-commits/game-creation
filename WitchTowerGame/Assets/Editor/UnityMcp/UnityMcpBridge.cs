@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
@@ -12,8 +13,12 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 using WitchTower.Battle;
+using WitchTower.Core;
+using WitchTower.Data;
 using WitchTower.Home;
 using WitchTower.Managers;
+using WitchTower.MasterData;
+using WitchTower.Save;
 
     [InitializeOnLoad]
     public static class UnityMcpBridge
@@ -282,6 +287,24 @@ using WitchTower.Managers;
         if (path == "home-debug" && method == "GET")
         {
             string json = RunOnMainThreadAndWait(BuildHomeDebugResponse);
+            WriteJson(context.Response, json);
+            return;
+        }
+
+        if (path == "set-debug-party" && method == "POST")
+        {
+            string requestBody = ReadRequestBody(context.Request);
+            DebugPartyRequest payload = ParseJson<DebugPartyRequest>(requestBody);
+            if (payload == null || payload.monsterIds == null || payload.monsterIds.Length == 0)
+            {
+                WriteError(context.Response, 400, "Missing required field: monsterIds");
+                return;
+            }
+
+            string json = RunOnMainThreadAndWait(delegate
+            {
+                return ApplyDebugParty(payload);
+            });
             WriteJson(context.Response, json);
             return;
         }
@@ -753,17 +776,48 @@ using WitchTower.Managers;
                 builder.Append(i);
                 builder.Append(",\"hasRuntime\":");
                 builder.Append(simulator.HasAllyRuntime(i) ? "true" : "false");
+                AppendString(builder, ",\"monsterId\":", simulator.GetAllyMonsterId(i));
+                AppendString(builder, ",\"rangeType\":", simulator.GetAllyRangeTypeName(i));
                 builder.Append(",\"alive\":");
                 builder.Append(simulator.IsAllyAlive(i) ? "true" : "false");
                 builder.Append(",\"moving\":");
                 builder.Append(simulator.IsAllyMoving(i) ? "true" : "false");
+                builder.Append(",\"attackEngaged\":");
+                builder.Append(simulator.IsAllyAttackEngaged(i) ? "true" : "false");
+                builder.Append(",\"closeCombatEngaged\":");
+                builder.Append(simulator.IsAllyCloseCombatEngaged(i) ? "true" : "false");
+                builder.Append(",\"targetInsideSearchRange\":");
+                builder.Append(simulator.IsAllyTargetInsideSearchRange(i) ? "true" : "false");
                 builder.Append(",\"targetEnemyIndex\":");
                 builder.Append(simulator.GetAllyTargetEnemyIndex(i));
+                AppendFloat(builder, ",\"attackTimer\":", simulator.GetAllyAttackTimer(i));
+                AppendFloat(builder, ",\"attackInterval\":", simulator.GetAllyAttackInterval(i));
+                AppendFloat(builder, ",\"attackMotionLockRemaining\":", simulator.GetAllyAttackMotionLockRemaining(i));
+                AppendFloat(builder, ",\"attackRange\":", simulator.GetAllyAttackRange(i));
+                AppendFloat(builder, ",\"combatRadius\":", simulator.GetAllyCombatRadius(i));
+                AppendFloat(builder, ",\"attackReachAnchor\":", simulator.GetAllyAttackReachAnchor(i));
+                AppendFloat(builder, ",\"searchReachAnchor\":", simulator.GetAllySearchReachAnchor(i));
+                AppendFloat(builder, ",\"attackDistanceThreshold\":", simulator.GetAllyAttackDistanceThreshold(i));
+                AppendFloat(builder, ",\"horizontalGapToTarget\":", simulator.GetAllyHorizontalGapToTarget(i));
+                AppendFloat(builder, ",\"verticalGapToTarget\":", simulator.GetAllyVerticalGapToTarget(i));
                 builder.Append(",\"currentHp\":");
                 builder.Append(simulator.GetAllyCurrentHp(i));
                 builder.Append(",\"maxHp\":");
                 builder.Append(simulator.GetAllyMaxHp(i));
+                AppendVector2(builder, ",\"home\":", simulator.GetAllyHomeAnchor(i));
                 AppendVector2(builder, ",\"position\":", simulator.GetAllyPositionAnchor(i));
+                if (sceneController != null)
+                {
+                    AppendString(builder, ",\"previewPose\":", sceneController.GetDebugAllyPreviewPoseName(i));
+                    AppendString(builder, ",\"previewSprite\":", sceneController.GetDebugAllyPreviewSpriteName(i));
+                    builder.Append(",\"idleSpriteCount\":");
+                    builder.Append(sceneController.GetDebugAllyIdleSpriteCount(i));
+                    builder.Append(",\"moveSpriteCount\":");
+                    builder.Append(sceneController.GetDebugAllyMoveSpriteCount(i));
+                    builder.Append(",\"attackSpriteCount\":");
+                    builder.Append(sceneController.GetDebugAllyAttackSpriteCount(i));
+                    AppendFloat(builder, ",\"attackVisualRemaining\":", sceneController.GetDebugAllyAttackVisualRemaining(i));
+                }
                 builder.Append("}");
             }
 
@@ -781,17 +835,35 @@ using WitchTower.Managers;
                 builder.Append(i);
                 builder.Append(",\"hasRuntime\":");
                 builder.Append(simulator.HasEnemyRuntime(i) ? "true" : "false");
+                AppendString(builder, ",\"enemyId\":", simulator.GetEnemyId(i));
                 builder.Append(",\"alive\":");
                 builder.Append(enemyCurrentHp > 0 && enemyMaxHp > 0 ? "true" : "false");
                 builder.Append(",\"moving\":");
                 builder.Append(simulator.IsEnemyMoving(i) ? "true" : "false");
+                builder.Append(",\"attackEngaged\":");
+                builder.Append(simulator.IsEnemyAttackEngaged(i) ? "true" : "false");
+                builder.Append(",\"closeCombatEngaged\":");
+                builder.Append(simulator.IsEnemyCloseCombatEngaged(i) ? "true" : "false");
                 builder.Append(",\"targetAllyIndex\":");
                 builder.Append(simulator.GetEnemyTargetAllyIndex(i));
+                AppendFloat(builder, ",\"attackTimer\":", simulator.GetEnemyAttackTimer(i));
+                AppendFloat(builder, ",\"attackInterval\":", simulator.GetEnemyAttackInterval(i));
+                AppendFloat(builder, ",\"attackMotionLockRemaining\":", simulator.GetEnemyAttackMotionLockRemaining(i));
+                AppendFloat(builder, ",\"attackReachAnchor\":", simulator.GetEnemyAttackReachAnchor(i));
                 builder.Append(",\"currentHp\":");
                 builder.Append(enemyCurrentHp);
                 builder.Append(",\"maxHp\":");
                 builder.Append(enemyMaxHp);
+                AppendVector2(builder, ",\"home\":", simulator.GetEnemyHomeAnchor(i));
                 AppendVector2(builder, ",\"position\":", simulator.GetEnemyPositionAnchor(i));
+                if (sceneController != null)
+                {
+                    AppendString(builder, ",\"previewPose\":", sceneController.GetDebugEnemyPreviewPoseName(i));
+                    AppendString(builder, ",\"previewSprite\":", sceneController.GetDebugEnemyPreviewSpriteName(i));
+                    builder.Append(",\"attackSpriteCount\":");
+                    builder.Append(sceneController.GetDebugEnemyAttackSpriteCount());
+                    AppendFloat(builder, ",\"attackVisualRemaining\":", sceneController.GetDebugEnemyAttackVisualRemaining(i));
+                }
                 builder.Append("}");
             }
 
@@ -842,6 +914,132 @@ using WitchTower.Managers;
         builder.Append(",\"y\":");
         builder.Append(value.y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
         builder.Append("}");
+    }
+
+    private static void AppendFloat(StringBuilder builder, string propertyName, float value)
+    {
+        builder.Append(propertyName);
+        builder.Append(value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    private static void AppendString(StringBuilder builder, string propertyName, string value)
+    {
+        builder.Append(propertyName);
+        builder.Append("\"");
+        builder.Append(EscapeJson(value ?? string.Empty));
+        builder.Append("\"");
+    }
+
+    private static string ApplyDebugParty(DebugPartyRequest payload)
+    {
+        ManagerFactory.EnsureSaveManager();
+        ManagerFactory.EnsureGameManager();
+        ManagerFactory.EnsureMasterDataManager();
+
+        if (SaveManager.Instance != null && SaveManager.Instance.CurrentSaveData == null)
+        {
+            SaveManager.Instance.LoadOrCreate();
+        }
+
+        MasterDataManager.Instance?.Initialize();
+
+        if (GameManager.Instance != null &&
+            GameManager.Instance.PlayerProfile == null &&
+            SaveManager.Instance?.CurrentSaveData != null)
+        {
+            GameManager.Instance.InitializeFromSave(SaveManager.Instance.CurrentSaveData);
+        }
+
+        PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+        if (profile == null)
+        {
+            return BuildFailureResponse("PlayerProfile is not initialized.");
+        }
+
+        var partyInstanceIds = new List<string>();
+        int targetLevel = Mathf.Max(1, payload.level > 0 ? payload.level : 1);
+        for (int i = 0; i < payload.monsterIds.Length && partyInstanceIds.Count < 5; i += 1)
+        {
+            string monsterId = payload.monsterIds[i];
+            if (string.IsNullOrEmpty(monsterId))
+            {
+                continue;
+            }
+
+            MonsterDataSO monsterData = MasterDataManager.Instance != null
+                ? MasterDataManager.Instance.GetMonsterData(monsterId)
+                : null;
+            if (monsterData == null)
+            {
+                return BuildFailureResponse("Monster not found: " + monsterId);
+            }
+
+            OwnedMonsterData ownedMonster = null;
+            for (int ownedIndex = 0; ownedIndex < profile.OwnedMonsters.Count; ownedIndex += 1)
+            {
+                OwnedMonsterData candidate = profile.OwnedMonsters[ownedIndex];
+                if (candidate != null && string.Equals(candidate.MonsterId, monsterId, StringComparison.Ordinal))
+                {
+                    ownedMonster = candidate;
+                    break;
+                }
+            }
+
+            ownedMonster ??= profile.AddOwnedMonster(monsterId, targetLevel);
+            if (ownedMonster == null || string.IsNullOrEmpty(ownedMonster.InstanceId))
+            {
+                return BuildFailureResponse("Failed to create owned monster: " + monsterId);
+            }
+
+            ownedMonster.Level = Mathf.Max(1, targetLevel);
+            partyInstanceIds.Add(ownedMonster.InstanceId);
+        }
+
+        if (partyInstanceIds.Count == 0)
+        {
+            return BuildFailureResponse("No valid party monsters were provided.");
+        }
+
+        profile.SetPartyMonsterIds(partyInstanceIds);
+        if (payload.floor > 0 && GameManager.Instance != null)
+        {
+            GameManager.Instance.SetCurrentFloor(payload.floor);
+        }
+
+        bool restarted = false;
+        if (payload.restartBattle && EditorApplication.isPlaying)
+        {
+            BattleSceneController sceneController = UnityEngine.Object.FindObjectOfType<BattleSceneController>(true);
+            if (sceneController != null)
+            {
+                sceneController.GoToNextFloor();
+                restarted = true;
+            }
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.Append("{\"ok\":true,\"party\":[");
+        for (int i = 0; i < partyInstanceIds.Count; i += 1)
+        {
+            if (i > 0)
+            {
+                builder.Append(",");
+            }
+
+            OwnedMonsterData ownedMonster = profile.GetOwnedMonster(partyInstanceIds[i]);
+            builder.Append("{\"instanceId\":\"");
+            builder.Append(EscapeJson(partyInstanceIds[i]));
+            builder.Append("\",\"monsterId\":\"");
+            builder.Append(EscapeJson(ownedMonster != null ? ownedMonster.MonsterId : string.Empty));
+            builder.Append("\"}");
+        }
+
+        builder.Append("],\"floor\":");
+        builder.Append(GameManager.Instance != null ? GameManager.Instance.CurrentFloor : 0);
+        builder.Append(",\"restartedBattle\":");
+        builder.Append(restarted ? "true" : "false");
+        builder.Append("}");
+        return builder.ToString();
     }
 
     private static string BuildHomeDebugResponse()
@@ -1230,6 +1428,15 @@ using WitchTower.Managers;
     private class PlayModeRequest
     {
         public string action;
+    }
+
+    [Serializable]
+    private class DebugPartyRequest
+    {
+        public string[] monsterIds;
+        public int floor;
+        public int level;
+        public bool restartBattle;
     }
 
     [Serializable]

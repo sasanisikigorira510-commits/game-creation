@@ -19,7 +19,7 @@ MonoBehaviour:
   classRank: 4
   rarity: 4
   element: 5
-  rangeType: 1
+  rangeType: 0
   damageType: 1
   baseStats:
     maxHp: 230
@@ -28,8 +28,8 @@ MonoBehaviour:
     defense: 62
     magicDefense: 66
     attackSpeed: 0.62
-  attackRange: 2.45
-  normalAttackTargetCount: 3
+  attackRange: 1.20
+  normalAttackTargetCount: 2
   normalAttackAppliesKnockback: 0
   normalAttackKnockbackDuration: 0.18
   plusValueCap: 99
@@ -60,4 +60,4 @@ MonoBehaviour:
   battleAttackResourcePath: MonsterBattle/mon_astral_eclipse_golem_attack
   battleAttackFacing: 0
   battleVisualScale: 1.24
-  description: "星蝕の魔力を宿した魔像。高耐久と範囲魔法を両立する。"
+  description: "星蝕の魔力を宿した魔像。高耐久の巨体で前線を押し潰す。"

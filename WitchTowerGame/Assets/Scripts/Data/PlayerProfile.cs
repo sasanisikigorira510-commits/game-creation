@@ -7,6 +7,8 @@ namespace WitchTower.Data
 {
     public sealed partial class PlayerProfile
     {
+        public const int PartySlotCount = 5;
+
         public int Level { get; set; }
         public int Exp { get; set; }
         public int Gold { get; set; }
@@ -280,12 +282,23 @@ namespace WitchTower.Data
             PartyMonsterInstanceIds.Clear();
             if (monsterInstanceIds == null)
             {
+                for (int i = 0; i < PartySlotCount; i += 1)
+                {
+                    PartyMonsterInstanceIds.Add(string.Empty);
+                }
+
+                SyncLegacyRepresentativeEquipmentIds();
                 return;
             }
 
-            foreach (string instanceId in monsterInstanceIds.Where(x => !string.IsNullOrEmpty(x)).Take(5))
+            foreach (string instanceId in monsterInstanceIds.Take(PartySlotCount))
             {
-                PartyMonsterInstanceIds.Add(instanceId);
+                PartyMonsterInstanceIds.Add(instanceId ?? string.Empty);
+            }
+
+            while (PartyMonsterInstanceIds.Count < PartySlotCount)
+            {
+                PartyMonsterInstanceIds.Add(string.Empty);
             }
 
             SyncLegacyRepresentativeEquipmentIds();

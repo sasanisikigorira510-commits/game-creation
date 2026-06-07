@@ -29,7 +29,8 @@ namespace WitchTower.Managers
         public void InitializeFromSave(PlayerSaveData saveData)
         {
             PlayerProfile = new PlayerProfile(saveData);
-            CurrentFloor = Mathf.Max(1, saveData.CurrentFloor);
+            int nextProgressFloor = PlayerProfile != null ? PlayerProfile.HighestFloor + 1 : 1;
+            CurrentFloor = Mathf.Max(1, Mathf.Max(saveData.CurrentFloor, nextProgressFloor));
             SyncDungeonSelectionFromCurrentFloor();
             if (PrototypePartyBootstrapService.EnsureParty(PlayerProfile))
             {

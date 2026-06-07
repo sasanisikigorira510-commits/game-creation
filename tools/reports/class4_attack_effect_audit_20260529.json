@@ -1,0 +1,813 @@
+{
+  "checked_class4_count": 12,
+  "all_sources_exist": true,
+  "all_code_mappings_exist": true,
+  "all_frames_exist": true,
+  "all_meta_exist": true,
+  "rows": [
+    {
+      "key": "mecha_dragon_valdrake",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            118,
+            171,
+            394,
+            341
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            81,
+            148,
+            430,
+            363
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            53,
+            131,
+            459,
+            381
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            20,
+            111,
+            491,
+            401
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "drag_gaia",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            118,
+            137,
+            394,
+            375
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            81,
+            105,
+            430,
+            406
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            53,
+            81,
+            459,
+            431
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            20,
+            53,
+            491,
+            459
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "dragon_sword_saint_agito",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            118,
+            123,
+            393,
+            389
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            82,
+            88,
+            430,
+            424
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            53,
+            60,
+            458,
+            451
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            21,
+            29,
+            491,
+            483
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "abyss_dragon_mage_valflare",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            118,
+            134,
+            393,
+            377
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            82,
+            102,
+            430,
+            409
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            53,
+            77,
+            458,
+            434
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            21,
+            49,
+            491,
+            463
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "fortress_machine_gigafort",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            117,
+            160,
+            394,
+            351
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            81,
+            135,
+            431,
+            377
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            52,
+            115,
+            459,
+            396
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            20,
+            93,
+            492,
+            419
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "mecha_sword_saint_gransaber",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            118,
+            126,
+            393,
+            386
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            82,
+            91,
+            430,
+            420
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            53,
+            65,
+            458,
+            447
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            21,
+            34,
+            491,
+            477
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "dark_magic_machine_god_merchion",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            118,
+            126,
+            393,
+            386
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            82,
+            91,
+            430,
+            420
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            53,
+            65,
+            458,
+            447
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            21,
+            34,
+            491,
+            477
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "rock_knight_gaius",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            118,
+            125,
+            393,
+            386
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            82,
+            91,
+            430,
+            421
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            53,
+            64,
+            458,
+            448
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            21,
+            33,
+            491,
+            478
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "astral_eclipse_golem",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            118,
+            121,
+            394,
+            390
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            81,
+            86,
+            430,
+            426
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            53,
+            58,
+            459,
+            453
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            20,
+            27,
+            491,
+            485
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "magic_sword_saint_luciel",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            115,
+            125,
+            396,
+            386
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            78,
+            91,
+            433,
+            421
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            49,
+            64,
+            462,
+            448
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            16,
+            33,
+            495,
+            478
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "seraph_michael",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            116,
+            123,
+            395,
+            388
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            79,
+            88,
+            432,
+            423
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            51,
+            61,
+            461,
+            450
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            18,
+            30,
+            494,
+            481
+          ],
+          "meta_exists": true
+        }
+      ]
+    },
+    {
+      "key": "spirit_queen_titania",
+      "source_exists": true,
+      "code_mapping": true,
+      "frames": [
+        {
+          "frame": 0,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            116,
+            123,
+            395,
+            388
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 1,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            79,
+            88,
+            432,
+            423
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 2,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            51,
+            61,
+            461,
+            450
+          ],
+          "meta_exists": true
+        },
+        {
+          "frame": 3,
+          "exists": true,
+          "size": [
+            512,
+            512
+          ],
+          "alpha_bbox": [
+            18,
+            30,
+            494,
+            481
+          ],
+          "meta_exists": true
+        }
+      ]
+    }
+  ]
+}

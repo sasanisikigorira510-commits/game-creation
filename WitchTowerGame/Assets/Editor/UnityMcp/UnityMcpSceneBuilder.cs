@@ -521,6 +521,15 @@ public static class UnityMcpSceneBuilder
 
         EnsureEventSystem();
         Canvas canvas = CreateCanvas("GachaCanvas");
+        EnsureUiPresentationCameraInOpenScene();
+        Camera uiCamera = GameObject.Find(UiPresentationCameraName)?.GetComponent<Camera>();
+        if (uiCamera != null)
+        {
+            uiCamera.cullingMask = ~0;
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = uiCamera;
+            canvas.planeDistance = 100f;
+        }
 
         GameObject panelObject = new GameObject("GachaScenePanel", typeof(RectTransform), typeof(Image), typeof(GachaPanelController));
         panelObject.transform.SetParent(canvas.transform, false);
@@ -768,16 +777,20 @@ public static class UnityMcpSceneBuilder
 
     private static Canvas CreateCanvas(string name)
     {
-        GameObject canvasObject = new GameObject(name, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        canvasObject.transform.localScale = Vector3.one;
-        Canvas canvas = canvasObject.GetComponent<Canvas>();
+        GameObject canvasObject = new GameObject(name, typeof(RectTransform));
+        RectTransform rect = canvasObject.GetComponent<RectTransform>();
+        rect.localScale = Vector3.one;
+        rect.sizeDelta = new Vector2(1080f, 1920f);
+
+        Canvas canvas = canvasObject.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+        CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1080f, 1920f);
         scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         scaler.matchWidthOrHeight = 0.5f;
+        canvasObject.AddComponent<GraphicRaycaster>();
         return canvas;
     }
 

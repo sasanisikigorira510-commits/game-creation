@@ -2,3 +2,12 @@ mode,assetPath,characterKey,pose,oldRatio,scale,oldCanvasWidth,oldCanvasHeight,n
 apply,Assets/Resources/MonsterBattle/mon_rock_golem_move_0.png,rock_golem,move,0.918,1.089,627,627,627,627,426,449,464,489
 apply,Assets/Resources/MonsterBattle/mon_rock_golem_move_2.png,rock_golem,move,0.910,1.099,627,627,627,627,425,445,467,489
 apply,Assets/Resources/MonsterBattle/mon_rock_golem_move_3.png,rock_golem,move,0.889,1.125,627,627,627,627,402,435,452,489
+apply,Assets/Resources/MonsterBattle/mon_abyss_dragon_mage_valflare_move_0.png,abyss_dragon_mage_valflare,move,0.885,1.130,627,627,641,653,546,493,617,557
+apply,Assets/Resources/MonsterBattle/mon_abyss_dragon_mage_valflare_move_1.png,abyss_dragon_mage_valflare,move,0.885,1.130,627,627,731,651,626,493,707,557
+apply,Assets/Resources/MonsterBattle/mon_mecha_dragon_valdrake_attack_0.png,mecha_dragon_valdrake,attack,1.000,1.042,627,627,627,627,438,385,456,401
+apply,Assets/Resources/MonsterBattle/mon_mecha_dragon_valdrake_attack_1.png,mecha_dragon_valdrake,attack,1.000,1.042,627,627,627,627,467,385,486,401
+apply,Assets/Resources/MonsterBattle/mon_mecha_dragon_valdrake_attack_3.png,mecha_dragon_valdrake,attack,1.000,1.042,627,627,627,627,425,385,443,401
+apply,Assets/Resources/MonsterBattle/mon_mecha_dragon_valdrake_move_0.png,mecha_dragon_valdrake,move,1.049,1.060,627,627,627,627,452,404,479,428
+apply,Assets/Resources/MonsterBattle/mon_mecha_dragon_valdrake_move_3.png,mecha_dragon_valdrake,move,1.000,1.045,627,627,627,627,571,385,597,402
+apply,Assets/Resources/MonsterBattle/mon_mecha_dragon_valdrake_attack_1.png,mecha_dragon_valdrake,attack,1.042,1.029,627,627,627,627,486,401,500,413
+apply,Assets/Resources/MonsterBattle/mon_mecha_dragon_valdrake_attack_2.png,mecha_dragon_valdrake,attack,1.042,1.048,627,627,627,627,572,401,599,420

@@ -1,0 +1,13 @@
+key,pose,sourceWidth,sourceHeight,frameCount,frameIndex,frameWidth,frameHeight,sourceOpaqueWidth,sourceOpaqueHeight,sourceEdgeFlags,sourceMarginLeft,sourceMarginTop,sourceMarginRight,sourceMarginBottom,opaqueWidth,opaqueHeight,edgeFlags,marginLeft,marginTop,marginRight,marginBottom
+spirit_queen_titania,idle,2508,627,4,0,675,675,523,581,R,104,27,0,19,523,581,-,128,51,24,43
+spirit_queen_titania,idle,2508,627,4,1,675,675,591,580,-,4,27,32,20,591,580,-,28,51,56,44
+spirit_queen_titania,idle,2508,627,4,2,675,675,536,572,-,51,32,40,23,536,572,-,75,56,64,47
+spirit_queen_titania,idle,2508,627,4,3,675,675,532,581,-,24,27,71,19,532,581,-,48,51,95,43
+spirit_queen_titania,move,2508,627,4,0,675,675,553,566,R,74,33,0,28,553,566,-,98,57,24,52
+spirit_queen_titania,move,2508,627,4,1,675,675,519,589,-,69,17,39,21,519,589,-,93,41,63,45
+spirit_queen_titania,move,2508,627,4,2,675,675,577,568,-,21,33,29,26,577,568,-,45,57,53,50
+spirit_queen_titania,move,2508,627,4,3,675,675,545,573,-,46,36,36,18,545,573,-,70,60,60,42
+spirit_queen_titania,attack,2508,627,4,0,675,675,526,486,-,77,92,24,49,629,581,-,38,50,8,44
+spirit_queen_titania,attack,2508,627,4,1,675,675,557,557,-,55,23,15,47,577,602,-,90,29,8,44
+spirit_queen_titania,attack,2508,627,4,2,675,675,627,403,LR,0,169,0,55,399,581,-,138,50,138,44
+spirit_queen_titania,attack,2508,627,4,3,675,675,501,419,-,60,162,66,46,659,567,-,8,64,8,44

@@ -8,6 +8,8 @@ namespace WitchTower.Battle
     {
         private const float CombatReachOffsetPerRangeStep = 0.14f;
         private const float MaxCombatReachOffset = 0.24f;
+        private const float RangedMonsterCombatReachOffsetPerRangeStep = 0.24f;
+        private const float MaxRangedMonsterCombatReachOffset = 0.62f;
         private const float RangedMonsterSearchBonus = 1.00f;
         private const float MeleeMonsterSearchBonus = 1.20f;
         private const float MinAllySearchOffset = 0.68f;
@@ -25,16 +27,16 @@ namespace WitchTower.Battle
             { "monster_worm", 0.90f },
             { "monster_naga", 1.20f },
             { "monster_dragoon", 1.30f },
-            { "monster_dragon_whelp", 1.05f },
-            { "monster_flare_drake", 1.30f },
-            { "monster_abyss_dragon", 2.25f },
-            { "monster_bat", 1.75f },
-            { "monster_bee", 1.60f },
-            { "monster_centaur", 2.00f },
-            { "monster_death_mage_elf", 2.40f },
-            { "monster_ghost", 1.85f },
-            { "monster_naga_mage", 2.25f },
-            { "monster_wraith", 2.10f }
+            { "monster_dragon_whelp", 2.80f },
+            { "monster_flare_drake", 3.05f },
+            { "monster_abyss_dragon", 3.30f },
+            { "monster_bat", 2.60f },
+            { "monster_bee", 2.55f },
+            { "monster_centaur", 2.90f },
+            { "monster_death_mage_elf", 3.20f },
+            { "monster_ghost", 2.85f },
+            { "monster_naga_mage", 3.10f },
+            { "monster_wraith", 3.00f }
         };
 
         private static readonly Dictionary<string, float> EnemyAttackRangeDefaults = new Dictionary<string, float>
@@ -64,7 +66,7 @@ namespace WitchTower.Battle
                 return defaultRange;
             }
 
-            return monsterData.rangeType == MonsterRangeType.Ranged ? 1.8f : 1.0f;
+            return monsterData.rangeType == MonsterRangeType.Ranged ? 2.8f : 1.0f;
         }
 
         public static float ResolveEnemyAttackRange(EnemyDataSO enemyData)
@@ -91,6 +93,20 @@ namespace WitchTower.Battle
         public static float ToAllyHoldOffset(float attackRange)
         {
             return ResolveCombatReachOffset(attackRange);
+        }
+
+        public static float ToMonsterHoldOffset(MonsterDataSO monsterData)
+        {
+            float attackRange = ResolveMonsterAttackRange(monsterData);
+            if (monsterData != null && monsterData.rangeType == MonsterRangeType.Ranged)
+            {
+                return Mathf.Clamp(
+                    (attackRange - 1.0f) * RangedMonsterCombatReachOffsetPerRangeStep,
+                    0f,
+                    MaxRangedMonsterCombatReachOffset);
+            }
+
+            return ToAllyHoldOffset(attackRange);
         }
 
         public static float ToEnemyHoldOffset(float attackRange)
