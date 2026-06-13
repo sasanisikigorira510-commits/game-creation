@@ -26,8 +26,10 @@ namespace WitchTower.Formation
             public int IndividualAverage;
             public int AcquiredOrder;
             public bool IsFavorite;
+            public bool IsLocked;
+            public MonsterDamageType DamageType;
 
-            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int maxLevel, int classRank, int individualAverage, int acquiredOrder, bool isFavorite)
+            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int maxLevel, int classRank, int individualAverage, int acquiredOrder, bool isFavorite, bool isLocked, MonsterDamageType damageType = MonsterDamageType.Physical)
             {
                 InstanceId = instanceId;
                 Name = name;
@@ -38,6 +40,8 @@ namespace WitchTower.Formation
                 IndividualAverage = individualAverage;
                 AcquiredOrder = acquiredOrder;
                 IsFavorite = isFavorite;
+                IsLocked = isLocked;
+                DamageType = damageType;
             }
         }
 
@@ -123,6 +127,8 @@ namespace WitchTower.Formation
         private readonly List<MonsterEntry> selectedMonsters = new List<MonsterEntry>();
         private readonly List<MonsterCardView> rosterViews = new List<MonsterCardView>();
         private readonly List<FormationSlotView> slotViews = new List<FormationSlotView>();
+        private Sprite favoriteHeartFilledSprite;
+        private Sprite favoriteHeartOutlineSprite;
 
         private const string Class1CardFrameTexturePath = "MonsterCardFrames/monster_class_1_card_frame";
         private const string Class2CardFrameTexturePath = "MonsterCardFrames/monster_class_2_card_frame";
@@ -136,6 +142,46 @@ namespace WitchTower.Formation
         private const string Class4SlotFrameTexturePath = "MonsterCardFrames/monster_class_4_slot_frame";
         private const string Class5SlotFrameTexturePath = "MonsterCardFrames/monster_class_5_slot_frame";
         private const string Class6SlotFrameTexturePath = "MonsterCardFrames/monster_class_6_slot_frame";
+        private const string FavoriteHeartFilledTexturePath = "UI/Favorite/FavoriteHeartFilledImage2";
+        private const string FavoriteHeartOutlineTexturePath = "UI/Favorite/FavoriteHeartOutlineImage2";
+        private const string LockedMonsterIconTexturePath = "EquipmentUi/ui_lock_locked_icon";
+        private const string UnlockedMonsterIconTexturePath = "EquipmentUi/ui_lock_unlocked_icon";
+        private const int FavoriteHeartPixelSize = 32;
+        private const float CardCornerActionInset = 4f;
+        private const float CardCornerActionButtonSize = 42f;
+        private const float CardCornerActionIconSize = 30f;
+
+        private static readonly int[] FavoriteHeartLeftEdges =
+        {
+            -1, -1, 8, 6, 5, 4, 3, 2,
+            2, 2, 3, 4, 5, 6, 7, 8,
+            9, 10, 11, 12, 13, 14, 15, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1
+        };
+
+        private static readonly int[] FavoriteHeartRightEdges =
+        {
+            -1, -1, 12, 14, 26, 27, 28, 29,
+            29, 29, 28, 27, 26, 25, 24, 23,
+            22, 21, 20, 19, 18, 17, 16, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1
+        };
+
+        private static readonly int[] FavoriteHeartSecondLeftEdges =
+        {
+            -1, -1, 19, 17, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1
+        };
+
+        private static readonly int[] FavoriteHeartSecondRightEdges =
+        {
+            -1, -1, 23, 25, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1
+        };
 
         private RectTransform rosterContent;
         private Text summaryText;
@@ -300,7 +346,9 @@ namespace WitchTower.Formation
                     Mathf.Max(1, monsterData.classRank),
                     MonsterIndividualValueService.GetAverage(ownedMonster),
                     ownedMonster.AcquiredOrder,
-                    ownedMonster.IsFavorite);
+                    ownedMonster.IsFavorite,
+                    ownedMonster.IsLocked,
+                    monsterData.damageType);
 
                 roster.Add(entry);
                 entryLookup[entry.InstanceId] = entry;
@@ -367,11 +415,11 @@ namespace WitchTower.Formation
 
         private void SeedFallbackRoster()
         {
-            roster.Add(new MonsterEntry("dragon_whelp_a", "ヒナドラ", "FamilyMonsterCards/Dragon/dragon_whelp", 14, 20, 1, 50, 9, false));
-            roster.Add(new MonsterEntry("chibi_gear_a", "チビギア", "FamilyMonsterCards/Robot/chibi_gear", 12, 20, 1, 50, 8, false));
-            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "FamilyMonsterCards/Golem/rock_golem", 18, 20, 1, 50, 7, false));
-            roster.Add(new MonsterEntry("apprentice_swordsman_a", "見習い剣士", "FamilyMonsterCards/Swordsman/apprentice_swordsman", 20, 20, 1, 50, 6, false));
-            roster.Add(new MonsterEntry("apprentice_mage_a", "見習い魔導士", "FamilyMonsterCards/Mage/apprentice_mage", 20, 20, 1, 50, 5, false));
+            roster.Add(new MonsterEntry("dragon_whelp_a", "ヒナドラ", "FamilyMonsterCards/Dragon/dragon_whelp", 14, 20, 1, 50, 9, false, false, MonsterDamageType.Magic));
+            roster.Add(new MonsterEntry("chibi_gear_a", "チビギア", "FamilyMonsterCards/Robot/chibi_gear", 12, 20, 1, 50, 8, false, false, MonsterDamageType.Physical));
+            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "FamilyMonsterCards/Golem/rock_golem", 18, 20, 1, 50, 7, false, false, MonsterDamageType.Physical));
+            roster.Add(new MonsterEntry("apprentice_swordsman_a", "見習い剣士", "FamilyMonsterCards/Swordsman/apprentice_swordsman", 20, 20, 1, 50, 6, false, false, MonsterDamageType.Physical));
+            roster.Add(new MonsterEntry("apprentice_mage_a", "見習い魔導士", "FamilyMonsterCards/Mage/apprentice_mage", 20, 20, 1, 50, 5, false, false, MonsterDamageType.Magic));
 
             EnsureSelectedSlotCapacity();
             selectedMonsters[0] = roster[0];
@@ -427,10 +475,7 @@ namespace WitchTower.Formation
                 new Vector2(0f, -100f), new Vector2(760f, 32f), TextAnchor.MiddleCenter,
                 new Color(0.99f, 0.9f, 0.62f, 0.98f));
 
-            CreateActionButton("ReturnButton", root.transform, runtimeFont, "ホームへ戻る",
-                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(54f, -160f), new Vector2(220f, 88f),
-                new Color(0.54f, 0.29f, 0.14f, 0.94f), ReturnHome);
+            HomeReturnButtonStyle.Create(root.transform, "ReturnButton", ReturnHome);
 
             GameObject teamPanel = CreatePanel("SelectedPanel", root.transform,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -812,7 +857,11 @@ namespace WitchTower.Formation
         private static void ApplyScaffoldLayout(Transform root)
         {
             SetRect(root.Find("FormationHeader"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -122f), new Vector2(980f, 176f));
-            SetRect(root.Find("ReturnButton"), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(54f, -160f), new Vector2(220f, 88f));
+            Button returnButton = root.Find("ReturnButton")?.GetComponent<Button>();
+            if (returnButton != null)
+            {
+                HomeReturnButtonStyle.Apply(returnButton);
+            }
             SetRect(root.Find("SelectedPanel"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -404f), new Vector2(1000f, 300f));
             SetRect(root.Find("ControlPanel"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -734f), new Vector2(1000f, 124f));
             SetCenteredVerticalStretchRect(root.Find("RosterPanel"), RosterPanelWidth, RosterPanelTopInset, RosterPanelBottomInset);
@@ -990,6 +1039,18 @@ namespace WitchTower.Formation
             return new Color(0.12f, 0.46f, 0.68f, alpha);
         }
 
+        private static string ResolveDamageTypeLabel(MonsterDamageType damageType)
+        {
+            return damageType == MonsterDamageType.Magic ? "魔法型" : "物理型";
+        }
+
+        private static Color ResolveDamageTypeColor(MonsterDamageType damageType, float alpha)
+        {
+            return damageType == MonsterDamageType.Magic
+                ? new Color(0.52f, 0.86f, 1f, alpha)
+                : new Color(1f, 0.78f, 0.45f, alpha);
+        }
+
         private void EnsureSelectedSlotCapacity()
         {
             while (selectedMonsters.Count < MaxPartySize)
@@ -1100,9 +1161,11 @@ namespace WitchTower.Formation
                     }
                     view.Portrait.sprite = LoadPortrait(entry.ResourcePath);
                     view.Portrait.color = Color.white;
-                    view.NameLabel.text = entry.Name;
-                    view.StatusLabel.text = isActiveSlot ? "配置先 / 外す" : "タップで外す";
-                    view.StatusLabel.color = new Color(0.68f, 0.94f, 0.78f, 0.96f);
+                    ApplySelectedSlotNameLabel(view.NameLabel, entry.Name);
+                    view.StatusLabel.text = isActiveSlot
+                        ? $"{ResolveDamageTypeLabel(entry.DamageType)} / 配置先"
+                        : $"{ResolveDamageTypeLabel(entry.DamageType)} / 外す";
+                    view.StatusLabel.color = ResolveDamageTypeColor(entry.DamageType, 0.96f);
                 }
                 else
                 {
@@ -1118,11 +1181,71 @@ namespace WitchTower.Formation
                     }
                     view.Portrait.sprite = null;
                     view.Portrait.color = new Color(1f, 1f, 1f, 0f);
-                    view.NameLabel.text = isActiveSlot ? "配置先" : "空きスロット";
+                    ApplySelectedSlotNameLabel(view.NameLabel, isActiveSlot ? "配置先" : "空きスロット");
                     view.StatusLabel.text = isActiveSlot ? "一覧から配置" : "一覧から選択";
                     view.StatusLabel.color = new Color(0.82f, 0.89f, 0.95f, 0.78f);
                 }
             }
+        }
+
+        private static void ApplySelectedSlotNameLabel(Text label, string monsterName)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            string displayName = FormatSelectedSlotMonsterName(monsterName);
+            bool usesTwoLines = displayName.Contains("\n");
+            label.text = displayName;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = usesTwoLines ? 12 : 13;
+            label.resizeTextMaxSize = 18;
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+
+            RectTransform rect = label.rectTransform;
+            rect.anchoredPosition = new Vector2(0f, usesTwoLines ? 40f : 42f);
+            rect.sizeDelta = new Vector2(154f, usesTwoLines ? 46f : 24f);
+        }
+
+        private static string FormatSelectedSlotMonsterName(string monsterName)
+        {
+            if (string.IsNullOrEmpty(monsterName))
+            {
+                return string.Empty;
+            }
+
+            bool hasKanjiBefore = false;
+            for (int i = 0; i < monsterName.Length; i += 1)
+            {
+                char character = monsterName[i];
+                if (IsKanji(character))
+                {
+                    hasKanjiBefore = true;
+                    continue;
+                }
+
+                if (hasKanjiBefore && IsKatakana(character))
+                {
+                    return monsterName.Substring(0, i) + "\n" + monsterName.Substring(i);
+                }
+            }
+
+            return monsterName;
+        }
+
+        private static bool IsKanji(char character)
+        {
+            return character >= '\u3400' && character <= '\u4dbf'
+                || character >= '\u4e00' && character <= '\u9fff'
+                || character == '\u3005';
+        }
+
+        private static bool IsKatakana(char character)
+        {
+            return character >= '\u30a0' && character <= '\u30ff'
+                || character >= '\uff65' && character <= '\uff9f';
         }
 
         private void RefreshRosterCards()
@@ -1177,12 +1300,12 @@ namespace WitchTower.Formation
             cardImage.color = isSelected
                 ? new Color(0.14f, 0.34f, 0.26f, 0.22f)
                 : new Color(0.12f, 0.16f, 0.22f, 0.12f);
+            cardImage.raycastTarget = true;
 
             Button cardButton = card.AddComponent<Button>();
             cardButton.targetGraphic = cardImage;
             cardButton.onClick.AddListener(() =>
             {
-                ToggleSelection(entry);
                 ShowMonsterDetail(entry);
             });
 
@@ -1249,37 +1372,41 @@ namespace WitchTower.Formation
             nameLabel.resizeTextMinSize = 10;
             nameLabel.resizeTextMaxSize = 15;
 
+            CreateText("DamageTypeLabel", body.transform, runtimeFont, ResolveDamageTypeLabel(entry.DamageType), 13, FontStyle.Bold,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(12f, 22f), new Vector2(86f, 18f), TextAnchor.MiddleLeft,
+                ResolveDamageTypeColor(entry.DamageType, 1f));
+
             CreateText("LevelLabel", body.transform, runtimeFont, $"Lv.{entry.Level}/{entry.MaxLevel}  IV{entry.IndividualAverage}", 13, FontStyle.Bold,
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(12f, 10f), new Vector2(130f, 20f), TextAnchor.MiddleLeft,
+                new Vector2(12f, 1f), new Vector2(130f, 18f), TextAnchor.MiddleLeft,
                 new Color(0.98f, 0.91f, 0.66f, 1f));
 
             GameObject favoriteButton = CreateActionButton("FavoriteButton", body.transform, runtimeFont,
-                entry.IsFavorite ? "♥" : "♡",
+                string.Empty,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(8f, -8f), new Vector2(54f, 54f),
+                new Vector2(CardCornerActionInset, -CardCornerActionInset),
+                new Vector2(CardCornerActionButtonSize, CardCornerActionButtonSize),
                 new Color(0f, 0f, 0f, 0f), () => ToggleFavorite(entry));
 
-            Text favoriteText = FindChildText(favoriteButton);
-            if (favoriteText != null)
-            {
-                favoriteText.fontSize = entry.IsFavorite ? 34 : 32;
-                favoriteText.color = entry.IsFavorite
-                    ? new Color(1f, 0.44f, 0.54f, 1f)
-                    : new Color(0.84f, 0.88f, 0.92f, 0.86f);
-            }
+            CreateFavoriteHeartIcon(favoriteButton.transform, entry.IsFavorite);
 
-            GameObject checkBadge = CreatePanel("CheckBadge", body.transform,
+            CreateMonsterLockButton(body.transform, entry);
+
+            GameObject selectionButton = CreateActionButton("SelectionButton", body.transform, runtimeFont,
+                isSelected ? "外す" : "編成",
                 new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
                 new Vector2(-10f, 10f), new Vector2(74f, 28f),
-                isSelected ? new Color(0.12f, 0.38f, 0.22f, 0.98f) : new Color(0f, 0f, 0f, 0.18f));
-            checkBadge.GetComponent<Image>().raycastTarget = false;
-
-            CreateText("CheckText", checkBadge.transform, runtimeFont,
-                isSelected ? "出撃中" : "未編成", 12, FontStyle.Bold,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                Vector2.zero, new Vector2(62f, 18f), TextAnchor.MiddleCenter,
-                isSelected ? Color.white : new Color(0.84f, 0.88f, 0.92f, 0.9f));
+                isSelected ? new Color(0.23f, 0.12f, 0.12f, 0.94f) : new Color(0.12f, 0.29f, 0.20f, 0.94f),
+                () => ToggleSelection(entry));
+            Text selectionText = FindChildText(selectionButton);
+            if (selectionText != null)
+            {
+                selectionText.fontSize = 12;
+                selectionText.resizeTextForBestFit = true;
+                selectionText.resizeTextMinSize = 10;
+                selectionText.resizeTextMaxSize = 12;
+            }
 
             return new MonsterCardView
             {
@@ -1415,6 +1542,27 @@ namespace WitchTower.Formation
             RefreshView();
         }
 
+        private void ToggleMonsterLock(MonsterEntry entry)
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            var profile = GameManager.Instance?.PlayerProfile;
+            if (profile != null)
+            {
+                entry.IsLocked = profile.ToggleMonsterLock(entry.InstanceId);
+                SaveManager.Instance?.SaveCurrentGame();
+            }
+            else
+            {
+                entry.IsLocked = !entry.IsLocked;
+            }
+
+            RefreshView();
+        }
+
         private void ShowMonsterDetail(MonsterEntry entry)
         {
             if (entry == null)
@@ -1429,7 +1577,213 @@ namespace WitchTower.Formation
             MonsterDataSO monsterData = ownedMonster != null && masterDataManager != null
                 ? masterDataManager.GetMonsterData(ownedMonster.MonsterId)
                 : null;
-            MonsterStatusDetailPopup.Show(transform, profile, ownedMonster, monsterData);
+            bool canRelease = CanReleaseMonster(profile, ownedMonster, entry, out string releaseMessage);
+            Transform popupParent = ResolvePopupParent();
+            MonsterStatusDetailPopup.Show(
+                popupParent,
+                profile,
+                ownedMonster,
+                monsterData,
+                () => ReleaseMonster(entry.InstanceId),
+                canRelease,
+                releaseMessage);
+        }
+
+        private Transform ResolvePopupParent()
+        {
+            Canvas canvas = null;
+            if (rosterContent != null)
+            {
+                canvas = rosterContent.GetComponentInParent<Canvas>();
+            }
+
+            if (canvas == null)
+            {
+                canvas = FindFirstObjectByType<Canvas>();
+            }
+
+            return canvas != null ? canvas.transform : transform;
+        }
+
+        private bool CanReleaseMonster(PlayerProfile profile, OwnedMonsterData ownedMonster, MonsterEntry entry, out string message)
+        {
+            if (!Application.isPlaying)
+            {
+                message = "再生中のみ逃がせます。";
+                return false;
+            }
+
+            if (profile == null || profile.OwnedMonsters == null || ownedMonster == null || entry == null)
+            {
+                message = "対象モンスターが見つかりません。";
+                return false;
+            }
+
+            if (ownedMonster.IsLocked || entry.IsLocked)
+            {
+                message = "ロック中は逃がせません。";
+                return false;
+            }
+
+            if (ownedMonster.IsFavorite || entry.IsFavorite)
+            {
+                message = "お気に入り登録中は逃がせません。";
+                return false;
+            }
+
+            if (IsRosterEntrySelected(entry))
+            {
+                message = "出撃メンバーから外すと逃がせます。";
+                return false;
+            }
+
+            if (CountOwnedMonsters(profile) <= 1)
+            {
+                message = "最後の1体は逃がせません。";
+                return false;
+            }
+
+            message = "逃がしたモンスターは戻せません。";
+            return true;
+        }
+
+        private bool ReleaseMonster(string instanceId)
+        {
+            PlayerProfile profile = GameManager.Instance?.PlayerProfile;
+            OwnedMonsterData ownedMonster = profile?.GetOwnedMonster(instanceId);
+            MonsterEntry entry = FindRosterEntry(instanceId);
+            if (!CanReleaseMonster(profile, ownedMonster, entry, out string message))
+            {
+                if (summaryText != null)
+                {
+                    summaryText.text = message;
+                }
+
+                return false;
+            }
+
+            string monsterId = ownedMonster.MonsterId;
+            ClearReleasedMonsterReferences(profile, instanceId);
+            profile.OwnedMonsters.Remove(ownedMonster);
+            UpdateDexOwnedCount(profile, monsterId);
+            SaveManager.Instance?.SaveCurrentGame();
+
+            SeedRoster();
+            RefreshView();
+            return true;
+        }
+
+        private MonsterEntry FindRosterEntry(string instanceId)
+        {
+            if (string.IsNullOrEmpty(instanceId))
+            {
+                return null;
+            }
+
+            for (int i = 0; i < roster.Count; i += 1)
+            {
+                MonsterEntry entry = roster[i];
+                if (entry != null && string.Equals(entry.InstanceId, instanceId, StringComparison.Ordinal))
+                {
+                    return entry;
+                }
+            }
+
+            return null;
+        }
+
+        private static int CountOwnedMonsters(PlayerProfile profile)
+        {
+            if (profile?.OwnedMonsters == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            for (int i = 0; i < profile.OwnedMonsters.Count; i += 1)
+            {
+                if (profile.OwnedMonsters[i] != null)
+                {
+                    count += 1;
+                }
+            }
+
+            return count;
+        }
+
+        private void ClearReleasedMonsterReferences(PlayerProfile profile, string instanceId)
+        {
+            if (profile == null || string.IsNullOrEmpty(instanceId))
+            {
+                return;
+            }
+
+            EnsureSelectedSlotCapacity();
+            for (int i = 0; i < selectedMonsters.Count; i += 1)
+            {
+                if (selectedMonsters[i] != null && string.Equals(selectedMonsters[i].InstanceId, instanceId, StringComparison.Ordinal))
+                {
+                    selectedMonsters[i] = null;
+                }
+            }
+
+            if (profile.PartyMonsterInstanceIds != null)
+            {
+                for (int i = 0; i < profile.PartyMonsterInstanceIds.Count; i += 1)
+                {
+                    if (string.Equals(profile.PartyMonsterInstanceIds[i], instanceId, StringComparison.Ordinal))
+                    {
+                        profile.PartyMonsterInstanceIds[i] = string.Empty;
+                    }
+                }
+            }
+
+            if (profile.OwnedEquipments != null)
+            {
+                for (int i = 0; i < profile.OwnedEquipments.Count; i += 1)
+                {
+                    OwnedEquipmentData equipment = profile.OwnedEquipments[i];
+                    if (equipment != null && string.Equals(equipment.EquippedMonsterInstanceId, instanceId, StringComparison.Ordinal))
+                    {
+                        equipment.EquippedMonsterInstanceId = string.Empty;
+                        equipment.IsEquipped = false;
+                    }
+                }
+            }
+        }
+
+        private static void UpdateDexOwnedCount(PlayerProfile profile, string monsterId)
+        {
+            if (profile == null || profile.MonsterDexEntries == null || string.IsNullOrEmpty(monsterId))
+            {
+                return;
+            }
+
+            int ownedCount = profile.GetOwnedMonsterCount(monsterId);
+            MonsterDexEntryData dexEntry = null;
+            for (int i = 0; i < profile.MonsterDexEntries.Count; i += 1)
+            {
+                MonsterDexEntryData candidate = profile.MonsterDexEntries[i];
+                if (candidate != null && string.Equals(candidate.MonsterId, monsterId, StringComparison.Ordinal))
+                {
+                    dexEntry = candidate;
+                    break;
+                }
+            }
+
+            if (dexEntry == null)
+            {
+                profile.MonsterDexEntries.Add(new MonsterDexEntryData
+                {
+                    MonsterId = monsterId,
+                    IsUnlocked = true,
+                    OwnedCount = Mathf.Max(0, ownedCount)
+                });
+                return;
+            }
+
+            dexEntry.IsUnlocked = true;
+            dexEntry.OwnedCount = Mathf.Max(0, ownedCount);
         }
 
         private void OnSlotPressed(int slotIndex)
@@ -1629,6 +1983,199 @@ namespace WitchTower.Formation
                 default:
                     return Class1SlotFrameTexturePath;
             }
+        }
+
+        private void CreateFavoriteHeartIcon(Transform parent, bool isFavorite)
+        {
+            GameObject iconObject = CreateUiObject("HeartIcon", parent);
+            RectTransform rect = iconObject.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(CardCornerActionIconSize, CardCornerActionIconSize);
+
+            Image image = iconObject.AddComponent<Image>();
+            image.sprite = GetFavoriteHeartSprite(isFavorite);
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.color = Color.white;
+        }
+
+        private void CreateMonsterLockButton(Transform parent, MonsterEntry entry)
+        {
+            GameObject buttonObject = CreateUiObject("LockButton", parent);
+            RectTransform rect = buttonObject.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.anchoredPosition = new Vector2(-CardCornerActionInset, -CardCornerActionInset);
+            rect.sizeDelta = new Vector2(CardCornerActionButtonSize, CardCornerActionButtonSize);
+
+            Image background = buttonObject.AddComponent<Image>();
+            background.color = new Color(0f, 0f, 0f, 0f);
+            background.raycastTarget = true;
+
+            Button button = buttonObject.AddComponent<Button>();
+            button.targetGraphic = background;
+            button.onClick.AddListener(() => ToggleMonsterLock(entry));
+
+            GameObject iconObject = CreateUiObject("LockIcon", buttonObject.transform);
+            RectTransform iconRect = iconObject.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.anchoredPosition = new Vector2(0f, 2f);
+            iconRect.sizeDelta = new Vector2(CardCornerActionIconSize, CardCornerActionIconSize);
+
+            RawImage icon = iconObject.AddComponent<RawImage>();
+            bool isLocked = entry != null && entry.IsLocked;
+            Texture2D lockTexture = LoadFrameTexture(isLocked ? LockedMonsterIconTexturePath : UnlockedMonsterIconTexturePath);
+            if (lockTexture != null)
+            {
+                lockTexture.filterMode = UnityEngine.FilterMode.Point;
+                lockTexture.wrapMode = TextureWrapMode.Clamp;
+            }
+
+            icon.texture = lockTexture;
+            icon.color = lockTexture != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+            icon.raycastTarget = false;
+        }
+
+        private Sprite GetFavoriteHeartSprite(bool isFavorite)
+        {
+            if (isFavorite)
+            {
+                if (favoriteHeartFilledSprite == null)
+                {
+                    favoriteHeartFilledSprite = LoadFavoriteHeartSprite(FavoriteHeartFilledTexturePath) ?? CreateFavoriteHeartSprite(true);
+                }
+
+                return favoriteHeartFilledSprite;
+            }
+
+            if (favoriteHeartOutlineSprite == null)
+            {
+                favoriteHeartOutlineSprite = LoadFavoriteHeartSprite(FavoriteHeartOutlineTexturePath) ?? CreateFavoriteHeartSprite(false);
+            }
+
+            return favoriteHeartOutlineSprite;
+        }
+
+        private static Sprite LoadFavoriteHeartSprite(string resourcePath)
+        {
+            Texture2D texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+            {
+                return null;
+            }
+
+            texture.filterMode = UnityEngine.FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            return Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                100f);
+        }
+
+        private static Sprite CreateFavoriteHeartSprite(bool filled)
+        {
+            Texture2D texture = new Texture2D(FavoriteHeartPixelSize, FavoriteHeartPixelSize, TextureFormat.RGBA32, false);
+            texture.filterMode = UnityEngine.FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.hideFlags = HideFlags.HideAndDontSave;
+
+            Color clear = new Color(0f, 0f, 0f, 0f);
+            Color fill = new Color(1f, 0.40f, 0.53f, 1f);
+            Color innerEdge = new Color(0.86f, 0.18f, 0.33f, 1f);
+            Color outerEdge = new Color(0.30f, 0.04f, 0.11f, 0.94f);
+            Color outline = new Color(0.86f, 0.90f, 0.96f, 0.94f);
+
+            for (int y = 0; y < FavoriteHeartPixelSize; y += 1)
+            {
+                for (int x = 0; x < FavoriteHeartPixelSize; x += 1)
+                {
+                    bool isHeartPixel = IsFavoriteHeartPixel(x, y);
+                    bool touchesHeart = isHeartPixel || HasFavoriteHeartNeighbor(x, y);
+                    bool isInnerPixel = isHeartPixel && IsFavoriteHeartInteriorPixel(x, y);
+                    Color pixel = clear;
+
+                    if (filled)
+                    {
+                        if (isHeartPixel)
+                        {
+                            pixel = isInnerPixel ? fill : innerEdge;
+                        }
+                        else if (touchesHeart)
+                        {
+                            pixel = outerEdge;
+                        }
+                    }
+                    else if (touchesHeart && !isInnerPixel)
+                    {
+                        pixel = outline;
+                    }
+
+                    texture.SetPixel(x, y, pixel);
+                }
+            }
+
+            texture.Apply(false, false);
+            return Sprite.Create(
+                texture,
+                new Rect(0f, 0f, FavoriteHeartPixelSize, FavoriteHeartPixelSize),
+                new Vector2(0.5f, 0.5f),
+                100f);
+        }
+
+        private static bool IsFavoriteHeartPixel(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= FavoriteHeartPixelSize || y >= FavoriteHeartPixelSize)
+            {
+                return false;
+            }
+
+            int topRow = FavoriteHeartPixelSize - 1 - y;
+            return IsBetween(x, FavoriteHeartLeftEdges[topRow], FavoriteHeartRightEdges[topRow])
+                || IsBetween(x, FavoriteHeartSecondLeftEdges[topRow], FavoriteHeartSecondRightEdges[topRow]);
+        }
+
+        private static bool HasFavoriteHeartNeighbor(int x, int y)
+        {
+            for (int offsetY = -1; offsetY <= 1; offsetY += 1)
+            {
+                for (int offsetX = -1; offsetX <= 1; offsetX += 1)
+                {
+                    if (IsFavoriteHeartPixel(x + offsetX, y + offsetY))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsFavoriteHeartInteriorPixel(int x, int y)
+        {
+            for (int offsetY = -1; offsetY <= 1; offsetY += 1)
+            {
+                for (int offsetX = -1; offsetX <= 1; offsetX += 1)
+                {
+                    if (!IsFavoriteHeartPixel(x + offsetX, y + offsetY))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsBetween(int value, int min, int max)
+        {
+            return min >= 0 && value >= min && value <= max;
         }
 
         private static void CreateBackdrop(Transform parent, Color color)

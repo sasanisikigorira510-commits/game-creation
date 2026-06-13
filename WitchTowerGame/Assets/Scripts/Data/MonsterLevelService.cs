@@ -8,10 +8,10 @@ namespace WitchTower.Data
     {
         public const int LevelsPerClassRank = 20;
 
-        private const int BaseRequiredExp = 30;
-        private const int LinearRequiredExpPerLevel = 10;
-        private const float QuadraticRequiredExpPerLevel = 0.8f;
-        private const float ClassRequiredExpMultiplierStep = 0.55f;
+        private const int BaseRequiredExp = 130;
+        private const int LinearRequiredExpPerLevel = 36;
+        private const float QuadraticRequiredExpPerLevel = 3.0f;
+        private const float ClassRequiredExpMultiplierStep = 0.90f;
 
         public static int GetMaxLevel(MonsterDataSO monsterData)
         {

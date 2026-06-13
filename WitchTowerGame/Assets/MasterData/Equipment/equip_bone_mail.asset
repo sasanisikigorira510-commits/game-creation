@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: equip_bone_mail
   m_EditorClassIdentifier: 
   equipmentId: equip_bone_mail
-  equipmentName: Bone Mail
+  equipmentName: 骨の鎧
   slotType: 1
   baseAttack: 0
-  baseDefense: 5
-  baseHp: 18
+  baseDefense: 4
+  baseHp: 13
   bonusCritRate: 0
-  bonusAttackSpeed: -0.02
-  rarity: 2
+  bonusAttackSpeed: 0
+  rarity: 1

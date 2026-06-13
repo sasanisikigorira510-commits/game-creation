@@ -53,15 +53,26 @@ public static class UnityMcpMasterDataBuilder
             CreateSkill("skill_guard", "Guard", "Raise defense for a short time.", 10f, 0f, 0f, BuffType.DefenseUp, 5f, 5f)
         };
 
-        var equipment = new[]
+        var equipment = new List<EquipmentDataSO>
         {
-            CreateEquipment("equip_bronze_blade", "Bronze Blade", EquipmentSlotType.Weapon, 3, 0, 0, 0.01f, 0.02f, EquipmentRarity.Common),
-            CreateEquipment("equip_guard_cloth", "Guard Cloth", EquipmentSlotType.Armor, 0, 2, 8, 0f, 0f, EquipmentRarity.Common),
-            CreateEquipment("equip_ashen_ring", "Ashen Ring", EquipmentSlotType.Accessory, 1, 0, 0, 0.02f, 0.03f, EquipmentRarity.Uncommon),
-            CreateEquipment("equip_iron_sword", "Iron Sword", EquipmentSlotType.Weapon, 6, 0, 0, 0.02f, 0.03f, EquipmentRarity.Uncommon),
-            CreateEquipment("equip_bone_mail", "Bone Mail", EquipmentSlotType.Armor, 0, 5, 18, 0f, -0.02f, EquipmentRarity.Rare),
-            CreateEquipment("equip_quick_charm", "Quick Charm", EquipmentSlotType.Accessory, 2, 1, 6, 0.03f, 0.04f, EquipmentRarity.Rare)
+            CreateEquipment("equip_bronze_blade", "青銅の刃", EquipmentSlotType.Weapon, 3, 0, 0, 0, 0, 0.01f, 0.02f, EquipmentRarity.Common),
+            CreateEquipment("equip_guard_cloth", "守護の布鎧", EquipmentSlotType.Armor, 0, 0, 2, 0, 8, 0f, 0f, EquipmentRarity.Common),
+            CreateEquipment("equip_ashen_ring", "灰燼の指輪", EquipmentSlotType.Accessory, 1, 0, 0, 0, 0, 0.02f, 0.03f, EquipmentRarity.Uncommon),
+            CreateEquipment("equip_apprentice_charm", "見習いの護符", EquipmentSlotType.Accessory, 0, 2, 0, 2, 4, 0.01f, 0.02f, EquipmentRarity.Common),
+            CreateEquipment("equip_iron_sword", "鉄の剣", EquipmentSlotType.Weapon, 6, 0, 0, 0, 0, 0.02f, 0.03f, EquipmentRarity.Uncommon),
+            CreateEquipment("equip_bone_mail", "骨の鎧", EquipmentSlotType.Armor, 0, 0, 4, 0, 13, 0f, 0f, EquipmentRarity.Uncommon),
+            CreateEquipment("equip_sage_ring", "賢者の指輪", EquipmentSlotType.Accessory, 0, 4, 0, 3, 6, 0.02f, 0.03f, EquipmentRarity.Uncommon),
+            CreateEquipment("equip_quick_charm", "俊足のお守り", EquipmentSlotType.Accessory, 2, 0, 1, 0, 6, 0.03f, 0.04f, EquipmentRarity.Rare),
+            CreateEquipment("equip_iron_saber", "鉄のサーベル", EquipmentSlotType.Weapon, 9, 0, 0, 0, 0, 0.03f, 0.04f, EquipmentRarity.Rare),
+            CreateEquipment("equip_bastion_mail", "城塞の鎧", EquipmentSlotType.Armor, 0, 0, 6, 0, 18, 0f, 0f, EquipmentRarity.Rare),
+            CreateEquipment("equip_barrier_talisman", "結界の護符", EquipmentSlotType.Accessory, 0, 6, 0, 5, 10, 0.03f, 0.04f, EquipmentRarity.Rare),
+            CreateEquipment("equip_moon_charm", "月影のお守り", EquipmentSlotType.Accessory, 0, 0, 0, 0, 4, 0.01f, 0.02f, EquipmentRarity.Common),
+            CreateEquipment("equip_frost_greatsword", "冬晶の大剣", EquipmentSlotType.Weapon, 12, 0, 0, 0, 0, 0.04f, 0.05f, EquipmentRarity.Epic),
+            CreateEquipment("equip_ice_dragon_armor", "氷竜の鎧", EquipmentSlotType.Armor, 0, 0, 8, 0, 24, 0f, 0f, EquipmentRarity.Epic),
+            CreateEquipment("equip_ice_star_talisman", "星氷の護符", EquipmentSlotType.Accessory, 0, 4, 0, 3, 8, 0.04f, 0.05f, EquipmentRarity.Epic),
+            CreateEquipment("equip_oracle_orb", "星詠みの宝珠", EquipmentSlotType.Accessory, 0, 8, 0, 6, 14, 0.04f, 0.05f, EquipmentRarity.Epic)
         };
+        equipment.AddRange(CreateClassMagicEquipmentSets());
 
         var floors = new List<FloorDataSO>();
         for (int floorNumber = 1; floorNumber <= 10; floorNumber++)
@@ -80,7 +91,7 @@ public static class UnityMcpMasterDataBuilder
         root.monsterDataList = LoadAssetsInFolder<MonsterDataSO>(MonsterFolder);
         root.enemyDataList = enemies.ToArray();
         root.skillDataList = skills;
-        root.equipmentDataList = equipment;
+        root.equipmentDataList = equipment.ToArray();
         root.floorDataList = floors.ToArray();
         root.dropTableDataList = new[] { commonDropTable };
 
@@ -109,6 +120,46 @@ public static class UnityMcpMasterDataBuilder
         EditorUtility.SetDirty(root);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+    }
+
+    [MenuItem("Tools/MCP/Add Class Magic Equipment Sets")]
+    public static void AddClassMagicEquipmentSets()
+    {
+        EnsureFolders();
+        EquipmentDataSO[] equipment = CreateClassMagicEquipmentSets();
+        MasterDataRoot root = CreateOrReplaceAsset<MasterDataRoot>(ResourceFolder + "/MasterDataRoot.asset");
+        root.equipmentDataList = LoadAssetsInFolder<EquipmentDataSO>(EquipmentFolder);
+
+        foreach (EquipmentDataSO equipmentData in equipment)
+        {
+            EditorUtility.SetDirty(equipmentData);
+        }
+
+        EditorUtility.SetDirty(root);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+    }
+
+    private static EquipmentDataSO[] CreateClassMagicEquipmentSets()
+    {
+        return new[]
+        {
+            CreateEquipment("equip_c1_arcane_wand", "魔導の小杖", EquipmentSlotType.Weapon, 0, 4, 0, 0, 0, 0.01f, 0.01f, EquipmentRarity.Common),
+            CreateEquipment("equip_c1_spellguard_robe", "術守のローブ", EquipmentSlotType.Armor, 0, 0, 0, 3, 7, 0f, 0f, EquipmentRarity.Common),
+            CreateEquipment("equip_c1_mana_brooch", "魔力のブローチ", EquipmentSlotType.Accessory, 0, 2, 0, 2, 4, 0f, 0.01f, EquipmentRarity.Common),
+
+            CreateEquipment("equip_c2_runic_staff", "刻印の魔杖", EquipmentSlotType.Weapon, 0, 7, 0, 0, 0, 0.02f, 0.02f, EquipmentRarity.Uncommon),
+            CreateEquipment("equip_c2_sage_mantle", "賢者の法衣", EquipmentSlotType.Armor, 0, 0, 0, 6, 13, 0f, 0f, EquipmentRarity.Uncommon),
+            CreateEquipment("equip_c2_runic_ring", "刻印の指輪", EquipmentSlotType.Accessory, 0, 4, 0, 4, 7, 0.02f, 0.01f, EquipmentRarity.Uncommon),
+
+            CreateEquipment("equip_c3_astral_scepter", "星界の王笏", EquipmentSlotType.Weapon, 0, 11, 0, 0, 0, 0.03f, 0.03f, EquipmentRarity.Rare),
+            CreateEquipment("equip_c3_aurora_robe", "極光の霊装", EquipmentSlotType.Armor, 0, 0, 2, 9, 19, 0f, 0f, EquipmentRarity.Rare),
+            CreateEquipment("equip_c3_starseer_charm", "星詠みの護符", EquipmentSlotType.Accessory, 0, 7, 0, 6, 11, 0.03f, 0.03f, EquipmentRarity.Rare),
+
+            CreateEquipment("equip_c4_abyss_grimoire", "深淵の魔導書", EquipmentSlotType.Weapon, 0, 16, 0, 0, 0, 0.05f, 0.04f, EquipmentRarity.Epic),
+            CreateEquipment("equip_c4_voidweave_raiment", "虚空織の神衣", EquipmentSlotType.Armor, 0, 0, 4, 13, 28, 0f, 0f, EquipmentRarity.Epic),
+            CreateEquipment("equip_c4_eclipse_core", "蝕星の魔核", EquipmentSlotType.Accessory, 0, 10, 0, 9, 17, 0.05f, 0.05f, EquipmentRarity.Epic)
+        };
     }
 
     private static EnemyDataSO CreateEnemy(
@@ -170,7 +221,9 @@ public static class UnityMcpMasterDataBuilder
         string equipmentName,
         EquipmentSlotType slotType,
         int baseAttack,
+        int baseWisdom,
         int baseDefense,
+        int baseMagicDefense,
         int baseHp,
         float bonusCritRate,
         float bonusAttackSpeed,
@@ -180,11 +233,13 @@ public static class UnityMcpMasterDataBuilder
         equipment.equipmentId = equipmentId;
         equipment.equipmentName = equipmentName;
         equipment.slotType = slotType;
-        equipment.baseAttack = baseAttack;
-        equipment.baseDefense = baseDefense;
-        equipment.baseHp = baseHp;
-        equipment.bonusCritRate = bonusCritRate;
-        equipment.bonusAttackSpeed = bonusAttackSpeed;
+        equipment.baseAttack = Mathf.Max(0, baseAttack);
+        equipment.baseWisdom = Mathf.Max(0, baseWisdom);
+        equipment.baseDefense = Mathf.Max(0, baseDefense);
+        equipment.baseMagicDefense = Mathf.Max(0, baseMagicDefense);
+        equipment.baseHp = Mathf.Max(0, baseHp);
+        equipment.bonusCritRate = Mathf.Max(0f, bonusCritRate);
+        equipment.bonusAttackSpeed = Mathf.Max(0f, bonusAttackSpeed);
         equipment.rarity = rarity;
         return equipment;
     }

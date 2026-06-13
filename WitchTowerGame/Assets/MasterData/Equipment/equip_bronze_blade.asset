@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: equip_bronze_blade
   m_EditorClassIdentifier: 
   equipmentId: equip_bronze_blade
-  equipmentName: Bronze Blade
+  equipmentName: 青銅の刃
   slotType: 0
   baseAttack: 3
   baseDefense: 0

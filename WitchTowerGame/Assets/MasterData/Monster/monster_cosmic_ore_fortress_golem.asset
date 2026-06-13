@@ -18,7 +18,7 @@ MonoBehaviour:
   raceId: golem
   classRank: 3
   rarity: 3
-  element: 5
+  element: 2
   rangeType: 0
   damageType: 0
   baseStats:
@@ -60,4 +60,4 @@ MonoBehaviour:
   battleAttackResourcePath: MonsterBattle/mon_cosmic_ore_fortress_golem_attack
   battleAttackFacing: 0
   battleVisualScale: 1.3
-  description: "宇宙鉱石で構成された要塞級ゴーレム。圧倒的な耐久力を誇る。"
+  description: "宇宙鉱石に蓄えた蒼い霊水で動く要塞級ゴーレム。圧倒的な耐久力を誇る。"

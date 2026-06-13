@@ -1,4 +1,5 @@
 using UnityEngine;
+using WitchTower.Data;
 using WitchTower.Managers;
 using WitchTower.MasterData;
 
@@ -9,8 +10,13 @@ namespace WitchTower.Battle
         public static BattleUnitStats CreateEnemyPreview(int floor)
         {
             var masterDataManager = MasterDataManager.Instance;
+            masterDataManager?.Initialize();
             var floorData = masterDataManager != null ? masterDataManager.GetFloorData(floor) : null;
-            EnemyDataSO enemyData = floorData != null ? floorData.enemyData : null;
+            EnemyDataSO enemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, masterDataManager);
+            if (enemyData == null)
+            {
+                enemyData = floorData != null ? floorData.enemyData : null;
+            }
 
             if (enemyData == null)
             {

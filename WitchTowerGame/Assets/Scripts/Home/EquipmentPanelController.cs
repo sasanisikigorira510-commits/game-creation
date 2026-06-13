@@ -400,7 +400,7 @@ namespace WitchTower.Home
             }
 
             label.text = canOpen
-                ? $"{slotLabel}強化\n{equipmentData.equipmentName}\n{EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / 残{equipment.RemainingEnhanceAttempts}"
+                ? $"{slotLabel}強化\n{equipmentData.equipmentName}  {EquipmentEnhancementCatalog.BuildQualityLabel(equipmentData, equipment)}\n{EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / {EquipmentEnhancementCatalog.BuildEnhanceAttemptsLabel(equipmentData, equipment)}"
                 : $"{slotLabel}強化\n未装備\n-";
             label.color = canOpen ? Color.white : new Color(0.72f, 0.76f, 0.82f, 0.88f);
         }
@@ -459,13 +459,15 @@ namespace WitchTower.Home
 
             if (enhancementOverlayTitleText != null)
             {
-                enhancementOverlayTitleText.text = equipmentData != null ? equipmentData.equipmentName : "強化対象なし";
+                enhancementOverlayTitleText.text = equipmentData != null
+                    ? $"{equipmentData.equipmentName}  {EquipmentEnhancementCatalog.BuildQualityLabel(equipmentData, equipment)}"
+                    : "強化対象なし";
             }
 
             if (enhancementOverlayInfoText != null)
             {
                 enhancementOverlayInfoText.text = equipment != null && equipmentData != null
-                    ? $"現在 {EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / 強化Lv.{Mathf.Max(0, equipment.UpgradeLevel)} / 残り {Mathf.Max(0, equipment.RemainingEnhanceAttempts)}回 / {(equipment.IsLocked ? "ロック中" : "未ロック")}"
+                    ? $"現在 {EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / {EquipmentEnhancementCatalog.BuildEnhanceAttemptsLabel(equipmentData, equipment)} / {(equipment.IsLocked ? "ロック中" : "未ロック")}"
                     : "装備カードから強化対象を選んでください。";
             }
 
@@ -626,6 +628,10 @@ namespace WitchTower.Home
         {
             bool isOwned = HasEquipment(profile, equipmentId);
             bool isEquipped = IsEquipped(profile, equipmentId);
+            EquipmentDataSO equipmentData = MasterDataManager.Instance != null
+                ? MasterDataManager.Instance.GetEquipmentData(equipmentId)
+                : null;
+            string displayName = equipmentData != null ? equipmentData.equipmentName : equipmentId;
 
             if (button != null)
             {
@@ -639,6 +645,7 @@ namespace WitchTower.Home
                 var label = button.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)
                 {
+                    label.text = displayName;
                     label.color = isOwned ? Color.white : new Color(0.78f, 0.78f, 0.82f, 1f);
                 }
             }
@@ -675,7 +682,9 @@ namespace WitchTower.Home
             var equipmentData = MasterDataManager.Instance != null
                 ? MasterDataManager.Instance.GetEquipmentData(equipmentId)
                 : null;
-            return equipmentData != null ? equipmentData.equipmentName : equipmentId;
+            return equipmentData != null
+                ? $"{equipmentData.equipmentName}[{EquipmentEnhancementCatalog.ResolveQualityName(equipmentData, equipped)}]"
+                : equipmentId;
         }
 
         private static string BuildSummary(Save.OwnedMonsterData monster, BattleUnitStats stats)
@@ -686,8 +695,9 @@ namespace WitchTower.Home
             }
 
             string monsterLabel = ResolveMonsterName(monster);
+            string damageTypeLabel = ResolveMonsterDamageTypeLabel(monster);
             string individualLabel = MonsterIndividualValueService.BuildAverageLabel(monster);
-            return $"{monsterLabel}  {individualLabel}  HP {stats.MaxHp}  ATK {stats.Attack}  DEF {stats.Defense}  CRIT {(stats.CritRate * 100f):0.#}%  SPD {stats.AttackSpeed:0.##}\n評価: {BuildGrade(stats)}";
+            return $"{monsterLabel}  {damageTypeLabel}  {individualLabel}  HP {stats.MaxHp}  ATK {stats.Attack}  DEF {stats.Defense}  CRIT {(stats.CritRate * 100f):0.#}%  SPD {stats.AttackSpeed:0.###}\n評価: {BuildGrade(stats)}";
         }
 
         private static string BuildEquipmentPolicyText(Save.OwnedMonsterData monster)
@@ -732,29 +742,39 @@ namespace WitchTower.Home
 
             System.Collections.Generic.List<string> parts = new System.Collections.Generic.List<string>();
             var resolvedBonus = EquipmentEnhancementCatalog.ResolveEquipmentBonus(equipmentData, equipped);
-            if (resolvedBonus.Attack != 0)
+            if (resolvedBonus.AttackPercent > 0f)
             {
-                parts.Add($"攻+{resolvedBonus.Attack}");
+                parts.Add($"攻+{resolvedBonus.AttackPercent * 100f:0.#}%");
             }
 
-            if (resolvedBonus.Defense != 0)
+            if (resolvedBonus.WisdomPercent > 0f)
             {
-                parts.Add($"防+{resolvedBonus.Defense}");
+                parts.Add($"賢+{resolvedBonus.WisdomPercent * 100f:0.#}%");
             }
 
-            if (resolvedBonus.Hp != 0)
+            if (resolvedBonus.DefensePercent > 0f)
             {
-                parts.Add($"HP+{resolvedBonus.Hp}");
+                parts.Add($"防+{resolvedBonus.DefensePercent * 100f:0.#}%");
             }
 
-            if (resolvedBonus.CritRate != 0f)
+            if (resolvedBonus.MagicDefensePercent > 0f)
+            {
+                parts.Add($"魔防+{resolvedBonus.MagicDefensePercent * 100f:0.#}%");
+            }
+
+            if (resolvedBonus.HpPercent > 0f)
+            {
+                parts.Add($"HP+{resolvedBonus.HpPercent * 100f:0.#}%");
+            }
+
+            if (resolvedBonus.CritRate > 0f)
             {
                 parts.Add($"会心+{resolvedBonus.CritRate * 100f:0.#}%");
             }
 
-            if (resolvedBonus.AttackSpeed != 0f)
+            if (resolvedBonus.AttackSpeed > 0f)
             {
-                parts.Add($"速+{resolvedBonus.AttackSpeed:0.##}");
+                parts.Add($"速+{resolvedBonus.AttackSpeed:0.###}");
             }
 
             if (parts.Count == 0)
@@ -762,7 +782,7 @@ namespace WitchTower.Home
                 parts.Add("補正なし");
             }
 
-            return $"{slotLabel} {equipmentData.equipmentName} ({string.Join(", ", parts)})";
+            return $"{slotLabel} {equipmentData.equipmentName}[{EquipmentEnhancementCatalog.ResolveQualityName(equipmentData, equipped)}] ({string.Join(", ", parts)})";
         }
 
         private static string BuildGrade(BattleUnitStats stats)
@@ -833,7 +853,7 @@ namespace WitchTower.Home
                 return "装備管理: 所持モンスターを入手すると個別装備を確認できます。";
             }
 
-            return $"{ResolveMonsterName(monster)} の個別装備を確認中。ロックと強化遺物で装備を管理できます。";
+            return $"{ResolveMonsterName(monster)}（{ResolveMonsterDamageTypeLabel(monster)}）の個別装備を確認中。ロックと強化遺物で装備を管理できます。";
         }
 
         private static string ResolveMonsterName(Save.OwnedMonsterData monster)
@@ -847,6 +867,24 @@ namespace WitchTower.Home
                 ? MasterDataManager.Instance.GetMonsterData(monster.MonsterId)
                 : null;
             return monsterData != null ? monsterData.monsterName : monster.MonsterId;
+        }
+
+        private static string ResolveMonsterDamageTypeLabel(Save.OwnedMonsterData monster)
+        {
+            if (monster == null)
+            {
+                return "型不明";
+            }
+
+            var monsterData = MasterDataManager.Instance != null
+                ? MasterDataManager.Instance.GetMonsterData(monster.MonsterId)
+                : null;
+            return monsterData != null ? ResolveDamageTypeLabel(monsterData.damageType) : "型不明";
+        }
+
+        private static string ResolveDamageTypeLabel(MonsterDamageType damageType)
+        {
+            return damageType == MonsterDamageType.Magic ? "魔法型" : "物理型";
         }
 
         private static string ResolveEnhancementRelicTexturePath(string relicId)

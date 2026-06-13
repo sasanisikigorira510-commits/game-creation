@@ -18,7 +18,7 @@ MonoBehaviour:
   raceId: dragon
   classRank: 3
   rarity: 3
-  element: 5
+  element: 2
   rangeType: 1
   damageType: 1
   baseStats:
@@ -60,4 +60,4 @@ MonoBehaviour:
   battleAttackResourcePath: MonsterBattle/mon_abyss_dragon_attack
   battleAttackFacing: 0
   battleVisualScale: 1.14
-  description: "蒼黒の炎を操る上位竜。広い射程と重い一撃で戦線を支配する。"
+  description: "火炎を極めた果てに蒼黒の水流を操る上位竜。広い射程と重い奔流で戦線を支配する。"

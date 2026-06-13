@@ -7,6 +7,7 @@ using WitchTower.Core;
 using WitchTower.Data;
 using WitchTower.Managers;
 using WitchTower.MasterData;
+using WitchTower.UI;
 
 namespace WitchTower.Home
 {
@@ -121,10 +122,7 @@ namespace WitchTower.Home
                 TextAnchor.MiddleCenter, new Color(0.78f, 0.88f, 0.96f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f), new Vector2(0f, -96f), new Vector2(760f, 34f));
 
-            Button closeButton = CreateTextButton("CloseButton", panel.transform, "戻る",
-                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(-26f, -32f), new Vector2(130f, 52f), new Color(0.36f, 0.18f, 0.16f, 0.96f), Close, 18);
-            closeButton.targetGraphic.raycastTarget = true;
+            HomeReturnButtonStyle.Create(panelRoot.transform, "CloseButton", Close);
 
             dungeonListRoot = CreateUiObject("DungeonList", panel.transform).GetComponent<RectTransform>();
             dungeonListRoot.anchorMin = new Vector2(0.5f, 1f);

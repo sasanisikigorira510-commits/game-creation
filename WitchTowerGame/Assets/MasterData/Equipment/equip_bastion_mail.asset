@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: equip_bastion_mail
   m_EditorClassIdentifier: 
   equipmentId: equip_bastion_mail
-  equipmentName: Bastion Mail
+  equipmentName: 城塞の鎧
   slotType: 1
   baseAttack: 0
-  baseDefense: 5
+  baseDefense: 6
   baseHp: 18
   bonusCritRate: 0
-  bonusAttackSpeed: -0.02
+  bonusAttackSpeed: 0
   rarity: 2

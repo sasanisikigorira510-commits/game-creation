@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: equip_quick_charm
   m_EditorClassIdentifier: 
   equipmentId: equip_quick_charm
-  equipmentName: Quick Charm
+  equipmentName: 俊足のお守り
   slotType: 2
   baseAttack: 2
   baseDefense: 1

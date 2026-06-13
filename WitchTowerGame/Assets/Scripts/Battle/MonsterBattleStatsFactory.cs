@@ -73,31 +73,31 @@ namespace WitchTower.Battle
                 monsterData.baseStats.attackSpeed +
                 ResolveFloatLevelGrowth(levelOffset, classLevelGrowth.AttackSpeed, levelGrowth.attackSpeedCoefficient);
 
-            int maxHp = Mathf.Max(1,
+            int maxHpBase =
                 ResolveIndividualIntegerStat(intrinsicMaxHp, ownedMonster != null ? ownedMonster.IndividualHp : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(monsterData.plusGrowth.maxHpPerPlus * plusHp) +
-                fusionBonusHp +
-                equipmentBonus.Hp);
-            int attack = Mathf.Max(1,
+                fusionBonusHp;
+            int attackBase =
                 ResolveIndividualIntegerStat(intrinsicAttack, ownedMonster != null ? ownedMonster.IndividualAttack : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(monsterData.plusGrowth.attackPerPlus * plusAttack) +
-                fusionBonusAttack +
-                equipmentBonus.Attack);
-            int wisdom = Mathf.Max(1,
+                fusionBonusAttack;
+            int wisdomBase =
                 ResolveIndividualIntegerStat(intrinsicWisdom, ownedMonster != null ? ownedMonster.IndividualWisdom : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(monsterData.plusGrowth.magicAttackPerPlus * plusWisdom) +
-                fusionBonusWisdom +
-                equipmentBonus.Wisdom);
-            int defense = Mathf.Max(1,
+                fusionBonusWisdom;
+            int defenseBase =
                 ResolveIndividualIntegerStat(intrinsicDefense, ownedMonster != null ? ownedMonster.IndividualDefense : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(monsterData.plusGrowth.defensePerPlus * plusDefense) +
-                fusionBonusDefense +
-                equipmentBonus.Defense);
-            int magicDefense = Mathf.Max(1,
+                fusionBonusDefense;
+            int magicDefenseBase =
                 ResolveIndividualIntegerStat(intrinsicMagicDefense, ownedMonster != null ? ownedMonster.IndividualMagicDefense : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(monsterData.plusGrowth.magicDefensePerPlus * plusMagicDefense) +
-                fusionBonusMagicDefense +
-                equipmentBonus.MagicDefense);
+                fusionBonusMagicDefense;
+            int maxHp = Mathf.Max(1, Mathf.RoundToInt(maxHpBase * (1f + Mathf.Max(0f, equipmentBonus.HpPercent))));
+            int attack = Mathf.Max(1, Mathf.RoundToInt(attackBase * (1f + Mathf.Max(0f, equipmentBonus.AttackPercent))));
+            int wisdom = Mathf.Max(1, Mathf.RoundToInt(wisdomBase * (1f + Mathf.Max(0f, equipmentBonus.WisdomPercent))));
+            int defense = Mathf.Max(1, Mathf.RoundToInt(defenseBase * (1f + Mathf.Max(0f, equipmentBonus.DefensePercent))));
+            int magicDefense = Mathf.Max(1, Mathf.RoundToInt(magicDefenseBase * (1f + Mathf.Max(0f, equipmentBonus.MagicDefensePercent))));
             float attackSpeed = Mathf.Max(0.2f,
                 ResolveIndividualAttackSpeed(intrinsicAttackSpeed, ownedMonster != null ? ownedMonster.IndividualAttackSpeed : MonsterIndividualValueService.DefaultValue) +
                 fusionBonusAttackSpeed +

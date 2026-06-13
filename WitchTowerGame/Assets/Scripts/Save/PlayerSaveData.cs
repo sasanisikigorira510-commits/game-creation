@@ -9,12 +9,17 @@ namespace WitchTower.Save
         public int PlayerLevel;
         public int PlayerExp;
         public int Gold;
+        public int FreeGachaStones;
+        public int PaidGachaStones;
         public int HighestFloor;
         public int CurrentFloor;
         public int AttackUpgradeLevel;
         public int DefenseUpgradeLevel;
         public int HpUpgradeLevel;
         public string LastDailyRewardDate;
+        public string DailyQuestProgressDate;
+        public int DailyBattleWinCount;
+        public List<string> DailyClaimedQuestIds;
         public string LastActiveAt;
         public int PendingIdleRewardGold;
         public List<MissionProgressData> MissionProgressList;
@@ -37,12 +42,17 @@ namespace WitchTower.Save
                 PlayerLevel = 1,
                 PlayerExp = 0,
                 Gold = 100,
+                FreeGachaStones = 3000,
+                PaidGachaStones = 0,
                 HighestFloor = 1,
                 CurrentFloor = 1,
                 AttackUpgradeLevel = 0,
                 DefenseUpgradeLevel = 0,
                 HpUpgradeLevel = 0,
                 LastDailyRewardDate = string.Empty,
+                DailyQuestProgressDate = string.Empty,
+                DailyBattleWinCount = 0,
+                DailyClaimedQuestIds = new List<string>(),
                 LastActiveAt = string.Empty,
                 PendingIdleRewardGold = 0,
                 MissionProgressList = new List<MissionProgressData>
@@ -72,7 +82,9 @@ namespace WitchTower.Save
                         EquipmentId = "equip_bronze_blade",
                         UpgradeLevel = 0,
                         EnhancementBonusRate = 0f,
+                        QualityRank = 1,
                         RemainingEnhanceAttempts = 5,
+                        MaxEnhanceAttempts = 5,
                         IsEquipped = false,
                         IsLocked = false,
                         EquippedMonsterInstanceId = string.Empty
@@ -83,7 +95,9 @@ namespace WitchTower.Save
                         EquipmentId = "equip_guard_cloth",
                         UpgradeLevel = 0,
                         EnhancementBonusRate = 0f,
+                        QualityRank = 1,
                         RemainingEnhanceAttempts = 5,
+                        MaxEnhanceAttempts = 5,
                         IsEquipped = false,
                         IsLocked = false,
                         EquippedMonsterInstanceId = string.Empty
@@ -94,7 +108,9 @@ namespace WitchTower.Save
                         EquipmentId = "equip_ashen_ring",
                         UpgradeLevel = 0,
                         EnhancementBonusRate = 0f,
+                        QualityRank = 2,
                         RemainingEnhanceAttempts = 5,
+                        MaxEnhanceAttempts = 5,
                         IsEquipped = false,
                         IsLocked = false,
                         EquippedMonsterInstanceId = string.Empty
@@ -141,7 +157,9 @@ namespace WitchTower.Save
         public string EquipmentId;
         public int UpgradeLevel;
         public float EnhancementBonusRate;
+        public int QualityRank;
         public int RemainingEnhanceAttempts;
+        public int MaxEnhanceAttempts;
         public bool IsEquipped;
         public bool IsLocked;
         public string EquippedMonsterInstanceId;
@@ -158,6 +176,7 @@ namespace WitchTower.Save
         public int EnhancementDefenseFlat;
         public int EnhancementMagicDefenseFlat;
         public int EnhancementHpFlat;
+        public float EnhancementCritRateFlat;
         public float EnhancementAttackSpeedFlat;
     }
 
@@ -195,6 +214,7 @@ namespace WitchTower.Save
         public int IndividualMagicDefense;
         public int IndividualAttackSpeed;
         public bool IsFavorite;
+        public bool IsLocked;
         public int AcquiredOrder;
         public string EquippedWeaponInstanceId;
         public string EquippedArmorInstanceId;

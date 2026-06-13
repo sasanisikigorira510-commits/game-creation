@@ -2,6 +2,10 @@ import AppKit
 import Foundation
 
 let outputRoot = "/Users/andou/Desktop/あ/game-creation/WitchTowerGame/Assets/Resources/UI/EquipmentEnhance"
+let image2SourceRoot = "/Users/andou/Desktop/あ/game-creation/tools/generated_equipment_enhancement_image2_sources"
+let successImage2SheetPath = "\(image2SourceRoot)/enhance_success_image2_sheet.png"
+let failImage2SheetPath = "\(image2SourceRoot)/enhance_fail_image2_sheet.png"
+let destroyImage2SheetPath = "\(image2SourceRoot)/rejected_destroy_image2_sheet_has_monster.png"
 
 func color(_ hex: UInt32, alpha: CGFloat = 1.0) -> NSColor {
     let r = CGFloat((hex >> 16) & 0xff) / 255.0
@@ -11,18 +15,28 @@ func color(_ hex: UInt32, alpha: CGFloat = 1.0) -> NSColor {
 }
 
 func render(size: CGSize, draw: () -> Void) throws -> NSBitmapImageRep {
-    let image = NSImage(size: size)
-    image.lockFocus()
+    guard let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: Int(size.width),
+        pixelsHigh: Int(size.height),
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0) else {
+        throw NSError(domain: "EquipmentEnhancementEffects", code: 1, userInfo: [NSLocalizedDescriptionKey: "render allocation failed"])
+    }
+
+    rep.size = size
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
     NSColor.clear.setFill()
     NSRect(origin: .zero, size: size).fill()
     NSGraphicsContext.current?.imageInterpolation = .none
     draw()
-    image.unlockFocus()
-
-    guard let data = image.tiffRepresentation,
-          let rep = NSBitmapImageRep(data: data) else {
-        throw NSError(domain: "EquipmentEnhancementEffects", code: 1, userInfo: [NSLocalizedDescriptionKey: "render failed"])
-    }
+    NSGraphicsContext.restoreGraphicsState()
 
     return rep
 }
@@ -33,6 +47,112 @@ func savePNG(_ rep: NSBitmapImageRep, to path: String) throws {
     }
 
     try data.write(to: URL(fileURLWithPath: path), options: .atomic)
+}
+
+func loadBitmap(_ path: String) throws -> NSBitmapImageRep {
+    guard let image = NSImage(contentsOfFile: path),
+          let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
+          let sourceRep = NSBitmapImageRep(data: data) else {
+        throw NSError(domain: "EquipmentEnhancementEffects", code: 3, userInfo: [NSLocalizedDescriptionKey: "image2 sheet load failed: \(path)"])
+    }
+
+    let size = CGSize(width: sourceRep.pixelsWide, height: sourceRep.pixelsHigh)
+    guard let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: sourceRep.pixelsWide,
+        pixelsHigh: sourceRep.pixelsHigh,
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0) else {
+        throw NSError(domain: "EquipmentEnhancementEffects", code: 4, userInfo: [NSLocalizedDescriptionKey: "image2 sheet normalize failed: \(path)"])
+    }
+
+    rep.size = size
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+    NSColor.black.setFill()
+    NSRect(origin: .zero, size: size).fill()
+    image.draw(
+        in: NSRect(origin: .zero, size: size),
+        from: NSRect(origin: .zero, size: image.size),
+        operation: .copy,
+        fraction: 1)
+    NSGraphicsContext.restoreGraphicsState()
+    return rep
+}
+
+func transparentImage2Frame(from sheet: NSBitmapImageRep, frameIndex: Int, alphaBoost: CGFloat = 1.18) throws -> NSBitmapImageRep {
+    let columns = 4
+    let rows = 2
+    let outputSize = 512
+    let cellWidth = sheet.pixelsWide / columns
+    let cellHeight = sheet.pixelsHigh / rows
+    let column = frameIndex % columns
+    let rowFromTop = frameIndex / columns
+    let scale = min(CGFloat(outputSize) / CGFloat(cellWidth), CGFloat(outputSize) / CGFloat(cellHeight))
+    let drawWidth = CGFloat(cellWidth) * scale
+    let drawHeight = CGFloat(cellHeight) * scale
+    let offsetX = (CGFloat(outputSize) - drawWidth) * 0.5
+    let offsetY = (CGFloat(outputSize) - drawHeight) * 0.5
+
+    guard let out = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: outputSize,
+        pixelsHigh: outputSize,
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0) else {
+        throw NSError(domain: "EquipmentEnhancementEffects", code: 4, userInfo: [NSLocalizedDescriptionKey: "frame bitmap allocation failed"])
+    }
+
+    for y in 0..<outputSize {
+        for x in 0..<outputSize {
+            let localX = (CGFloat(x) - offsetX) / scale
+            let localY = (CGFloat(y) - offsetY) / scale
+            guard localX >= 0, localX < CGFloat(cellWidth), localY >= 0, localY < CGFloat(cellHeight) else {
+                out.setColor(NSColor.clear, atX: x, y: y)
+                continue
+            }
+
+            let sourceX = min(sheet.pixelsWide - 1, max(0, column * cellWidth + Int(localX)))
+            let sourceY = min(sheet.pixelsHigh - 1, max(0, rowFromTop * cellHeight + (cellHeight - 1 - Int(localY))))
+            guard let sourceColor = sheet.colorAt(x: sourceX, y: sourceY) else {
+                out.setColor(NSColor.clear, atX: x, y: y)
+                continue
+            }
+
+            var r: CGFloat = 0
+            var g: CGFloat = 0
+            var b: CGFloat = 0
+            var a: CGFloat = 0
+            sourceColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+            let maxChannel = max(r, max(g, b))
+            if maxChannel < 0.018 || a <= 0.001 {
+                out.setColor(NSColor.clear, atX: x, y: y)
+                continue
+            }
+
+            let alpha = min(1, pow(maxChannel, 0.72) * alphaBoost) * a
+            let divisor = max(alpha, 0.001)
+            out.setColor(NSColor(
+                deviceRed: min(1, r / divisor),
+                green: min(1, g / divisor),
+                blue: min(1, b / divisor),
+                alpha: alpha),
+                atX: x,
+                y: y)
+        }
+    }
+
+    return out
 }
 
 func guid() -> String {
@@ -219,78 +339,61 @@ let violet = color(0xa95cff)
 let smoke = color(0x77808f)
 let black = color(0x08070b)
 
-let runeCircle = try render(size: CGSize(width: 512, height: 512)) {
-    let c = CGPoint(x: 256, y: 256)
-    drawGlowOval(center: c, radiusX: 230, radiusY: 230, color: cyan.withAlphaComponent(0.62), layers: 16)
-    drawGlowOval(center: c, radiusX: 170, radiusY: 170, color: violet.withAlphaComponent(0.36), layers: 10)
-    drawRing(center: c, radius: 208, color: cyan.withAlphaComponent(0.58), width: 8)
-    drawRing(center: c, radius: 168, color: gold.withAlphaComponent(0.66), width: 5, dash: [18, 10])
-    drawRing(center: c, radius: 118, color: whiteGold.withAlphaComponent(0.48), width: 3)
-    for i in 0..<16 {
-        let a = CGFloat(i) * .pi * 2 / 16
-        drawSpark(center: CGPoint(x: c.x + cos(a) * 186, y: c.y + sin(a) * 186), color: gold.withAlphaComponent(0.78), size: 10, width: 2)
-    }
-    for i in 0..<8 {
-        let a = CGFloat(i) * .pi * 2 / 8 + .pi / 8
-        strokePath(points: [
-            CGPoint(x: c.x + cos(a) * 132, y: c.y + sin(a) * 132),
-            CGPoint(x: c.x + cos(a) * 154, y: c.y + sin(a) * 154)
-        ], color: cyan.withAlphaComponent(0.72), width: 4)
-    }
-}
+let successImage2Sheet = try loadBitmap(successImage2SheetPath)
+let failImage2Sheet = try loadBitmap(failImage2SheetPath)
+let destroyImage2Sheet = try loadBitmap(destroyImage2SheetPath)
+let destroyImage2FrameMap = [2, 2, 2, 5, 5, 6, 6, 7]
+
+let runeCircle = try transparentImage2Frame(from: successImage2Sheet, frameIndex: 7, alphaBoost: 1.08)
 try savePNG(runeCircle, to: "\(outputRoot)/EnhanceRuneCircle.png")
 try ensureSpriteMeta(for: "\(outputRoot)/EnhanceRuneCircle.png")
 
 for frame in 0..<8 {
     let t = CGFloat(frame) / 7
-    let success = try render(size: CGSize(width: 512, height: 512)) {
-        let c = CGPoint(x: 256, y: 256)
-        drawGlowOval(center: c, radiusX: 80 + 150 * t, radiusY: 80 + 150 * t, color: gold.withAlphaComponent(0.78 * (1 - t * 0.32)), layers: 12)
-        drawRing(center: c, radius: 52 + 155 * t, color: whiteGold.withAlphaComponent(0.82 * (1 - t * 0.18)), width: 10 - 5 * t)
-        drawRing(center: c, radius: 96 + 92 * t, color: cyan.withAlphaComponent(0.55), width: 5, dash: [16, 9])
-        for i in 0..<20 {
-            let a = CGFloat(i) * .pi * 2 / 20 + t * .pi * 0.45
-            let d = 52 + 188 * t + CGFloat(i % 3) * 8
-            drawSpark(center: CGPoint(x: c.x + cos(a) * d, y: c.y + sin(a) * d), color: i % 2 == 0 ? whiteGold.withAlphaComponent(0.94) : cyan.withAlphaComponent(0.78), size: 8 + 8 * t, width: 2.2)
-        }
-        strokePath(points: [CGPoint(x: 118, y: 248), CGPoint(x: 214, y: 182), CGPoint(x: 384, y: 342)], color: whiteGold.withAlphaComponent(0.88), width: 16)
-        strokePath(points: [CGPoint(x: 118, y: 248), CGPoint(x: 214, y: 182), CGPoint(x: 384, y: 342)], color: gold.withAlphaComponent(0.86), width: 8)
-    }
+    let success = try transparentImage2Frame(from: successImage2Sheet, frameIndex: frame, alphaBoost: 1.22)
     try savePNG(success, to: "\(outputRoot)/EnhanceSuccess_\(frame).png")
     try ensureSpriteMeta(for: "\(outputRoot)/EnhanceSuccess_\(frame).png")
 
-    let fail = try render(size: CGSize(width: 512, height: 512)) {
-        let c = CGPoint(x: 256, y: 256)
-        drawGlowOval(center: c, radiusX: 105 + 80 * t, radiusY: 75 + 55 * t, color: smoke.withAlphaComponent(0.62 * (1 - t * 0.25)), layers: 10)
-        drawGlowOval(center: CGPoint(x: c.x - 14 + sin(t * .pi) * 24, y: c.y + 4), radiusX: 88 + 70 * t, radiusY: 58 + 40 * t, color: violet.withAlphaComponent(0.28 * (1 - t * 0.1)), layers: 8)
-        drawRing(center: c, radius: 70 + 115 * t, color: red.withAlphaComponent(0.42 * (1 - t * 0.18)), width: 7)
-        strokePath(points: [
-            CGPoint(x: 207, y: 340),
-            CGPoint(x: 245, y: 274),
-            CGPoint(x: 232, y: 230),
-            CGPoint(x: 292, y: 174)
-        ], color: red.withAlphaComponent(0.82), width: 9)
-        for i in 0..<10 {
-            let a = CGFloat(i) * .pi * 2 / 10 + 0.25
-            let d = 64 + 120 * t + CGFloat(i % 2) * 12
-            drawSpark(center: CGPoint(x: c.x + cos(a) * d, y: c.y + sin(a) * d), color: smoke.withAlphaComponent(0.62), size: 7 + 6 * t, width: 2)
-        }
-    }
+    let fail = try transparentImage2Frame(from: failImage2Sheet, frameIndex: frame, alphaBoost: 1.34)
     try savePNG(fail, to: "\(outputRoot)/EnhanceFail_\(frame).png")
     try ensureSpriteMeta(for: "\(outputRoot)/EnhanceFail_\(frame).png")
 
-    let destroy = try render(size: CGSize(width: 512, height: 512)) {
+    let destroy: NSBitmapImageRep
+    if frame >= 1 {
+        destroy = try transparentImage2Frame(from: destroyImage2Sheet, frameIndex: destroyImage2FrameMap[frame], alphaBoost: 1.30)
+    } else {
+        destroy = try render(size: CGSize(width: 512, height: 512)) {
         let c = CGPoint(x: 256, y: 256)
-        drawGlowOval(center: c, radiusX: 108 + 120 * t, radiusY: 108 + 120 * t, color: red.withAlphaComponent(0.40 * (1 - t * 0.22)), layers: 12)
-        drawGlowOval(center: c, radiusX: 92 + 74 * t, radiusY: 92 + 74 * t, color: black.withAlphaComponent(0.72), layers: 8)
-        drawRing(center: c, radius: 72 + 130 * t, color: red.withAlphaComponent(0.76 * (1 - t * 0.22)), width: 10)
-        for i in 0..<18 {
-            let a = CGFloat(i) * .pi * 2 / 18 + CGFloat(i % 5) * 0.08
-            let d = 35 + 198 * t + CGFloat((i * 17) % 29)
-            drawShard(center: c, angle: a, distance: d, size: 8 + CGFloat(i % 4) * 3 + t * 5, color: i % 3 == 0 ? red.withAlphaComponent(0.88) : smoke.withAlphaComponent(0.74))
+        let pulse = sin(t * .pi)
+        let flash = max(0, 1 - abs(t - 0.30) * 3.5)
+        let fade = max(0.12, 1 - t * 0.62)
+        drawGlowOval(center: c, radiusX: 74 + 226 * t, radiusY: 74 + 226 * t, color: red.withAlphaComponent(0.72 * fade), layers: 18)
+        drawGlowOval(center: c, radiusX: 42 + 118 * pulse, radiusY: 42 + 118 * pulse, color: whiteGold.withAlphaComponent(0.34 * flash), layers: 8)
+        drawGlowOval(center: c, radiusX: 130 + 90 * t, radiusY: 96 + 84 * t, color: black.withAlphaComponent(0.58 * t), layers: 10)
+        drawRing(center: c, radius: 46 + 184 * t, color: red.withAlphaComponent(0.92 * fade), width: 18 - 10 * t)
+        drawRing(center: c, radius: 78 + 120 * t, color: gold.withAlphaComponent(0.46 * pulse), width: 6, dash: [14, 8])
+        for i in 0..<42 {
+            let a = CGFloat(i) * .pi * 2 / 42 + CGFloat((i * 11) % 17) * 0.035
+            let d = 28 + 258 * t + CGFloat((i * 23) % 37)
+            let shardColor = i % 4 == 0
+                ? whiteGold.withAlphaComponent(0.82 * fade)
+                : (i % 3 == 0 ? smoke.withAlphaComponent(0.62 * fade) : red.withAlphaComponent(0.92 * fade))
+            drawShard(center: c, angle: a, distance: d, size: 6 + CGFloat(i % 5) * 3 + t * 8, color: shardColor)
         }
-        strokePath(points: [CGPoint(x: 178, y: 190), CGPoint(x: 334, y: 334)], color: red.withAlphaComponent(0.82), width: 12)
-        strokePath(points: [CGPoint(x: 178, y: 334), CGPoint(x: 334, y: 190)], color: red.withAlphaComponent(0.82), width: 12)
+        for i in 0..<34 {
+            let a = CGFloat(i) * .pi * 2 / 34 + t * .pi * 0.5
+            let d = 34 + 218 * t + CGFloat((i * 13) % 31)
+            drawSpark(center: CGPoint(x: c.x + cos(a) * d, y: c.y + sin(a) * d),
+                      color: i % 2 == 0 ? gold.withAlphaComponent(0.76 * fade) : red.withAlphaComponent(0.88 * fade),
+                      size: 4 + 9 * pulse,
+                      width: 2.5)
+        }
+        strokePath(points: [CGPoint(x: 150, y: 184), CGPoint(x: 220, y: 238), CGPoint(x: 274, y: 206), CGPoint(x: 362, y: 342)], color: red.withAlphaComponent(0.88 * fade), width: 13)
+        strokePath(points: [CGPoint(x: 164, y: 342), CGPoint(x: 232, y: 286), CGPoint(x: 300, y: 322), CGPoint(x: 360, y: 188)], color: red.withAlphaComponent(0.82 * fade), width: 12)
+        if frame <= 3 {
+            drawGlowOval(center: c, radiusX: 34 + 44 * flash, radiusY: 34 + 44 * flash, color: whiteGold.withAlphaComponent(0.74 * flash), layers: 7)
+        }
+        }
     }
     try savePNG(destroy, to: "\(outputRoot)/EnhanceDestroy_\(frame).png")
     try ensureSpriteMeta(for: "\(outputRoot)/EnhanceDestroy_\(frame).png")

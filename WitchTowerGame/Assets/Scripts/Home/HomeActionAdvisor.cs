@@ -6,7 +6,6 @@ namespace WitchTower.Home
 {
     public static class HomeActionAdvisor
     {
-        private const int DailyRewardGold = 50;
         private static readonly (string missionId, int targetValue)[] MissionChecks =
         {
             ("mission_clear_1", 1),
@@ -49,7 +48,7 @@ namespace WitchTower.Home
             }
 
             int count = 0;
-            count += profile.CanClaimDailyReward(now.ToString("yyyy-MM-dd")) ? 1 : 0;
+            count += DailyRewardService.GetClaimableQuestCount(profile, now);
             count += IsMissionClaimable(profile, "mission_clear_1", 1) ? 1 : 0;
             count += IsMissionClaimable(profile, "mission_reach_floor_3", 3) ? 1 : 0;
             return count;
@@ -205,17 +204,17 @@ namespace WitchTower.Home
 
             if (profile.HasEquipment("equip_iron_sword") && profile.EquippedWeaponId != "equip_iron_sword")
             {
-                upgrades.Add("Iron Sword");
+                upgrades.Add("鉄の剣");
             }
 
             if (profile.HasEquipment("equip_bone_mail") && profile.EquippedArmorId != "equip_bone_mail")
             {
-                upgrades.Add("Bone Mail");
+                upgrades.Add("骨の鎧");
             }
 
             if (profile.HasEquipment("equip_quick_charm") && profile.EquippedAccessoryId != "equip_quick_charm")
             {
-                upgrades.Add("Quick Charm");
+                upgrades.Add("俊足のお守り");
             }
 
             if (upgrades.Count == 0)
@@ -324,7 +323,7 @@ namespace WitchTower.Home
                 return "Reward Route: unavailable.";
             }
 
-            bool dailyReady = profile.CanClaimDailyReward(now.ToString("yyyy-MM-dd"));
+            bool dailyReady = DailyRewardService.HasClaimableQuest(profile, now);
             bool missionClearReady = IsMissionClaimable(profile, "mission_clear_1", 1);
             bool missionFloorReady = IsMissionClaimable(profile, "mission_reach_floor_3", 3);
 
@@ -335,7 +334,7 @@ namespace WitchTower.Home
 
             if (dailyReady)
             {
-                return $"Reward Route: daily reward first for {DailyRewardGold} Gold before anything else.";
+                return $"Reward Route: claim completed daily quests for {DailyRewardService.GetClaimableRewardFreeGachaStones(profile, now)} free stones before anything else.";
             }
 
             if (missionFloorReady)
@@ -1072,28 +1071,28 @@ namespace WitchTower.Home
 
             if (!profile.HasEquipment("equip_iron_sword"))
             {
-                return "Loadout Focus: clear floor 2 to unlock Iron Sword.";
+                return "Loadout Focus: clear floor 2 to unlock 鉄の剣.";
             }
 
             if (!profile.HasEquipment("equip_bone_mail"))
             {
-                return "Loadout Focus: clear floor 4 to unlock Bone Mail.";
+                return "Loadout Focus: clear floor 4 to unlock 骨の鎧.";
             }
 
             if (!profile.HasEquipment("equip_quick_charm"))
             {
-                return "Loadout Focus: clear floor 6 to unlock Quick Charm.";
+                return "Loadout Focus: clear floor 6 to unlock 俊足のお守り.";
             }
 
             string threat = GetNextFloorThreat(profile);
             if (threat.Contains("dangerous") && profile.EquippedArmorId != "equip_bone_mail")
             {
-                return "Loadout Focus: switch into Bone Mail before the dangerous floor.";
+                return "Loadout Focus: switch into 骨の鎧 before the dangerous floor.";
             }
 
             if (threat.Contains("even") && profile.EquippedWeaponId != "equip_iron_sword")
             {
-                return "Loadout Focus: switch into Iron Sword to push through the even floor.";
+                return "Loadout Focus: switch into 鉄の剣 to push through the even floor.";
             }
 
             return "Loadout Focus: all sample gear unlocked. Tune your build before the next push.";
@@ -1106,9 +1105,21 @@ namespace WitchTower.Home
                 return "Mission Focus: profile unavailable.";
             }
 
-            if (profile.CanClaimDailyReward(now.ToString("yyyy-MM-dd")))
+            if (DailyRewardService.HasClaimableQuest(profile, now))
             {
-                return string.Format("Mission Focus: claim today's {0} Gold daily reward.", DailyRewardGold);
+                return string.Format(
+                    "Mission Focus: claim today's completed daily quests for {0} free stones.",
+                    DailyRewardService.GetClaimableRewardFreeGachaStones(profile, now));
+            }
+
+            if (!DailyRewardService.AreAllClaimed(profile, now))
+            {
+                DailyQuestDefinition finalQuest = DailyRewardService.GetDefinitions()[DailyRewardService.GetDefinitions().Count - 1];
+                int progress = DailyRewardService.GetBattleWinProgress(profile, now, finalQuest.Id);
+                return string.Format(
+                    "Mission Focus: win {0} battles to complete every daily quest ({1}/{0}).",
+                    DailyRewardService.GetMaximumRequiredBattleWins(),
+                    progress);
             }
 
             if (IsMissionClaimable(profile, "mission_clear_1", 1))
@@ -1157,7 +1168,7 @@ namespace WitchTower.Home
             }
 
             int count = 0;
-            count += profile.CanClaimDailyReward(now.ToString("yyyy-MM-dd")) ? 1 : 0;
+            count += DailyRewardService.GetClaimableQuestCount(profile, now);
             foreach (var missionCheck in MissionChecks)
             {
                 count += IsMissionClaimable(profile, missionCheck.missionId, missionCheck.targetValue) ? 1 : 0;
@@ -1175,11 +1186,6 @@ namespace WitchTower.Home
 
             int total = profile.PendingIdleRewardGold;
             total += GetClaimableMissionGold(profile);
-            if (profile.CanClaimDailyReward(now.ToString("yyyy-MM-dd")))
-            {
-                total += DailyRewardGold;
-            }
-
             return total;
         }
 
@@ -1205,12 +1211,26 @@ namespace WitchTower.Home
             }
 
             int missionGold = GetClaimableMissionGold(profile);
-            bool dailyReady = profile.CanClaimDailyReward(now.ToString("yyyy-MM-dd"));
-            int totalGold = missionGold + (dailyReady ? DailyRewardGold : 0);
+            bool dailyReady = DailyRewardService.HasClaimableQuest(profile, now);
+            int totalGold = missionGold;
+            int totalStones = dailyReady ? DailyRewardService.GetClaimableRewardFreeGachaStones(profile, now) : 0;
             int totalClaims = GetClaimableMissionCount(profile, now);
-            return totalClaims > 0
-                ? $"Claimable Rewards: {totalGold} Gold across {totalClaims} ready claims."
-                : "Claimable Rewards: no reward claims ready.";
+            if (totalClaims <= 0)
+            {
+                return "Claimable Rewards: no reward claims ready.";
+            }
+
+            if (totalGold > 0 && totalStones > 0)
+            {
+                return $"Claimable Rewards: {totalGold} Gold and {totalStones} free stones across {totalClaims} ready claims.";
+            }
+
+            if (totalStones > 0)
+            {
+                return $"Claimable Rewards: {totalStones} free stones ready.";
+            }
+
+            return $"Claimable Rewards: {totalGold} Gold across {totalClaims} ready claims.";
         }
 
         public static string BuildPriorityTabText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
@@ -1388,13 +1408,13 @@ namespace WitchTower.Home
                 currentScore,
                 enemyStats);
 
-            EvaluateEquipmentCandidate(ref best, "Equip Iron Sword", profile.HasEquipment("equip_iron_sword") && profile.EquippedWeaponId != "equip_iron_sword"
+            EvaluateEquipmentCandidate(ref best, "鉄の剣を装備", profile.HasEquipment("equip_iron_sword") && profile.EquippedWeaponId != "equip_iron_sword"
                 ? PlayerBattleStatsFactory.CreatePreviewWithEquipment(profile, "equip_iron_sword", null, null)
                 : null, currentStats, currentThreat, currentScore, enemyStats);
-            EvaluateEquipmentCandidate(ref best, "Equip Bone Mail", profile.HasEquipment("equip_bone_mail") && profile.EquippedArmorId != "equip_bone_mail"
+            EvaluateEquipmentCandidate(ref best, "骨の鎧を装備", profile.HasEquipment("equip_bone_mail") && profile.EquippedArmorId != "equip_bone_mail"
                 ? PlayerBattleStatsFactory.CreatePreviewWithEquipment(profile, null, "equip_bone_mail", null)
                 : null, currentStats, currentThreat, currentScore, enemyStats);
-            EvaluateEquipmentCandidate(ref best, "Equip Quick Charm", profile.HasEquipment("equip_quick_charm") && profile.EquippedAccessoryId != "equip_quick_charm"
+            EvaluateEquipmentCandidate(ref best, "俊足のお守りを装備", profile.HasEquipment("equip_quick_charm") && profile.EquippedAccessoryId != "equip_quick_charm"
                 ? PlayerBattleStatsFactory.CreatePreviewWithEquipment(profile, null, null, "equip_quick_charm")
                 : null, currentStats, currentThreat, currentScore, enemyStats);
 

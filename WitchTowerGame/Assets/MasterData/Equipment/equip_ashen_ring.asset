@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: equip_ashen_ring
   m_EditorClassIdentifier: 
   equipmentId: equip_ashen_ring
-  equipmentName: Ashen Ring
+  equipmentName: 灰燼の指輪
   slotType: 2
   baseAttack: 1
   baseDefense: 0

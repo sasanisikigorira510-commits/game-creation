@@ -50,6 +50,17 @@ namespace WitchTower.Data
                 RollOne());
         }
 
+        public static MonsterIndividualValues RollHighQuality()
+        {
+            return new MonsterIndividualValues(
+                RollHighQualityOne(),
+                RollHighQualityOne(),
+                RollHighQualityOne(),
+                RollHighQualityOne(),
+                RollHighQualityOne(),
+                RollHighQualityOne());
+        }
+
         public static MonsterIndividualValues Inherit(OwnedMonsterData parentA, OwnedMonsterData parentB)
         {
             EnsureInitialized(parentA);
@@ -141,6 +152,11 @@ namespace WitchTower.Data
         private static int RollOne()
         {
             return Random.Next(MinValue, MaxValue + 1);
+        }
+
+        private static int RollHighQualityOne()
+        {
+            return Math.Max(RollOne(), RollOne());
         }
 
         private static MonsterIndividualValues RollForExistingMonster(OwnedMonsterData monster)

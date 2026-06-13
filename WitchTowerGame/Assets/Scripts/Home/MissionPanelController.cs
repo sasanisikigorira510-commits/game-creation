@@ -15,8 +15,6 @@ namespace WitchTower.Home
         [SerializeField] private TMP_Text ctaText;
         [SerializeField] private TMP_Text rewardSummaryText;
 
-        private const int DailyRewardGold = 50;
-
         private void OnEnable()
         {
             Refresh();
@@ -25,8 +23,8 @@ namespace WitchTower.Home
         public void ClaimDailyReward()
         {
             var profile = GameManager.Instance.PlayerProfile;
-            var claimedGold = DailyRewardService.Claim(profile, DateTime.Now);
-            if (claimedGold > 0)
+            var claimedStones = DailyRewardService.ClaimAll(profile, DateTime.Now);
+            if (claimedStones > 0)
             {
                 SaveManager.Instance.SaveCurrentGame();
             }
@@ -54,10 +52,19 @@ namespace WitchTower.Home
                 resourceView.Bind(profile);
             }
 
-            var canClaimDaily = profile != null && profile.CanClaimDailyReward(DateTime.Now.ToString("yyyy-MM-dd"));
+            DateTime now = DateTime.Now;
+            bool canClaimDaily = profile != null && DailyRewardService.HasClaimableQuest(profile, now);
+            bool isDailyClaimed = profile != null && DailyRewardService.AreAllClaimed(profile, now);
+            int dailyTarget = DailyRewardService.GetMaximumRequiredBattleWins();
+            DailyQuestDefinition finalQuest = DailyRewardService.GetDefinitions()[DailyRewardService.GetDefinitions().Count - 1];
+            int dailyProgress = DailyRewardService.GetBattleWinProgress(profile, now, finalQuest.Id);
             if (dailyRewardView != null)
             {
-                dailyRewardView.Bind(canClaimDaily, DailyRewardGold);
+                dailyRewardView.Bind(
+                    canClaimDaily,
+                    isDailyClaimed,
+                    dailyProgress,
+                    dailyTarget);
             }
 
             BindMission(missionItemView1, profile, "mission_clear_1");

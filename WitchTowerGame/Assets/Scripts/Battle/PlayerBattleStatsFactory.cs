@@ -27,15 +27,18 @@ namespace WitchTower.Battle
             }
 
             var equipmentBonus = GetEquipmentBonus(profile, weaponOverrideId, armorOverrideId, accessoryOverrideId);
-            var maxHp = playerData.initialHp + GetHpBonus(profile, hpLevelOffset) + equipmentBonus.Hp;
+            int maxHpBase = playerData.initialHp + GetHpBonus(profile, hpLevelOffset);
+            int attackBase = playerData.initialAttack + GetAttackBonus(profile, attackLevelOffset);
+            int wisdomBase = playerData.initialAttack + GetAttackBonus(profile, attackLevelOffset);
+            int defenseBase = playerData.initialDefense + GetDefenseBonus(profile, defenseLevelOffset);
             return new BattleUnitStats
             {
-                MaxHp = maxHp,
-                CurrentHp = maxHp,
-                Attack = playerData.initialAttack + GetAttackBonus(profile, attackLevelOffset) + equipmentBonus.Attack,
-                Wisdom = playerData.initialAttack + GetAttackBonus(profile, attackLevelOffset) + equipmentBonus.Wisdom,
-                Defense = playerData.initialDefense + GetDefenseBonus(profile, defenseLevelOffset) + equipmentBonus.Defense,
-                MagicDefense = playerData.initialDefense + GetDefenseBonus(profile, defenseLevelOffset) + equipmentBonus.MagicDefense,
+                MaxHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent))),
+                CurrentHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent))),
+                Attack = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(attackBase * (1f + equipmentBonus.AttackPercent))),
+                Wisdom = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(wisdomBase * (1f + equipmentBonus.WisdomPercent))),
+                Defense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.DefensePercent))),
+                MagicDefense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.MagicDefensePercent))),
                 AttackSpeed = playerData.initialAttackSpeed + equipmentBonus.AttackSpeed,
                 CritRate = playerData.initialCritRate + equipmentBonus.CritRate,
                 CritDamage = playerData.initialCritDamage
@@ -61,15 +64,18 @@ namespace WitchTower.Battle
         private static BattleUnitStats CreateFallback(PlayerProfile profile, int attackLevelOffset, int defenseLevelOffset, int hpLevelOffset, string weaponOverrideId, string armorOverrideId, string accessoryOverrideId)
         {
             var equipmentBonus = GetEquipmentBonus(profile, weaponOverrideId, armorOverrideId, accessoryOverrideId);
-            var maxHp = 100 + GetHpBonus(profile, hpLevelOffset) + equipmentBonus.Hp;
+            int maxHpBase = 100 + GetHpBonus(profile, hpLevelOffset);
+            int attackBase = 15 + GetAttackBonus(profile, attackLevelOffset);
+            int wisdomBase = 15 + GetAttackBonus(profile, attackLevelOffset);
+            int defenseBase = 5 + GetDefenseBonus(profile, defenseLevelOffset);
             return new BattleUnitStats
             {
-                MaxHp = maxHp,
-                CurrentHp = maxHp,
-                Attack = 15 + GetAttackBonus(profile, attackLevelOffset) + equipmentBonus.Attack,
-                Wisdom = 15 + GetAttackBonus(profile, attackLevelOffset) + equipmentBonus.Wisdom,
-                Defense = 5 + GetDefenseBonus(profile, defenseLevelOffset) + equipmentBonus.Defense,
-                MagicDefense = 5 + GetDefenseBonus(profile, defenseLevelOffset) + equipmentBonus.MagicDefense,
+                MaxHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent))),
+                CurrentHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent))),
+                Attack = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(attackBase * (1f + equipmentBonus.AttackPercent))),
+                Wisdom = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(wisdomBase * (1f + equipmentBonus.WisdomPercent))),
+                Defense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.DefensePercent))),
+                MagicDefense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.MagicDefensePercent))),
                 AttackSpeed = 1.0f + equipmentBonus.AttackSpeed,
                 CritRate = 0.05f + equipmentBonus.CritRate,
                 CritDamage = 1.5f
@@ -118,22 +124,22 @@ namespace WitchTower.Battle
                 return;
             }
 
-            bonus.Attack += equipmentData.baseAttack;
-            bonus.Wisdom += equipmentData.baseWisdom;
-            bonus.Defense += equipmentData.baseDefense;
-            bonus.MagicDefense += equipmentData.baseMagicDefense;
-            bonus.Hp += equipmentData.baseHp;
-            bonus.CritRate += equipmentData.bonusCritRate;
-            bonus.AttackSpeed += equipmentData.bonusAttackSpeed;
+            bonus.AttackPercent += UnityEngine.Mathf.Max(0, equipmentData.baseAttack) / 100f;
+            bonus.WisdomPercent += UnityEngine.Mathf.Max(0, equipmentData.baseWisdom) / 100f;
+            bonus.DefensePercent += UnityEngine.Mathf.Max(0, equipmentData.baseDefense) / 100f;
+            bonus.MagicDefensePercent += UnityEngine.Mathf.Max(0, equipmentData.baseMagicDefense) / 100f;
+            bonus.HpPercent += UnityEngine.Mathf.Max(0, equipmentData.baseHp) / 100f;
+            bonus.CritRate += UnityEngine.Mathf.Max(0f, equipmentData.bonusCritRate);
+            bonus.AttackSpeed += UnityEngine.Mathf.Max(0f, equipmentData.bonusAttackSpeed);
         }
 
         private struct EquipmentBonus
         {
-            public int Attack;
-            public int Wisdom;
-            public int Defense;
-            public int MagicDefense;
-            public int Hp;
+            public float AttackPercent;
+            public float WisdomPercent;
+            public float DefensePercent;
+            public float MagicDefensePercent;
+            public float HpPercent;
             public float CritRate;
             public float AttackSpeed;
         }

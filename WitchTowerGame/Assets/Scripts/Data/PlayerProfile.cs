@@ -8,15 +8,21 @@ namespace WitchTower.Data
     public sealed partial class PlayerProfile
     {
         public const int PartySlotCount = 5;
+        private const string LegacyPrimaryDailyQuestId = "daily_battle_win_1";
 
         public int Level { get; set; }
         public int Exp { get; set; }
         public int Gold { get; set; }
+        public int FreeGachaStones { get; set; }
+        public int PaidGachaStones { get; set; }
         public int HighestFloor { get; set; }
         public int AttackUpgradeLevel { get; set; }
         public int DefenseUpgradeLevel { get; set; }
         public int HpUpgradeLevel { get; set; }
         public string LastDailyRewardDate { get; set; }
+        public string DailyQuestProgressDate { get; set; }
+        public int DailyBattleWinCount { get; set; }
+        public List<string> DailyClaimedQuestIds { get; }
         public string LastActiveAt { get; set; }
         public int PendingIdleRewardGold { get; set; }
         public List<OwnedMaterialData> OwnedMaterials { get; }
@@ -33,11 +39,16 @@ namespace WitchTower.Data
             Level = saveData.PlayerLevel;
             Exp = saveData.PlayerExp;
             Gold = saveData.Gold;
+            FreeGachaStones = Math.Max(0, saveData.FreeGachaStones);
+            PaidGachaStones = Math.Max(0, saveData.PaidGachaStones);
             HighestFloor = saveData.HighestFloor;
             AttackUpgradeLevel = saveData.AttackUpgradeLevel;
             DefenseUpgradeLevel = saveData.DefenseUpgradeLevel;
             HpUpgradeLevel = saveData.HpUpgradeLevel;
             LastDailyRewardDate = saveData.LastDailyRewardDate ?? string.Empty;
+            DailyQuestProgressDate = saveData.DailyQuestProgressDate ?? string.Empty;
+            DailyBattleWinCount = Math.Max(0, saveData.DailyBattleWinCount);
+            DailyClaimedQuestIds = saveData.DailyClaimedQuestIds ?? new List<string>();
             LastActiveAt = saveData.LastActiveAt ?? string.Empty;
             PendingIdleRewardGold = saveData.PendingIdleRewardGold;
             OwnedMaterials = saveData.OwnedMaterials ?? new List<OwnedMaterialData>();
@@ -58,6 +69,72 @@ namespace WitchTower.Data
             Gold += amount;
         }
 
+        public bool TrySpendGold(int amount)
+        {
+            int cost = Math.Max(0, amount);
+            if (Gold < cost)
+            {
+                return false;
+            }
+
+            Gold -= cost;
+            return true;
+        }
+
+        public void AddFreeGachaStones(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            FreeGachaStones += amount;
+        }
+
+        public void AddPaidGachaStones(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            PaidGachaStones += amount;
+        }
+
+        public bool CanSpendFreeGachaStones(int amount)
+        {
+            return FreeGachaStones >= Math.Max(0, amount);
+        }
+
+        public bool CanSpendPaidGachaStones(int amount)
+        {
+            return PaidGachaStones >= Math.Max(0, amount);
+        }
+
+        public bool TrySpendFreeGachaStones(int amount)
+        {
+            int cost = Math.Max(0, amount);
+            if (FreeGachaStones < cost)
+            {
+                return false;
+            }
+
+            FreeGachaStones -= cost;
+            return true;
+        }
+
+        public bool TrySpendPaidGachaStones(int amount)
+        {
+            int cost = Math.Max(0, amount);
+            if (PaidGachaStones < cost)
+            {
+                return false;
+            }
+
+            PaidGachaStones -= cost;
+            return true;
+        }
+
         public void AddExp(int amount)
         {
             if (amount <= 0)
@@ -71,7 +148,8 @@ namespace WitchTower.Data
 
         public int GetRequiredExpForNextLevel()
         {
-            return 10 + (Level - 1) * 5;
+            int levelOffset = Math.Max(0, Level - 1);
+            return 120 + levelOffset * 60 + levelOffset * levelOffset * 16;
         }
 
         public int GetAttackBonus()
@@ -94,9 +172,57 @@ namespace WitchTower.Data
             return LastDailyRewardDate != currentDate;
         }
 
+        public bool HasClaimedDailyReward(string currentDate)
+        {
+            return LastDailyRewardDate == currentDate;
+        }
+
         public void MarkDailyRewardClaimed(string currentDate)
         {
             LastDailyRewardDate = currentDate;
+        }
+
+        public int GetDailyBattleWinCount(string currentDate)
+        {
+            ResetDailyQuestProgressIfNeeded(currentDate);
+            return DailyBattleWinCount;
+        }
+
+        public void RecordDailyBattleWin(string currentDate)
+        {
+            ResetDailyQuestProgressIfNeeded(currentDate);
+            DailyBattleWinCount += 1;
+        }
+
+        public bool HasClaimedDailyQuest(string currentDate, string questId)
+        {
+            ResetDailyQuestProgressIfNeeded(currentDate);
+            if (string.IsNullOrEmpty(questId))
+            {
+                return false;
+            }
+
+            if (questId == LegacyPrimaryDailyQuestId && HasClaimedDailyReward(currentDate))
+            {
+                return true;
+            }
+
+            return DailyClaimedQuestIds.Contains(questId);
+        }
+
+        public void MarkDailyQuestClaimed(string currentDate, string questId)
+        {
+            ResetDailyQuestProgressIfNeeded(currentDate);
+            if (string.IsNullOrEmpty(questId) || DailyClaimedQuestIds.Contains(questId))
+            {
+                return;
+            }
+
+            DailyClaimedQuestIds.Add(questId);
+            if (questId == LegacyPrimaryDailyQuestId)
+            {
+                MarkDailyRewardClaimed(currentDate);
+            }
         }
 
         public bool HasMonsterStorageSpace()
@@ -107,6 +233,14 @@ namespace WitchTower.Data
         public OwnedMonsterData GetOwnedMonster(string instanceId)
         {
             return OwnedMonsters.FirstOrDefault(x => x != null && x.InstanceId == instanceId);
+        }
+
+        public bool ToggleMonsterLock(string monsterInstanceId)
+        {
+            OwnedMonsterData monster = GetOwnedMonster(monsterInstanceId);
+            if (monster == null) return false;
+            monster.IsLocked = !monster.IsLocked;
+            return monster.IsLocked;
         }
 
         public int GetOwnedMonsterCount(string monsterId)
@@ -157,6 +291,7 @@ namespace WitchTower.Data
                 FusionBonusAttackSpeed = 0f,
                 HasIndividualValues = false,
                 IsFavorite = isFavorite,
+                IsLocked = false,
                 AcquiredOrder = acquiredOrder,
                 EquippedWeaponInstanceId = string.Empty,
                 EquippedArmorInstanceId = string.Empty,
@@ -341,12 +476,17 @@ namespace WitchTower.Data
                 PlayerLevel = Level,
                 PlayerExp = Exp,
                 Gold = Gold,
+                FreeGachaStones = FreeGachaStones,
+                PaidGachaStones = PaidGachaStones,
                 HighestFloor = HighestFloor,
                 CurrentFloor = currentFloor,
                 AttackUpgradeLevel = AttackUpgradeLevel,
                 DefenseUpgradeLevel = DefenseUpgradeLevel,
                 HpUpgradeLevel = HpUpgradeLevel,
                 LastDailyRewardDate = LastDailyRewardDate,
+                DailyQuestProgressDate = DailyQuestProgressDate,
+                DailyBattleWinCount = DailyBattleWinCount,
+                DailyClaimedQuestIds = new List<string>(DailyClaimedQuestIds),
                 LastActiveAt = LastActiveAt,
                 PendingIdleRewardGold = PendingIdleRewardGold,
                 MissionProgressList = new List<MissionProgressData>(MissionProgressList),
@@ -373,6 +513,23 @@ namespace WitchTower.Data
                 Level += 1;
                 requiredExp = GetRequiredExpForNextLevel();
             }
+        }
+
+        private void ResetDailyQuestProgressIfNeeded(string currentDate)
+        {
+            if (string.IsNullOrEmpty(currentDate))
+            {
+                return;
+            }
+
+            if (DailyQuestProgressDate == currentDate)
+            {
+                return;
+            }
+
+            DailyQuestProgressDate = currentDate;
+            DailyBattleWinCount = 0;
+            DailyClaimedQuestIds.Clear();
         }
 
         partial void InitializeEquipmentState(PlayerSaveData saveData);

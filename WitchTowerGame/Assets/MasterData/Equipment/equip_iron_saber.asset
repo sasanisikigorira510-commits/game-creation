@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: equip_iron_saber
   m_EditorClassIdentifier: 
   equipmentId: equip_iron_saber
-  equipmentName: Iron Saber
+  equipmentName: 鉄のサーベル
   slotType: 0
-  baseAttack: 6
+  baseAttack: 9
   baseDefense: 0
   baseHp: 0
-  bonusCritRate: 0.02
-  bonusAttackSpeed: 0.03
-  rarity: 1
+  bonusCritRate: 0.03
+  bonusAttackSpeed: 0.04
+  rarity: 2

@@ -18,7 +18,7 @@ MonoBehaviour:
   raceId: special
   classRank: 4
   rarity: 4
-  element: 4
+  element: 2
   rangeType: 1
   damageType: 1
   baseStats:
@@ -60,4 +60,4 @@ MonoBehaviour:
   battleAttackResourcePath: MonsterBattle/mon_mecha_dragon_valdrake_attack
   battleAttackFacing: 0
   battleVisualScale: 1.22
-  description: "竜の魔力と機械装甲が融合した特殊個体。中距離から機械竜の砲撃を放つ。"
+  description: "蒼黒竜の水魔力と機械装甲が融合した特殊個体。中距離から高圧の機械竜砲を放つ。"

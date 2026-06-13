@@ -120,6 +120,8 @@ namespace WitchTower.Battle
 
         public void ShowResultPanel(BattleResultViewData viewData)
         {
+            SetState(BattleFlowState.Result);
+            hudController.SetSkillButtonsInteractable(false);
             hudController.ShowResultPanel(viewData);
         }
 

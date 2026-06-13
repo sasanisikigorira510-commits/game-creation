@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: equip_guard_cloth
   m_EditorClassIdentifier: 
   equipmentId: equip_guard_cloth
-  equipmentName: Guard Cloth
+  equipmentName: 守護の布鎧
   slotType: 1
   baseAttack: 0
   baseDefense: 2

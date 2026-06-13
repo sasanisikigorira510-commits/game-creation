@@ -18,7 +18,7 @@ MonoBehaviour:
   raceId: special
   classRank: 4
   rarity: 4
-  element: 4
+  element: 2
   rangeType: 0
   damageType: 0
   baseStats:
@@ -60,4 +60,4 @@ MonoBehaviour:
   battleAttackResourcePath: MonsterBattle/mon_fortress_machine_gigafort_attack
   battleAttackFacing: 0
   battleVisualScale: 1.32
-  description: "要塞級の装甲を持つ機械兵。圧倒的な防御力で戦線を固定する。"
+  description: "要塞級の装甲と冷却水脈を持つ機械兵。圧倒的な防御力で戦線を固定する。"

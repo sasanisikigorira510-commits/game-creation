@@ -128,19 +128,8 @@ namespace WitchTower.Home
             }
 
             canvas.transform.localScale = Vector3.one;
-            Camera uiCamera = FindObjectOfType<Camera>(true);
-            if (uiCamera != null)
-            {
-                uiCamera.cullingMask = ~0;
-                canvas.renderMode = RenderMode.ScreenSpaceCamera;
-                canvas.worldCamera = uiCamera;
-                canvas.planeDistance = 100f;
-            }
-            else
-            {
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                canvas.worldCamera = null;
-            }
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.worldCamera = null;
 
             CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
             if (scaler == null)

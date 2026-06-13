@@ -424,12 +424,12 @@ public static class UnityMcpSceneBuilder
         CreateNavButton(enhancePanel.transform, "UpgradeAttack", new Vector2(0f, -350f), enhancePanelController, nameof(EnhancePanelController.UpgradeAttack), new Vector2(220f, 40f));
         CreateNavButton(enhancePanel.transform, "UpgradeDefense", new Vector2(0f, -480f), enhancePanelController, nameof(EnhancePanelController.UpgradeDefense), new Vector2(220f, 40f));
         CreateNavButton(enhancePanel.transform, "UpgradeHp", new Vector2(0f, -610f), enhancePanelController, nameof(EnhancePanelController.UpgradeHp), new Vector2(220f, 40f));
-        Button bronzeBladeButton = CreateNavButton(equipmentPanel.transform, "BronzeBlade", new Vector2(-170f, -630f), equipmentPanelController, nameof(EquipmentPanelController.EquipBronzeBlade), new Vector2(220f, 40f));
-        Button ironSwordButton = CreateNavButton(equipmentPanel.transform, "IronSword", new Vector2(170f, -630f), equipmentPanelController, nameof(EquipmentPanelController.EquipIronSword), new Vector2(220f, 40f));
-        Button guardClothButton = CreateNavButton(equipmentPanel.transform, "GuardCloth", new Vector2(-170f, -720f), equipmentPanelController, nameof(EquipmentPanelController.EquipGuardCloth), new Vector2(220f, 40f));
-        Button boneMailButton = CreateNavButton(equipmentPanel.transform, "BoneMail", new Vector2(170f, -720f), equipmentPanelController, nameof(EquipmentPanelController.EquipBoneMail), new Vector2(220f, 40f));
-        Button ashenRingButton = CreateNavButton(equipmentPanel.transform, "AshenRing", new Vector2(-170f, -810f), equipmentPanelController, nameof(EquipmentPanelController.EquipAshenRing), new Vector2(220f, 40f));
-        Button quickCharmButton = CreateNavButton(equipmentPanel.transform, "QuickCharm", new Vector2(170f, -810f), equipmentPanelController, nameof(EquipmentPanelController.EquipQuickCharm), new Vector2(220f, 40f));
+        Button bronzeBladeButton = CreateNavButton(equipmentPanel.transform, "青銅の刃", new Vector2(-170f, -630f), equipmentPanelController, nameof(EquipmentPanelController.EquipBronzeBlade), new Vector2(220f, 40f));
+        Button ironSwordButton = CreateNavButton(equipmentPanel.transform, "鉄の剣", new Vector2(170f, -630f), equipmentPanelController, nameof(EquipmentPanelController.EquipIronSword), new Vector2(220f, 40f));
+        Button guardClothButton = CreateNavButton(equipmentPanel.transform, "守護の布鎧", new Vector2(-170f, -720f), equipmentPanelController, nameof(EquipmentPanelController.EquipGuardCloth), new Vector2(220f, 40f));
+        Button boneMailButton = CreateNavButton(equipmentPanel.transform, "骨の鎧", new Vector2(170f, -720f), equipmentPanelController, nameof(EquipmentPanelController.EquipBoneMail), new Vector2(220f, 40f));
+        Button ashenRingButton = CreateNavButton(equipmentPanel.transform, "灰燼の指輪", new Vector2(-170f, -810f), equipmentPanelController, nameof(EquipmentPanelController.EquipAshenRing), new Vector2(220f, 40f));
+        Button quickCharmButton = CreateNavButton(equipmentPanel.transform, "俊足のお守り", new Vector2(170f, -810f), equipmentPanelController, nameof(EquipmentPanelController.EquipQuickCharm), new Vector2(220f, 40f));
         CreateGearRowLabel(equipmentPanel.transform, "WeaponRowLabel", new Vector2(0f, -586f), "WEAPON LINE");
         CreateGearRowLabel(equipmentPanel.transform, "ArmorRowLabel", new Vector2(0f, -676f), "ARMOR LINE");
         CreateGearRowLabel(equipmentPanel.transform, "AccessoryRowLabel", new Vector2(0f, -766f), "ACCESSORY LINE");
@@ -522,14 +522,8 @@ public static class UnityMcpSceneBuilder
         EnsureEventSystem();
         Canvas canvas = CreateCanvas("GachaCanvas");
         EnsureUiPresentationCameraInOpenScene();
-        Camera uiCamera = GameObject.Find(UiPresentationCameraName)?.GetComponent<Camera>();
-        if (uiCamera != null)
-        {
-            uiCamera.cullingMask = ~0;
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = uiCamera;
-            canvas.planeDistance = 100f;
-        }
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.worldCamera = null;
 
         GameObject panelObject = new GameObject("GachaScenePanel", typeof(RectTransform), typeof(Image), typeof(GachaPanelController));
         panelObject.transform.SetParent(canvas.transform, false);

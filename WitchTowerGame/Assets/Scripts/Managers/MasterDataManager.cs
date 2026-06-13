@@ -188,6 +188,42 @@ namespace WitchTower.Managers
 
         public EquipmentDataSO GetEquipmentData(string equipmentId)
         {
+            EquipmentDataSO found = FindEquipmentData(equipmentId);
+            if (found != null)
+            {
+                return found;
+            }
+
+            var root = Resources.Load<MasterDataRoot>(DefaultMasterDataRootPath);
+            if (root != null)
+            {
+                ApplyRoot(root);
+                found = FindEquipmentData(equipmentId);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
+        public EquipmentDataSO[] GetAllEquipmentData()
+        {
+            if (equipmentDataList == null || equipmentDataList.Length == 0)
+            {
+                var root = Resources.Load<MasterDataRoot>(DefaultMasterDataRootPath);
+                if (root != null)
+                {
+                    ApplyRoot(root);
+                }
+            }
+
+            return equipmentDataList;
+        }
+
+        private EquipmentDataSO FindEquipmentData(string equipmentId)
+        {
             if (equipmentDataList == null)
             {
                 return null;

@@ -63,8 +63,26 @@ namespace WitchTower.Data
     public static class BattleDungeonCatalog
     {
         private const int FloorsPerDungeon = 5;
-        private const float EnemyStatScaleBase = 0.58f;
-        private const float EnemyStatScalePerGlobalFloor = 0.055f;
+        private const float EnemyStatScaleBase = 0.46f;
+        private const float EnemyStatScalePerGlobalFloor = 0.045f;
+        private const float EnemyStatScalePerDungeon = 0.17f;
+        private const int RewardGoldBase = 8;
+        private const int RewardGoldPerGlobalFloor = 3;
+        private const int RewardGoldPerDungeon = 5;
+        private const int RewardExpBase = 8;
+        private const float RewardExpHpWeight = 0.16f;
+        private const float RewardExpAttackWeight = 1.35f;
+        private const float RewardExpDefenseWeight = 0.55f;
+        private const float RewardExpAttackSpeedWeight = 10f;
+        private const float RewardExpCritWeight = 80f;
+        private const float RewardExpStatScoreMultiplier = 0.30f;
+        private const float RewardExpPerGlobalFloor = 0.25f;
+        private const int RewardExpPerDungeon = 4;
+        private const float RewardExpCountBase = 0.78f;
+        private const float RewardExpCountSqrtStep = 0.32f;
+        private const float RewardExpBossHpMultiplier = 5.0f;
+        private const float RewardExpBossAttackMultiplier = 2.0f;
+        private const int RewardExpBossDefenseBonus = 8;
 
         private static readonly BattleDungeonDefinition[] DungeonDefinitions =
         {
@@ -77,9 +95,9 @@ namespace WitchTower.Data
                 1,
                 BuildDungeonFloors(
                     "monster_apprentice_swordsman",
-                    0.46f,
-                    10,
-                    4,
+                    0.48f,
+                    6,
+                    2,
                     false,
                     "木剣の入口",
                     "石床の稽古場",
@@ -95,9 +113,9 @@ namespace WitchTower.Data
                 6,
                 BuildDungeonFloors(
                     "monster_ore_giant_garm",
-                    0.36f,
+                    0.32f,
                     18,
-                    3,
+                    5,
                     false,
                     "錆びた搬入口",
                     "鉱石運搬路",
@@ -113,9 +131,9 @@ namespace WitchTower.Data
                 11,
                 BuildDungeonFloors(
                     "monster_abyss_grand_mage_seraphis",
-                    0.30f,
-                    38,
-                    4,
+                    0.26f,
+                    34,
+                    7,
                     false,
                     "封印書架",
                     "召喚円の閲覧室",
@@ -131,9 +149,9 @@ namespace WitchTower.Data
                 16,
                 BuildDungeonFloors(
                     "monster_mecha_dragon_valdrake",
-                    0.22f,
-                    58,
-                    4,
+                    0.20f,
+                    48,
+                    8,
                     true,
                     "火口の入口",
                     "紅蓮の石橋",
@@ -149,9 +167,9 @@ namespace WitchTower.Data
                 21,
                 BuildDungeonFloors(
                     "monster_astral_eclipse_golem",
-                    0.18f,
-                    72,
-                    2,
+                    0.16f,
+                    62,
+                    8,
                     true,
                     "星鉱の外郭",
                     "結晶橋の広間",
@@ -167,9 +185,9 @@ namespace WitchTower.Data
                 26,
                 BuildDungeonFloors(
                     "monster_seraph_michael",
-                    0.13f,
-                    80,
-                    2,
+                    0.12f,
+                    74,
+                    9,
                     true,
                     "深淵塔の入口",
                     "浮遊階段",
@@ -224,6 +242,24 @@ namespace WitchTower.Data
             }
 
             return DungeonDefinitions[0];
+        }
+
+        private static int ResolveDungeonIndex(BattleDungeonDefinition dungeon)
+        {
+            if (dungeon == null)
+            {
+                return 0;
+            }
+
+            for (int i = 0; i < DungeonDefinitions.Length; i += 1)
+            {
+                if (DungeonDefinitions[i].DungeonId == dungeon.DungeonId)
+                {
+                    return i;
+                }
+            }
+
+            return 0;
         }
 
         public static BattleDungeonDefinition GetDungeonForGlobalFloor(int globalFloor)
@@ -334,7 +370,12 @@ namespace WitchTower.Data
                 return null;
             }
 
-            float scale = EnemyStatScaleBase + Mathf.Max(1, globalFloor) * EnemyStatScalePerGlobalFloor;
+            BattleDungeonDefinition dungeon = GetDungeonForGlobalFloor(globalFloor);
+            int dungeonIndex = ResolveDungeonIndex(dungeon);
+            float scale =
+                EnemyStatScaleBase +
+                Mathf.Max(1, globalFloor) * EnemyStatScalePerGlobalFloor +
+                dungeonIndex * EnemyStatScalePerDungeon;
             EnemyDataSO enemyData = ScriptableObject.CreateInstance<EnemyDataSO>();
             enemyData.enemyId = ResolveEnemyIdFromMonsterId(monsterData.monsterId);
             enemyData.enemyName = monsterData.monsterName;
@@ -351,14 +392,59 @@ namespace WitchTower.Data
             enemyData.attackSpeed = Mathf.Max(0.45f, monsterData.baseStats.attackSpeed * 0.88f);
             enemyData.critRate = Mathf.Clamp(monsterData.baseStats.attackSpeed * 0.025f, 0.02f, 0.08f);
             enemyData.critDamage = 1.35f;
-            enemyData.rewardGold = 8 + Mathf.Max(1, globalFloor) * 3;
-            enemyData.rewardExp = 5 + Mathf.Max(1, globalFloor) * 2;
+            enemyData.rewardGold =
+                RewardGoldBase +
+                Mathf.Max(1, globalFloor) * RewardGoldPerGlobalFloor +
+                dungeonIndex * RewardGoldPerDungeon;
+            enemyData.rewardExp = ResolveRewardExpForFloor(globalFloor, dungeonIndex, floor, enemyData);
             enemyData.dropTableId = "drop_common_floor";
             enemyData.enemyTrait = ResolveTrait(monsterData);
             enemyData.battleIdleFacing = monsterData.battleIdleFacing;
             enemyData.battleMoveFacing = monsterData.battleMoveFacing;
             enemyData.battleAttackFacing = monsterData.battleAttackFacing;
             return enemyData;
+        }
+
+        private static int ResolveRewardExpForFloor(
+            int globalFloor,
+            int dungeonIndex,
+            BattleDungeonFloorDefinition floor,
+            EnemyDataSO enemyData)
+        {
+            if (floor == null || enemyData == null)
+            {
+                return 5;
+            }
+
+            bool isBossEncounter = floor.IsBossEncounter;
+            int enemyCount = Mathf.Max(1, floor.EnemyCount);
+            float effectiveHp = Mathf.Max(1, enemyData.maxHp);
+            float effectiveAttack = Mathf.Max(1, Mathf.Max(enemyData.attack, enemyData.magicAttack));
+            float effectiveDefense = Mathf.Max(0, enemyData.defense + enemyData.magicDefense);
+
+            if (isBossEncounter)
+            {
+                effectiveHp *= RewardExpBossHpMultiplier;
+                effectiveAttack *= RewardExpBossAttackMultiplier;
+                effectiveDefense += RewardExpBossDefenseBonus * 2f;
+            }
+
+            float statScore =
+                effectiveHp * RewardExpHpWeight +
+                effectiveAttack * RewardExpAttackWeight +
+                effectiveDefense * RewardExpDefenseWeight +
+                Mathf.Max(0.1f, enemyData.attackSpeed) * RewardExpAttackSpeedWeight +
+                Mathf.Clamp01(enemyData.critRate) * RewardExpCritWeight;
+            float enemyCountMultiplier = isBossEncounter
+                ? 1f
+                : RewardExpCountBase + Mathf.Sqrt(enemyCount) * RewardExpCountSqrtStep;
+            float floorComponent =
+                RewardExpBase +
+                statScore * RewardExpStatScoreMultiplier +
+                Mathf.Max(1, globalFloor) * RewardExpPerGlobalFloor +
+                Mathf.Max(0, dungeonIndex) * RewardExpPerDungeon;
+
+            return Mathf.Max(1, Mathf.RoundToInt(floorComponent * enemyCountMultiplier));
         }
 
         private static EnemyTrait ResolveTrait(MonsterDataSO monsterData)

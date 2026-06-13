@@ -18,7 +18,7 @@ MonoBehaviour:
   raceId: special
   classRank: 4
   rarity: 4
-  element: 1
+  element: 2
   rangeType: 0
   damageType: 0
   baseStats:
@@ -60,4 +60,4 @@ MonoBehaviour:
   battleAttackResourcePath: MonsterBattle/mon_drag_gaia_attack
   battleAttackFacing: 0
   battleVisualScale: 1.34
-  description: "竜骨と巨岩が一体化した特殊巨兵。巨大な体で敵群を受け止める。"
+  description: "竜骨と巨岩に蒼い水脈が巡る特殊巨兵。巨大な体で敵群を受け止める。"

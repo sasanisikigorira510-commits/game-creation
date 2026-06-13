@@ -8,15 +8,25 @@ namespace WitchTower.MasterData
         public string equipmentId;
         public string equipmentName;
         public EquipmentSlotType slotType;
-        public int baseAttack;
-        public int baseWisdom;
-        public int baseDefense;
-        public int baseMagicDefense;
-        public int baseHp;
-        public float bonusCritRate;
-        public float bonusAttackSpeed;
+        [Min(0)] public int baseAttack;
+        [Min(0)] public int baseWisdom;
+        [Min(0)] public int baseDefense;
+        [Min(0)] public int baseMagicDefense;
+        [Min(0)] public int baseHp;
+        [Min(0f)] public float bonusCritRate;
+        [Min(0f)] public float bonusAttackSpeed;
         public EquipmentRarity rarity;
-        [Range(0f, 0.5f)] public float statVarianceRate = 0.20f;
         [Min(1)] public int maxEnhancementAttempts = 5;
+
+        private void OnValidate()
+        {
+            baseAttack = Mathf.Max(0, baseAttack);
+            baseWisdom = Mathf.Max(0, baseWisdom);
+            baseDefense = Mathf.Max(0, baseDefense);
+            baseMagicDefense = Mathf.Max(0, baseMagicDefense);
+            baseHp = Mathf.Max(0, baseHp);
+            bonusCritRate = Mathf.Max(0f, bonusCritRate);
+            bonusAttackSpeed = Mathf.Max(0f, bonusAttackSpeed);
+        }
     }
 }

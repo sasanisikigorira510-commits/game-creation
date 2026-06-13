@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: equip_moon_charm
   m_EditorClassIdentifier: 
   equipmentId: equip_moon_charm
-  equipmentName: Moon Charm
+  equipmentName: 月影のお守り
   slotType: 2
-  baseAttack: 2
-  baseDefense: 1
-  baseHp: 6
-  bonusCritRate: 0.03
-  bonusAttackSpeed: 0.04
-  rarity: 2
+  baseAttack: 0
+  baseDefense: 0
+  baseHp: 4
+  bonusCritRate: 0.01
+  bonusAttackSpeed: 0.02
+  rarity: 0

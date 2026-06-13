@@ -52,12 +52,34 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8360131f3777c8f40ac2c1271e6033e1, type: 2}
   - {fileID: 11400000, guid: be1c5f6d1d295d348a6bae7649f1839b, type: 2}
   equipmentDataList:
-  - {fileID: 11400000, guid: f27ac3e7f16bca0408ca440193a0bbe1, type: 2}
-  - {fileID: 11400000, guid: def91a956fe49cf4182e36051ed670e0, type: 2}
+  - {fileID: 11400000, guid: 55d03d595199653dfda34895ae454228, type: 2}
   - {fileID: 11400000, guid: 5d3317aa421275e429b9a773fb2591a3, type: 2}
-  - {fileID: 11400000, guid: af3d2da3a399a4b43a786a8ced40d904, type: 2}
+  - {fileID: 11400000, guid: 9182ce6f29389a467b2508e568bccdd2, type: 2}
+  - {fileID: 11400000, guid: 5992c1f83237c7341b3da8642cd92619, type: 2}
   - {fileID: 11400000, guid: 36a799ae15c33224e908904acb00d207, type: 2}
+  - {fileID: 11400000, guid: f27ac3e7f16bca0408ca440193a0bbe1, type: 2}
+  - {fileID: 11400000, guid: 93962e94c05434942a0ef25076497983, type: 2}
+  - {fileID: 11400000, guid: c45caf8bbe893416eadaa5db47b0c4cb, type: 2}
+  - {fileID: 11400000, guid: 19df811ed995c4b92b3c90bbc5dcf624, type: 2}
+  - {fileID: 11400000, guid: 8b6e37d95220047b481dfd41b42f5a22, type: 2}
+  - {fileID: 11400000, guid: 487e63d4b34364e658575295b7f3543d, type: 2}
+  - {fileID: 11400000, guid: f30b961977bcb4281bfa752e013ce9d8, type: 2}
+  - {fileID: 11400000, guid: 47983024f782b48639e969ef9e179000, type: 2}
+  - {fileID: 11400000, guid: fce327b1a05294f108266426d622cb77, type: 2}
+  - {fileID: 11400000, guid: 2ad45c87718634eb2962947a75c0a1f4, type: 2}
+  - {fileID: 11400000, guid: ae20121d4f8984e63a43ceaf6c639b88, type: 2}
+  - {fileID: 11400000, guid: 8a8cbe546bd91419eb6f3934d026475a, type: 2}
+  - {fileID: 11400000, guid: a507f24788cc1491fbf3da1c398a33af, type: 2}
+  - {fileID: 11400000, guid: c19d3b2de7ed486eb9dc169ea39e538c, type: 2}
+  - {fileID: 11400000, guid: def91a956fe49cf4182e36051ed670e0, type: 2}
+  - {fileID: 11400000, guid: efd631608d874b0c85315834cd96c0cb, type: 2}
+  - {fileID: 11400000, guid: 43e2455b7e3e4fa29912406946063225, type: 2}
+  - {fileID: 11400000, guid: 260125a706cd3ae45873a7e03b15f4a4, type: 2}
+  - {fileID: 11400000, guid: af3d2da3a399a4b43a786a8ced40d904, type: 2}
+  - {fileID: 11400000, guid: 65b9208338bc3624f982d55c6d46ac0c, type: 2}
+  - {fileID: 11400000, guid: 84771dcfd0e4cd31425d01fbd29a275c, type: 2}
   - {fileID: 11400000, guid: 72e8b31d661dd114b92cd795413f2a0d, type: 2}
+  - {fileID: 11400000, guid: 8a4a2886dc3a70c713a024d3f8ac1ce3, type: 2}
   floorDataList:
   - {fileID: 11400000, guid: 974f3e0295592654080bc902842facaa, type: 2}
   - {fileID: 11400000, guid: 03af447f52211364aa4b42e6c6c34413, type: 2}

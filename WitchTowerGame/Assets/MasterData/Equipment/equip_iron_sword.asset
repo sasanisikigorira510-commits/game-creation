@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: equip_iron_sword
   m_EditorClassIdentifier: 
   equipmentId: equip_iron_sword
-  equipmentName: Iron Sword
+  equipmentName: 鉄の剣
   slotType: 0
   baseAttack: 6
   baseDefense: 0

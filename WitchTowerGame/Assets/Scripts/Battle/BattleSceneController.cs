@@ -59,6 +59,9 @@ namespace WitchTower.Battle
             "monster_apprentice_mage"
         };
 
+        private const string ResultPanelResourcePath = "UI/BattleResult/BattleResultPanelImage2";
+        private const string DropRewardFrameResourcePath = "UI/BattleResult/BattleResultDropFrameImage2";
+        private const string RecruitRewardFrameResourcePath = "UI/BattleResult/BattleResultRecruitFrameImage2";
         private static readonly Vector2 AllyPreviewSize = new Vector2(220f, 220f);
         private const int InitialEnemyPreviewSlotCapacity = 100;
         private static readonly Vector2 BossPreviewAnchor = new Vector2(0.78f, 0.43f);
@@ -401,6 +404,7 @@ namespace WitchTower.Battle
 
         private static readonly string[] MinimalHiddenObjectNames =
         {
+            "BattleMinimalResultOverlay",
             "ResultPanel",
             "WinLabel",
             "LoseLabel",
@@ -517,6 +521,26 @@ namespace WitchTower.Battle
             "EnemyFlash"
         };
 
+        private static readonly HashSet<string> MinimalResultObjectNames = new HashSet<string>
+        {
+            "BattleMinimalResultOverlay",
+            "ResultPanel",
+            "RewardStrip",
+            "RewardStripFrame",
+            "RewardStripLabel",
+            "NextMoveStrip",
+            "NextMoveStripFrame",
+            "NextActionText",
+            "ReturnHomeButton",
+            "NextFloorButton",
+            "NextFloorButtonFrame",
+            "NextFloorAura",
+            "NextFloorAuraTag",
+            "NextFloorAuraTagText",
+            "NextFloorButtonAccentLeft",
+            "NextFloorButtonAccentRight"
+        };
+
         private static readonly string[] MinimalTransparentObjectNames =
         {
             "PlayerFrame",
@@ -591,6 +615,14 @@ namespace WitchTower.Battle
         private bool initialized;
         private BattleRewardResult lastReward;
         private MonsterRecruitResult lastRecruitResult;
+        private BattleResultViewData lastResultViewData;
+        private bool hasLastResultViewData;
+        private string lastEquipmentDropSummary;
+        private string lastRelicDropSummary;
+        private readonly List<BattleResultRewardVisual> lastRewardVisuals = new List<BattleResultRewardVisual>();
+        private int lastPartyMonsterExpTargetCount;
+        private int lastPlayerLevelBeforeReward;
+        private int lastPlayerLevelAfterReward;
         private int updateCount;
         private float lastDeltaTime;
         private bool recruitEnabledAtBattleStart;
@@ -608,6 +640,7 @@ namespace WitchTower.Battle
         private readonly List<float> allyPreviewTrackedTargetYAnchors = new List<float>();
         private readonly List<float> enemyPreviewTrackedTargetXAnchors = new List<float>();
         private readonly List<float> enemyPreviewTrackedTargetYAnchors = new List<float>();
+        private static readonly System.Random DropRandom = new System.Random();
         private readonly List<int> allyPreviewLockedEnemyIndices = new List<int>();
         private readonly List<int> enemyPreviewLockedAllyIndices = new List<int>();
         private readonly List<List<Sprite>> allyIdleSprites = new List<List<Sprite>>();
@@ -630,6 +663,19 @@ namespace WitchTower.Battle
         private TMP_Text enemyRoleText;
         private TMP_Text playerHintText;
         private TMP_Text enemyHintText;
+        private GameObject minimalResultOverlayRoot;
+        private Text minimalResultTitleText;
+        private Text minimalResultSummaryText;
+        private Text minimalResultRewardText;
+        private Text minimalResultForecastText;
+        private GameObject minimalResultRewardVisualRoot;
+        private Button minimalResultNextFloorButton;
+        private Button minimalResultRetryFloorButton;
+        private Button minimalResultHomeButton;
+        private Text minimalResultNextFloorButtonText;
+        private Text minimalResultRetryFloorButtonText;
+        private Text minimalResultHomeButtonText;
+        private readonly List<GameObject> minimalResultRewardVisualObjects = new List<GameObject>();
         private int lastEncounterSerial = -1;
         private int lastPresentedWave = -1;
         private bool isApplyingEditorPreview;
@@ -652,9 +698,6 @@ namespace WitchTower.Battle
         private float enemySearchRange = 1.8f;
         private float combatSearchProgress = 0.55f;
         private float combatStartProgress = 1f;
-        private int displayedRemainingEnemyCount = -1;
-        private int pendingRemainingEnemyCount = -1;
-        private float enemyCountCommitDelayRemaining;
         private readonly List<float> allyKnockbackRemainings = new List<float>();
         private readonly List<float> enemyKnockbackRemainings = new List<float>();
         private readonly List<PendingHitReaction> pendingHitReactions = new List<PendingHitReaction>();
@@ -666,7 +709,6 @@ namespace WitchTower.Battle
         private bool lastBattleWon;
         private const float EngagementDuration = 2.70f;
         private const float CombatLoopDuration = 1.8f;
-        private const float EnemyCountCommitDelay = 0.12f;
         private const float KnockbackDuration = 0.16f;
         private const float AttackVisualDuration = 0.62f;
         private const float AllyKnockbackDistance = 0.016f;
@@ -924,24 +966,40 @@ namespace WitchTower.Battle
         {
             ApplyRewards();
             ApplyMonsterRecruitment();
+            int clearedFloor = currentFloor;
             GameManager.Instance.RecordFloorClear(currentFloor);
             var profile = GameManager.Instance.PlayerProfile;
             MissionService.RecordBattleWin(profile);
+            DailyRewardService.RecordBattleWin(profile, System.DateTime.Now);
             MissionService.RecordHighestFloor(profile, profile.HighestFloor);
             SaveManager.Instance?.SaveAfterDungeonStageClear(currentFloor);
-            if (!minimalMonsterPresentation)
-            {
-                stateMachine.ShowResultPanel(new BattleResultViewData(true, lastReward.Gold, lastReward.Exp, GameManager.Instance.CurrentFloor, lastRecruitResult.Summary));
-            }
+            var resultViewData = new BattleResultViewData(
+                true,
+                lastReward.Gold,
+                lastReward.Exp,
+                lastReward.Exp,
+                lastPartyMonsterExpTargetCount,
+                lastPlayerLevelBeforeReward,
+                lastPlayerLevelAfterReward,
+                clearedFloor,
+                GameManager.Instance.CurrentFloor,
+                BuildItemDropSummary(lastEquipmentDropSummary, lastRelicDropSummary),
+                lastRecruitResult.Summary,
+                lastRewardVisuals.ToArray());
+            lastResultViewData = resultViewData;
+            hasLastResultViewData = true;
+            stateMachine.ShowResultPanel(resultViewData);
+            ShowMinimalResultOverlay(resultViewData);
         }
 
         public void OnBattleLose()
         {
             SaveManager.Instance.SaveCurrentGame();
-            if (!minimalMonsterPresentation)
-            {
-                stateMachine.ShowResultPanel(new BattleResultViewData(false, 0, 0, currentFloor, string.Empty));
-            }
+            var resultViewData = new BattleResultViewData(false, 0, 0, currentFloor, string.Empty);
+            lastResultViewData = resultViewData;
+            hasLastResultViewData = true;
+            stateMachine.ShowResultPanel(resultViewData);
+            ShowMinimalResultOverlay(resultViewData);
         }
 
         public void Retreat()
@@ -959,10 +1017,73 @@ namespace WitchTower.Battle
             RefreshBattlePresentation(force: true);
         }
 
+        public void RetryClearedFloor()
+        {
+            int retryFloor = hasLastResultViewData
+                ? Mathf.Max(1, lastResultViewData.ClearedFloor)
+                : Mathf.Max(1, currentFloor);
+
+            GameManager.Instance.SetCurrentFloor(retryFloor);
+            currentFloor = retryFloor;
+            PrepareBattleSession();
+            stateMachine.Begin(currentFloor);
+            ApplyMinimalPresentation();
+            RefreshBattlePresentation(force: true);
+        }
+
         public void ReturnHome()
         {
             SceneManager.LoadScene(homeSceneName);
         }
+
+#if UNITY_EDITOR
+        public void ShowDebugRewardResult()
+        {
+            EnsureInitialized();
+            int previewFloor = Mathf.Max(1, currentFloor);
+            var rewardVisuals = new[]
+            {
+                new BattleResultRewardVisual(
+                    "青銅の刃",
+                    "コモン",
+                    "EquipmentIcons/eq_bronze_blade_icon",
+                    DropRewardFrameResourcePath,
+                    false),
+                new BattleResultRewardVisual(
+                    "通常遺物",
+                    "x1",
+                    "EquipmentRelics/relic_safe_ember_icon",
+                    DropRewardFrameResourcePath,
+                    false),
+                new BattleResultRewardVisual(
+                    "ヒナドラ",
+                    "仲間になりました",
+                    "FamilyMonsterCards/Dragon/dragon_whelp",
+                    RecruitRewardFrameResourcePath,
+                    true)
+            };
+
+            var resultViewData = new BattleResultViewData(
+                true,
+                120,
+                48,
+                48,
+                3,
+                4,
+                5,
+                previewFloor,
+                previewFloor + 1,
+                "装備入手: 青銅の刃[コモン]\n強化遺物入手: 通常遺物 x1",
+                "ヒナドラ が仲間になりました。",
+                rewardVisuals);
+
+            lastResultViewData = resultViewData;
+            hasLastResultViewData = true;
+            resultHandled = true;
+            stateMachine.ShowResultPanel(resultViewData);
+            ShowMinimalResultOverlay(resultViewData);
+        }
+#endif
 
         public void UseSkillStrike()
         {
@@ -1013,22 +1134,115 @@ namespace WitchTower.Battle
             }
 
             var reward = BattleRewardCalculator.Calculate(currentFloor, profile.HighestFloor);
+            lastPlayerLevelBeforeReward = profile.Level;
             profile.AddGold(reward.Gold);
             profile.AddExp(reward.Exp);
-            ApplyPartyMonsterExp(profile, reward.Exp);
+            lastPlayerLevelAfterReward = profile.Level;
+            lastPartyMonsterExpTargetCount = ApplyPartyMonsterExp(profile, reward.Exp);
+            ApplyEquipmentDrop(profile);
+            ApplyRelicDrop(profile);
             lastReward = reward;
         }
 
-        private void ApplyPartyMonsterExp(PlayerProfile profile, int exp)
+        private void ApplyEquipmentDrop(PlayerProfile profile)
+        {
+            lastEquipmentDropSummary = string.Empty;
+            if (profile == null || !StageDropService.TryRollEquipmentDrop(IsCurrentBossEncounter(), DropRandom))
+            {
+                return;
+            }
+
+            EquipmentDataSO equipmentData = RollEquipmentDropData(DropRandom);
+            if (equipmentData == null || string.IsNullOrEmpty(equipmentData.equipmentId))
+            {
+                return;
+            }
+
+            EquipmentRarity quality = StageDropService.RollEquipmentQuality(DropRandom);
+            if (!profile.AddOwnedEquipment(equipmentData.equipmentId, quality))
+            {
+                return;
+            }
+
+            string qualityName = EquipmentEnhancementCatalog.ResolveQualityName(quality);
+            lastEquipmentDropSummary = $"装備入手: {equipmentData.equipmentName}[{qualityName}]";
+            lastRewardVisuals.Add(new BattleResultRewardVisual(
+                equipmentData.equipmentName,
+                qualityName,
+                ResolveEquipmentIconResourcePath(equipmentData.equipmentId),
+                DropRewardFrameResourcePath,
+                false));
+        }
+
+        private void ApplyRelicDrop(PlayerProfile profile)
+        {
+            lastRelicDropSummary = string.Empty;
+            if (profile == null || !StageDropService.TryRollEnhancementRelic(DropRandom, out string relicId))
+            {
+                return;
+            }
+
+            profile.AddEnhancementRelics(relicId, 1);
+            EnhancementRelicDefinition relicDefinition = EquipmentEnhancementCatalog.GetRelic(relicId);
+            string relicName = relicDefinition != null && !string.IsNullOrEmpty(relicDefinition.RelicName)
+                ? relicDefinition.RelicName
+                : relicId;
+            lastRelicDropSummary = $"強化遺物入手: {relicName} x1";
+            lastRewardVisuals.Add(new BattleResultRewardVisual(
+                relicName,
+                "x1",
+                ResolveEnhancementRelicResourcePath(relicId),
+                DropRewardFrameResourcePath,
+                false));
+        }
+
+        private EquipmentDataSO RollEquipmentDropData(System.Random random)
+        {
+            EquipmentDataSO[] allEquipment = MasterDataManager.Instance?.GetAllEquipmentData();
+            if (allEquipment == null || allEquipment.Length <= 0)
+            {
+                return null;
+            }
+
+            List<EquipmentDataSO> candidates = new List<EquipmentDataSO>();
+            for (int i = 0; i < allEquipment.Length; i += 1)
+            {
+                if (allEquipment[i] != null && !string.IsNullOrEmpty(allEquipment[i].equipmentId))
+                {
+                    candidates.Add(allEquipment[i]);
+                }
+            }
+
+            if (candidates.Count <= 0)
+            {
+                return null;
+            }
+
+            System.Random rng = random ?? DropRandom;
+            return candidates[rng.Next(candidates.Count)];
+        }
+
+        private bool IsCurrentBossEncounter()
+        {
+            if (stateMachine != null && stateMachine.Simulator != null)
+            {
+                return stateMachine.Simulator.IsBossWave;
+            }
+
+            return bossFloorInterval > 0 && currentFloor > 0 && currentFloor % bossFloorInterval == 0;
+        }
+
+        private int ApplyPartyMonsterExp(PlayerProfile profile, int exp)
         {
             if (profile == null || exp <= 0)
             {
-                return;
+                return 0;
             }
 
             MasterDataManager masterDataManager = MasterDataManager.Instance;
             masterDataManager?.Initialize();
             List<OwnedMonsterData> partyMonsters = BattleVisualResolver.ResolvePartyOwnedMonsters(profile, 5);
+            int appliedCount = 0;
             foreach (OwnedMonsterData monster in partyMonsters)
             {
                 if (monster == null)
@@ -1040,7 +1254,10 @@ namespace WitchTower.Battle
                     ? masterDataManager.GetMonsterData(monster.MonsterId)
                     : null;
                 MonsterLevelService.AddExperience(monster, monsterData, exp);
+                appliedCount += 1;
             }
+
+            return appliedCount;
         }
 
         private void ApplyMonsterRecruitment()
@@ -1053,6 +1270,16 @@ namespace WitchTower.Battle
             }
 
             lastRecruitResult = MonsterRecruitService.ResolveAfterBattleWin(currentFloor, profile, recruitEnabledAtBattleStart);
+            if (lastRecruitResult.Succeeded)
+            {
+                MonsterDataSO monsterData = MasterDataManager.Instance?.GetMonsterData(lastRecruitResult.MonsterId);
+                lastRewardVisuals.Add(new BattleResultRewardVisual(
+                    lastRecruitResult.MonsterName,
+                    "仲間になりました",
+                    ResolveMonsterRewardIconResourcePath(monsterData),
+                    RecruitRewardFrameResourcePath,
+                    true));
+            }
         }
 
         private static int CountResolvedPartyMonsters(List<OwnedMonsterData> partyMonsters)
@@ -1109,7 +1336,158 @@ namespace WitchTower.Battle
             lastBattleWon = false;
             lastReward = new BattleRewardResult(0, 0);
             lastRecruitResult = MonsterRecruitResult.Empty;
+            lastEquipmentDropSummary = string.Empty;
+            lastRelicDropSummary = string.Empty;
+            lastRewardVisuals.Clear();
+            lastPartyMonsterExpTargetCount = 0;
+            lastPlayerLevelBeforeReward = 0;
+            lastPlayerLevelAfterReward = 0;
+            hasLastResultViewData = false;
             recruitEnabledAtBattleStart = MonsterRecruitService.CanAttemptRecruitThisBattle(GameManager.Instance?.PlayerProfile);
+            HideMinimalResultOverlay();
+        }
+
+        private static string BuildItemDropSummary(string equipmentDropSummary, string relicDropSummary)
+        {
+            if (string.IsNullOrEmpty(equipmentDropSummary))
+            {
+                return relicDropSummary ?? string.Empty;
+            }
+
+            if (string.IsNullOrEmpty(relicDropSummary))
+            {
+                return equipmentDropSummary;
+            }
+
+            return equipmentDropSummary + "\n" + relicDropSummary;
+        }
+
+        private static string ResolveEquipmentIconResourcePath(string equipmentId)
+        {
+            switch (equipmentId)
+            {
+                case "equip_bronze_blade":
+                    return "EquipmentIcons/eq_bronze_blade_icon";
+                case "equip_iron_sword":
+                case "equip_iron_saber":
+                    return "EquipmentIcons/eq_iron_blade_icon";
+                case "equip_gold_blade":
+                    return "EquipmentIcons/eq_gold_blade_icon";
+                case "equip_frost_greatsword":
+                    return "EquipmentIcons/eq_frost_greatsword_icon";
+                case "equip_c1_arcane_wand":
+                    return "EquipmentIcons/ClassMagic/equip_c1_arcane_wand_icon";
+                case "equip_c2_runic_staff":
+                    return "EquipmentIcons/ClassMagic/equip_c2_runic_staff_icon";
+                case "equip_c3_astral_scepter":
+                    return "EquipmentIcons/ClassMagic/equip_c3_astral_scepter_icon";
+                case "equip_c4_abyss_grimoire":
+                    return "EquipmentIcons/ClassMagic/equip_c4_abyss_grimoire_icon";
+                case "equip_guard_cloth":
+                    return "EquipmentIcons/eq_cloth_armor_icon";
+                case "equip_c1_spellguard_robe":
+                    return "EquipmentIcons/ClassMagic/equip_c1_spellguard_robe_icon";
+                case "equip_bone_mail":
+                case "equip_bastion_mail":
+                    return "EquipmentIcons/eq_plate_armor_icon";
+                case "equip_leather_armor":
+                    return "EquipmentIcons/eq_leather_armor_icon";
+                case "equip_c2_sage_mantle":
+                    return "EquipmentIcons/ClassMagic/equip_c2_sage_mantle_icon";
+                case "equip_ice_dragon_armor":
+                    return "EquipmentIcons/eq_ice_dragon_armor_icon";
+                case "equip_c3_aurora_robe":
+                    return "EquipmentIcons/ClassMagic/equip_c3_aurora_robe_icon";
+                case "equip_c4_voidweave_raiment":
+                    return "EquipmentIcons/ClassMagic/equip_c4_voidweave_raiment_icon";
+                case "equip_ashen_ring":
+                    return "EquipmentIcons/eq_red_ring_icon";
+                case "equip_sage_ring":
+                case "equip_green_ring":
+                    return "EquipmentIcons/eq_green_ring_icon";
+                case "equip_c2_runic_ring":
+                    return "EquipmentIcons/ClassMagic/equip_c2_runic_ring_icon";
+                case "equip_quick_charm":
+                case "equip_moon_charm":
+                case "equip_apprentice_charm":
+                case "equip_barrier_talisman":
+                    return "EquipmentIcons/eq_violet_pendant_icon";
+                case "equip_c1_mana_brooch":
+                    return "EquipmentIcons/ClassMagic/equip_c1_mana_brooch_icon";
+                case "equip_ice_star_talisman":
+                case "equip_oracle_orb":
+                    return "EquipmentIcons/eq_ice_star_talisman_icon";
+                case "equip_c3_starseer_charm":
+                    return "EquipmentIcons/ClassMagic/equip_c3_starseer_charm_icon";
+                case "equip_c4_eclipse_core":
+                    return "EquipmentIcons/ClassMagic/equip_c4_eclipse_core_icon";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static string ResolveEnhancementRelicResourcePath(string relicId)
+        {
+            switch (relicId)
+            {
+                case "relic_safe_ember":
+                    return "EquipmentRelics/relic_safe_ember_icon";
+                case "relic_risky_ember":
+                    return "EquipmentRelics/relic_risky_ember_icon";
+                case "relic_volatile_ember":
+                    return "EquipmentRelics/relic_volatile_ember_icon";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static string ResolveMonsterRewardIconResourcePath(MonsterDataSO monsterData)
+        {
+            if (monsterData == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.portraitResourcePath))
+            {
+                return monsterData.portraitResourcePath;
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.illustrationResourcePath))
+            {
+                return monsterData.illustrationResourcePath;
+            }
+
+            if (!string.IsNullOrEmpty(monsterData.battleIdleResourcePath))
+            {
+                return ResolveExistingSpriteResourcePath(monsterData.battleIdleResourcePath);
+            }
+
+            return string.Empty;
+        }
+
+        private static string ResolveExistingSpriteResourcePath(string resourcePath)
+        {
+            if (string.IsNullOrEmpty(resourcePath))
+            {
+                return string.Empty;
+            }
+
+            if (HasSpriteResource(resourcePath))
+            {
+                return resourcePath;
+            }
+
+            string firstFramePath = resourcePath + "_0";
+            return HasSpriteResource(firstFramePath) ? firstFramePath : resourcePath;
+        }
+
+        private static bool HasSpriteResource(string resourcePath)
+        {
+            return !string.IsNullOrEmpty(resourcePath) &&
+                   (Resources.Load<Sprite>(resourcePath) != null ||
+                    Resources.Load<Texture2D>(resourcePath) != null ||
+                    Resources.LoadAll<Sprite>(resourcePath).Length > 0);
         }
 
         private void ApplyBackdropForFloor(int floor)
@@ -1314,6 +1692,11 @@ namespace WitchTower.Battle
 
             foreach (string objectName in MinimalHiddenObjectNames)
             {
+                if (resultHandled && MinimalResultObjectNames.Contains(objectName))
+                {
+                    continue;
+                }
+
                 GameObject targetObject = GameObject.Find(objectName);
                 if (targetObject != null)
                 {
@@ -3469,9 +3852,7 @@ namespace WitchTower.Battle
 
             Image fill = fillObject.GetComponent<Image>();
             fill.raycastTarget = false;
-            fill.type = Image.Type.Filled;
-            fill.fillMethod = Image.FillMethod.Horizontal;
-            fill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fill.type = Image.Type.Simple;
             fill.color = new Color(0.28f, 0.88f, 0.66f, 0.95f);
 
             GameObject labelObject = new GameObject($"{objectName}_Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
@@ -3531,10 +3912,9 @@ namespace WitchTower.Battle
 
             if (hpBar.Fill != null)
             {
-                hpBar.Fill.fillAmount = Mathf.Clamp01((float)Mathf.Clamp(currentHp, 0, maxHp) / Mathf.Max(1, maxHp));
                 Color fill = fillColor;
                 fill.a *= alpha;
-                hpBar.Fill.color = fill;
+                ApplyHorizontalImageFill(hpBar.Fill, (float)Mathf.Clamp(currentHp, 0, maxHp) / Mathf.Max(1, maxHp), fill);
             }
 
             if (hpBar.Label != null)
@@ -3544,6 +3924,29 @@ namespace WitchTower.Battle
                 hpBar.Label.color = labelColor;
                 hpBar.Label.text = $"{Mathf.Clamp(currentHp, 0, maxHp)}/{maxHp}";
             }
+        }
+
+        private static void ApplyHorizontalImageFill(Image fillImage, float ratio, Color color)
+        {
+            if (fillImage == null)
+            {
+                return;
+            }
+
+            float clampedRatio = Mathf.Clamp01(ratio);
+            fillImage.type = Image.Type.Simple;
+            fillImage.fillAmount = clampedRatio;
+            fillImage.color = color;
+            fillImage.gameObject.SetActive(clampedRatio > 0.001f);
+
+            RectTransform fillRect = fillImage.rectTransform;
+            if (fillRect == null)
+            {
+                return;
+            }
+
+            fillRect.anchorMin = new Vector2(0f, fillRect.anchorMin.y);
+            fillRect.anchorMax = new Vector2(clampedRatio, fillRect.anchorMax.y);
         }
 
         private static void ApplyPreviewImageLayout(Image image, Vector2 anchor, Vector2 size)
@@ -4842,6 +5245,485 @@ namespace WitchTower.Battle
             rect.offsetMax = Vector2.zero;
         }
 
+        private void ShowMinimalResultOverlay(BattleResultViewData viewData)
+        {
+            if (!minimalMonsterPresentation)
+            {
+                return;
+            }
+
+            EnsureMinimalCanvas();
+            EnsureMinimalResultOverlay();
+            if (minimalResultOverlayRoot == null)
+            {
+                return;
+            }
+
+            minimalResultOverlayRoot.SetActive(true);
+            minimalResultOverlayRoot.transform.SetAsLastSibling();
+
+            if (minimalResultTitleText != null)
+            {
+                minimalResultTitleText.text = viewData.IsWin ? "勝利" : "敗北";
+                minimalResultTitleText.color = viewData.IsWin
+                    ? new Color(1f, 0.88f, 0.42f, 1f)
+                    : new Color(1f, 0.55f, 0.55f, 1f);
+            }
+
+            if (minimalResultSummaryText != null)
+            {
+                minimalResultSummaryText.text = viewData.IsWin
+                    ? $"第{viewData.ClearedFloor}階層を突破\n次の階層: 第{viewData.NextFloor}階層"
+                    : "戦闘に敗北しました\n編成や装備を見直しましょう";
+            }
+
+            if (minimalResultRewardText != null)
+            {
+                minimalResultRewardText.text = BuildMinimalResultRewardText(viewData);
+            }
+
+            ShowMinimalResultRewardVisuals(viewData);
+
+            if (minimalResultForecastText != null)
+            {
+                minimalResultForecastText.text = string.Empty;
+                minimalResultForecastText.gameObject.SetActive(false);
+            }
+
+            if (minimalResultNextFloorButton != null)
+            {
+                minimalResultNextFloorButton.gameObject.SetActive(viewData.IsWin);
+                minimalResultNextFloorButton.onClick.RemoveAllListeners();
+                minimalResultNextFloorButton.onClick.AddListener(GoToNextFloor);
+            }
+
+            if (minimalResultNextFloorButtonText != null)
+            {
+                minimalResultNextFloorButtonText.text = $"第{viewData.NextFloor}階層へ";
+            }
+
+            if (minimalResultRetryFloorButton != null)
+            {
+                minimalResultRetryFloorButton.gameObject.SetActive(true);
+                minimalResultRetryFloorButton.onClick.RemoveAllListeners();
+                minimalResultRetryFloorButton.onClick.AddListener(RetryClearedFloor);
+            }
+
+            if (minimalResultRetryFloorButtonText != null)
+            {
+                minimalResultRetryFloorButtonText.text = "この階層に再挑戦";
+            }
+
+            if (minimalResultHomeButton != null)
+            {
+                minimalResultHomeButton.gameObject.SetActive(true);
+                minimalResultHomeButton.onClick.RemoveAllListeners();
+                minimalResultHomeButton.onClick.AddListener(ReturnHome);
+            }
+
+            if (minimalResultHomeButtonText != null)
+            {
+                minimalResultHomeButtonText.text = "ホームへ戻る";
+            }
+        }
+
+        private void HideMinimalResultOverlay()
+        {
+            if (minimalResultOverlayRoot != null)
+            {
+                minimalResultOverlayRoot.SetActive(false);
+            }
+        }
+
+        private void EnsureMinimalResultOverlay()
+        {
+            if (minimalCanvasRoot == null)
+            {
+                return;
+            }
+
+            if (minimalResultOverlayRoot == null)
+            {
+                Transform existing = minimalCanvasRoot.transform.Find("BattleMinimalResultOverlay");
+                if (existing != null)
+                {
+                    minimalResultOverlayRoot = existing.gameObject;
+                    minimalResultTitleText = existing.Find("ResultCard/Title")?.GetComponent<Text>();
+                    minimalResultSummaryText = existing.Find("ResultCard/Summary")?.GetComponent<Text>();
+                    minimalResultRewardText = existing.Find("ResultCard/Rewards")?.GetComponent<Text>();
+                    minimalResultForecastText = existing.Find("ResultCard/Forecast")?.GetComponent<Text>();
+                    minimalResultRewardVisualRoot = existing.Find("ResultCard/RewardVisuals")?.gameObject;
+                    minimalResultNextFloorButton = existing.Find("ResultCard/NextFloorButton")?.GetComponent<Button>();
+                    minimalResultRetryFloorButton = existing.Find("ResultCard/RetryFloorButton")?.GetComponent<Button>();
+                    minimalResultHomeButton = existing.Find("ResultCard/HomeButton")?.GetComponent<Button>();
+                    minimalResultNextFloorButtonText = existing.Find("ResultCard/NextFloorButton/Label")?.GetComponent<Text>();
+                    minimalResultRetryFloorButtonText = existing.Find("ResultCard/RetryFloorButton/Label")?.GetComponent<Text>();
+                    minimalResultHomeButtonText = existing.Find("ResultCard/HomeButton/Label")?.GetComponent<Text>();
+                }
+            }
+
+            if (minimalResultOverlayRoot != null)
+            {
+                EnsureMinimalResultActionButtons();
+                return;
+            }
+
+            minimalResultOverlayRoot = new GameObject("BattleMinimalResultOverlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            RegisterSceneObjectIfEditing(minimalResultOverlayRoot);
+            RectTransform overlayRect = minimalResultOverlayRoot.GetComponent<RectTransform>();
+            overlayRect.SetParent(minimalCanvasRoot.transform, false);
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+            Image overlayImage = minimalResultOverlayRoot.GetComponent<Image>();
+            overlayImage.color = new Color(0f, 0f, 0f, 0.48f);
+            overlayImage.raycastTarget = true;
+
+            GameObject card = new GameObject("ResultCard", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            RegisterSceneObjectIfEditing(card);
+            RectTransform cardRect = card.GetComponent<RectTransform>();
+            cardRect.SetParent(overlayRect, false);
+            cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+            cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRect.pivot = new Vector2(0.5f, 0.5f);
+            cardRect.anchoredPosition = Vector2.zero;
+            cardRect.sizeDelta = new Vector2(920f, 640f);
+            Image cardImage = card.GetComponent<Image>();
+            Sprite panelSprite = BattleVisualResolver.LoadSprite(ResultPanelResourcePath);
+            if (panelSprite != null)
+            {
+                cardImage.sprite = panelSprite;
+                cardImage.color = Color.white;
+                cardImage.type = Image.Type.Simple;
+                cardImage.preserveAspect = false;
+            }
+            else
+            {
+                cardImage.color = new Color(0.05f, 0.07f, 0.09f, 0.97f);
+            }
+
+            cardImage.raycastTarget = true;
+
+            minimalResultTitleText = CreateMinimalResultText("Title", card.transform, new Vector2(0.06f, 0.83f), new Vector2(0.94f, 0.96f), 54, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(1f, 0.88f, 0.42f, 1f));
+            minimalResultSummaryText = CreateMinimalResultText("Summary", card.transform, new Vector2(0.08f, 0.68f), new Vector2(0.92f, 0.80f), 26, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.94f, 0.95f, 0.92f, 1f));
+            minimalResultRewardText = CreateMinimalResultText("Rewards", card.transform, new Vector2(0.10f, 0.46f), new Vector2(0.90f, 0.66f), 22, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.84f, 0.93f, 1f, 1f));
+            minimalResultRewardVisualRoot = CreateMinimalResultRewardVisualRoot(card.transform);
+            minimalResultForecastText = CreateMinimalResultText("Forecast", card.transform, new Vector2(0.08f, 0.23f), new Vector2(0.92f, 0.31f), 22, FontStyle.Normal, TextAnchor.MiddleCenter, new Color(1f, 0.90f, 0.66f, 1f));
+            minimalResultForecastText.gameObject.SetActive(false);
+            minimalResultNextFloorButton = CreateMinimalResultButton("NextFloorButton", card.transform, new Vector2(0.06f, 0.08f), new Vector2(0.32f, 0.19f), new Color(0.15f, 0.43f, 0.70f, 1f), out minimalResultNextFloorButtonText);
+            minimalResultRetryFloorButton = CreateMinimalResultButton("RetryFloorButton", card.transform, new Vector2(0.37f, 0.08f), new Vector2(0.63f, 0.19f), new Color(0.28f, 0.39f, 0.24f, 1f), out minimalResultRetryFloorButtonText);
+            minimalResultHomeButton = CreateMinimalResultButton("HomeButton", card.transform, new Vector2(0.68f, 0.08f), new Vector2(0.94f, 0.19f), new Color(0.50f, 0.24f, 0.08f, 1f), out minimalResultHomeButtonText);
+        }
+
+        private void EnsureMinimalResultActionButtons()
+        {
+            Transform card = minimalResultOverlayRoot != null
+                ? minimalResultOverlayRoot.transform.Find("ResultCard")
+                : null;
+            if (card == null)
+            {
+                return;
+            }
+
+            if (minimalResultNextFloorButton == null)
+            {
+                minimalResultNextFloorButton = card.Find("NextFloorButton")?.GetComponent<Button>();
+            }
+
+            if (minimalResultRetryFloorButton == null)
+            {
+                minimalResultRetryFloorButton = card.Find("RetryFloorButton")?.GetComponent<Button>();
+            }
+
+            if (minimalResultHomeButton == null)
+            {
+                minimalResultHomeButton = card.Find("HomeButton")?.GetComponent<Button>();
+            }
+
+            if (minimalResultNextFloorButton == null)
+            {
+                minimalResultNextFloorButton = CreateMinimalResultButton("NextFloorButton", card, new Vector2(0.06f, 0.08f), new Vector2(0.32f, 0.19f), new Color(0.15f, 0.43f, 0.70f, 1f), out minimalResultNextFloorButtonText);
+            }
+
+            if (minimalResultRetryFloorButton == null)
+            {
+                minimalResultRetryFloorButton = CreateMinimalResultButton("RetryFloorButton", card, new Vector2(0.37f, 0.08f), new Vector2(0.63f, 0.19f), new Color(0.28f, 0.39f, 0.24f, 1f), out minimalResultRetryFloorButtonText);
+            }
+
+            if (minimalResultHomeButton == null)
+            {
+                minimalResultHomeButton = CreateMinimalResultButton("HomeButton", card, new Vector2(0.68f, 0.08f), new Vector2(0.94f, 0.19f), new Color(0.50f, 0.24f, 0.08f, 1f), out minimalResultHomeButtonText);
+            }
+
+            ConfigureMinimalResultButtonRect(minimalResultNextFloorButton, new Vector2(0.06f, 0.08f), new Vector2(0.32f, 0.19f));
+            ConfigureMinimalResultButtonRect(minimalResultRetryFloorButton, new Vector2(0.37f, 0.08f), new Vector2(0.63f, 0.19f));
+            ConfigureMinimalResultButtonRect(minimalResultHomeButton, new Vector2(0.68f, 0.08f), new Vector2(0.94f, 0.19f));
+
+            minimalResultNextFloorButtonText = minimalResultNextFloorButtonText != null
+                ? minimalResultNextFloorButtonText
+                : minimalResultNextFloorButton?.transform.Find("Label")?.GetComponent<Text>();
+            minimalResultRetryFloorButtonText = minimalResultRetryFloorButtonText != null
+                ? minimalResultRetryFloorButtonText
+                : minimalResultRetryFloorButton?.transform.Find("Label")?.GetComponent<Text>();
+            minimalResultHomeButtonText = minimalResultHomeButtonText != null
+                ? minimalResultHomeButtonText
+                : minimalResultHomeButton?.transform.Find("Label")?.GetComponent<Text>();
+        }
+
+        private static void ConfigureMinimalResultButtonRect(Button button, Vector2 anchorMin, Vector2 anchorMax)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            RectTransform rect = button.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+        }
+
+        private void ShowMinimalResultRewardVisuals(BattleResultViewData viewData)
+        {
+            if (minimalResultRewardVisualRoot == null && minimalResultOverlayRoot != null)
+            {
+                Transform card = minimalResultOverlayRoot.transform.Find("ResultCard");
+                if (card != null)
+                {
+                    minimalResultRewardVisualRoot = CreateMinimalResultRewardVisualRoot(card);
+                }
+            }
+
+            if (minimalResultRewardVisualRoot == null)
+            {
+                return;
+            }
+
+            ClearMinimalResultRewardVisuals();
+
+            BattleResultRewardVisual[] visuals = viewData.RewardVisuals;
+            if (!viewData.IsWin || visuals == null || visuals.Length == 0)
+            {
+                minimalResultRewardVisualRoot.SetActive(false);
+                return;
+            }
+
+            minimalResultRewardVisualRoot.SetActive(true);
+            int count = Mathf.Min(visuals.Length, 4);
+            float spacing = count > 1 ? 148f : 0f;
+            float startX = -((count - 1) * spacing * 0.5f);
+            for (int i = 0; i < count; i += 1)
+            {
+                GameObject slot = CreateMinimalResultRewardVisual(visuals[i], minimalResultRewardVisualRoot.transform);
+                RectTransform slotRect = slot.GetComponent<RectTransform>();
+                slotRect.anchoredPosition = new Vector2(startX + i * spacing, 0f);
+                minimalResultRewardVisualObjects.Add(slot);
+            }
+        }
+
+        private static GameObject CreateMinimalResultRewardVisualRoot(Transform parent)
+        {
+            GameObject root = new GameObject("RewardVisuals", typeof(RectTransform));
+            RegisterSceneObjectIfEditing(root);
+            RectTransform rect = root.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.08f, 0.23f);
+            rect.anchorMax = new Vector2(0.92f, 0.43f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            return root;
+        }
+
+        private static GameObject CreateMinimalResultRewardVisual(BattleResultRewardVisual visual, Transform parent)
+        {
+            GameObject slot = new GameObject("RewardVisualSlot", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            RegisterSceneObjectIfEditing(slot);
+            RectTransform slotRect = slot.GetComponent<RectTransform>();
+            slotRect.SetParent(parent, false);
+            slotRect.anchorMin = new Vector2(0.5f, 0.5f);
+            slotRect.anchorMax = new Vector2(0.5f, 0.5f);
+            slotRect.pivot = new Vector2(0.5f, 0.5f);
+            slotRect.sizeDelta = new Vector2(136f, 150f);
+
+            Image background = slot.GetComponent<Image>();
+            background.color = new Color(0.02f, 0.03f, 0.05f, 0.58f);
+            background.raycastTarget = false;
+
+            GameObject iconObject = new GameObject("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            RegisterSceneObjectIfEditing(iconObject);
+            RectTransform iconRect = iconObject.GetComponent<RectTransform>();
+            iconRect.SetParent(slot.transform, false);
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.anchoredPosition = new Vector2(0f, 20f);
+            iconRect.sizeDelta = new Vector2(82f, 82f);
+            Image icon = iconObject.GetComponent<Image>();
+            icon.sprite = BattleVisualResolver.LoadSprite(visual.IconResourcePath);
+            icon.color = icon.sprite != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+
+            GameObject frameObject = new GameObject("Frame", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            RegisterSceneObjectIfEditing(frameObject);
+            RectTransform frameRect = frameObject.GetComponent<RectTransform>();
+            frameRect.SetParent(slot.transform, false);
+            frameRect.anchorMin = new Vector2(0.5f, 0.5f);
+            frameRect.anchorMax = new Vector2(0.5f, 0.5f);
+            frameRect.pivot = new Vector2(0.5f, 0.5f);
+            frameRect.anchoredPosition = new Vector2(0f, 20f);
+            frameRect.sizeDelta = new Vector2(116f, 116f);
+            Image frame = frameObject.GetComponent<Image>();
+            frame.sprite = BattleVisualResolver.LoadSprite(visual.FrameResourcePath);
+            frame.color = frame.sprite != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+            frame.preserveAspect = true;
+            frame.raycastTarget = false;
+
+            Text label = CreateMinimalResultText("Label", slot.transform, new Vector2(0.04f, 0.02f), new Vector2(0.96f, 0.23f), 14, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+            label.text = visual.DisplayName;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 9;
+            label.resizeTextMaxSize = 14;
+
+            if (!string.IsNullOrEmpty(visual.DetailText))
+            {
+                Text detail = CreateMinimalResultText("Detail", slot.transform, new Vector2(0.12f, 0.77f), new Vector2(0.88f, 0.92f), 13, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(1f, 0.93f, 0.68f, 1f));
+                detail.text = visual.DetailText;
+                detail.resizeTextForBestFit = true;
+                detail.resizeTextMinSize = 8;
+                detail.resizeTextMaxSize = 13;
+            }
+
+            return slot;
+        }
+
+        private void ClearMinimalResultRewardVisuals()
+        {
+            if (minimalResultRewardVisualRoot == null)
+            {
+                for (int i = 0; i < minimalResultRewardVisualObjects.Count; i += 1)
+                {
+                    DestroyMinimalResultObject(minimalResultRewardVisualObjects[i]);
+                }
+
+                minimalResultRewardVisualObjects.Clear();
+                return;
+            }
+
+            for (int i = minimalResultRewardVisualRoot.transform.childCount - 1; i >= 0; i -= 1)
+            {
+                Transform child = minimalResultRewardVisualRoot.transform.GetChild(i);
+                if (child == null || child.name != "RewardVisualSlot")
+                {
+                    continue;
+                }
+
+                DestroyMinimalResultObject(child.gameObject);
+            }
+
+            minimalResultRewardVisualObjects.Clear();
+        }
+
+        private static void DestroyMinimalResultObject(GameObject obj)
+        {
+            if (obj == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                UnityEngine.Object.Destroy(obj);
+            }
+            else
+            {
+                UnityEngine.Object.DestroyImmediate(obj);
+            }
+        }
+
+        private static Text CreateMinimalResultText(string objectName, Transform parent, Vector2 anchorMin, Vector2 anchorMax, int fontSize, FontStyle style, TextAnchor alignment, Color color)
+        {
+            GameObject textObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text), typeof(Outline));
+            RegisterSceneObjectIfEditing(textObject);
+            RectTransform rect = textObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            Text text = textObject.GetComponent<Text>();
+            text.font = ResolveBuiltinUiFont();
+            text.fontSize = fontSize;
+            text.fontStyle = style;
+            text.alignment = alignment;
+            text.color = color;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+
+            Outline outline = textObject.GetComponent<Outline>();
+            outline.effectColor = new Color(0f, 0f, 0f, 0.82f);
+            outline.effectDistance = new Vector2(2f, -2f);
+            return text;
+        }
+
+        private static Button CreateMinimalResultButton(string objectName, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Color color, out Text label)
+        {
+            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            RegisterSceneObjectIfEditing(buttonObject);
+            RectTransform rect = buttonObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            Image image = buttonObject.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = true;
+
+            Button button = buttonObject.GetComponent<Button>();
+            button.targetGraphic = image;
+
+            label = CreateMinimalResultText("Label", buttonObject.transform, Vector2.zero, Vector2.one, 26, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 12;
+            label.resizeTextMaxSize = 26;
+            label.raycastTarget = false;
+            return button;
+        }
+
+        private static string BuildMinimalResultRewardText(BattleResultViewData viewData)
+        {
+            if (!viewData.IsWin)
+            {
+                return "今回の獲得報酬はありません。\n次の挑戦に向けて強化しましょう。";
+            }
+
+            var lines = new List<string>
+            {
+                $"ゴールド +{viewData.Gold:N0}",
+                $"プレイヤー経験値 +{viewData.Exp:N0}",
+                viewData.PartyMonsterCount > 0
+                    ? $"パーティ経験値 +{viewData.PartyMonsterExp:N0} / {viewData.PartyMonsterCount}体"
+                    : "パーティ経験値 なし"
+            };
+
+            if (viewData.PlayerLevelBefore > 0 && viewData.PlayerLevelAfter > viewData.PlayerLevelBefore)
+            {
+                lines.Add($"レベルアップ: Lv.{viewData.PlayerLevelBefore} -> Lv.{viewData.PlayerLevelAfter}");
+            }
+
+            return string.Join("\n", lines);
+        }
+
         private void EnsureWaveHud()
         {
             if (minimalCanvasRoot == null)
@@ -4855,7 +5737,7 @@ namespace WitchTower.Battle
                 waveHudRoot = existingHud.gameObject;
                 if (waveEnemyCountFillImage == null)
                 {
-                    waveEnemyCountFillImage = waveHudRoot.transform.Find("EnemyCountFill")?.GetComponent<Image>();
+                    waveEnemyCountFillImage = waveHudRoot.transform.Find("EnemyCountBarFrame/EnemyCountFill")?.GetComponent<Image>();
                 }
 
                 if (waveEnemyCountText == null)
@@ -4921,9 +5803,7 @@ namespace WitchTower.Battle
             fillRect.offsetMax = new Vector2(-4f, -4f);
             waveEnemyCountFillImage = fill.GetComponent<Image>();
             waveEnemyCountFillImage.color = new Color(0.60f, 0.86f, 0.24f, 1f);
-            waveEnemyCountFillImage.type = Image.Type.Filled;
-            waveEnemyCountFillImage.fillMethod = Image.FillMethod.Horizontal;
-            waveEnemyCountFillImage.fillOrigin = 0;
+            waveEnemyCountFillImage.type = Image.Type.Simple;
 
             waveTitleText = CreateHudText("WaveTitleText", waveHudRoot.transform, new Vector2(0.03f, 0.05f), new Vector2(0.28f, 0.95f), TextAnchor.MiddleLeft, 28);
             waveEnemyCountText = CreateHudText("EnemyCountText", waveHudRoot.transform, new Vector2(0.62f, -1.05f), new Vector2(0.99f, -0.10f), TextAnchor.MiddleRight, 34);
@@ -5357,12 +6237,12 @@ namespace WitchTower.Battle
 
                 if (waveEnemyCountText != null)
                 {
-                    waveEnemyCountText.text = "残り 5";
+                    waveEnemyCountText.text = "残り 0 / 0";
                 }
 
                 if (waveEnemyCountFillImage != null)
                 {
-                    waveEnemyCountFillImage.fillAmount = 1f;
+                    ApplyHorizontalImageFill(waveEnemyCountFillImage, 0f, new Color(0.60f, 0.86f, 0.24f, 1f));
                 }
 
                 if (battleStatusText != null)
@@ -5374,13 +6254,9 @@ namespace WitchTower.Battle
             }
 
             int totalCount = simulator.CurrentEnemyCountTarget;
-            if (displayedRemainingEnemyCount < 0 || displayedRemainingEnemyCount > totalCount)
-            {
-                displayedRemainingEnemyCount = simulator.CurrentRemainingEnemyCount;
-            }
-
-            int remainingCount = Mathf.Clamp(displayedRemainingEnemyCount, 0, totalCount);
+            int remainingCount = Mathf.Clamp(simulator.CurrentRemainingEnemyCount, 0, totalCount);
             float fill = totalCount > 0 ? (float)remainingCount / totalCount : 0f;
+            string countText = $"残り {remainingCount} / {totalCount}";
 
             if (waveTitleText != null)
             {
@@ -5389,12 +6265,12 @@ namespace WitchTower.Battle
 
             if (waveEnemyCountText != null)
             {
-                waveEnemyCountText.text = $"残り {remainingCount}";
+                waveEnemyCountText.text = countText;
             }
 
             if (waveEnemyCountFillImage != null)
             {
-                waveEnemyCountFillImage.fillAmount = fill;
+                ApplyHorizontalImageFill(waveEnemyCountFillImage, fill, new Color(0.60f, 0.86f, 0.24f, 1f));
             }
 
             if (battleStatusText != null)
@@ -5445,12 +6321,6 @@ namespace WitchTower.Battle
                     ResetEnemyPreviewProgress();
                     combatLoopProgress = 0f;
                     engagementProgress = Application.isPlaying ? 0f : 1f;
-                    if (simulator != null)
-                    {
-                        displayedRemainingEnemyCount = simulator.CurrentRemainingEnemyCount;
-                        pendingRemainingEnemyCount = simulator.CurrentRemainingEnemyCount;
-                        enemyCountCommitDelayRemaining = 0f;
-                    }
                     displayedEnemyPreviewCount = 0;
                     observedSpawnedEnemyCount = 0;
                     pendingEnemyPreviewRemovalIndices.Clear();
@@ -5507,18 +6377,14 @@ namespace WitchTower.Battle
             }
 
             RefreshBattlePresentation(force: false);
+            if (resultHandled && hasLastResultViewData &&
+                (minimalResultOverlayRoot == null || !minimalResultOverlayRoot.activeInHierarchy))
+            {
+                ShowMinimalResultOverlay(lastResultViewData);
+            }
 
             BattleSimulator simulator = stateMachine != null ? stateMachine.Simulator : null;
             bool hasSpawnedEnemies = simulator != null && simulator.CurrentSpawnedEnemyCount > 0;
-
-            if (enemyCountCommitDelayRemaining > 0f)
-            {
-                enemyCountCommitDelayRemaining = Mathf.Max(0f, enemyCountCommitDelayRemaining - deltaTime);
-                if (enemyCountCommitDelayRemaining <= 0f && pendingRemainingEnemyCount >= 0)
-                {
-                    displayedRemainingEnemyCount = pendingRemainingEnemyCount;
-                }
-            }
 
             for (int i = 0; i < allyKnockbackRemainings.Count; i += 1)
             {
@@ -5658,10 +6524,8 @@ namespace WitchTower.Battle
             // Knockback has been removed from the battle presentation.
         }
 
-        private void HandleEnemyDefeated(int remainingCount, int defeatedPreviewIndex)
+        private void HandleEnemyDefeated(int _, int defeatedPreviewIndex)
         {
-            pendingRemainingEnemyCount = Mathf.Max(0, remainingCount);
-            enemyCountCommitDelayRemaining = EnemyCountCommitDelay;
             if (defeatedPreviewIndex >= 0)
             {
                 pendingEnemyPreviewRemovalIndices.Add(defeatedPreviewIndex);

@@ -9,6 +9,7 @@ using WitchTower.Data;
 using WitchTower.Managers;
 using WitchTower.MasterData;
 using WitchTower.Save;
+using WitchTower.UI;
 
 namespace WitchTower.Home
 {
@@ -17,10 +18,19 @@ namespace WitchTower.Home
         private const string BackgroundSpritePath = "UI/GachaPage/GachaSummonChamberBackground";
         private const string PullButtonSpritePath = "UI/GachaPage/GachaPullButton";
         private const string SmallButtonSpritePath = "UI/GachaPage/GachaSmallButton";
+        private const string FreeStoneIconPath = "UI/GachaPage/GachaStoneFreeIcon";
+        private const string PaidStoneIconPath = "UI/GachaPage/GachaStonePaidIcon";
         private const string MasterDataRootPath = "MasterData/MasterDataRoot";
         private const string NormalEffectSpritePath = "UI/GachaPage/Effects/GachaContractEffect_Normal";
         private const string RareEffectSpritePath = "UI/GachaPage/Effects/GachaContractEffect_Rare";
         private const string LegendaryEffectSpritePath = "UI/GachaPage/Effects/GachaContractEffect_Legendary";
+        private const int GachaStoneCostPerPull = 300;
+        private const int PaidTenPullGuaranteedClassRank = 3;
+        private const int FreeClass3SummonRatePercent = 1;
+        private const int FreeClass2SummonRatePercent = 9;
+        private const int PaidClass4SummonRatePercent = 1;
+        private const int PaidClass3SummonRatePercent = 3;
+        private const int PaidClass2SummonRatePercent = 9;
 
         private static readonly Color PanelColor = new Color(0.035f, 0.030f, 0.028f, 0.72f);
         private static readonly Color DeepPanelColor = new Color(0.015f, 0.012f, 0.014f, 0.82f);
@@ -33,10 +43,14 @@ namespace WitchTower.Home
         private bool builtForPlayMode;
         private GameObject contractHomeRoot;
         private GameObject resultStageRoot;
-        private Text ticketText;
+        private Text freeStoneText;
+        private Text paidStoneText;
+        private Text storageText;
         private Text statusText;
         private Button singlePullButton;
         private Button tenPullButton;
+        private Button paidSinglePullButton;
+        private Button paidTenPullButton;
         private CanvasGroup effectCanvasGroup;
         private Image effectImage;
         private Image effectFlashImage;
@@ -50,10 +64,12 @@ namespace WitchTower.Home
         private Text resultSummaryText;
         private Button resultAgainButton;
         private Button resultBackButton;
+        private Button resultHomeButton;
         private readonly List<ResultSlotView> resultSlotViews = new List<ResultSlotView>();
         private Coroutine effectRoutine;
         private bool contractInProgress;
         private int lastRequestedCount = 1;
+        private bool lastUsedPaidStones;
 
         private enum ContractEffectTier
         {
@@ -109,10 +125,14 @@ namespace WitchTower.Home
             ClearChildren();
             contractHomeRoot = null;
             resultStageRoot = null;
-            ticketText = null;
+            freeStoneText = null;
+            paidStoneText = null;
+            storageText = null;
             statusText = null;
             singlePullButton = null;
             tenPullButton = null;
+            paidSinglePullButton = null;
+            paidTenPullButton = null;
             effectCanvasGroup = null;
             effectImage = null;
             effectFlashImage = null;
@@ -126,10 +146,12 @@ namespace WitchTower.Home
             resultSummaryText = null;
             resultAgainButton = null;
             resultBackButton = null;
+            resultHomeButton = null;
             resultSlotViews.Clear();
             effectRoutine = null;
             contractInProgress = false;
             lastRequestedCount = 1;
+            lastUsedPaidStones = false;
 
             Image rootImage = GetComponent<Image>();
             if (rootImage != null)
@@ -152,9 +174,13 @@ namespace WitchTower.Home
                 new Vector2(0.5f, 0.26f), Vector2.zero, new Vector2(730f, 42f), PaleTextColor);
 
             GameObject ticketPanel = CreatePanel("GachaTicketPanel", contractHomeRoot.transform, null,
-                new Vector2(0.5f, 1f), new Vector2(0f, -292f), new Vector2(660f, 72f), DeepPanelColor);
-            ticketText = CreateText("TicketCount", ticketPanel.transform, "契約券 0 / 魔晶石 0", 28, FontStyle.Bold,
-                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560f, 42f), PaleTextColor);
+                new Vector2(0.5f, 1f), new Vector2(0f, -292f), new Vector2(860f, 82f), DeepPanelColor);
+            freeStoneText = CreateStoneCounter(ticketPanel.transform, "FreeStoneCounter", FreeStoneIconPath,
+                new Vector2(-286f, 0f));
+            paidStoneText = CreateStoneCounter(ticketPanel.transform, "PaidStoneCounter", PaidStoneIconPath,
+                new Vector2(0f, 0f));
+            storageText = CreateText("StorageCount", ticketPanel.transform, "所持 0/0", 22, FontStyle.Bold,
+                new Vector2(0.5f, 0.5f), new Vector2(292f, 0f), new Vector2(220f, 42f), PaleTextColor);
 
             GameObject ritePanel = CreatePanel("ContractRitePanel", contractHomeRoot.transform, null,
                 new Vector2(0.5f, 0.5f), new Vector2(0f, -116f), new Vector2(780f, 250f), new Color(0.018f, 0.014f, 0.020f, 0.54f));
@@ -163,24 +189,40 @@ namespace WitchTower.Home
             statusText = CreateText("RiteStatus", ritePanel.transform, "未召喚", 24, FontStyle.Bold,
                 new Vector2(0.5f, 0.40f), Vector2.zero, new Vector2(700f, 138f), PaleTextColor);
 
-            GameObject ratesPanel = CreatePanel("GachaRatesPanel", contractHomeRoot.transform, null,
+            GameObject benefitPanel = CreatePanel("GachaBenefitPanel", contractHomeRoot.transform, null,
                 new Vector2(0.5f, 0f), new Vector2(0f, 416f), new Vector2(820f, 214f), DeepPanelColor);
-            CreateText("RatesTitle", ratesPanel.transform, "召喚候補", 24, FontStyle.Bold,
+            CreateText("BenefitTitle", benefitPanel.transform, "契約特典", 24, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0f, -32f), new Vector2(480f, 36f), GoldTextColor);
-            CreateRateChip(ratesPanel.transform, "Class4", "C4", "3%", new Vector2(-260f, -10f), new Color(0.88f, 0.45f, 0.92f, 1f));
-            CreateRateChip(ratesPanel.transform, "Upper", "上級", "12%", new Vector2(0f, -10f), new Color(0.78f, 0.58f, 0.34f, 1f));
-            CreateRateChip(ratesPanel.transform, "Middle", "中級", "35%", new Vector2(260f, -10f), new Color(0.45f, 0.80f, 0.76f, 1f));
-            CreateText("RatesNote", ratesPanel.transform, "無料テスト契約中 / 正式通貨は後続接続", 18, FontStyle.Bold,
-                new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(660f, 30f), AshTextColor);
+            CreateContractBenefitCard(
+                benefitPanel.transform,
+                "StandardContractBenefit",
+                FreeStoneIconPath,
+                "通常契約",
+                "標準個体値",
+                new Vector2(-195f, -18f),
+                new Color(0.32f, 0.68f, 0.86f, 1f));
+            CreateContractBenefitCard(
+                benefitPanel.transform,
+                "PremiumContractBenefit",
+                PaidStoneIconPath,
+                "上質契約",
+                "高個体値が出やすい\n10回: クラス3保証",
+                new Vector2(195f, -18f),
+                new Color(0.80f, 0.48f, 0.92f, 1f));
 
-            singlePullButton = CreateSpriteButton("SinglePullButton", contractHomeRoot.transform, PullButtonSpritePath, "1回契約",
-                new Vector2(-205f, 236f), new Vector2(340f, 104f), () => RunContract(1));
-            tenPullButton = CreateSpriteButton("TenPullButton", contractHomeRoot.transform, PullButtonSpritePath, "10回契約",
-                new Vector2(205f, 236f), new Vector2(340f, 104f), () => RunContract(10));
-            Button closeButton = CreateSpriteButton("BackButton", contractHomeRoot.transform, SmallButtonSpritePath, "戻る",
-                new Vector2(0f, 132f), new Vector2(260f, 78f), Close);
+            singlePullButton = CreateStoneCostButton("FreeSinglePullButton", contractHomeRoot.transform, 1, false, false,
+                new Vector2(-205f, 246f), () => RunContract(1, false));
+            tenPullButton = CreateStoneCostButton("FreeTenPullButton", contractHomeRoot.transform, 10, false, false,
+                new Vector2(205f, 246f), () => RunContract(10, false));
+            paidSinglePullButton = CreateStoneCostButton("PaidSinglePullButton", contractHomeRoot.transform, 1, true, false,
+                new Vector2(-205f, 136f), () => RunContract(1, true));
+            paidTenPullButton = CreateStoneCostButton("PaidTenPullButton", contractHomeRoot.transform, 10, true, true,
+                new Vector2(205f, 136f), () => RunContract(10, true));
+            Button closeButton = HomeReturnButtonStyle.Create(contractHomeRoot.transform, Close);
             singlePullButton.interactable = true;
             tenPullButton.interactable = true;
+            paidSinglePullButton.interactable = true;
+            paidTenPullButton.interactable = true;
             closeButton.interactable = true;
 
             CreateContractEffectOverlay();
@@ -192,28 +234,69 @@ namespace WitchTower.Home
 
             if (statusText != null)
             {
-                statusText.text = Application.isPlaying ? "契約可能" : "エディタプレビュー";
+                PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+                statusText.text = BuildPreviewStatusText(profile);
             }
+
+            SetPullButtonsInteractable(!contractInProgress);
         }
 
         private void UpdateInventoryHeader()
         {
-            if (ticketText != null)
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            if (profile != null)
             {
-                PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-                if (profile != null)
+                if (freeStoneText != null)
+                {
+                    freeStoneText.text = profile.FreeGachaStones.ToString("N0");
+                }
+
+                if (paidStoneText != null)
+                {
+                    paidStoneText.text = profile.PaidGachaStones.ToString("N0");
+                }
+
+                if (storageText != null)
                 {
                     int ownedCount = profile.OwnedMonsters != null ? profile.OwnedMonsters.Count : 0;
-                    ticketText.text = $"無料契約 / 所持 {ownedCount}/{Mathf.Max(1, profile.MonsterStorageLimit)}";
+                    storageText.text = $"所持 {ownedCount}/{Mathf.Max(1, profile.MonsterStorageLimit)}";
                 }
-                else
-                {
-                    ticketText.text = "無料契約 / セーブ読込待ち";
-                }
+            }
+            else
+            {
+                if (freeStoneText != null) freeStoneText.text = "-";
+                if (paidStoneText != null) paidStoneText.text = "-";
+                if (storageText != null) storageText.text = "読込待ち";
             }
         }
 
-        private void RunContract(int count)
+        private static string BuildPreviewStatusText(PlayerProfile profile)
+        {
+            if (!Application.isPlaying)
+            {
+                return "エディタプレビュー";
+            }
+
+            if (profile == null)
+            {
+                return "セーブ読込待ち";
+            }
+
+            if (GetAvailableMonsterStorageSlots(profile) <= 0)
+            {
+                return "所持枠がいっぱいです";
+            }
+
+            int singleCost = GetContractCost(1);
+            if (!profile.CanSpendFreeGachaStones(singleCost) && !profile.CanSpendPaidGachaStones(singleCost))
+            {
+                return "魔晶石が足りません";
+            }
+
+            return "契約可能";
+        }
+
+        private void RunContract(int count, bool usePaidStones)
         {
             if (contractInProgress)
             {
@@ -235,36 +318,67 @@ namespace WitchTower.Home
                 return;
             }
 
-            int availableSlots = Mathf.Max(0, profile.MonsterStorageLimit - profile.OwnedMonsters.Count);
-            if (availableSlots <= 0)
+            int availableSlots = GetAvailableMonsterStorageSlots(profile);
+            if (availableSlots < requestedCount)
             {
                 UpdateInventoryHeader();
-                SetStatus("所持枠がいっぱいです");
+                SetPullButtonsInteractable(true);
+                SetStatus(BuildStorageShortageText(requestedCount, availableSlots));
                 return;
             }
 
-            List<MonsterDataSO> summonPool = CollectSummonPool();
+            int stoneCost = GetContractCost(requestedCount);
+            if (!CanSpendGachaStones(profile, stoneCost, usePaidStones))
+            {
+                UpdateInventoryHeader();
+                SetPullButtonsInteractable(true);
+                SetStatus(BuildStoneShortageText(profile, stoneCost, usePaidStones));
+                return;
+            }
+
+            List<MonsterDataSO> summonPool = CollectSummonPool(usePaidStones);
             if (summonPool.Count == 0)
             {
                 SetStatus("召喚候補が登録されていません");
                 return;
             }
 
-            int actualCount = Mathf.Min(requestedCount, availableSlots);
+            if (!SpendGachaStones(profile, stoneCost, usePaidStones))
+            {
+                UpdateInventoryHeader();
+                SetPullButtonsInteractable(true);
+                SetStatus(BuildStoneShortageText(profile, stoneCost, usePaidStones));
+                return;
+            }
+
+            int actualCount = requestedCount;
             lastRequestedCount = requestedCount;
+            lastUsedPaidStones = usePaidStones;
             SetStatus("契約空間へ転移中");
             var results = new List<MonsterDataSO>();
+            bool paidTenPullGuarantee = usePaidStones && requestedCount >= 10;
+            bool hasGuaranteedClass = false;
             for (int i = 0; i < actualCount; i += 1)
             {
-                MonsterDataSO result = DrawMonster(summonPool);
+                int remainingPulls = actualCount - i;
+                bool shouldForceGuarantee = paidTenPullGuarantee && !hasGuaranteedClass && remainingPulls <= 1;
+                MonsterDataSO result = shouldForceGuarantee
+                    ? DrawGuaranteedClass(summonPool, PaidTenPullGuaranteedClassRank)
+                    : DrawMonster(summonPool, usePaidStones);
                 if (result == null)
                 {
                     continue;
                 }
 
+                hasGuaranteedClass = hasGuaranteedClass || Mathf.Max(1, result.classRank) == PaidTenPullGuaranteedClassRank;
                 OwnedMonsterData addedMonster = profile.AddOwnedMonster(result.monsterId, 1);
                 if (addedMonster != null)
                 {
+                    if (usePaidStones)
+                    {
+                        MonsterIndividualValueService.Apply(addedMonster, MonsterIndividualValueService.RollHighQuality());
+                    }
+
                     results.Add(result);
                 }
             }
@@ -272,6 +386,69 @@ namespace WitchTower.Home
             SaveManager.Instance?.SaveCurrentGame();
             UpdateInventoryHeader();
             StartContractEffect(results, requestedCount, actualCount);
+        }
+
+        private static int GetContractCost(int requestedCount)
+        {
+            return Mathf.Max(1, requestedCount) * GachaStoneCostPerPull;
+        }
+
+        private static bool CanSpendGachaStones(PlayerProfile profile, int stoneCost, bool usePaidStones)
+        {
+            if (profile == null)
+            {
+                return false;
+            }
+
+            return usePaidStones
+                ? profile.CanSpendPaidGachaStones(stoneCost)
+                : profile.CanSpendFreeGachaStones(stoneCost);
+        }
+
+        private static bool SpendGachaStones(PlayerProfile profile, int stoneCost, bool usePaidStones)
+        {
+            if (profile == null)
+            {
+                return false;
+            }
+
+            return usePaidStones
+                ? profile.TrySpendPaidGachaStones(stoneCost)
+                : profile.TrySpendFreeGachaStones(stoneCost);
+        }
+
+        private static string BuildStoneShortageText(PlayerProfile profile, int stoneCost, bool usePaidStones)
+        {
+            int owned = 0;
+            if (profile != null)
+            {
+                owned = usePaidStones ? profile.PaidGachaStones : profile.FreeGachaStones;
+            }
+
+            return $"石が足りません（所持 {Mathf.Max(0, owned)} / 必要 {Mathf.Max(0, stoneCost)}）";
+        }
+
+        private static int GetAvailableMonsterStorageSlots(PlayerProfile profile)
+        {
+            if (profile == null)
+            {
+                return 0;
+            }
+
+            int ownedCount = profile.OwnedMonsters != null ? profile.OwnedMonsters.Count : 0;
+            return Mathf.Max(0, profile.MonsterStorageLimit - ownedCount);
+        }
+
+        private static string BuildStorageShortageText(int requestedCount, int availableSlots)
+        {
+            int required = Mathf.Max(1, requestedCount);
+            int available = Mathf.Max(0, availableSlots);
+            if (available <= 0)
+            {
+                return "所持枠がいっぱいです";
+            }
+
+            return $"所持枠が足りません（空き {available} / 必要 {required}）";
         }
 
         private void Close()
@@ -369,13 +546,73 @@ namespace WitchTower.Home
             return button;
         }
 
-        private static void CreateRateChip(Transform parent, string name, string rarity, string rate, Vector2 anchoredPosition, Color accentColor)
+        private static Button CreateStoneCostButton(
+            string name,
+            Transform parent,
+            int pullCount,
+            bool usePaidStones,
+            bool showGuarantee,
+            Vector2 anchoredPosition,
+            UnityEngine.Events.UnityAction onClick)
         {
-            GameObject chip = CreatePanel(name + "RateChip", parent, null, new Vector2(0.5f, 0.5f), anchoredPosition, new Vector2(190f, 96f), new Color(0.08f, 0.09f, 0.13f, 0.92f));
+            Vector2 buttonSize = new Vector2(340f, 92f);
+            string label = showGuarantee
+                ? $"{Mathf.Max(1, pullCount)}回\n{GetContractCost(pullCount)}  クラス3保証"
+                : $"{Mathf.Max(1, pullCount)}回\n{GetContractCost(pullCount)}";
+            Button button = CreateSpriteButton(name, parent, PullButtonSpritePath, label, anchoredPosition, buttonSize, onClick);
+            Text labelText = button.transform.Find("Label")?.GetComponent<Text>();
+            if (labelText != null)
+            {
+                RectTransform labelRect = labelText.rectTransform;
+                labelRect.anchoredPosition = new Vector2(32f, 0f);
+                labelRect.sizeDelta = new Vector2(248f, 74f);
+                labelText.fontSize = showGuarantee ? 25 : 29;
+                labelText.resizeTextMaxSize = labelText.fontSize;
+            }
+
+            CreateImage(
+                "StoneIcon",
+                button.transform,
+                usePaidStones ? PaidStoneIconPath : FreeStoneIconPath,
+                new Vector2(0.23f, 0.5f),
+                new Vector2(0f, -18f),
+                new Vector2(54f, 54f),
+                true,
+                Color.white);
+            return button;
+        }
+
+        private static Text CreateStoneCounter(Transform parent, string name, string iconPath, Vector2 anchoredPosition)
+        {
+            GameObject root = CreatePanel(name, parent, null, new Vector2(0.5f, 0.5f), anchoredPosition,
+                new Vector2(252f, 58f), new Color(0.018f, 0.020f, 0.026f, 0.84f));
+            Image rootImage = root.GetComponent<Image>();
+            if (rootImage != null)
+            {
+                rootImage.raycastTarget = false;
+            }
+
+            CreateImage("Icon", root.transform, iconPath, new Vector2(0f, 0.5f),
+                new Vector2(36f, 0f), new Vector2(54f, 54f), true, Color.white);
+            return CreateText("Amount", root.transform, "0", 23, FontStyle.Bold,
+                new Vector2(0.62f, 0.5f), new Vector2(0f, 0f), new Vector2(156f, 38f), Color.white);
+        }
+
+        private static void CreateContractBenefitCard(
+            Transform parent,
+            string name,
+            string iconPath,
+            string title,
+            string detail,
+            Vector2 anchoredPosition,
+            Color accentColor)
+        {
+            GameObject chip = CreatePanel(name, parent, null, new Vector2(0.5f, 0.5f), anchoredPosition, new Vector2(350f, 112f), new Color(0.08f, 0.09f, 0.13f, 0.92f));
             Image image = chip.GetComponent<Image>();
             image.color = new Color(accentColor.r * 0.18f, accentColor.g * 0.18f, accentColor.b * 0.18f, 0.94f);
-            CreateText(name + "Rarity", chip.transform, rarity, 24, FontStyle.Bold, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(160f, 32f), accentColor);
-            CreateText(name + "Rate", chip.transform, rate, 30, FontStyle.Bold, new Vector2(0.5f, 0.28f), Vector2.zero, new Vector2(160f, 38f), Color.white);
+            CreateImage("StoneIcon", chip.transform, iconPath, new Vector2(0.16f, 0.5f), Vector2.zero, new Vector2(68f, 68f), true, Color.white);
+            CreateText("Title", chip.transform, title, 23, FontStyle.Bold, new Vector2(0.62f, 0.69f), Vector2.zero, new Vector2(230f, 32f), accentColor);
+            CreateText("Detail", chip.transform, detail, 17, FontStyle.Bold, new Vector2(0.62f, 0.30f), Vector2.zero, new Vector2(230f, 48f), Color.white);
         }
 
         private void CreateResultSlotGrid(Transform parent)
@@ -509,9 +746,10 @@ namespace WitchTower.Home
             CreateResultSlotGrid(resultStageRoot.transform);
 
             resultAgainButton = CreateSpriteButton("ResultAgainButton", resultStageRoot.transform, PullButtonSpritePath, "もう一度契約",
-                new Vector2(-190f, 82f), new Vector2(350f, 84f), () => RunContract(lastRequestedCount));
+                new Vector2(-190f, 82f), new Vector2(350f, 84f), () => RunContract(lastRequestedCount, lastUsedPaidStones));
             resultBackButton = CreateSpriteButton("ResultBackButton", resultStageRoot.transform, SmallButtonSpritePath, "契約画面へ",
                 new Vector2(210f, 82f), new Vector2(310f, 84f), ReturnToContractHome);
+            resultHomeButton = HomeReturnButtonStyle.Create(resultStageRoot.transform, "ResultHomeReturnButton", Close);
 
             SetResultButtonsVisible(false);
             resultStageRoot.SetActive(false);
@@ -631,13 +869,36 @@ namespace WitchTower.Home
         {
             if (singlePullButton != null)
             {
-                singlePullButton.interactable = interactable;
+                singlePullButton.interactable = interactable && CanRequestContract(1, false);
             }
 
             if (tenPullButton != null)
             {
-                tenPullButton.interactable = interactable;
+                tenPullButton.interactable = interactable && CanRequestContract(10, false);
             }
+
+            if (paidSinglePullButton != null)
+            {
+                paidSinglePullButton.interactable = interactable && CanRequestContract(1, true);
+            }
+
+            if (paidTenPullButton != null)
+            {
+                paidTenPullButton.interactable = interactable && CanRequestContract(10, true);
+            }
+        }
+
+        private static bool CanRequestContract(int requestedCount, bool usePaidStones)
+        {
+            if (!Application.isPlaying)
+            {
+                return true;
+            }
+
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            int normalizedCount = Mathf.Max(1, requestedCount);
+            return GetAvailableMonsterStorageSlots(profile) >= normalizedCount &&
+                CanSpendGachaStones(profile, GetContractCost(normalizedCount), usePaidStones);
         }
 
         private void ReturnToContractHome()
@@ -667,13 +928,19 @@ namespace WitchTower.Home
             if (resultAgainButton != null)
             {
                 resultAgainButton.gameObject.SetActive(visible);
-                resultAgainButton.interactable = visible;
+                resultAgainButton.interactable = visible && CanRequestContract(lastRequestedCount, lastUsedPaidStones);
             }
 
             if (resultBackButton != null)
             {
                 resultBackButton.gameObject.SetActive(visible);
                 resultBackButton.interactable = visible;
+            }
+
+            if (resultHomeButton != null)
+            {
+                resultHomeButton.gameObject.SetActive(visible);
+                resultHomeButton.interactable = visible;
             }
         }
 
@@ -914,13 +1181,13 @@ namespace WitchTower.Home
             switch (Mathf.Max(1, classRank))
             {
                 case 4:
-                    return "CLASS 4 / 深層契約";
+                    return "クラス4 / 深層契約";
                 case 3:
-                    return "CLASS 3 / 黄金契約";
+                    return "クラス3 / 黄金契約";
                 case 2:
-                    return "CLASS 2 / 上級契約";
+                    return "クラス2 / 上級契約";
                 default:
-                    return "CLASS 1 / 通常契約";
+                    return "クラス1 / 通常契約";
             }
         }
 
@@ -964,7 +1231,7 @@ namespace WitchTower.Home
             }
         }
 
-        private static List<MonsterDataSO> CollectSummonPool()
+        private static List<MonsterDataSO> CollectSummonPool(bool includePaidClass4)
         {
             var results = new List<MonsterDataSO>();
             MonsterDataSO[] monsterDataList = MasterDataManager.Instance?.GetAllMonsterData();
@@ -982,7 +1249,9 @@ namespace WitchTower.Home
             for (int i = 0; i < monsterDataList.Length; i += 1)
             {
                 MonsterDataSO monsterData = monsterDataList[i];
-                if (monsterData != null && !string.IsNullOrEmpty(monsterData.monsterId) && !monsterData.fusionExclusive)
+                bool canSummon = monsterData != null &&
+                    (!monsterData.fusionExclusive || (includePaidClass4 && Mathf.Max(1, monsterData.classRank) == 4));
+                if (canSummon && !string.IsNullOrEmpty(monsterData.monsterId))
                 {
                     results.Add(monsterData);
                 }
@@ -991,32 +1260,64 @@ namespace WitchTower.Home
             return results;
         }
 
-        private static MonsterDataSO DrawMonster(List<MonsterDataSO> summonPool)
+        private static MonsterDataSO DrawMonster(List<MonsterDataSO> summonPool, bool usePaidStones)
         {
             if (summonPool == null || summonPool.Count == 0)
             {
                 return null;
             }
 
-            int targetClassRank = RollClassRank();
+            int targetClassRank = RollClassRank(usePaidStones);
             MonsterDataSO selected = DrawFromClassRank(summonPool, targetClassRank);
-            return selected != null ? selected : summonPool[UnityEngine.Random.Range(0, summonPool.Count)];
-        }
-
-        private static int RollClassRank()
-        {
-            int roll = UnityEngine.Random.Range(0, 100);
-            if (roll < 3)
+            if (selected != null)
             {
-                return 4;
+                return selected;
             }
 
-            if (roll < 15)
+            MonsterDataSO fallback = DrawFromClassRank(summonPool, 1);
+            return fallback != null ? fallback : summonPool[UnityEngine.Random.Range(0, summonPool.Count)];
+        }
+
+        private static MonsterDataSO DrawGuaranteedClass(List<MonsterDataSO> summonPool, int guaranteedClassRank)
+        {
+            if (summonPool == null || summonPool.Count == 0)
+            {
+                return null;
+            }
+
+            MonsterDataSO selected = DrawFromClassRank(summonPool, Mathf.Max(1, guaranteedClassRank));
+            return selected != null ? selected : DrawMonster(summonPool, true);
+        }
+
+        private static int RollClassRank(bool usePaidStones)
+        {
+            int roll = UnityEngine.Random.Range(0, 100);
+            if (usePaidStones)
+            {
+                if (roll < PaidClass4SummonRatePercent)
+                {
+                    return 4;
+                }
+
+                if (roll < PaidClass4SummonRatePercent + PaidClass3SummonRatePercent)
+                {
+                    return 3;
+                }
+
+                if (roll < PaidClass4SummonRatePercent + PaidClass3SummonRatePercent + PaidClass2SummonRatePercent)
+                {
+                    return 2;
+                }
+
+                return 1;
+            }
+
+            if (roll < FreeClass3SummonRatePercent)
             {
                 return 3;
             }
 
-            if (roll < 50)
+            if (roll < FreeClass3SummonRatePercent + FreeClass2SummonRatePercent)
             {
                 return 2;
             }

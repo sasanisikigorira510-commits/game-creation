@@ -86,6 +86,11 @@ namespace WitchTower.Data
             return CreateOwnedEquipmentInstance(equipmentId) != null;
         }
 
+        public bool AddOwnedEquipment(string equipmentId, EquipmentRarity quality)
+        {
+            return CreateOwnedEquipmentInstance(equipmentId, ((int)quality) + 1) != null;
+        }
+
         public bool EquipEquipmentToMonster(string monsterInstanceId, string equipmentInstanceId)
         {
             OwnedMonsterData monster = GetOwnedMonster(monsterInstanceId);
@@ -115,6 +120,37 @@ namespace WitchTower.Data
             SetMonsterEquipmentInstanceId(monster, equipmentData.slotType, equipment.InstanceId);
             equipment.EquippedMonsterInstanceId = monster.InstanceId;
             SyncEquippedFlags();
+            return true;
+        }
+
+        public bool TryUnequipEquipment(string equipmentInstanceId, out string message)
+        {
+            OwnedEquipmentData equipment = GetOwnedEquipmentByInstanceId(equipmentInstanceId);
+            if (equipment == null)
+            {
+                message = "対象装備が見つかりません。";
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(equipment.EquippedMonsterInstanceId))
+            {
+                message = "この装備は装備されていません。";
+                return false;
+            }
+
+            OwnedMonsterData monster = GetOwnedMonster(equipment.EquippedMonsterInstanceId);
+            EquipmentSlotType slotType = ResolveEquipmentSlotType(equipment.EquipmentId);
+            if (monster != null)
+            {
+                ClearMonsterEquipmentSlot(monster, slotType, equipment.InstanceId);
+            }
+
+            equipment.EquippedMonsterInstanceId = string.Empty;
+            equipment.IsEquipped = false;
+            ClearLegacyRepresentativeEquipmentIfEmpty(slotType);
+            SyncEquippedFlags();
+
+            message = GetEquipmentDisplayName(equipment.EquipmentId) + " を外しました。";
             return true;
         }
 
@@ -170,7 +206,7 @@ namespace WitchTower.Data
         {
             OwnedEquipmentData equipment = GetOwnedEquipmentByInstanceId(equipmentInstanceId);
             EquipmentDataSO equipmentData = equipment != null ? MasterDataManager.Instance?.GetEquipmentData(equipment.EquipmentId) : null;
-            EquipmentEnhancementCatalog.EnsureRolledStats(equipmentData, equipment, EnhancementRandom);
+            EquipmentEnhancementCatalog.SyncRolledStatsFromMaster(equipmentData, equipment);
             EnhancementRelicDefinition relic = EquipmentEnhancementCatalog.GetRelic(relicId);
             var result = new EquipmentEnhancementResult
             {
@@ -228,21 +264,56 @@ namespace WitchTower.Data
                 if (legacyData) equipment.InstanceId = equipment.EquipmentId + "_" + Guid.NewGuid().ToString("N");
                 if (legacyData)
                 {
+                    equipment.QualityRank = EquipmentEnhancementCatalog.ResolveQualityRank(equipmentData);
                     equipment.RemainingEnhanceAttempts = ResolveInitialEnhanceAttempts(equipment.EquipmentId);
+                    equipment.MaxEnhanceAttempts = equipment.RemainingEnhanceAttempts;
                     equipment.EnhancementBonusRate = 0f;
                     equipment.EnhancementAttackFlat = 0;
                     equipment.EnhancementWisdomFlat = 0;
                     equipment.EnhancementDefenseFlat = 0;
                     equipment.EnhancementMagicDefenseFlat = 0;
                     equipment.EnhancementHpFlat = 0;
+                    equipment.EnhancementCritRateFlat = 0f;
                     equipment.EnhancementAttackSpeedFlat = 0f;
                     equipment.IsLocked = false;
                     equipment.EquippedMonsterInstanceId = string.Empty;
                 }
-                else if (equipment.RemainingEnhanceAttempts < 0) equipment.RemainingEnhanceAttempts = 0;
+                else
+                {
+                    if (equipment.RemainingEnhanceAttempts < 0) equipment.RemainingEnhanceAttempts = 0;
+                    EquipmentEnhancementCatalog.EnsureQualityEnhanceAttempts(equipmentData, equipment);
+                    if (Math.Abs(equipment.EnhancementAttackSpeedFlat) > 0.5f)
+                    {
+                        equipment.EnhancementAttackSpeedFlat /= 100f;
+                    }
 
-                EquipmentEnhancementCatalog.EnsureRolledStats(equipmentData, equipment, EnhancementRandom);
+                    int completedEnhancements = Math.Max(0, equipment.UpgradeLevel);
+                    if (completedEnhancements > 0 && equipmentData != null)
+                    {
+                        if (equipmentData.bonusCritRate > 0.0001f && Math.Abs(equipment.EnhancementCritRateFlat) <= 0.0001f)
+                        {
+                            equipment.EnhancementCritRateFlat = completedEnhancements * 0.002f;
+                        }
+
+                        if (equipmentData.bonusAttackSpeed > 0.0001f && Math.Abs(equipment.EnhancementAttackSpeedFlat) <= 0.0001f)
+                        {
+                            equipment.EnhancementAttackSpeedFlat = completedEnhancements * 0.002f;
+                        }
+                    }
+                }
+
+                equipment.EnhancementBonusRate = Math.Max(0f, equipment.EnhancementBonusRate);
+                equipment.EnhancementAttackFlat = Math.Max(0, equipment.EnhancementAttackFlat);
+                equipment.EnhancementWisdomFlat = Math.Max(0, equipment.EnhancementWisdomFlat);
+                equipment.EnhancementDefenseFlat = Math.Max(0, equipment.EnhancementDefenseFlat);
+                equipment.EnhancementMagicDefenseFlat = Math.Max(0, equipment.EnhancementMagicDefenseFlat);
+                equipment.EnhancementHpFlat = Math.Max(0, equipment.EnhancementHpFlat);
+                equipment.EnhancementCritRateFlat = Math.Max(0f, equipment.EnhancementCritRateFlat);
+                equipment.EnhancementAttackSpeedFlat = Math.Max(0f, equipment.EnhancementAttackSpeedFlat);
+                EquipmentEnhancementCatalog.SyncRolledStatsFromMaster(equipmentData, equipment);
             }
+
+            EnsureAllEquipmentOwnedForPreview();
 
             foreach (OwnedMonsterData monster in OwnedMonsters)
             {
@@ -273,6 +344,25 @@ namespace WitchTower.Data
             SyncEquippedFlags();
         }
 
+        private void EnsureAllEquipmentOwnedForPreview()
+        {
+            EquipmentDataSO[] allEquipmentData = MasterDataManager.Instance?.GetAllEquipmentData();
+            if (allEquipmentData == null)
+            {
+                return;
+            }
+
+            foreach (EquipmentDataSO equipmentData in allEquipmentData)
+            {
+                if (equipmentData == null || string.IsNullOrEmpty(equipmentData.equipmentId) || HasEquipment(equipmentData.equipmentId))
+                {
+                    continue;
+                }
+
+                CreateOwnedEquipmentInstance(equipmentData.equipmentId, EquipmentEnhancementCatalog.ResolveQualityRank(equipmentData));
+            }
+        }
+
         partial void SyncLegacyRepresentativeEquipmentIds()
         {
             legacyEquippedWeaponId = GetRepresentativeEquippedEquipmentId(EquipmentSlotType.Weapon) ?? legacyEquippedWeaponId;
@@ -297,28 +387,35 @@ namespace WitchTower.Data
             if (equipment != null) EquipEquipmentToMonster(representative.InstanceId, equipment.InstanceId);
         }
 
-        private OwnedEquipmentData CreateOwnedEquipmentInstance(string equipmentId)
+        private OwnedEquipmentData CreateOwnedEquipmentInstance(string equipmentId, int qualityRank = 0)
         {
             if (string.IsNullOrEmpty(equipmentId)) return null;
             EquipmentDataSO equipmentData = MasterDataManager.Instance?.GetEquipmentData(equipmentId);
+            int resolvedQualityRank = qualityRank > 0
+                ? Math.Min(5, Math.Max(1, qualityRank))
+                : EquipmentEnhancementCatalog.ResolveQualityRank(equipmentData);
+            int maxEnhanceAttempts = EquipmentEnhancementCatalog.ResolveMaxEnhanceAttempts(equipmentData, new OwnedEquipmentData { QualityRank = resolvedQualityRank });
             var equipment = new OwnedEquipmentData
             {
                 InstanceId = equipmentId + "_" + Guid.NewGuid().ToString("N"),
                 EquipmentId = equipmentId,
                 UpgradeLevel = 0,
                 EnhancementBonusRate = 0f,
+                QualityRank = resolvedQualityRank,
                 EnhancementAttackFlat = 0,
                 EnhancementWisdomFlat = 0,
                 EnhancementDefenseFlat = 0,
                 EnhancementMagicDefenseFlat = 0,
                 EnhancementHpFlat = 0,
+                EnhancementCritRateFlat = 0f,
                 EnhancementAttackSpeedFlat = 0f,
-                RemainingEnhanceAttempts = ResolveInitialEnhanceAttempts(equipmentId),
+                RemainingEnhanceAttempts = maxEnhanceAttempts,
+                MaxEnhanceAttempts = maxEnhanceAttempts,
                 IsEquipped = false,
                 IsLocked = false,
                 EquippedMonsterInstanceId = string.Empty
             };
-            EquipmentEnhancementCatalog.EnsureRolledStats(equipmentData, equipment, EnhancementRandom);
+            EquipmentEnhancementCatalog.SyncRolledStatsFromMaster(equipmentData, equipment);
             OwnedEquipments.Add(equipment);
             return equipment;
         }
@@ -396,6 +493,34 @@ namespace WitchTower.Data
             string current = GetMonsterEquipmentInstanceId(monster, slotType);
             if (!string.IsNullOrEmpty(expectedInstanceId) && current != expectedInstanceId) return;
             SetMonsterEquipmentInstanceId(monster, slotType, string.Empty);
+        }
+
+        private void ClearLegacyRepresentativeEquipmentIfEmpty(EquipmentSlotType slotType)
+        {
+            if (GetRepresentativeEquippedEquipment(slotType) != null)
+            {
+                return;
+            }
+
+            switch (slotType)
+            {
+                case EquipmentSlotType.Weapon:
+                    legacyEquippedWeaponId = string.Empty;
+                    break;
+                case EquipmentSlotType.Armor:
+                    legacyEquippedArmorId = string.Empty;
+                    break;
+                case EquipmentSlotType.Accessory:
+                    legacyEquippedAccessoryId = string.Empty;
+                    break;
+            }
+
+            if (!OwnedMonsters.Any(x => x != null && (!string.IsNullOrEmpty(x.EquippedWeaponInstanceId) || !string.IsNullOrEmpty(x.EquippedArmorInstanceId) || !string.IsNullOrEmpty(x.EquippedAccessoryInstanceId))))
+            {
+                legacyEquippedWeaponId = string.Empty;
+                legacyEquippedArmorId = string.Empty;
+                legacyEquippedAccessoryId = string.Empty;
+            }
         }
 
         private void ConsumeEnhancementRelic(string relicId)

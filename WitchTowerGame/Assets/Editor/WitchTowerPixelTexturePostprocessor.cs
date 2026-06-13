@@ -19,7 +19,8 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
             "Assets/Resources/EquipmentFrames",
             "Assets/Resources/UI/HomeMenu",
             "Assets/Resources/UI/FusionPage",
-            "Assets/Resources/UI/GachaPage"
+            "Assets/Resources/UI/GachaPage",
+            "Assets/Resources/UI/BattleResult"
         };
 
         List<string> existingFolders = new List<string>();
@@ -74,8 +75,9 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
         bool isHomeMenuTexture = normalizedPath.StartsWith("Assets/Resources/UI/HomeMenu/");
         bool isFusionPageTexture = normalizedPath.StartsWith("Assets/Resources/UI/FusionPage/");
         bool isGachaPageTexture = normalizedPath.StartsWith("Assets/Resources/UI/GachaPage/");
+        bool isBattleResultTexture = normalizedPath.StartsWith("Assets/Resources/UI/BattleResult/");
 
-        if (!isBattlePixelArt && !isCardPortrait && !isLegacyPortrait && !isFrameTexture && !isHomeMenuTexture && !isFusionPageTexture && !isGachaPageTexture)
+        if (!isBattlePixelArt && !isCardPortrait && !isLegacyPortrait && !isFrameTexture && !isHomeMenuTexture && !isFusionPageTexture && !isGachaPageTexture && !isBattleResultTexture)
         {
             return false;
         }
@@ -84,8 +86,8 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
         importer.spriteImportMode = SpriteImportMode.Single;
         importer.wrapMode = TextureWrapMode.Clamp;
         importer.npotScale = TextureImporterNPOTScale.None;
-        importer.filterMode = (isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture || isGachaPageTexture) ? FilterMode.Trilinear : FilterMode.Point;
-        importer.mipmapEnabled = isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture || isGachaPageTexture;
+        importer.filterMode = (isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture || isGachaPageTexture || isBattleResultTexture) ? FilterMode.Trilinear : FilterMode.Point;
+        importer.mipmapEnabled = isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture || isGachaPageTexture || isBattleResultTexture;
         importer.textureCompression = TextureImporterCompression.Uncompressed;
         importer.alphaIsTransparency = true;
         importer.isReadable = isMonsterBattleTexture;

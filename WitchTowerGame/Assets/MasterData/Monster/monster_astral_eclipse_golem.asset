@@ -18,7 +18,7 @@ MonoBehaviour:
   raceId: special
   classRank: 4
   rarity: 4
-  element: 5
+  element: 2
   rangeType: 0
   damageType: 1
   baseStats:
@@ -60,4 +60,4 @@ MonoBehaviour:
   battleAttackResourcePath: MonsterBattle/mon_astral_eclipse_golem_attack
   battleAttackFacing: 0
   battleVisualScale: 1.24
-  description: "星蝕の魔力を宿した魔像。高耐久の巨体で前線を押し潰す。"
+  description: "星蝕の潮汐魔力を宿した魔像。高耐久の巨体で前線を押し潰す。"

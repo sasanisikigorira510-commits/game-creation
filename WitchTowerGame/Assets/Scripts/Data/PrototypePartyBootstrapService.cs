@@ -84,6 +84,7 @@ namespace WitchTower.Data
                 {
                     foreach (MonsterDataSO monsterData in allMonsterData
                                  .Where(data => data != null && !string.IsNullOrEmpty(data.monsterId))
+                                 .Where(data => !WasReleasedFromRoster(profile, data.monsterId))
                                  .OrderBy(data => data.encyclopediaNumber))
                     {
                         if (profile.OwnedMonsters.Count >= targetCount)
@@ -250,7 +251,7 @@ namespace WitchTower.Data
             }
 
             bool changed = false;
-            int missingMonsterCount = implementedMonsterIds.Count(monsterId => ResolveOwnedMonsterByMonsterId(profile, monsterId) == null);
+            int missingMonsterCount = implementedMonsterIds.Count(monsterId => !WasReleasedFromRoster(profile, monsterId) && ResolveOwnedMonsterByMonsterId(profile, monsterId) == null);
             int requiredStorageLimit = Math.Max(DefaultStorageLimit, profile.OwnedMonsters.Count + missingMonsterCount);
             if (profile.MonsterStorageLimit < requiredStorageLimit)
             {
@@ -260,6 +261,11 @@ namespace WitchTower.Data
 
             foreach (string monsterId in implementedMonsterIds)
             {
+                if (WasReleasedFromRoster(profile, monsterId))
+                {
+                    continue;
+                }
+
                 OwnedMonsterData ensuredMonster = EnsureOwnedMonster(profile, masterDataManager, monsterId, out bool addedMonster);
                 changed |= addedMonster;
                 if (ensuredMonster != null)
@@ -297,6 +303,20 @@ namespace WitchTower.Data
         private static int CountValidPartySlots(List<string> partyIds)
         {
             return partyIds != null ? partyIds.Count(instanceId => !string.IsNullOrEmpty(instanceId)) : 0;
+        }
+
+        private static bool WasReleasedFromRoster(PlayerProfile profile, string monsterId)
+        {
+            if (profile?.MonsterDexEntries == null || string.IsNullOrEmpty(monsterId))
+            {
+                return false;
+            }
+
+            return profile.MonsterDexEntries.Any(entry =>
+                entry != null &&
+                entry.IsUnlocked &&
+                entry.OwnedCount <= 0 &&
+                string.Equals(entry.MonsterId, monsterId, StringComparison.Ordinal));
         }
 
         private static List<string> BuildResolvedPartyIds(

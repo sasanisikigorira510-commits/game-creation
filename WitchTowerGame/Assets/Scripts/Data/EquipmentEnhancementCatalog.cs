@@ -8,33 +8,33 @@ namespace WitchTower.Data
 {
     public readonly struct EquipmentResolvedBonus
     {
-        public readonly int Attack;
-        public readonly int Wisdom;
-        public readonly int Defense;
-        public readonly int MagicDefense;
-        public readonly int Hp;
+        public readonly float AttackPercent;
+        public readonly float WisdomPercent;
+        public readonly float DefensePercent;
+        public readonly float MagicDefensePercent;
+        public readonly float HpPercent;
         public readonly float CritRate;
         public readonly float AttackSpeed;
 
-        public EquipmentResolvedBonus(int attack, int wisdom, int defense, int magicDefense, int hp, float critRate, float attackSpeed)
+        public EquipmentResolvedBonus(float attackPercent, float wisdomPercent, float defensePercent, float magicDefensePercent, float hpPercent, float critRate, float attackSpeed)
         {
-            Attack = attack;
-            Wisdom = wisdom;
-            Defense = defense;
-            MagicDefense = magicDefense;
-            Hp = hp;
-            CritRate = critRate;
-            AttackSpeed = attackSpeed;
+            AttackPercent = Mathf.Max(0f, attackPercent);
+            WisdomPercent = Mathf.Max(0f, wisdomPercent);
+            DefensePercent = Mathf.Max(0f, defensePercent);
+            MagicDefensePercent = Mathf.Max(0f, magicDefensePercent);
+            HpPercent = Mathf.Max(0f, hpPercent);
+            CritRate = Mathf.Max(0f, critRate);
+            AttackSpeed = Mathf.Max(0f, attackSpeed);
         }
 
         public static EquipmentResolvedBonus operator +(EquipmentResolvedBonus left, EquipmentResolvedBonus right)
         {
             return new EquipmentResolvedBonus(
-                left.Attack + right.Attack,
-                left.Wisdom + right.Wisdom,
-                left.Defense + right.Defense,
-                left.MagicDefense + right.MagicDefense,
-                left.Hp + right.Hp,
+                left.AttackPercent + right.AttackPercent,
+                left.WisdomPercent + right.WisdomPercent,
+                left.DefensePercent + right.DefensePercent,
+                left.MagicDefensePercent + right.MagicDefensePercent,
+                left.HpPercent + right.HpPercent,
                 left.CritRate + right.CritRate,
                 left.AttackSpeed + right.AttackSpeed);
         }
@@ -52,13 +52,13 @@ namespace WitchTower.Data
 
         public EquipmentRolledBaseBonus(int attack, int wisdom, int defense, int magicDefense, int hp, float critRate, float attackSpeed)
         {
-            Attack = attack;
-            Wisdom = wisdom;
-            Defense = defense;
-            MagicDefense = magicDefense;
-            Hp = hp;
-            CritRate = critRate;
-            AttackSpeed = attackSpeed;
+            Attack = Mathf.Max(0, attack);
+            Wisdom = Mathf.Max(0, wisdom);
+            Defense = Mathf.Max(0, defense);
+            MagicDefense = Mathf.Max(0, magicDefense);
+            Hp = Mathf.Max(0, hp);
+            CritRate = Mathf.Max(0f, critRate);
+            AttackSpeed = Mathf.Max(0f, attackSpeed);
         }
     }
 
@@ -108,7 +108,7 @@ namespace WitchTower.Data
                 SuccessRate = 1.0f,
                 BonusPercent = 0.05f,
                 DestroysOnFailure = false,
-                Description = "成功率100%。上昇量は小さい。"
+                Description = "確実に成功する。装備の基礎効果を強化し、会心・速度付き装備には固定ボーナスを加える。"
             },
             new EnhancementRelicDefinition
             {
@@ -117,7 +117,7 @@ namespace WitchTower.Data
                 SuccessRate = 0.3f,
                 BonusPercent = 0.10f,
                 DestroysOnFailure = false,
-                Description = "成功率30%。上昇量は高め。"
+                Description = "装備の基礎効果を強化し、会心・速度付き装備には固定ボーナスを加える。失敗しても装備は残る。"
             },
             new EnhancementRelicDefinition
             {
@@ -126,7 +126,7 @@ namespace WitchTower.Data
                 SuccessRate = 0.10f,
                 BonusPercent = 0.25f,
                 DestroysOnFailure = true,
-                Description = "成功率10%。失敗時に装備が消滅する。"
+                Description = "装備の基礎効果を大きく強化し、会心・速度付き装備には固定ボーナスを加える。失敗時に装備が消滅する。"
             }
         };
 
@@ -152,32 +152,117 @@ namespace WitchTower.Data
 
         public static int ResolveInitialEnhanceAttempts(EquipmentDataSO equipmentData, string equipmentId)
         {
-            EquipmentRarity rarity = equipmentData != null ? equipmentData.rarity : EquipmentRarity.Common;
-            int defaultByRarity;
-            switch (rarity)
+            return ResolveMaxEnhanceAttempts(equipmentData);
+        }
+
+        public static int ResolveMaxEnhanceAttempts(EquipmentDataSO equipmentData)
+        {
+            return 4 + ResolveQualityRank(equipmentData);
+        }
+
+        public static int ResolveMaxEnhanceAttempts(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
+        {
+            return 4 + ResolveQualityRank(equipmentData, ownedEquipment);
+        }
+
+        public static int ResolveQualityRank(EquipmentDataSO equipmentData)
+        {
+            EquipmentRarity quality = equipmentData != null ? equipmentData.rarity : EquipmentRarity.Common;
+            return Mathf.Clamp((int)quality + 1, 1, 5);
+        }
+
+        public static int ResolveQualityRank(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
+        {
+            return ownedEquipment != null && ownedEquipment.QualityRank > 0
+                ? Mathf.Clamp(ownedEquipment.QualityRank, 1, 5)
+                : ResolveQualityRank(equipmentData);
+        }
+
+        public static float ResolveQualityMultiplier(EquipmentDataSO equipmentData)
+        {
+            return 1f + ((ResolveQualityRank(equipmentData) - 1) * 0.2f);
+        }
+
+        public static float ResolveQualityMultiplier(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
+        {
+            return 1f + ((ResolveQualityRank(equipmentData, ownedEquipment) - 1) * 0.2f);
+        }
+
+        public static string ResolveQualityName(EquipmentDataSO equipmentData)
+        {
+            EquipmentRarity quality = equipmentData != null ? equipmentData.rarity : EquipmentRarity.Common;
+            return ResolveQualityName(quality);
+        }
+
+        public static string ResolveQualityName(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
+        {
+            int rank = ResolveQualityRank(equipmentData, ownedEquipment);
+            EquipmentRarity quality = (EquipmentRarity)Mathf.Clamp(rank - 1, 0, 4);
+            return ResolveQualityName(quality);
+        }
+
+        public static string ResolveQualityName(EquipmentRarity quality)
+        {
+            switch (quality)
             {
-                case EquipmentRarity.Common:
                 case EquipmentRarity.Uncommon:
+                    return "アンコモン";
                 case EquipmentRarity.Rare:
-                    defaultByRarity = 5;
-                    break;
+                    return "レア";
                 case EquipmentRarity.Epic:
-                    defaultByRarity = 6;
-                    break;
+                    return "エピック";
                 case EquipmentRarity.Legendary:
-                    defaultByRarity = 7;
-                    break;
+                    return "レジェンダリー";
+                case EquipmentRarity.Common:
                 default:
-                    defaultByRarity = 5;
-                    break;
+                    return "コモン";
             }
+        }
 
-            if (equipmentData != null && equipmentData.maxEnhancementAttempts > 0)
+        public static string BuildQualityLabel(EquipmentDataSO equipmentData)
+        {
+            return $"品質:{ResolveQualityName(equipmentData)}";
+        }
+
+        public static string BuildQualityLabel(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
+        {
+            return $"品質:{ResolveQualityName(equipmentData, ownedEquipment)}";
+        }
+
+        public static string BuildEnhanceAttemptsLabel(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
+        {
+            int maxAttempts = ownedEquipment != null && ownedEquipment.MaxEnhanceAttempts > 0
+                ? ownedEquipment.MaxEnhanceAttempts
+                : ResolveMaxEnhanceAttempts(equipmentData, ownedEquipment);
+            int remainingAttempts = ownedEquipment != null ? Mathf.Max(0, ownedEquipment.RemainingEnhanceAttempts) : 0;
+            return $"残り {remainingAttempts}/{maxAttempts}回";
+        }
+
+        public static void EnsureQualityEnhanceAttempts(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
+        {
+            if (ownedEquipment == null)
             {
-                return Mathf.Max(defaultByRarity, equipmentData.maxEnhancementAttempts);
+                return;
             }
 
-            return defaultByRarity;
+            if (ownedEquipment.QualityRank <= 0)
+            {
+                ownedEquipment.QualityRank = ResolveQualityRank(equipmentData);
+            }
+
+            int qualityMax = ResolveMaxEnhanceAttempts(equipmentData, ownedEquipment);
+            if (ownedEquipment.MaxEnhanceAttempts <= 0)
+            {
+                int legacyMax = ResolveLegacyMaxEnhanceAttempts(equipmentData);
+                int consumedAttempts = Mathf.Max(0, legacyMax - Mathf.Max(0, ownedEquipment.RemainingEnhanceAttempts));
+                ownedEquipment.MaxEnhanceAttempts = qualityMax;
+                ownedEquipment.RemainingEnhanceAttempts = Mathf.Max(0, qualityMax - consumedAttempts);
+                return;
+            }
+
+            int usedAttempts = Mathf.Max(0, ownedEquipment.MaxEnhanceAttempts - Mathf.Max(0, ownedEquipment.RemainingEnhanceAttempts));
+            ownedEquipment.MaxEnhanceAttempts = qualityMax;
+            ownedEquipment.RemainingEnhanceAttempts = Mathf.Max(0, qualityMax - usedAttempts);
         }
 
         public static void EnsureRolledStats(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment, System.Random random)
@@ -187,14 +272,23 @@ namespace WitchTower.Data
                 return;
             }
 
-            float variance = Mathf.Clamp01(equipmentData.statVarianceRate);
-            ownedEquipment.RolledAttack = RollIntStat(equipmentData.baseAttack, variance, random);
-            ownedEquipment.RolledWisdom = RollIntStat(equipmentData.baseWisdom, variance, random);
-            ownedEquipment.RolledDefense = RollIntStat(equipmentData.baseDefense, variance, random);
-            ownedEquipment.RolledMagicDefense = RollIntStat(equipmentData.baseMagicDefense, variance, random);
-            ownedEquipment.RolledHp = RollIntStat(equipmentData.baseHp, variance, random);
-            ownedEquipment.RolledCritRate = RollFloatStat(equipmentData.bonusCritRate, variance, random);
-            ownedEquipment.RolledAttackSpeed = RollFloatStat(equipmentData.bonusAttackSpeed, variance, random);
+            SyncRolledStatsFromMaster(equipmentData, ownedEquipment);
+        }
+
+        public static void SyncRolledStatsFromMaster(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
+        {
+            if (equipmentData == null || ownedEquipment == null)
+            {
+                return;
+            }
+
+            ownedEquipment.RolledAttack = Mathf.Max(0, equipmentData.baseAttack);
+            ownedEquipment.RolledWisdom = Mathf.Max(0, equipmentData.baseWisdom);
+            ownedEquipment.RolledDefense = Mathf.Max(0, equipmentData.baseDefense);
+            ownedEquipment.RolledMagicDefense = Mathf.Max(0, equipmentData.baseMagicDefense);
+            ownedEquipment.RolledHp = Mathf.Max(0, equipmentData.baseHp);
+            ownedEquipment.RolledCritRate = Mathf.Max(0f, equipmentData.bonusCritRate);
+            ownedEquipment.RolledAttackSpeed = Mathf.Max(0f, equipmentData.bonusAttackSpeed);
             ownedEquipment.HasRolledStats = true;
         }
 
@@ -205,26 +299,14 @@ namespace WitchTower.Data
                 return default;
             }
 
-            if (ownedEquipment == null || !ownedEquipment.HasRolledStats)
-            {
-                return new EquipmentRolledBaseBonus(
-                    equipmentData.baseAttack,
-                    equipmentData.baseWisdom,
-                    equipmentData.baseDefense,
-                    equipmentData.baseMagicDefense,
-                    equipmentData.baseHp,
-                    equipmentData.bonusCritRate,
-                    equipmentData.bonusAttackSpeed);
-            }
-
             return new EquipmentRolledBaseBonus(
-                ownedEquipment.RolledAttack,
-                ownedEquipment.RolledWisdom,
-                ownedEquipment.RolledDefense,
-                ownedEquipment.RolledMagicDefense,
-                ownedEquipment.RolledHp,
-                ownedEquipment.RolledCritRate,
-                ownedEquipment.RolledAttackSpeed);
+                equipmentData.baseAttack,
+                equipmentData.baseWisdom,
+                equipmentData.baseDefense,
+                equipmentData.baseMagicDefense,
+                equipmentData.baseHp,
+                equipmentData.bonusCritRate,
+                equipmentData.bonusAttackSpeed);
         }
 
         public static EquipmentResolvedBonus ResolveEquipmentBonus(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
@@ -235,27 +317,16 @@ namespace WitchTower.Data
             }
 
             EquipmentRolledBaseBonus rolledBase = ResolveBaseBonus(equipmentData, ownedEquipment);
-            if (equipmentData.slotType == EquipmentSlotType.Accessory)
-            {
-                return new EquipmentResolvedBonus(
-                    rolledBase.Attack + ownedEquipment.EnhancementAttackFlat,
-                    rolledBase.Wisdom + ownedEquipment.EnhancementWisdomFlat,
-                    rolledBase.Defense + ownedEquipment.EnhancementDefenseFlat,
-                    rolledBase.MagicDefense + ownedEquipment.EnhancementMagicDefenseFlat,
-                    rolledBase.Hp + ownedEquipment.EnhancementHpFlat,
-                    rolledBase.CritRate,
-                    rolledBase.AttackSpeed + ownedEquipment.EnhancementAttackSpeedFlat);
-            }
-
-            float multiplier = 1f + Mathf.Max(0f, ownedEquipment.EnhancementBonusRate);
-            int attack = rolledBase.Attack == 0 ? 0 : Mathf.RoundToInt(rolledBase.Attack * multiplier);
-            int wisdom = rolledBase.Wisdom == 0 ? 0 : Mathf.RoundToInt(rolledBase.Wisdom * multiplier);
-            int defense = rolledBase.Defense == 0 ? 0 : Mathf.RoundToInt(rolledBase.Defense * multiplier);
-            int magicDefense = rolledBase.MagicDefense == 0 ? 0 : Mathf.RoundToInt(rolledBase.MagicDefense * multiplier);
-            int hp = rolledBase.Hp == 0 ? 0 : Mathf.RoundToInt(rolledBase.Hp * multiplier);
-            float critRate = Mathf.Approximately(rolledBase.CritRate, 0f) ? 0f : rolledBase.CritRate * multiplier;
-            float attackSpeed = Mathf.Approximately(rolledBase.AttackSpeed, 0f) ? 0f : rolledBase.AttackSpeed * multiplier;
-            return new EquipmentResolvedBonus(attack, wisdom, defense, magicDefense, hp, critRate, attackSpeed);
+            float enhancementMultiplier = 1f + Mathf.Max(0f, ownedEquipment.EnhancementBonusRate);
+            float qualityMultiplier = ResolveQualityMultiplier(equipmentData, ownedEquipment);
+            float attackPercent = (((rolledBase.Attack * enhancementMultiplier) + ownedEquipment.EnhancementAttackFlat) * qualityMultiplier) / 100f;
+            float wisdomPercent = (((rolledBase.Wisdom * enhancementMultiplier) + ownedEquipment.EnhancementWisdomFlat) * qualityMultiplier) / 100f;
+            float defensePercent = (((rolledBase.Defense * enhancementMultiplier) + ownedEquipment.EnhancementDefenseFlat) * qualityMultiplier) / 100f;
+            float magicDefensePercent = (((rolledBase.MagicDefense * enhancementMultiplier) + ownedEquipment.EnhancementMagicDefenseFlat) * qualityMultiplier) / 100f;
+            float hpPercent = (((rolledBase.Hp * enhancementMultiplier) + ownedEquipment.EnhancementHpFlat) * qualityMultiplier) / 100f;
+            float critRate = (rolledBase.CritRate + ownedEquipment.EnhancementCritRateFlat) * qualityMultiplier;
+            float attackSpeed = (rolledBase.AttackSpeed + ownedEquipment.EnhancementAttackSpeedFlat) * qualityMultiplier;
+            return new EquipmentResolvedBonus(attackPercent, wisdomPercent, defensePercent, magicDefensePercent, hpPercent, critRate, attackSpeed);
         }
 
         public static void ApplyEnhancementSuccess(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment, EnhancementRelicDefinition relic)
@@ -265,35 +336,35 @@ namespace WitchTower.Data
                 return;
             }
 
-            if (equipmentData.slotType == EquipmentSlotType.Accessory)
+            ownedEquipment.EnhancementBonusRate += relic.BonusPercent;
+            if (equipmentData.bonusCritRate > 0f)
             {
-                ApplyAccessoryEnhancementSuccess(equipmentData, ownedEquipment, relic);
-                return;
+                ownedEquipment.EnhancementCritRateFlat += ResolveCritRateEnhancement(relic);
             }
 
-            ownedEquipment.EnhancementBonusRate += relic.BonusPercent;
+            if (equipmentData.bonusAttackSpeed > 0f)
+            {
+                ownedEquipment.EnhancementAttackSpeedFlat += ResolveAttackSpeedEnhancement(relic);
+            }
         }
 
         public static string BuildEnhancementSummary(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
         {
             if (equipmentData == null || ownedEquipment == null)
             {
-                return "強化なし";
+                return "補正なし";
             }
 
-            if (equipmentData.slotType != EquipmentSlotType.Accessory)
-            {
-                return $"+{ownedEquipment.EnhancementBonusRate * 100f:0.#}%";
-            }
-
+            EquipmentResolvedBonus bonus = ResolveEquipmentBonus(equipmentData, ownedEquipment);
             var parts = new List<string>();
-            if (ownedEquipment.EnhancementAttackFlat != 0) parts.Add($"攻+{ownedEquipment.EnhancementAttackFlat}");
-            if (ownedEquipment.EnhancementWisdomFlat != 0) parts.Add($"賢+{ownedEquipment.EnhancementWisdomFlat}");
-            if (ownedEquipment.EnhancementDefenseFlat != 0) parts.Add($"防+{ownedEquipment.EnhancementDefenseFlat}");
-            if (ownedEquipment.EnhancementMagicDefenseFlat != 0) parts.Add($"魔防+{ownedEquipment.EnhancementMagicDefenseFlat}");
-            if (ownedEquipment.EnhancementHpFlat != 0) parts.Add($"HP+{ownedEquipment.EnhancementHpFlat}");
-            if (Mathf.Abs(ownedEquipment.EnhancementAttackSpeedFlat) > 0.0001f) parts.Add($"速+{ownedEquipment.EnhancementAttackSpeedFlat:0.##}");
-            return parts.Count > 0 ? string.Join(" / ", parts) : "強化なし";
+            if (bonus.AttackPercent > 0.0001f) parts.Add($"攻+{bonus.AttackPercent * 100f:0.#}%");
+            if (bonus.WisdomPercent > 0.0001f) parts.Add($"賢+{bonus.WisdomPercent * 100f:0.#}%");
+            if (bonus.DefensePercent > 0.0001f) parts.Add($"防+{bonus.DefensePercent * 100f:0.#}%");
+            if (bonus.MagicDefensePercent > 0.0001f) parts.Add($"魔防+{bonus.MagicDefensePercent * 100f:0.#}%");
+            if (bonus.HpPercent > 0.0001f) parts.Add($"HP+{bonus.HpPercent * 100f:0.#}%");
+            if (bonus.CritRate > 0.0001f) parts.Add($"会心+{bonus.CritRate * 100f:0.#}%");
+            if (bonus.AttackSpeed > 0.0001f) parts.Add($"速+{bonus.AttackSpeed:0.###}");
+            return parts.Count > 0 ? string.Join(" / ", parts) : "補正なし";
         }
 
         public static string BuildRelicEffectSummary(EquipmentDataSO equipmentData, EnhancementRelicDefinition relic)
@@ -303,126 +374,57 @@ namespace WitchTower.Data
                 return string.Empty;
             }
 
-            if (equipmentData.slotType != EquipmentSlotType.Accessory)
+            var parts = new List<string>
             {
-                return $"成功時 ×{1f + relic.BonusPercent:0.##}";
+                $"基礎効果 +{relic.BonusPercent * 100f:0.#}%"
+            };
+            if (equipmentData.bonusCritRate > 0f)
+            {
+                parts.Add($"会心+{ResolveCritRateEnhancement(relic) * 100f:0.#}%");
             }
 
-            var parts = new List<string>();
-            if (equipmentData.baseAttack != 0) parts.Add($"攻+{ResolveAccessoryAttackLikeIncrement(relic)}");
-            if (equipmentData.baseWisdom != 0) parts.Add($"賢+{ResolveAccessoryAttackLikeIncrement(relic)}");
-            if (equipmentData.baseDefense != 0) parts.Add($"防+{ResolveAccessoryDefenseLikeIncrement(relic)}");
-            if (equipmentData.baseMagicDefense != 0) parts.Add($"魔防+{ResolveAccessoryDefenseLikeIncrement(relic)}");
-            if (equipmentData.baseHp != 0) parts.Add($"HP+{ResolveAccessoryHpIncrement(relic)}");
-            if (!Mathf.Approximately(equipmentData.bonusAttackSpeed, 0f)) parts.Add($"速+{ResolveAccessoryAttackSpeedIncrement(relic):0}");
-            return parts.Count > 0 ? "成功時 " + string.Join(" / ", parts) : "成功時 変化なし";
-        }
-
-        private static int RollIntStat(int baseValue, float variance, System.Random random)
-        {
-            if (baseValue == 0)
+            if (equipmentData.bonusAttackSpeed > 0f)
             {
-                return 0;
+                parts.Add($"速+{ResolveAttackSpeedEnhancement(relic):0.###}");
             }
 
-            float multiplier = RollMultiplier(variance, random);
-            return Mathf.Max(1, Mathf.RoundToInt(baseValue * multiplier));
+            return "成功時 " + string.Join(" / ", parts);
         }
 
-        private static float RollFloatStat(float baseValue, float variance, System.Random random)
+        private static float ResolveCritRateEnhancement(EnhancementRelicDefinition relic)
         {
-            if (Mathf.Approximately(baseValue, 0f))
+            return relic?.RelicId switch
             {
-                return 0f;
-            }
-
-            return baseValue * RollMultiplier(variance, random);
+                "relic_safe_ember" => 0.002f,
+                "relic_risky_ember" => 0.004f,
+                "relic_volatile_ember" => 0.01f,
+                _ => 0f
+            };
         }
 
-        private static float RollMultiplier(float variance, System.Random random)
+        private static float ResolveAttackSpeedEnhancement(EnhancementRelicDefinition relic)
         {
-            if (random == null || variance <= 0f)
+            return relic?.RelicId switch
             {
-                return 1f;
-            }
-
-            float range = variance * 2f;
-            return 1f - variance + ((float)random.NextDouble() * range);
+                "relic_safe_ember" => 0.002f,
+                "relic_risky_ember" => 0.004f,
+                "relic_volatile_ember" => 0.01f,
+                _ => 0f
+            };
         }
 
-        private static void ApplyAccessoryEnhancementSuccess(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment, EnhancementRelicDefinition relic)
+        private static int ResolveLegacyMaxEnhanceAttempts(EquipmentDataSO equipmentData)
         {
-            int attackLike = ResolveAccessoryAttackLikeIncrement(relic);
-            int defenseLike = ResolveAccessoryDefenseLikeIncrement(relic);
-            int hp = ResolveAccessoryHpIncrement(relic);
-            float attackSpeed = ResolveAccessoryAttackSpeedIncrement(relic);
-
-            if (equipmentData.baseAttack != 0) ownedEquipment.EnhancementAttackFlat += attackLike;
-            if (equipmentData.baseWisdom != 0) ownedEquipment.EnhancementWisdomFlat += attackLike;
-            if (equipmentData.baseDefense != 0) ownedEquipment.EnhancementDefenseFlat += defenseLike;
-            if (equipmentData.baseMagicDefense != 0) ownedEquipment.EnhancementMagicDefenseFlat += defenseLike;
-            if (equipmentData.baseHp != 0) ownedEquipment.EnhancementHpFlat += hp;
-            if (!Mathf.Approximately(equipmentData.bonusAttackSpeed, 0f)) ownedEquipment.EnhancementAttackSpeedFlat += attackSpeed;
-        }
-
-        private static int ResolveAccessoryAttackLikeIncrement(EnhancementRelicDefinition relic)
-        {
-            switch (relic != null ? relic.RelicId : string.Empty)
+            EquipmentRarity rarity = equipmentData != null ? equipmentData.rarity : EquipmentRarity.Common;
+            int defaultByRarity = rarity switch
             {
-                case "relic_safe_ember":
-                    return 1;
-                case "relic_risky_ember":
-                    return 2;
-                case "relic_volatile_ember":
-                    return 5;
-                default:
-                    return 0;
-            }
-        }
-
-        private static int ResolveAccessoryDefenseLikeIncrement(EnhancementRelicDefinition relic)
-        {
-            switch (relic != null ? relic.RelicId : string.Empty)
-            {
-                case "relic_safe_ember":
-                    return 1;
-                case "relic_risky_ember":
-                    return 2;
-                case "relic_volatile_ember":
-                    return 4;
-                default:
-                    return 0;
-            }
-        }
-
-        private static int ResolveAccessoryHpIncrement(EnhancementRelicDefinition relic)
-        {
-            switch (relic != null ? relic.RelicId : string.Empty)
-            {
-                case "relic_safe_ember":
-                    return 5;
-                case "relic_risky_ember":
-                    return 10;
-                case "relic_volatile_ember":
-                    return 25;
-                default:
-                    return 0;
-            }
-        }
-
-        private static float ResolveAccessoryAttackSpeedIncrement(EnhancementRelicDefinition relic)
-        {
-            switch (relic != null ? relic.RelicId : string.Empty)
-            {
-                case "relic_safe_ember":
-                    return 1f;
-                case "relic_risky_ember":
-                    return 2f;
-                case "relic_volatile_ember":
-                    return 4f;
-                default:
-                    return 0f;
-            }
+                EquipmentRarity.Epic => 6,
+                EquipmentRarity.Legendary => 7,
+                _ => 5
+            };
+            return equipmentData != null && equipmentData.maxEnhancementAttempts > 0
+                ? Mathf.Max(defaultByRarity, equipmentData.maxEnhancementAttempts)
+                : defaultByRarity;
         }
     }
 }
