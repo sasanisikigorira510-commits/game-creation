@@ -1026,6 +1026,12 @@ namespace WitchTower.Battle
             MissionService.RecordBattleWin(profile);
             DailyRewardService.RecordBattleWin(profile, System.DateTime.Now);
             MissionService.RecordHighestFloor(profile, profile.HighestFloor);
+            if (profile != null)
+            {
+                StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstBattle);
+                StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstBattleWin);
+            }
+
             SaveManager.Instance?.SaveAfterDungeonStageClear(currentFloor);
             var resultViewData = new BattleResultViewData(
                 true,
@@ -1135,6 +1141,7 @@ namespace WitchTower.Battle
         public void GoToNextFloor()
         {
             StopAutoRepeatSameFloor();
+            AdvanceBattleTutorialResultStep();
             currentFloor = GameManager.Instance.CurrentFloor;
             PrepareBattleSession();
             stateMachine.Begin(currentFloor);
@@ -1150,6 +1157,7 @@ namespace WitchTower.Battle
                 ? Mathf.Max(1, lastResultViewData.ClearedFloor)
                 : Mathf.Max(1, currentFloor);
 
+            AdvanceBattleTutorialResultStep();
             GameManager.Instance.SetCurrentFloor(retryFloor);
             currentFloor = retryFloor;
             PrepareBattleSession();
@@ -1207,7 +1215,38 @@ namespace WitchTower.Battle
         public void ReturnHome()
         {
             StopAutoRepeatSameFloor();
+            AdvanceBattleTutorialResultStep();
             SceneManager.LoadScene(homeSceneName);
+        }
+
+        private static void AdvanceBattleTutorialSkillStep()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            if (profile == null)
+            {
+                return;
+            }
+
+            if (StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstBattle))
+            {
+                SaveManager.Instance?.SaveCurrentGame();
+            }
+        }
+
+        private static void AdvanceBattleTutorialResultStep()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            if (profile == null)
+            {
+                return;
+            }
+
+            bool changed = StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstBattleWin);
+            changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstResult);
+            if (changed)
+            {
+                SaveManager.Instance?.SaveCurrentGame();
+            }
         }
 
 #if UNITY_EDITOR
@@ -1261,16 +1300,19 @@ namespace WitchTower.Battle
 
         public void UseSkillStrike()
         {
+            AdvanceBattleTutorialSkillStep();
             stateMachine.UseSkill(BattleSkillType.Strike);
         }
 
         public void UseSkillDrain()
         {
+            AdvanceBattleTutorialSkillStep();
             stateMachine.UseSkill(BattleSkillType.Drain);
         }
 
         public void UseSkillGuard()
         {
+            AdvanceBattleTutorialSkillStep();
             stateMachine.UseSkill(BattleSkillType.Guard);
         }
 
@@ -6267,8 +6309,14 @@ namespace WitchTower.Battle
 
             if (minimalResultForecastText != null)
             {
-                minimalResultForecastText.text = string.Empty;
-                minimalResultForecastText.gameObject.SetActive(false);
+                StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(
+                    GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null,
+                    "BattleScene");
+                bool showTutorialResultText = tutorialEvent != null &&
+                    tutorialEvent.IsValid &&
+                    tutorialEvent.StepId == StoryTutorialService.StepFirstResult;
+                minimalResultForecastText.text = showTutorialResultText ? tutorialEvent.Body : string.Empty;
+                minimalResultForecastText.gameObject.SetActive(showTutorialResultText);
             }
 
             if (minimalResultNextFloorButton != null)

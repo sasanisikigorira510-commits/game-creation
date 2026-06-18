@@ -38,6 +38,10 @@ namespace WitchTower.Data
         public List<MonsterDexEntryData> MonsterDexEntries { get; }
         public List<string> PartyMonsterInstanceIds { get; }
         public List<MissionProgressData> MissionProgressList { get; }
+        public bool HasCompletedTutorial { get; set; }
+        public string TutorialStepId { get; set; }
+        public List<string> SeenStoryEventIds { get; }
+        public List<string> SeenTutorialHintIds { get; }
 
         public PlayerProfile(PlayerSaveData saveData)
         {
@@ -69,6 +73,17 @@ namespace WitchTower.Data
             MonsterDexEntries = saveData.MonsterDexEntries ?? new List<MonsterDexEntryData>();
             PartyMonsterInstanceIds = saveData.PartyMonsterInstanceIds ?? new List<string>();
             MissionProgressList = saveData.MissionProgressList ?? new List<MissionProgressData>();
+            bool hasSavedTutorialState = !string.IsNullOrEmpty(saveData.TutorialStepId);
+            HasCompletedTutorial = hasSavedTutorialState ? saveData.HasCompletedTutorial : true;
+            TutorialStepId = hasSavedTutorialState
+                ? saveData.TutorialStepId
+                : "Complete";
+            SeenStoryEventIds = saveData.SeenStoryEventIds ?? new List<string>();
+            SeenTutorialHintIds = saveData.SeenTutorialHintIds ?? new List<string>();
+            if (!hasSavedTutorialState)
+            {
+                StoryTutorialService.BackfillClearedChapterStories(this);
+            }
             NormalizeMonsterPlusValues();
             NormalizeMonsterIndividualValues();
             InitializeEquipmentState(saveData);
@@ -508,7 +523,11 @@ namespace WitchTower.Data
                 OwnedMonsters = new List<OwnedMonsterData>(OwnedMonsters),
                 MonsterDexEntries = new List<MonsterDexEntryData>(MonsterDexEntries),
                 PartyMonsterInstanceIds = new List<string>(PartyMonsterInstanceIds),
-                SkillLevels = new List<SkillLevelData>()
+                SkillLevels = new List<SkillLevelData>(),
+                HasCompletedTutorial = HasCompletedTutorial,
+                TutorialStepId = TutorialStepId ?? string.Empty,
+                SeenStoryEventIds = new List<string>(SeenStoryEventIds),
+                SeenTutorialHintIds = new List<string>(SeenTutorialHintIds)
             };
         }
 

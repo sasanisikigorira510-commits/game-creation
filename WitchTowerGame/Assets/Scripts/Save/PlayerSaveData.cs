@@ -37,6 +37,10 @@ namespace WitchTower.Save
         public List<MonsterDexEntryData> MonsterDexEntries;
         public List<string> PartyMonsterInstanceIds;
         public List<SkillLevelData> SkillLevels;
+        public bool HasCompletedTutorial;
+        public string TutorialStepId;
+        public List<string> SeenStoryEventIds;
+        public List<string> SeenTutorialHintIds;
 
         public static PlayerSaveData CreateDefault()
         {
@@ -144,7 +148,11 @@ namespace WitchTower.Save
                 OwnedMonsters = new List<OwnedMonsterData>(),
                 MonsterDexEntries = new List<MonsterDexEntryData>(),
                 PartyMonsterInstanceIds = new List<string>(),
-                SkillLevels = new List<SkillLevelData>()
+                SkillLevels = new List<SkillLevelData>(),
+                HasCompletedTutorial = false,
+                TutorialStepId = "T00",
+                SeenStoryEventIds = new List<string>(),
+                SeenTutorialHintIds = new List<string>()
             };
         }
     }

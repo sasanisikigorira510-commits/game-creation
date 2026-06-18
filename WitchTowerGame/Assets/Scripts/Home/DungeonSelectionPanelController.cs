@@ -151,6 +151,9 @@ namespace WitchTower.Home
             enemyPreviewText = CreateText("EnemyPreview", panel.transform, string.Empty, 22, FontStyle.Bold,
                 TextAnchor.MiddleCenter, new Color(1f, 0.86f, 0.56f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f), new Vector2(0f, -1200f), new Vector2(820f, 44f));
+            ConfigureSelectionInfoText(dungeonDescriptionText, 21, 14);
+            ConfigureSelectionInfoText(floorDescriptionText, 20, 13);
+            ConfigureSelectionInfoText(enemyPreviewText, 22, 14);
 
             CreateTextButton("StartBattleButton", panel.transform, "この階層へ挑む",
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
@@ -314,7 +317,10 @@ namespace WitchTower.Home
 
             if (dungeonDescriptionText != null)
             {
-                dungeonDescriptionText.text = string.Empty;
+                StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(GameManager.Instance?.PlayerProfile, "DungeonSelectionPanel");
+                dungeonDescriptionText.text = tutorialEvent != null && tutorialEvent.IsValid
+                    ? $"{tutorialEvent.Title}\n{tutorialEvent.Body}"
+                    : dungeon.Description;
             }
 
             for (int i = 0; i < floorNodeImages.Count; i += 1)
@@ -326,16 +332,84 @@ namespace WitchTower.Home
 
             if (floorDescriptionText != null)
             {
-                floorDescriptionText.text = string.Empty;
+                BattleDungeonFloorDefinition floor = GetSelectedFloorDefinition(dungeon);
+                floorDescriptionText.text = floor != null
+                    ? $"{floor.FloorName}  仲間化率 {Mathf.RoundToInt(floor.RecruitChance * 100f)}%"
+                    : string.Empty;
             }
 
             if (enemyPreviewText != null)
             {
-                enemyPreviewText.text = string.Empty;
+                enemyPreviewText.text = BuildEnemyPreviewText(GetSelectedFloorDefinition(dungeon));
             }
         }
 
-        private void StartSelectedBattle()
+        private BattleDungeonFloorDefinition GetSelectedFloorDefinition(BattleDungeonDefinition dungeon)
+        {
+            if (dungeon == null || dungeon.Floors == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < dungeon.Floors.Count; i += 1)
+            {
+                BattleDungeonFloorDefinition floor = dungeon.Floors[i];
+                if (floor != null && floor.LocalFloor == selectedLocalFloor)
+                {
+                    return floor;
+                }
+            }
+
+            return null;
+        }
+
+        private static string BuildEnemyPreviewText(BattleDungeonFloorDefinition floor)
+        {
+            if (floor == null)
+            {
+                return string.Empty;
+            }
+
+            List<string> enemyNames = new List<string>();
+            for (int i = 0; i < floor.EnemyMonsterIds.Count; i += 1)
+            {
+                string monsterName = ResolveMonsterName(floor.EnemyMonsterIds[i]);
+                if (!string.IsNullOrEmpty(monsterName) && !enemyNames.Contains(monsterName))
+                {
+                    enemyNames.Add(monsterName);
+                }
+            }
+
+            if (floor.IsBossEncounter)
+            {
+                string bossName = ResolveMonsterName(floor.BossMonsterId);
+                if (!string.IsNullOrEmpty(bossName) && !enemyNames.Contains(bossName))
+                {
+                    enemyNames.Add(bossName + " BOSS");
+                }
+            }
+
+            string enemySummary = enemyNames.Count > 0 ? string.Join(" / ", enemyNames) : "未確認";
+            string bossSuffix = floor.IsBossEncounter ? "  ボス出現" : string.Empty;
+            return $"出現: {enemySummary}  敵数 {Mathf.Max(1, floor.EnemyCount)}{bossSuffix}";
+        }
+
+        private static string ResolveMonsterName(string monsterId)
+        {
+            if (string.IsNullOrEmpty(monsterId))
+            {
+                return string.Empty;
+            }
+
+            MonsterDataSO monsterData = MasterDataManager.Instance != null
+                ? MasterDataManager.Instance.GetMonsterData(monsterId)
+                : null;
+            return monsterData != null && !string.IsNullOrEmpty(monsterData.monsterName)
+                ? monsterData.monsterName
+                : monsterId;
+        }
+
+        public void StartSelectedBattle()
         {
             if (!Application.isPlaying)
             {
@@ -458,6 +532,20 @@ namespace WitchTower.Home
             text.verticalOverflow = VerticalWrapMode.Overflow;
             text.raycastTarget = false;
             return text;
+        }
+
+        private static void ConfigureSelectionInfoText(Text text, int maxSize, int minSize)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = Mathf.Max(8, minSize);
+            text.resizeTextMaxSize = Mathf.Max(text.resizeTextMinSize, maxSize);
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
         }
 
         private static Button CreateTextButton(string objectName, Transform parent, string label, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPosition, Vector2 sizeDelta, Color color, UnityEngine.Events.UnityAction onClick, int fontSize)

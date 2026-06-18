@@ -170,7 +170,7 @@ namespace WitchTower.Home
                 new Vector2(0.5f, 1f), new Vector2(0f, -144f), new Vector2(830f, 190f), PanelColor);
             CreateText("Title", titlePanel.transform, "契約召喚", 66, FontStyle.Bold,
                 new Vector2(0.5f, 0.64f), Vector2.zero, new Vector2(700f, 82f), GoldTextColor);
-            CreateText("SubTitle", titlePanel.transform, "魔塔の契約陣から、次の登攀者を呼び出す", 25, FontStyle.Bold,
+            CreateText("SubTitle", titlePanel.transform, "契約炉の召喚円から、次の探索者を呼び出す", 25, FontStyle.Bold,
                 new Vector2(0.5f, 0.26f), Vector2.zero, new Vector2(730f, 42f), PaleTextColor);
 
             GameObject ticketPanel = CreatePanel("GachaTicketPanel", contractHomeRoot.transform, null,
@@ -282,6 +282,14 @@ namespace WitchTower.Home
                 return "セーブ読込待ち";
             }
 
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "GachaScene");
+            if (tutorialEvent != null && tutorialEvent.IsValid)
+            {
+                return string.IsNullOrEmpty(tutorialEvent.Title)
+                    ? tutorialEvent.Body
+                    : $"{tutorialEvent.Title}\n{tutorialEvent.Body}";
+            }
+
             if (GetAvailableMonsterStorageSlots(profile) <= 0)
             {
                 return "所持枠がいっぱいです";
@@ -381,6 +389,11 @@ namespace WitchTower.Home
 
                     results.Add(result);
                 }
+            }
+
+            if (results.Count > 0)
+            {
+                StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstSummon);
             }
 
             SaveManager.Instance?.SaveCurrentGame();
@@ -1378,7 +1391,7 @@ namespace WitchTower.Home
             switch (tier)
             {
                 case ContractEffectTier.Legendary:
-                    return "魔塔深層の契約門が開く";
+                    return "深層ダンジョンの契約門が開く";
                 case ContractEffectTier.Rare:
                     return "黄金の契約門が反応";
                 default:

@@ -239,8 +239,8 @@ namespace WitchTower.Data
                     "星鉱の炉心")),
             new BattleDungeonDefinition(
                 "abyssal_grimoire_spire",
-                "深淵魔導塔",
-                "深淵の術式が空間を歪める魔導塔。全階層でクラス4天使系の熾天使ミカエルを捕獲できる。",
+                "深淵魔導回廊",
+                "深淵の術式が空間を歪める魔導回廊。全階層でクラス4天使系の熾天使ミカエルを捕獲できる。",
                 "UI/DungeonSelect/DungeonCard_AbyssalGrimoireSpire",
                 "BattleBackgrounds/dungeon6_1170x2532",
                 26,
@@ -250,11 +250,11 @@ namespace WitchTower.Data
                     74,
                     9,
                     true,
-                    "深淵塔の入口",
+                    "深淵回廊の入口",
                     "浮遊階段",
                     "紫光の魔導室",
                     "熾天使の天窓",
-                    "深淵塔の頂"))
+                    "深淵回廊の最奥"))
         };
 
         public static IReadOnlyList<BattleDungeonDefinition> Dungeons => DungeonDefinitions;

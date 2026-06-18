@@ -493,6 +493,9 @@ namespace WitchTower.Core
             equipmentHeadlineText = CreateText("EquipmentHeadline", panel.transform, font, string.Empty, 18, FontStyle.Bold,
                 TextAnchor.MiddleCenter, new Color(0.78f, 0.88f, 0.96f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f), new Vector2(0f, -96f), new Vector2(860f, 32f));
+            equipmentHeadlineText.resizeTextForBestFit = true;
+            equipmentHeadlineText.resizeTextMinSize = 11;
+            equipmentHeadlineText.resizeTextMaxSize = 18;
 
             GameObject equippedPanel = CreateUiObject("EquippedSummaryPanel", panel.transform);
             RectTransform equippedPanelRect = equippedPanel.AddComponent<RectTransform>();
@@ -925,9 +928,12 @@ namespace WitchTower.Core
 
             if (equipmentHeadlineText != null)
             {
-                equipmentHeadlineText.text = string.IsNullOrEmpty(equipmentLastActionMessage)
-                    ? "武器 / 防具 / 装飾 をモンスター個別に装備・強化できます"
-                    : equipmentLastActionMessage;
+                StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+                equipmentHeadlineText.text = !string.IsNullOrEmpty(equipmentLastActionMessage)
+                    ? equipmentLastActionMessage
+                    : tutorialEvent != null
+                        ? $"【{tutorialEvent.Title}】{tutorialEvent.Body}"
+                        : "武器 / 防具 / 装飾 をモンスター個別に装備・強化できます";
             }
 
             if (equipmentMonsterNameText != null)
@@ -1980,6 +1986,7 @@ namespace WitchTower.Core
             if (profile.EquipEquipmentToMonster(selectedMonster.InstanceId, equipmentInstanceId))
             {
                 equipmentLastActionMessage = $"{GetMonsterDisplayName(selectedMonster)} に装備しました。";
+                StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
                 if (Application.isPlaying && SaveManager.Instance != null)
                 {
                     SaveManager.Instance.SaveCurrentGame();
@@ -2066,6 +2073,14 @@ namespace WitchTower.Core
             EquipmentEnhancementResult result = profile.TryEnhanceEquipment(equipmentInstanceId, relicId);
             equipmentLastActionMessage = result.Message;
             equipmentEnhanceLastActionMessage = result.Message;
+            StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
+            if (EquipmentEnhancementCatalog.ResolveQualityRank(targetEquipmentData, targetEquipment) >= 3)
+            {
+                StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipmentQuality);
+                StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstEquipmentQuality);
+            }
+            StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipmentEnhance);
+            StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstEquipmentEnhance);
             StartEquipmentEnhancementEffect(result.ResultType);
             if (result.ResultType == EquipmentEnhancementResultType.Destroyed)
             {
@@ -2086,12 +2101,24 @@ namespace WitchTower.Core
             selectedEquipmentEnhanceInstanceId = equipmentInstanceId;
             ResetEquipmentEnhancementFeedback();
 
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            bool tutorialChanged = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
+            OwnedEquipmentData equipment = profile != null ? profile.GetOwnedEquipmentByInstanceId(equipmentInstanceId) : null;
+            EquipmentDataSO equipmentData = equipment != null ? MasterDataManager.Instance?.GetEquipmentData(equipment.EquipmentId) : null;
+            if (EquipmentEnhancementCatalog.ResolveQualityRank(equipmentData, equipment) >= 3)
+            {
+                tutorialChanged |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstEquipmentQuality);
+            }
+            if (tutorialChanged && Application.isPlaying && SaveManager.Instance != null)
+            {
+                SaveManager.Instance.SaveCurrentGame();
+            }
+
             if (equipmentEnhanceOverlayRoot != null)
             {
                 equipmentEnhanceOverlayRoot.SetActive(true);
             }
 
-            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             RefreshEquipmentEnhancementOverlay(profile);
         }
 
@@ -2182,7 +2209,10 @@ namespace WitchTower.Core
 
             if (equipmentEnhanceOverlayInfoText != null)
             {
-                equipmentEnhanceOverlayInfoText.text = equipment != null
+                StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+                equipmentEnhanceOverlayInfoText.text = tutorialEvent != null
+                    ? $"【{tutorialEvent.Title}】{tutorialEvent.Body}"
+                    : equipment != null
                     ? $"現在 {EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / {EquipmentEnhancementCatalog.BuildEnhanceAttemptsLabel(equipmentData, equipment)} / {(equipment.IsLocked ? "ロック中" : "未ロック")}\n現在所持している強化遺物だけを表示しています。"
                     : (!string.IsNullOrEmpty(equipmentEnhanceTargetInfo) ? equipmentEnhanceTargetInfo : "装備カードの「強化」から対象装備を選ぶと、ここに使用可能な強化遺物が表示されます。");
             }
@@ -2334,6 +2364,15 @@ namespace WitchTower.Core
             string name = equipmentData != null ? equipmentData.equipmentName : equipped.EquipmentId;
             string summary = BuildCompactEquipmentSummary(equipmentData, equipped);
             return $"{label}:{name} [{EquipmentEnhancementCatalog.ResolveQualityName(equipmentData, equipped)}] {summary} {EquipmentEnhancementCatalog.BuildEnhanceAttemptsLabel(equipmentData, equipped)}";
+        }
+
+        private static StoryTutorialEvent GetEquipmentTutorialEvent(PlayerProfile profile)
+        {
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "EquipmentScene");
+            return tutorialEvent != null &&
+                   tutorialEvent.TargetKey.StartsWith("equipment.", StringComparison.Ordinal)
+                ? tutorialEvent
+                : null;
         }
 
         private static string BuildCompactSlotLabel(EquipmentSlotType slotType)

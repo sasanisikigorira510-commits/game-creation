@@ -572,7 +572,7 @@ public static class UnityMcpSceneBuilder
         CreateSpriteImage(canvas.transform, "BattleTreeRight", TreeSpritePath, new Vector2(1f, 0.5f), new Vector2(-138f, 138f), new Vector2(172f, 172f), true);
         CreateTowerTotem(canvas.transform, "BattleTotemLeft", new Vector2(0f, 0.54f), new Vector2(74f, -24f), new Color(0.25f, 0.68f, 0.88f, 0.12f), true);
         CreateTowerTotem(canvas.transform, "BattleTotemRight", new Vector2(1f, 0.54f), new Vector2(-74f, -24f), new Color(0.88f, 0.32f, 0.34f, 0.12f), false);
-        CreateSceneRibbon(canvas.transform, "BattleTopRibbon", new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(980f, 26f), "TOWER ENCOUNTER // DUEL LANE", new Color(0.10f, 0.13f, 0.19f, 0.94f), new Color(0.97f, 0.85f, 0.58f, 0.96f));
+        CreateSceneRibbon(canvas.transform, "BattleTopRibbon", new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(980f, 26f), "DUNGEON ENCOUNTER // COMBAT LANE", new Color(0.10f, 0.13f, 0.19f, 0.94f), new Color(0.97f, 0.85f, 0.58f, 0.96f));
         CreateSceneRibbon(canvas.transform, "BattleBottomRibbon", new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(980f, 26f), "COOLDOWNS · PAYOUT · NEXT FLOOR DECISION", new Color(0.10f, 0.13f, 0.19f, 0.94f), new Color(0.72f, 0.86f, 0.96f, 0.92f));
         GameObject arenaLane = CreateUiObject("ArenaLane", canvas.transform, new Vector2(0.5f, 0.53f), new Vector2(0.5f, 0.53f), Vector2.zero, new Vector2(920f, 360f));
         StyleSurface(arenaLane, new Color(0.09f, 0.11f, 0.16f, 0.72f));
@@ -595,7 +595,7 @@ public static class UnityMcpSceneBuilder
         StyleSurface(floorBadgeGemCoreLeft, new Color(0.08f, 0.10f, 0.14f, 0.64f));
         GameObject floorBadgeGemCoreRight = CreateUiObject("BattleFloorBadgeGemCoreRight", floorBadgeGemRight.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(6f, 6f));
         StyleSurface(floorBadgeGemCoreRight, new Color(0.08f, 0.10f, 0.14f, 0.64f));
-        TMP_Text battleTitle = CreateLabel("BattleScreenTitle", canvas.transform, new Vector2(0.5f, 1f), new Vector2(0f, -58f), new Vector2(760f, 52f), "Tower Encounter");
+        TMP_Text battleTitle = CreateLabel("BattleScreenTitle", canvas.transform, new Vector2(0.5f, 1f), new Vector2(0f, -58f), new Vector2(760f, 52f), "Dungeon Encounter");
         StyleText(battleTitle, 40f, FontStyles.Bold, new Color(0.95f, 0.97f, 1f, 1f), TextAlignmentOptions.Center);
         CreateTitleSigil(canvas.transform, "BattleTitleSigil", new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Color(0.96f, 0.84f, 0.58f, 0.18f));
         TMP_Text battleSubtitle = CreateLabel("BattleScreenSubtitle", canvas.transform, new Vector2(0.5f, 1f), new Vector2(0f, -102f), new Vector2(820f, 34f), "Read the floor, time your skills, and finish the duel.");

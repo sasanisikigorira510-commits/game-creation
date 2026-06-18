@@ -55,12 +55,17 @@ def post(path, payload=None, timeout=20):
 def wait_for(predicate, timeout_sec, interval_sec=1.5, label="condition"):
     deadline = time.time() + timeout_sec
     last_value = None
+    last_error = None
     while time.time() < deadline:
-        last_value = predicate()
-        if last_value:
-            return last_value
+        try:
+            last_value = predicate()
+            if last_value:
+                return last_value
+        except Exception as exc:
+            last_error = exc
         time.sleep(interval_sec)
-    raise UnityBridgeError(f"Timed out waiting for {label}")
+    error_suffix = f"; last error: {last_error}" if last_error is not None else ""
+    raise UnityBridgeError(f"Timed out waiting for {label}{error_suffix}")
 
 
 def wait_for_scene(scene_path, timeout_sec=30):
@@ -118,6 +123,7 @@ def assert_true(condition, message):
 
 def main():
     report = {"steps": []}
+    entered_play_mode = False
 
     def record(name, data):
         report["steps"].append({"name": name, "data": data})
@@ -131,10 +137,6 @@ def main():
         assert_true(refresh.get("ok"), "Asset refresh failed")
         record("refresh", refresh)
 
-        rebuild = post("/execute-menu-item", {"menuPath": "Tools/MCP/Rebuild Minimal Home Scene"})
-        assert_true(rebuild.get("ok"), "Home scene rebuild failed")
-        record("rebuild_home", rebuild)
-
         open_home = post("/open-scene", {"path": "Assets/Scenes/HomeScene.unity"})
         assert_true(open_home.get("ok"), "Could not open HomeScene")
         record("open_home", open_home)
@@ -142,6 +144,7 @@ def main():
         enter_play = post("/play-mode", {"action": "enter"})
         record("enter_play", enter_play)
         play_info = wait_for_play_state(True, timeout_sec=30)
+        entered_play_mode = True
         record("play_info", play_info)
 
         show_equipment = post(
@@ -159,18 +162,28 @@ def main():
         record("equipment_texts", active_texts)
         record("equipment_buttons", active_buttons)
 
-        assert_true("WeaponText" in active_texts, "WeaponText missing from active equipment panel")
-        assert_true("ArmorText" in active_texts, "ArmorText missing from active equipment panel")
-        assert_true("AccessoryText" in active_texts, "AccessoryText missing from active equipment panel")
-        assert_true("BronzeBladeButton" in active_buttons, "BronzeBladeButton missing from active equipment panel")
-        assert_true("IronSwordButton" in active_buttons, "IronSwordButton missing from active equipment panel")
+        assert_true("Title" in active_texts, "Title missing from active equipment panel")
+        assert_true("Summary" in active_texts, "Summary missing from active equipment panel")
+        assert_true("Info" in active_texts, "Info missing from active equipment panel")
+        assert_true("WeaponEnhanceButton" in active_buttons, "WeaponEnhanceButton missing from active equipment panel")
+        assert_true("AllFilterButton" in active_buttons, "AllFilterButton missing from active equipment panel")
 
         battle = post(
             "/invoke-method",
             {"componentType": "WitchTower.Home.HomeSceneController", "methodName": "StartBattle"},
         )
-        assert_true(battle.get("ok"), "Could not start battle")
-        record("start_battle", battle)
+        assert_true(battle.get("ok"), "Could not open dungeon selection")
+        record("open_dungeon_selection", battle)
+
+        select_floor = post(
+            "/invoke-method",
+            {
+                "componentType": "WitchTower.Home.DungeonSelectionPanelController",
+                "methodName": "StartSelectedBattle",
+            },
+        )
+        assert_true(select_floor.get("ok"), "Could not start selected dungeon floor")
+        record("start_selected_floor", select_floor)
 
         battle_scene = wait_for_scene("Assets/Scenes/BattleScene.unity", timeout_sec=30)
         record("battle_scene", battle_scene)
@@ -182,6 +195,7 @@ def main():
         exit_play = post("/play-mode", {"action": "exit"})
         record("exit_play", exit_play)
         stopped = wait_for_play_state(False, timeout_sec=30)
+        entered_play_mode = False
         record("stopped", stopped)
 
         boot = post("/open-scene", {"path": "Assets/Scenes/BootScene.unity"})
@@ -194,6 +208,21 @@ def main():
         print(json.dumps({"ok": True, "report": report}, ensure_ascii=False, indent=2))
         return 0
     except Exception as exc:
+        try:
+            info = wait_for(
+                lambda: call("/project-info"),
+                timeout_sec=30,
+                interval_sec=1.0,
+                label="Unity bridge during cleanup",
+            )
+            if entered_play_mode or info.get("isPlaying"):
+                cleanup_exit = post("/play-mode", {"action": "exit"})
+                record("cleanup_exit_play", cleanup_exit)
+                record("cleanup_stopped", wait_for_play_state(False, timeout_sec=30))
+            cleanup_boot = post("/open-scene", {"path": "Assets/Scenes/BootScene.unity"})
+            record("cleanup_open_boot", cleanup_boot)
+        except Exception as cleanup_exc:
+            record("cleanup_error", {"message": str(cleanup_exc)})
         print(json.dumps({"ok": False, "error": str(exc), "report": report}, ensure_ascii=False, indent=2))
         return 1
 

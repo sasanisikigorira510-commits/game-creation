@@ -66,6 +66,8 @@ namespace WitchTower.Home
         private const string RockGolemMonsterId = "monster_rock_golem";
         private const string RockGolemHomeHeroSpritePath = "MonsterBattle/mon_rock_golem_attack_0";
         private const float HomeAdReservedHeight = 170f;
+        private static readonly Vector2 HomeGuidePanelPosition = new Vector2(0f, HomeAdReservedHeight + 1340f);
+        private static readonly Vector2 HomeGuidePanelSize = new Vector2(940f, 164f);
         private static readonly Vector2 HomeMenuButtonSize = new Vector2(480f, 250f);
         private static readonly Vector2 HomeMainActionButtonSize = new Vector2(470f, 220f);
         private static readonly Vector2 HomeBottomNavButtonSize = new Vector2(196f, 152f);
@@ -93,6 +95,19 @@ namespace WitchTower.Home
             "MonsterDexButton",
             "EquipmentButton",
             "FusionButton"
+        };
+        private static readonly string[] HomeTutorialActionButtonNames =
+        {
+            "BattleButton",
+            "FormationButton",
+            "GoldShopNavButton",
+            "GachaButton",
+            "MonsterDexButton",
+            "EquipmentButton",
+            "FusionButton",
+            "GoldShopButton",
+            "PermanentUpgradeButton",
+            "QuestButton"
         };
         private static readonly string[] HomeBottomNavPartPaths =
         {
@@ -159,6 +174,9 @@ namespace WitchTower.Home
         private bool homePlayerExpDetailsVisible;
         private Text homeGuideText;
         private Text homeNextFloorText;
+        private Button homeGuideButton;
+        private GameObject homeTutorialFocusRoot;
+        private Text homeTutorialFocusText;
         private Text homeHeroNameText;
         private Text homeHeroLevelText;
         private Image homeHeroImage;
@@ -281,6 +299,11 @@ namespace WitchTower.Home
         public void StartBattle()
         {
             if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (!TryAdvanceHomeTutorialForTarget("home.battle"))
             {
                 return;
             }
@@ -420,7 +443,7 @@ namespace WitchTower.Home
                 {
                     unifiedMenuRoot.SetActive(true);
                     RemoveHomeAtmosphereOverlays(unifiedMenuRoot.transform);
-                    RemoveHomeGuidePanel(unifiedMenuRoot.transform);
+                    EnsureHomeGuidePanel(unifiedMenuRoot.transform);
                     EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
                     RefreshHomeStoneBalanceBar();
                     unifiedMenuRoot.transform.SetAsLastSibling();
@@ -455,7 +478,7 @@ namespace WitchTower.Home
             CreateHomeAtmosphere(unifiedMenuRoot.transform);
             CreateAdReservedSpace(unifiedMenuRoot.transform);
             CreateHomeHeroShowcase(unifiedMenuRoot.transform);
-            RemoveHomeGuidePanel(unifiedMenuRoot.transform);
+            EnsureHomeGuidePanel(unifiedMenuRoot.transform);
 
             Sprite battleSprite = Resources.Load<Sprite>("UI/HomeMenu/BattleButton");
             Sprite formationSprite = Resources.Load<Sprite>("UI/HomeMenu/FormationButton");
@@ -478,12 +501,22 @@ namespace WitchTower.Home
                 return;
             }
 
+            if (!TryAdvanceHomeTutorialForTarget("home.formation"))
+            {
+                return;
+            }
+
             SceneManager.LoadScene(formationSceneName);
         }
 
         public void OpenEquipmentMenu()
         {
             if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (!TryAdvanceHomeTutorialForTarget("home.equipment"))
             {
                 return;
             }
@@ -498,6 +531,11 @@ namespace WitchTower.Home
                 return;
             }
 
+            if (!TryAdvanceHomeTutorialForTarget("home.fusion"))
+            {
+                return;
+            }
+
             SceneManager.LoadScene(fusionSceneName);
         }
 
@@ -508,12 +546,22 @@ namespace WitchTower.Home
                 return;
             }
 
+            if (!TryAdvanceHomeTutorialForTarget("home.gacha"))
+            {
+                return;
+            }
+
             SceneManager.LoadScene(gachaSceneName);
         }
 
         private void OpenMonsterDexMenu()
         {
             if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (!TryAdvanceHomeTutorialForTarget("home.dex"))
             {
                 return;
             }
@@ -539,6 +587,11 @@ namespace WitchTower.Home
         public void OpenGoldShopMenu()
         {
             if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (!TryAdvanceHomeTutorialForTarget("home.shop"))
             {
                 return;
             }
@@ -569,6 +622,11 @@ namespace WitchTower.Home
                 return;
             }
 
+            if (!TryAdvanceHomeTutorialForTarget("home.shop"))
+            {
+                return;
+            }
+
             HideUnifiedMenu();
             PaidShopPanelController shopPanel = EnsurePaidShopPanel();
             if (shopPanel == null)
@@ -591,6 +649,11 @@ namespace WitchTower.Home
         public void OpenPermanentUpgradeShop()
         {
             if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (!TryAdvanceHomeTutorialForTarget("home.shop"))
             {
                 return;
             }
@@ -898,7 +961,7 @@ namespace WitchTower.Home
             homeHeroLevelText = null;
         }
 
-        private void RemoveHomeGuidePanel(Transform menuRoot)
+        private void EnsureHomeGuidePanel(Transform menuRoot)
         {
             if (menuRoot == null)
             {
@@ -906,13 +969,94 @@ namespace WitchTower.Home
             }
 
             Transform existingPanel = menuRoot.Find("HomeGuidePanel");
-            if (existingPanel != null)
+            if (existingPanel == null)
             {
-                DestroySceneObject(existingPanel.gameObject);
+                GameObject panel = new GameObject("HomeGuidePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                panel.transform.SetParent(menuRoot, false);
+                existingPanel = panel.transform;
+
+                Image panelImage = panel.GetComponent<Image>();
+                panelImage.color = new Color(0.018f, 0.032f, 0.048f, 0.74f);
+                panelImage.raycastTarget = true;
+                Outline outline = panel.AddComponent<Outline>();
+                outline.effectColor = new Color(1f, 0.78f, 0.40f, 0.34f);
+                outline.effectDistance = new Vector2(2f, -2f);
+            }
+            else
+            {
+                Image panelImage = existingPanel.GetComponent<Image>();
+                if (panelImage != null)
+                {
+                    panelImage.raycastTarget = true;
+                }
             }
 
-            homeGuideText = null;
-            homeNextFloorText = null;
+            homeGuideButton = existingPanel.GetComponent<Button>();
+            if (homeGuideButton == null)
+            {
+                homeGuideButton = existingPanel.gameObject.AddComponent<Button>();
+            }
+
+            homeGuideButton.transition = Selectable.Transition.None;
+            homeGuideButton.targetGraphic = existingPanel.GetComponent<Image>();
+            homeGuideButton.onClick.RemoveAllListeners();
+            homeGuideButton.onClick.AddListener(AdvanceHomeGuidePanel);
+
+            RectTransform panelRect = existingPanel.GetComponent<RectTransform>();
+            if (panelRect != null)
+            {
+                panelRect.anchorMin = new Vector2(0.5f, 0f);
+                panelRect.anchorMax = new Vector2(0.5f, 0f);
+                panelRect.pivot = new Vector2(0.5f, 0.5f);
+                panelRect.anchoredPosition = HomeGuidePanelPosition;
+                panelRect.sizeDelta = HomeGuidePanelSize;
+            }
+
+            homeGuideText = existingPanel.Find("HomeGuideText")?.GetComponent<Text>();
+            if (homeGuideText == null)
+            {
+                homeGuideText = CreateUiText(
+                    "HomeGuideText",
+                    existingPanel,
+                    string.Empty,
+                    24,
+                    FontStyle.Bold,
+                    new Vector2(0.5f, 0.58f),
+                    new Vector2(0.5f, 0.58f),
+                    Vector2.zero,
+                    new Vector2(850f, 92f),
+                    new Color(0.96f, 0.95f, 0.88f, 1f),
+                    TextAnchor.MiddleCenter);
+            }
+
+            homeGuideText.resizeTextForBestFit = true;
+            homeGuideText.resizeTextMinSize = 16;
+            homeGuideText.resizeTextMaxSize = 24;
+            homeGuideText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            homeGuideText.verticalOverflow = VerticalWrapMode.Truncate;
+
+            homeNextFloorText = existingPanel.Find("HomeNextFloorText")?.GetComponent<Text>();
+            if (homeNextFloorText == null)
+            {
+                homeNextFloorText = CreateUiText(
+                    "HomeNextFloorText",
+                    existingPanel,
+                    string.Empty,
+                    18,
+                    FontStyle.Bold,
+                    new Vector2(0.5f, 0.16f),
+                    new Vector2(0.5f, 0.16f),
+                    Vector2.zero,
+                    new Vector2(820f, 34f),
+                    new Color(0.72f, 0.88f, 1f, 0.94f),
+                    TextAnchor.MiddleCenter);
+            }
+
+            homeNextFloorText.resizeTextForBestFit = true;
+            homeNextFloorText.resizeTextMinSize = 13;
+            homeNextFloorText.resizeTextMaxSize = 18;
+            homeNextFloorText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            homeNextFloorText.verticalOverflow = VerticalWrapMode.Truncate;
         }
 
         private void CreateHomeBottomNavigation(
@@ -1682,7 +1826,7 @@ namespace WitchTower.Home
                 return;
             }
 
-            RemoveHomeGuidePanel(menuRoot);
+            EnsureHomeGuidePanel(menuRoot);
 
             Transform existingBar = menuRoot.Find("HomeStoneBalanceBar");
             if (existingBar != null)
@@ -1951,6 +2095,7 @@ namespace WitchTower.Home
                 }
 
                 RefreshHomeHeroShowcase(profile);
+                ApplyHomeTutorialFocus(null);
                 return;
             }
 
@@ -1978,7 +2123,7 @@ namespace WitchTower.Home
 
             if (homeNextFloorText != null)
             {
-                homeNextFloorText.text = $"次の挑戦: 第{Mathf.Max(1, profile.HighestFloor + 1)}階";
+                homeNextFloorText.text = "次の探索: " + BuildNextDungeonLabel(Mathf.Max(1, profile.HighestFloor + 1));
             }
 
             if (homeQuestButtonText != null)
@@ -2004,6 +2149,7 @@ namespace WitchTower.Home
             }
 
             RefreshHomeHeroShowcase(profile);
+            ApplyHomeTutorialFocus(profile);
         }
 
         private Transform ResolveUnifiedMenuRootTransform()
@@ -2133,11 +2279,410 @@ namespace WitchTower.Home
             return profile.OwnedMonsters.Count > 0 ? profile.OwnedMonsters[0] : null;
         }
 
+        private bool TryAdvanceHomeTutorialForTarget(string targetKey)
+        {
+            PlayerProfile profile = GetRuntimeProfile();
+            if (profile == null)
+            {
+                return true;
+            }
+
+            bool changed = false;
+            StoryTutorialEvent activeEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
+            if (!profile.HasCompletedTutorial)
+            {
+                if (profile.TutorialStepId == StoryTutorialService.StepWakeup)
+                {
+                    changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryPrologueWakeup);
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepWakeup);
+                    SaveHomeTutorialProgressIfNeeded(changed);
+                    return false;
+                }
+
+                if (activeEvent != null &&
+                    activeEvent.BlocksInput &&
+                    !string.IsNullOrEmpty(activeEvent.TargetKey) &&
+                    !string.Equals(activeEvent.TargetKey, targetKey, StringComparison.Ordinal))
+                {
+                    RefreshHomeStoneBalanceBar();
+                    return false;
+                }
+
+                if (targetKey == "home.gacha" &&
+                    profile.TutorialStepId == StoryTutorialService.StepOpenGacha)
+                {
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepOpenGacha);
+                }
+                else if (targetKey == "home.formation" &&
+                         profile.TutorialStepId == StoryTutorialService.StepOpenFormation)
+                {
+                    changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstSummonDone);
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepOpenFormation);
+                }
+                else if (targetKey == "home.battle" &&
+                         profile.TutorialStepId == StoryTutorialService.StepOpenBattle)
+                {
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepOpenBattle);
+                }
+
+                if (profile.TutorialStepId == StoryTutorialService.StepWrapUp)
+                {
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepWrapUp);
+                    SaveHomeTutorialProgressIfNeeded(changed);
+                    return false;
+                }
+            }
+            else
+            {
+                if (activeEvent != null &&
+                    StoryTutorialService.IsChapterStoryEvent(activeEvent.EventId) &&
+                    activeEvent.TargetKey == targetKey)
+                {
+                    changed |= StoryTutorialService.MarkStorySeen(profile, activeEvent.EventId);
+                }
+                else if (activeEvent != null && IsHomeHintTarget(activeEvent, targetKey))
+                {
+                    changed |= StoryTutorialService.MarkHintSeen(profile, activeEvent.EventId);
+                }
+            }
+
+            SaveHomeTutorialProgressIfNeeded(changed);
+            return true;
+        }
+
+        private void AdvanceHomeGuidePanel()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            PlayerProfile profile = GetRuntimeProfile();
+            StoryTutorialEvent activeEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
+            if (profile == null || activeEvent == null || !activeEvent.IsValid)
+            {
+                return;
+            }
+
+            bool changed = false;
+            if (!profile.HasCompletedTutorial)
+            {
+                if (profile.TutorialStepId == StoryTutorialService.StepWakeup)
+                {
+                    changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryPrologueWakeup);
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepWakeup);
+                }
+                else if (profile.TutorialStepId == StoryTutorialService.StepWrapUp)
+                {
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepWrapUp);
+                }
+            }
+            else if (StoryTutorialService.IsChapterStoryEvent(activeEvent.EventId))
+            {
+                changed |= StoryTutorialService.MarkStorySeen(profile, activeEvent.EventId);
+            }
+            else if (string.IsNullOrEmpty(activeEvent.TargetKey))
+            {
+                changed |= StoryTutorialService.MarkHintSeen(profile, activeEvent.EventId);
+            }
+
+            SaveHomeTutorialProgressIfNeeded(changed);
+        }
+
+        private void SaveHomeTutorialProgressIfNeeded(bool changed)
+        {
+            if (!changed)
+            {
+                ApplyHomeTutorialFocus(GetRuntimeProfile());
+                return;
+            }
+
+            SaveManager.Instance?.SaveCurrentGame();
+            RefreshHomeStoneBalanceBar();
+        }
+
+        private void ApplyHomeTutorialFocus(PlayerProfile profile)
+        {
+            Transform menuRoot = ResolveUnifiedMenuRootTransform();
+            StoryTutorialEvent activeEvent = profile != null
+                ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
+                : null;
+            bool guideCanAdvance = CanAdvanceHomeGuidePanel(profile, activeEvent);
+            if (homeGuideButton != null)
+            {
+                homeGuideButton.interactable = guideCanAdvance;
+            }
+
+            if (menuRoot == null)
+            {
+                HideHomeTutorialFocus();
+                return;
+            }
+
+            bool blocksInput = profile != null &&
+                !profile.HasCompletedTutorial &&
+                activeEvent != null &&
+                activeEvent.BlocksInput;
+            string targetButtonName = ResolveHomeTutorialButtonName(activeEvent?.TargetKey ?? string.Empty);
+            SetHomeTutorialActionButtonsInteractable(menuRoot, !blocksInput, targetButtonName);
+
+            if (activeEvent == null || !activeEvent.IsValid)
+            {
+                HideHomeTutorialFocus();
+                return;
+            }
+
+            Transform focusTarget = null;
+            string focusLabel = string.Empty;
+            if (!string.IsNullOrEmpty(targetButtonName))
+            {
+                focusTarget = FindDescendant(menuRoot, targetButtonName);
+                focusLabel = "ここをタップ";
+            }
+            else if (guideCanAdvance)
+            {
+                focusTarget = homeGuideButton != null ? homeGuideButton.transform : menuRoot.Find("HomeGuidePanel");
+                focusLabel = "タップして続ける";
+            }
+
+            if (focusTarget == null)
+            {
+                HideHomeTutorialFocus();
+                return;
+            }
+
+            ShowHomeTutorialFocus(menuRoot, focusTarget, focusLabel);
+        }
+
+        private static bool CanAdvanceHomeGuidePanel(PlayerProfile profile, StoryTutorialEvent activeEvent)
+        {
+            if (profile == null || activeEvent == null || !activeEvent.IsValid)
+            {
+                return false;
+            }
+
+            if (!profile.HasCompletedTutorial)
+            {
+                return profile.TutorialStepId == StoryTutorialService.StepWakeup ||
+                    profile.TutorialStepId == StoryTutorialService.StepWrapUp;
+            }
+
+            return StoryTutorialService.IsChapterStoryEvent(activeEvent.EventId) ||
+                string.IsNullOrEmpty(activeEvent.TargetKey);
+        }
+
+        private static void SetHomeTutorialActionButtonsInteractable(Transform menuRoot, bool allInteractable, string targetButtonName)
+        {
+            for (int i = 0; i < HomeTutorialActionButtonNames.Length; i += 1)
+            {
+                string buttonName = HomeTutorialActionButtonNames[i];
+                Transform buttonTransform = FindDescendant(menuRoot, buttonName);
+                Button button = buttonTransform != null ? buttonTransform.GetComponent<Button>() : null;
+                if (button == null)
+                {
+                    continue;
+                }
+
+                button.interactable = allInteractable ||
+                    string.Equals(buttonName, targetButtonName, StringComparison.Ordinal);
+            }
+        }
+
+        private static string ResolveHomeTutorialButtonName(string targetKey)
+        {
+            switch (targetKey)
+            {
+                case "home.battle":
+                    return "BattleButton";
+                case "home.formation":
+                    return "FormationButton";
+                case "home.gacha":
+                    return "GachaButton";
+                case "home.equipment":
+                    return "EquipmentButton";
+                case "home.fusion":
+                    return "FusionButton";
+                case "home.dex":
+                    return "MonsterDexButton";
+                case "home.shop":
+                    return "GoldShopNavButton";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private void ShowHomeTutorialFocus(Transform menuRoot, Transform targetTransform, string label)
+        {
+            EnsureHomeTutorialFocus(menuRoot);
+            if (homeTutorialFocusRoot == null)
+            {
+                return;
+            }
+
+            RectTransform focusRect = homeTutorialFocusRoot.transform as RectTransform;
+            if (focusRect == null)
+            {
+                return;
+            }
+
+            Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(menuRoot, targetTransform);
+            focusRect.anchorMin = new Vector2(0.5f, 0f);
+            focusRect.anchorMax = new Vector2(0.5f, 0f);
+            focusRect.pivot = new Vector2(0.5f, 0.5f);
+            focusRect.anchoredPosition = new Vector2(bounds.center.x, bounds.center.y);
+            focusRect.sizeDelta = new Vector2(
+                Mathf.Max(130f, bounds.size.x + 30f),
+                Mathf.Max(84f, bounds.size.y + 30f));
+
+            if (homeTutorialFocusText != null)
+            {
+                RectTransform textRect = homeTutorialFocusText.transform as RectTransform;
+                if (textRect != null)
+                {
+                    textRect.anchoredPosition = new Vector2(0f, focusRect.sizeDelta.y * 0.5f + 30f);
+                    textRect.sizeDelta = new Vector2(Mathf.Max(220f, focusRect.sizeDelta.x + 40f), 44f);
+                }
+
+                homeTutorialFocusText.text = label;
+            }
+
+            homeTutorialFocusRoot.SetActive(true);
+            homeTutorialFocusRoot.transform.SetAsLastSibling();
+        }
+
+        private void EnsureHomeTutorialFocus(Transform menuRoot)
+        {
+            if (menuRoot == null)
+            {
+                return;
+            }
+
+            Transform existing = menuRoot.Find("HomeTutorialFocus");
+            if (homeTutorialFocusRoot == null || homeTutorialFocusRoot.transform.parent != menuRoot)
+            {
+                homeTutorialFocusRoot = existing != null
+                    ? existing.gameObject
+                    : new GameObject("HomeTutorialFocus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            }
+
+            if (homeTutorialFocusRoot.transform.parent != menuRoot)
+            {
+                homeTutorialFocusRoot.transform.SetParent(menuRoot, false);
+            }
+
+            Image image = homeTutorialFocusRoot.GetComponent<Image>();
+            if (image == null)
+            {
+                image = homeTutorialFocusRoot.AddComponent<Image>();
+            }
+
+            image.color = new Color(1f, 0.86f, 0.30f, 0.001f);
+            image.raycastTarget = false;
+
+            Outline outline = homeTutorialFocusRoot.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = homeTutorialFocusRoot.AddComponent<Outline>();
+            }
+
+            outline.effectColor = new Color(1f, 0.82f, 0.32f, 0.95f);
+            outline.effectDistance = new Vector2(5f, -5f);
+
+            homeTutorialFocusText = homeTutorialFocusRoot.transform.Find("HomeTutorialFocusLabel")?.GetComponent<Text>();
+            if (homeTutorialFocusText == null)
+            {
+                homeTutorialFocusText = CreateUiText(
+                    "HomeTutorialFocusLabel",
+                    homeTutorialFocusRoot.transform,
+                    string.Empty,
+                    24,
+                    FontStyle.Bold,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    Vector2.zero,
+                    new Vector2(260f, 44f),
+                    new Color(1f, 0.94f, 0.70f, 1f),
+                    TextAnchor.MiddleCenter);
+                AddTextShadow(homeTutorialFocusText, new Color(0f, 0f, 0f, 0.92f), new Vector2(2f, -2f));
+            }
+
+            homeTutorialFocusText.raycastTarget = false;
+        }
+
+        private void HideHomeTutorialFocus()
+        {
+            if (homeTutorialFocusRoot != null)
+            {
+                homeTutorialFocusRoot.SetActive(false);
+            }
+        }
+
+        private static Transform FindDescendant(Transform root, string objectName)
+        {
+            if (root == null || string.IsNullOrEmpty(objectName))
+            {
+                return null;
+            }
+
+            if (root.name == objectName)
+            {
+                return root;
+            }
+
+            Transform[] descendants = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < descendants.Length; i += 1)
+            {
+                if (descendants[i] != null && descendants[i].name == objectName)
+                {
+                    return descendants[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsHomeHintTarget(StoryTutorialEvent hint, string targetKey)
+        {
+            if (hint == null || string.IsNullOrEmpty(targetKey))
+            {
+                return false;
+            }
+
+            if (targetKey == "home.equipment")
+            {
+                // Equipment hints stay active until the player sees or uses the relevant control.
+                return false;
+            }
+
+            if (targetKey == "home.fusion")
+            {
+                return hint.EventId == StoryTutorialService.HintFusion;
+            }
+
+            if (targetKey == "home.dex")
+            {
+                return hint.EventId == StoryTutorialService.HintDex;
+            }
+
+            if (targetKey == "home.shop")
+            {
+                return hint.EventId == StoryTutorialService.HintShop;
+            }
+
+            return false;
+        }
+
         private static string BuildHomeGuideText(PlayerProfile profile)
         {
             if (profile == null)
             {
                 return "よぉし！\n今日の冒険を始めましょう。";
+            }
+
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
+            if (tutorialEvent != null && tutorialEvent.IsValid)
+            {
+                return BuildTutorialGuideText(tutorialEvent);
             }
 
             DateTime now = DateTime.Now;
@@ -2153,12 +2698,35 @@ namespace WitchTower.Home
             }
 
             int nextFloor = Mathf.Max(1, profile.HighestFloor + 1);
+            string nextDungeonLabel = BuildNextDungeonLabel(nextFloor);
             if (profile.Gold >= 100)
             {
-                return $"準備はいい感じ！\n第{nextFloor}階へ挑戦して、装備を集めましょう。";
+                return $"準備はいい感じ！\n{nextDungeonLabel}へ挑戦して、装備を集めましょう。";
             }
 
-            return $"よぉし！\n第{nextFloor}階へ挑戦して、ゴールドを稼ぎましょう！";
+            return $"よぉし！\n{nextDungeonLabel}へ挑戦して、ゴールドを稼ぎましょう！";
+        }
+
+        private static string BuildTutorialGuideText(StoryTutorialEvent tutorialEvent)
+        {
+            if (tutorialEvent == null || !tutorialEvent.IsValid)
+            {
+                return string.Empty;
+            }
+
+            return string.IsNullOrEmpty(tutorialEvent.Title)
+                ? tutorialEvent.Body
+                : $"{tutorialEvent.Title}\n{tutorialEvent.Body}";
+        }
+
+        private static string BuildNextDungeonLabel(int globalFloor)
+        {
+            int safeFloor = Mathf.Max(1, globalFloor);
+            string dungeonName = BattleDungeonCatalog.ResolveDungeonName(safeFloor);
+            int localFloor = BattleDungeonCatalog.ResolveLocalFloor(safeFloor);
+            return string.IsNullOrEmpty(dungeonName)
+                ? $"第{safeFloor}階層"
+                : $"{dungeonName} 第{localFloor}階層";
         }
 
         private void EnsureDailyQuestList(Transform menuRoot)

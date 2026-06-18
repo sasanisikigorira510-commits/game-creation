@@ -1720,7 +1720,11 @@ namespace WitchTower.Formation
 
             if (summaryText != null)
             {
-                summaryText.text = $"保有 {roster.Count}/{GetStorageLimit()}   出撃 {CountSelectedSlots()}/{MaxPartySize}";
+                PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+                StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "FormationScene");
+                summaryText.text = tutorialEvent != null && tutorialEvent.IsValid
+                    ? tutorialEvent.Body
+                    : $"保有 {roster.Count}/{GetStorageLimit()}   出撃 {CountSelectedSlots()}/{MaxPartySize}";
             }
 
             if (sortModeLabel != null)
@@ -2994,6 +2998,11 @@ namespace WitchTower.Formation
             }
 
             profile.SetPartyMonsterIds(selectedIds);
+            if (CountSelectedSlots() > 0)
+            {
+                StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstFormation);
+            }
+
             SaveManager.Instance?.SaveCurrentGame();
         }
 

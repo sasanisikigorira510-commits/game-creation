@@ -223,7 +223,7 @@ namespace WitchTower.Home
                         SkinIconPath,
                         new[]
                         {
-                            ("魔塔祭典衣装", "ホーム表示用の特別衣装", "宝晶 800"),
+                            ("契約祭典衣装", "ホーム表示用の特別衣装", "宝晶 800"),
                             ("深淵の装束", "漆黒を基調とした限定衣装", "宝晶 1,200"),
                             ("星晶の礼装", "星の輝きをまとう限定衣装", "宝晶 1,200")
                         });
@@ -288,7 +288,7 @@ namespace WitchTower.Home
             GameObject panel = BuildCategoryShell("宝晶購入", "有償宝晶を購入できます");
             CreateCrystalProductCard(panel.transform, "月光の小箱", "有償宝晶 120個", "¥160", new Vector2(-220f, -370f));
             CreateCrystalProductCard(panel.transform, "星導の宝箱", "有償宝晶 650個", "¥800", new Vector2(220f, -370f));
-            CreateCrystalProductCard(panel.transform, "魔塔の宝庫", "有償宝晶 2,000個", "¥2,400", new Vector2(-220f, -710f));
+            CreateCrystalProductCard(panel.transform, "契約炉の宝庫", "有償宝晶 2,000個", "¥2,400", new Vector2(-220f, -710f));
             CreateCrystalProductCard(panel.transform, "深淵の宝庫", "有償宝晶 4,200個", "¥4,800", new Vector2(220f, -710f));
             CreateCrystalProductCard(panel.transform, "星海の大宝庫", "有償宝晶 8,600個", "¥9,600", new Vector2(-220f, -1050f));
             CreateCrystalProductCard(panel.transform, "天頂の大宝庫", "有償宝晶 15,000個", "¥16,000", new Vector2(220f, -1050f));
