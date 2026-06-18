@@ -198,7 +198,7 @@ namespace WitchTower.Home
                 "StandardContractBenefit",
                 FreeStoneIconPath,
                 "通常契約",
-                "標準個体値",
+                string.Empty,
                 new Vector2(-195f, -18f),
                 new Color(0.32f, 0.68f, 0.86f, 1f));
             CreateContractBenefitCard(
@@ -206,17 +206,17 @@ namespace WitchTower.Home
                 "PremiumContractBenefit",
                 PaidStoneIconPath,
                 "上質契約",
-                "高個体値が出やすい\n10回: クラス3保証",
+                "高個体値が出やすい\n10回: クラス3を1体保証",
                 new Vector2(195f, -18f),
                 new Color(0.80f, 0.48f, 0.92f, 1f));
 
-            singlePullButton = CreateStoneCostButton("FreeSinglePullButton", contractHomeRoot.transform, 1, false, false,
+            singlePullButton = CreateStoneCostButton("FreeSinglePullButton", contractHomeRoot.transform, 1, false,
                 new Vector2(-205f, 246f), () => RunContract(1, false));
-            tenPullButton = CreateStoneCostButton("FreeTenPullButton", contractHomeRoot.transform, 10, false, false,
-                new Vector2(205f, 246f), () => RunContract(10, false));
-            paidSinglePullButton = CreateStoneCostButton("PaidSinglePullButton", contractHomeRoot.transform, 1, true, false,
-                new Vector2(-205f, 136f), () => RunContract(1, true));
-            paidTenPullButton = CreateStoneCostButton("PaidTenPullButton", contractHomeRoot.transform, 10, true, true,
+            tenPullButton = CreateStoneCostButton("FreeTenPullButton", contractHomeRoot.transform, 10, false,
+                new Vector2(-205f, 136f), () => RunContract(10, false));
+            paidSinglePullButton = CreateStoneCostButton("PaidSinglePullButton", contractHomeRoot.transform, 1, true,
+                new Vector2(205f, 246f), () => RunContract(1, true));
+            paidTenPullButton = CreateStoneCostButton("PaidTenPullButton", contractHomeRoot.transform, 10, true,
                 new Vector2(205f, 136f), () => RunContract(10, true));
             Button closeButton = HomeReturnButtonStyle.Create(contractHomeRoot.transform, Close);
             singlePullButton.interactable = true;
@@ -551,22 +551,19 @@ namespace WitchTower.Home
             Transform parent,
             int pullCount,
             bool usePaidStones,
-            bool showGuarantee,
             Vector2 anchoredPosition,
             UnityEngine.Events.UnityAction onClick)
         {
             Vector2 buttonSize = new Vector2(340f, 92f);
-            string label = showGuarantee
-                ? $"{Mathf.Max(1, pullCount)}回\n{GetContractCost(pullCount)}  クラス3保証"
-                : $"{Mathf.Max(1, pullCount)}回\n{GetContractCost(pullCount)}";
+            string label = $"{Mathf.Max(1, pullCount)}回\n{GetContractCost(pullCount)}個";
             Button button = CreateSpriteButton(name, parent, PullButtonSpritePath, label, anchoredPosition, buttonSize, onClick);
             Text labelText = button.transform.Find("Label")?.GetComponent<Text>();
             if (labelText != null)
             {
                 RectTransform labelRect = labelText.rectTransform;
-                labelRect.anchoredPosition = new Vector2(32f, 0f);
-                labelRect.sizeDelta = new Vector2(248f, 74f);
-                labelText.fontSize = showGuarantee ? 25 : 29;
+                labelRect.anchoredPosition = Vector2.zero;
+                labelRect.sizeDelta = new Vector2(230f, 74f);
+                labelText.fontSize = 29;
                 labelText.resizeTextMaxSize = labelText.fontSize;
             }
 
@@ -574,9 +571,9 @@ namespace WitchTower.Home
                 "StoneIcon",
                 button.transform,
                 usePaidStones ? PaidStoneIconPath : FreeStoneIconPath,
-                new Vector2(0.23f, 0.5f),
-                new Vector2(0f, -18f),
-                new Vector2(54f, 54f),
+                new Vector2(0.14f, 0.5f),
+                Vector2.zero,
+                new Vector2(52f, 52f),
                 true,
                 Color.white);
             return button;
@@ -1185,7 +1182,7 @@ namespace WitchTower.Home
                 case 3:
                     return "クラス3 / 黄金契約";
                 case 2:
-                    return "クラス2 / 上級契約";
+                    return "クラス2 / 蒼晶契約";
                 default:
                     return "クラス1 / 通常契約";
             }

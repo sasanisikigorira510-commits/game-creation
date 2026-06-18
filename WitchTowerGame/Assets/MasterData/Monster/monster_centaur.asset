@@ -29,9 +29,9 @@ MonoBehaviour:
   attackRange: 2.90
   plusValueCap: 99
   plusGrowth:
-    maxHpPerPlus: 2
-    attackPerPlus: 1
-    magicAttackPerPlus: 0
+    maxHpPerPlus: 1
+    attackPerPlus: 2
+    magicAttackPerPlus: 1
     defensePerPlus: 1
     magicDefensePerPlus: 1
     attackSpeedPerPlus: 0.003

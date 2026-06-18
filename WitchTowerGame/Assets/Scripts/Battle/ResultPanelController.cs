@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WitchTower.Data;
 using WitchTower.UI;
 
 namespace WitchTower.Battle
@@ -56,6 +57,17 @@ namespace WitchTower.Battle
         public void Show(BattleResultViewData viewData)
         {
             EnsureVisibleResultParent();
+            bool entersNextDungeon = BattleDungeonCatalog.IsDungeonTransition(viewData.ClearedFloor, viewData.NextFloor);
+            int clearedLocalFloor = BattleDungeonCatalog.ResolveLocalFloor(viewData.ClearedFloor);
+            int nextLocalFloor = BattleDungeonCatalog.ResolveLocalFloor(viewData.NextFloor);
+            string clearedStageName = BattleDungeonCatalog.ResolveStageName(viewData.ClearedFloor);
+            string nextDungeonName = BattleDungeonCatalog.ResolveDungeonName(viewData.NextFloor);
+            string nextFloorSummary = entersNextDungeon
+                ? $"次のステージ: {nextDungeonName} 第{nextLocalFloor}階層"
+                : $"次の階層: 第{nextLocalFloor}階層";
+            string nextFloorAction = entersNextDungeon
+                ? $"{nextDungeonName}\n第{nextLocalFloor}階層へ"
+                : $"第{nextLocalFloor}階層へ";
 
             if (rootObject != null)
             {
@@ -86,9 +98,12 @@ namespace WitchTower.Battle
             if (summaryText != null)
             {
                 summaryText.text = viewData.IsWin
-                    ? $"第{viewData.ClearedFloor}階層を突破しました\n次の階層: 第{viewData.NextFloor}階層"
+                    ? $"{clearedStageName}\n第{clearedLocalFloor}階層を突破しました\n{nextFloorSummary}"
                     : "戦闘に敗北しました\nホームで編成や装備を見直しましょう";
                 summaryText.color = viewData.IsWin ? WinSummaryColor : LoseSummaryColor;
+                summaryText.enableAutoSizing = true;
+                summaryText.fontSizeMin = 13f;
+                summaryText.fontSizeMax = 18f;
             }
 
             if (rewardHintText != null)
@@ -108,7 +123,7 @@ namespace WitchTower.Battle
             if (nextActionText != null)
             {
                 nextActionText.text = viewData.IsWin
-                    ? $"第{viewData.NextFloor}階層へ進む"
+                    ? nextFloorAction
                     : "ホームへ戻る";
             }
 
@@ -123,26 +138,39 @@ namespace WitchTower.Battle
             }
 
             EnsureRetryFloorButton();
+            BattleSceneController battleSceneController = ResolveBattleSceneController();
+            bool canAutoRepeat = battleSceneController != null && battleSceneController.HasAutoRepeatFloorUpgrade();
+            bool isAutoRepeatActive = battleSceneController != null && battleSceneController.IsAutoRepeatSameFloorActive();
             if (retryFloorButton != null)
             {
                 retryFloorButton.gameObject.SetActive(true);
                 retryFloorButton.onClick.RemoveAllListeners();
-                BattleSceneController battleSceneController = ResolveBattleSceneController();
-                retryFloorButton.interactable = battleSceneController != null;
-                if (battleSceneController != null)
+                retryFloorButton.interactable = battleSceneController != null && !isAutoRepeatActive;
+                if (battleSceneController != null && !isAutoRepeatActive)
                 {
-                    retryFloorButton.onClick.AddListener(battleSceneController.RetryClearedFloor);
+                    if (canAutoRepeat)
+                    {
+                        retryFloorButton.onClick.AddListener(battleSceneController.StartAutoRepeatSameFloor);
+                    }
+                    else
+                    {
+                        retryFloorButton.onClick.AddListener(battleSceneController.RetryClearedFloor);
+                    }
                 }
             }
 
             if (nextFloorButtonText != null)
             {
-                nextFloorButtonText.text = $"第{viewData.NextFloor}階層へ";
+                nextFloorButtonText.text = nextFloorAction;
             }
 
             if (retryFloorButtonText != null)
             {
-                retryFloorButtonText.text = "この階層に再挑戦";
+                retryFloorButtonText.text = isAutoRepeatActive
+                    ? "自動再挑戦中"
+                    : canAutoRepeat
+                        ? "繰り返し挑戦"
+                        : "この階層に再挑戦";
             }
 
             if (returnHomeButtonText != null)
@@ -677,7 +705,7 @@ namespace WitchTower.Battle
             Transform rootTransform = rootObject != null ? rootObject.transform : transform;
             ConfigureRect(rootTransform.Find("ResultFrame") as RectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(720f, 560f));
             ConfigureText(titleText, new Vector2(0.5f, 1f), new Vector2(0f, -48f), new Vector2(660f, 56f), 34f, FontStyles.Bold, TextAlignmentOptions.Center);
-            ConfigureText(summaryText, new Vector2(0.5f, 0.61f), new Vector2(0f, 0f), new Vector2(660f, 66f), 20f, FontStyles.Bold, TextAlignmentOptions.Center);
+            ConfigureText(summaryText, new Vector2(0.5f, 0.61f), new Vector2(0f, 0f), new Vector2(660f, 92f), 18f, FontStyles.Bold, TextAlignmentOptions.Center);
             ConfigureText(rewardHintText, new Vector2(0.5f, 0.46f), new Vector2(0f, 0f), new Vector2(680f, 92f), 15f, FontStyles.Bold, TextAlignmentOptions.Center);
             ConfigureText(nextRewardForecastText, new Vector2(0.5f, 0.25f), new Vector2(0f, 0f), new Vector2(660f, 42f), 15f, FontStyles.Normal, TextAlignmentOptions.Center);
             ConfigureText(nextActionText, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(580f, 32f), 16f, FontStyles.Bold, TextAlignmentOptions.Center);

@@ -1,0 +1,5 @@
+frame,path,size,alpha_bbox,opaque_pixels
+0,/Users/andou/Desktop/あ/game-creation/WitchTowerGame/Assets/Resources/MonsterBattle/mon_rock_golem_attack_0.png,700x627,"(122, 100, 577, 555)",123650
+1,/Users/andou/Desktop/あ/game-creation/WitchTowerGame/Assets/Resources/MonsterBattle/mon_rock_golem_attack_1.png,700x627,"(87, 121, 596, 555)",123954
+2,/Users/andou/Desktop/あ/game-creation/WitchTowerGame/Assets/Resources/MonsterBattle/mon_rock_golem_attack_2.png,700x627,"(0, 110, 635, 555)",140935
+3,/Users/andou/Desktop/あ/game-creation/WitchTowerGame/Assets/Resources/MonsterBattle/mon_rock_golem_attack_3.png,700x627,"(103, 100, 559, 555)",121692

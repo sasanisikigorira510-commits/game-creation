@@ -83,11 +83,21 @@ namespace WitchTower.Data
 
         public bool AddOwnedEquipment(string equipmentId)
         {
+            if (!HasEquipmentStorageSpace())
+            {
+                return false;
+            }
+
             return CreateOwnedEquipmentInstance(equipmentId) != null;
         }
 
         public bool AddOwnedEquipment(string equipmentId, EquipmentRarity quality)
         {
+            if (!HasEquipmentStorageSpace())
+            {
+                return false;
+            }
+
             return CreateOwnedEquipmentInstance(equipmentId, ((int)quality) + 1) != null;
         }
 
@@ -314,6 +324,10 @@ namespace WitchTower.Data
             }
 
             EnsureAllEquipmentOwnedForPreview();
+            if (EquipmentStorageLimit < OwnedEquipments.Count)
+            {
+                EquipmentStorageLimit = OwnedEquipments.Count;
+            }
 
             foreach (OwnedMonsterData monster in OwnedMonsters)
             {

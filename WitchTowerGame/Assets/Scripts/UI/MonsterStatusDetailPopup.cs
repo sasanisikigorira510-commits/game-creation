@@ -16,6 +16,17 @@ namespace WitchTower.UI
         private const string PanelTexturePath = "UI/MonsterDetail/MonsterDetailPanel";
         private const string StatRowTexturePath = "UI/MonsterDetail/MonsterDetailStatRow";
         private const string CloseButtonTexturePath = "UI/MonsterDetail/MonsterDetailCloseButton";
+        private const float StatRowWidth = 940f;
+        private const float StatColumnLeftStartX = -430f;
+        private const float StatColumnLeftEndX = -45f;
+        private const float StatColumnLeftContributionEndX = 20f;
+        private const float StatColumnRightStartX = -65f;
+        private const float StatColumnRightEndX = 320f;
+        private const float StatColumnRightContributionEndX = 346f;
+        private const float StatLeftLabelOffsetAfterDiamond = 104f;
+        private const float StatRightLabelOffsetAfterDiamond = 78f;
+        private const float StatLeftValueOffsetX = -10f;
+        private const float StatRightValueOffsetX = -28f;
 
         private static readonly Color BackdropColor = new Color(0f, 0f, 0f, 0.72f);
         private static readonly Color TextMain = new Color(0.96f, 0.98f, 1f, 1f);
@@ -29,6 +40,56 @@ namespace WitchTower.UI
         private static readonly Color ReleaseBorderColor = new Color(1f, 0.62f, 0.32f, 0.96f);
         private static readonly Color DisabledReleaseFillColor = new Color(0.12f, 0.12f, 0.12f, 0.86f);
         private static readonly Color DisabledReleaseBorderColor = new Color(0.55f, 0.52f, 0.48f, 0.80f);
+        private const string PlusContributionColorTag = "#94FFB8";
+        private const string EquipmentContributionColorTag = "#72C8FF";
+
+        private readonly struct StatContribution
+        {
+            public StatContribution(
+                int maxHp,
+                int attack,
+                int wisdom,
+                int defense,
+                int magicDefense,
+                float attackSpeed,
+                float critRate = 0f,
+                float critDamage = 0f)
+            {
+                MaxHp = maxHp;
+                Attack = attack;
+                Wisdom = wisdom;
+                Defense = defense;
+                MagicDefense = magicDefense;
+                AttackSpeed = attackSpeed;
+                CritRate = critRate;
+                CritDamage = critDamage;
+            }
+
+            public int MaxHp { get; }
+            public int Attack { get; }
+            public int Wisdom { get; }
+            public int Defense { get; }
+            public int MagicDefense { get; }
+            public float AttackSpeed { get; }
+            public float CritRate { get; }
+            public float CritDamage { get; }
+        }
+
+        private readonly struct StatValueParts
+        {
+            public StatValueParts(string mainText, string plusText = "", string equipmentText = "")
+            {
+                MainText = mainText ?? string.Empty;
+                PlusText = plusText ?? string.Empty;
+                EquipmentText = equipmentText ?? string.Empty;
+            }
+
+            public string MainText { get; }
+            public string PlusText { get; }
+            public string EquipmentText { get; }
+            public bool HasPlus => !string.IsNullOrEmpty(PlusText);
+            public bool HasEquipment => !string.IsNullOrEmpty(EquipmentText);
+        }
 
         public static void Show(
             Transform parent,
@@ -105,11 +166,14 @@ namespace WitchTower.UI
             CreateIdentityBlock(panel.transform, font, monster, monsterData, profile);
 
             BattleUnitStats stats = MonsterBattleStatsFactory.Create(profile, monster, monsterData);
+            StatContribution plusContribution = CalculatePlusContribution(profile, monster, monsterData, stats);
+            StatContribution equipmentContribution = CalculateEquipmentContribution(profile, monster, monsterData, stats);
             CreateSectionTitle(panel.transform, font, "戦闘ステータス", -500f);
-            CreateStatRow(panel.transform, font, -560f, "HP", stats != null ? stats.MaxHp.ToString() : "-", "攻撃", stats != null ? stats.Attack.ToString() : "-");
-            CreateStatRow(panel.transform, font, -622f, "魔攻", stats != null ? stats.Wisdom.ToString() : "-", "防御", stats != null ? stats.Defense.ToString() : "-");
-            CreateStatRow(panel.transform, font, -684f, "魔防", stats != null ? stats.MagicDefense.ToString() : "-", "攻速", stats != null ? stats.AttackSpeed.ToString("0.##") : "-");
-            CreateStatRow(panel.transform, font, -746f, "会心率", stats != null ? $"{stats.CritRate * 100f:0.#}%" : "-", "会心倍率", stats != null ? $"{stats.CritDamage:0.##}x" : "-");
+            CreateStatContributionLegend(panel.transform, font, -500f);
+            CreateStatRow(panel.transform, font, -560f, "HP", stats != null ? FormatStatParts(stats.MaxHp, plusContribution.MaxHp, equipmentContribution.MaxHp) : new StatValueParts("-"), "攻撃", stats != null ? FormatStatParts(stats.Attack, plusContribution.Attack, equipmentContribution.Attack) : new StatValueParts("-"));
+            CreateStatRow(panel.transform, font, -622f, "魔攻", stats != null ? FormatStatParts(stats.Wisdom, plusContribution.Wisdom, equipmentContribution.Wisdom) : new StatValueParts("-"), "防御", stats != null ? FormatStatParts(stats.Defense, plusContribution.Defense, equipmentContribution.Defense) : new StatValueParts("-"));
+            CreateStatRow(panel.transform, font, -684f, "魔防", stats != null ? FormatStatParts(stats.MagicDefense, plusContribution.MagicDefense, equipmentContribution.MagicDefense) : new StatValueParts("-"), "攻速", stats != null ? FormatStatParts(stats.AttackSpeed, plusContribution.AttackSpeed, equipmentContribution.AttackSpeed, "0.###") : new StatValueParts("-"));
+            CreateStatRow(panel.transform, font, -746f, "会心率", stats != null ? FormatPercentStatParts(stats.CritRate, plusContribution.CritRate, equipmentContribution.CritRate) : new StatValueParts("-"), "会心倍率", stats != null ? FormatStatParts(stats.CritDamage, plusContribution.CritDamage, equipmentContribution.CritDamage, "0.##", "x") : new StatValueParts("-"));
 
             MonsterIndividualValueService.EnsureInitialized(monster);
             CreateSectionTitle(panel.transform, font, $"個体値  平均 {MonsterIndividualValueService.GetAverage(monster)}", -824f);
@@ -372,28 +436,260 @@ namespace WitchTower.UI
         {
             CreateText("Section_" + title, parent, font, title, 27, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, y), new Vector2(820f, 40f), TextAnchor.MiddleLeft, TextGold);
+                new Vector2(0f, y), new Vector2(StatRowWidth, 40f), TextAnchor.MiddleLeft, TextGold);
+        }
+
+        private static void CreateStatContributionLegend(Transform parent, Font font, float y)
+        {
+            CreateText("StatContributionLegend", parent, font,
+                $"<color={PlusContributionColorTag}>（+）プラス</color>  <color={EquipmentContributionColorTag}>（装）装備</color>",
+                19, FontStyle.Bold,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, y), new Vector2(StatRowWidth, 40f), TextAnchor.MiddleRight, TextSub);
         }
 
         private static void CreateStatRow(Transform parent, Font font, float y, string leftLabel, string leftValue, string rightLabel, string rightValue, bool individualValues = false)
         {
+            CreateStatRow(parent, font, y, leftLabel, new StatValueParts(leftValue), rightLabel, new StatValueParts(rightValue), individualValues);
+        }
+
+        private static void CreateStatRow(Transform parent, Font font, float y, string leftLabel, StatValueParts leftValue, string rightLabel, StatValueParts rightValue, bool individualValues = false)
+        {
             Texture2D rowTexture = Resources.Load<Texture2D>(StatRowTexturePath);
             CreateRawPanel("StatRow", parent, rowTexture,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, y), new Vector2(820f, 58f), new Color(0.05f, 0.08f, 0.1f, 0.92f));
+                new Vector2(0f, y), new Vector2(StatRowWidth, 58f), new Color(0.05f, 0.08f, 0.1f, 0.92f));
 
-            CreateText("LeftLabel", parent, font, leftLabel, 21, FontStyle.Bold,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
-                new Vector2(-235f, y), new Vector2(90f, 32f), TextAnchor.MiddleLeft, TextSub);
-            CreateText("LeftValue", parent, font, leftValue, 24, FontStyle.Bold,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
-                new Vector2(-90f, y), new Vector2(140f, 34f), TextAnchor.MiddleRight, individualValues ? ResolveIndividualColor(leftValue) : TextMain);
-            CreateText("RightLabel", parent, font, rightLabel, 21, FontStyle.Bold,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
-                new Vector2(92f, y), new Vector2(130f, 32f), TextAnchor.MiddleLeft, TextSub);
-            CreateText("RightValue", parent, font, rightValue, 24, FontStyle.Bold,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
-                new Vector2(203f, y), new Vector2(130f, 34f), TextAnchor.MiddleRight, individualValues ? ResolveIndividualColor(rightValue) : TextMain);
+            CreateStatColumn(parent, font, y, StatColumnLeftStartX, StatColumnLeftEndX, leftLabel, leftValue, individualValues, true);
+            CreateStatColumn(parent, font, y, StatColumnRightStartX, StatColumnRightEndX, rightLabel, rightValue, individualValues, false);
+        }
+
+        private static void CreateStatColumn(
+            Transform parent,
+            Font font,
+            float y,
+            float columnStartX,
+            float columnEndX,
+            string label,
+            StatValueParts value,
+            bool individualValues,
+            bool leftColumn)
+        {
+            const float labelWidth = 76f;
+            const float labelValueGap = 8f;
+            const float baseWidth = 76f;
+            const float plusWidth = 80f;
+            const float segmentGap = 4f;
+            bool hasContribution = !individualValues && (value.HasPlus || value.HasEquipment);
+            float effectiveColumnEndX = hasContribution
+                ? (leftColumn ? StatColumnLeftContributionEndX : StatColumnRightContributionEndX)
+                : columnEndX;
+            float labelX = columnStartX + (leftColumn ? StatLeftLabelOffsetAfterDiamond : StatRightLabelOffsetAfterDiamond);
+
+            Text labelText = CreateText(leftColumn ? "LeftLabel" : "RightLabel", parent, font, label, 21, FontStyle.Bold,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, 0.5f),
+                new Vector2(labelX, y), new Vector2(labelWidth, 32f), TextAnchor.MiddleLeft, TextSub);
+            ConfigureStatLabelText(labelText);
+
+            float valueX = labelX + labelWidth + labelValueGap + (leftColumn ? StatLeftValueOffsetX : StatRightValueOffsetX);
+            float valueAreaWidth = Mathf.Max(80f, effectiveColumnEndX - valueX);
+            if (individualValues || (!value.HasPlus && !value.HasEquipment))
+            {
+                Text simpleValueText = CreateText(leftColumn ? "LeftValue" : "RightValue", parent, font, value.MainText, 24, FontStyle.Bold,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, 0.5f),
+                    new Vector2(valueX, y), new Vector2(valueAreaWidth, 34f), TextAnchor.MiddleRight, individualValues ? ResolveIndividualColor(value.MainText) : TextMain);
+                ApplySingleLineValueText(simpleValueText, 24);
+                return;
+            }
+
+            Text mainValueText = CreateText(leftColumn ? "LeftValue" : "RightValue", parent, font, value.MainText, 20, FontStyle.Bold,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, 0.5f),
+                new Vector2(valueX, y), new Vector2(baseWidth, 34f), TextAnchor.MiddleRight, TextMain);
+            ApplySingleLineValueText(mainValueText, 20);
+
+            float segmentX = valueX + baseWidth + segmentGap;
+            if (value.HasPlus)
+            {
+                Text plusValueText = CreateText(leftColumn ? "LeftValue" : "RightValue", parent, font, value.PlusText, 17, FontStyle.Bold,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, 0.5f),
+                    new Vector2(segmentX, y), new Vector2(plusWidth, 34f), TextAnchor.MiddleLeft, TextGreen);
+                ApplySingleLineValueText(plusValueText, 17);
+                segmentX += plusWidth + segmentGap;
+            }
+
+            if (value.HasEquipment)
+            {
+                float equipmentWidth = Mathf.Max(86f, effectiveColumnEndX - segmentX);
+                Text equipmentValueText = CreateText(leftColumn ? "LeftValue" : "RightValue", parent, font, value.EquipmentText, 17, FontStyle.Bold,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, 0.5f),
+                    new Vector2(segmentX, y), new Vector2(equipmentWidth, 34f), TextAnchor.MiddleLeft, new Color(0.45f, 0.78f, 1f, 1f));
+                ApplySingleLineValueText(equipmentValueText, 17);
+            }
+        }
+
+        private static void ConfigureStatLabelText(Text text)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 14;
+            text.resizeTextMaxSize = 21;
+        }
+
+        private static void ApplySingleLineValueText(Text text, int maxFontSize)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 11;
+            text.resizeTextMaxSize = maxFontSize;
+        }
+
+        private static StatContribution CalculatePlusContribution(PlayerProfile profile, OwnedMonsterData monster, MonsterDataSO monsterData, BattleUnitStats currentStats)
+        {
+            if (monster == null || monsterData == null || currentStats == null || monster.TotalPlusValue <= 0)
+            {
+                return default;
+            }
+
+            OwnedMonsterData monsterWithoutPlus = CreateMonsterWithoutPlus(monster);
+            BattleUnitStats baseStats = MonsterBattleStatsFactory.Create(profile, monsterWithoutPlus, monsterData);
+            if (baseStats == null)
+            {
+                return default;
+            }
+
+            return new StatContribution(
+                Mathf.Max(0, currentStats.MaxHp - baseStats.MaxHp),
+                Mathf.Max(0, currentStats.Attack - baseStats.Attack),
+                Mathf.Max(0, currentStats.Wisdom - baseStats.Wisdom),
+                Mathf.Max(0, currentStats.Defense - baseStats.Defense),
+                Mathf.Max(0, currentStats.MagicDefense - baseStats.MagicDefense),
+                Mathf.Max(0f, currentStats.AttackSpeed - baseStats.AttackSpeed));
+        }
+
+        private static StatContribution CalculateEquipmentContribution(PlayerProfile profile, OwnedMonsterData monster, MonsterDataSO monsterData, BattleUnitStats currentStats)
+        {
+            if (profile == null || monster == null || monsterData == null || currentStats == null)
+            {
+                return default;
+            }
+
+            BattleUnitStats statsWithoutEquipment = MonsterBattleStatsFactory.Create(null, monster, monsterData);
+            if (statsWithoutEquipment == null)
+            {
+                return default;
+            }
+
+            return new StatContribution(
+                currentStats.MaxHp - statsWithoutEquipment.MaxHp,
+                currentStats.Attack - statsWithoutEquipment.Attack,
+                currentStats.Wisdom - statsWithoutEquipment.Wisdom,
+                currentStats.Defense - statsWithoutEquipment.Defense,
+                currentStats.MagicDefense - statsWithoutEquipment.MagicDefense,
+                currentStats.AttackSpeed - statsWithoutEquipment.AttackSpeed,
+                currentStats.CritRate - statsWithoutEquipment.CritRate,
+                currentStats.CritDamage - statsWithoutEquipment.CritDamage);
+        }
+
+        private static OwnedMonsterData CreateMonsterWithoutPlus(OwnedMonsterData monster)
+        {
+            return new OwnedMonsterData
+            {
+                InstanceId = monster.InstanceId,
+                MonsterId = monster.MonsterId,
+                Level = monster.Level,
+                Exp = monster.Exp,
+                PlusValue = 0,
+                PlusHp = 0,
+                PlusAttack = 0,
+                PlusWisdom = 0,
+                PlusDefense = 0,
+                PlusMagicDefense = 0,
+                FusionBonusHp = monster.FusionBonusHp,
+                FusionBonusAttack = monster.FusionBonusAttack,
+                FusionBonusWisdom = monster.FusionBonusWisdom,
+                FusionBonusDefense = monster.FusionBonusDefense,
+                FusionBonusMagicDefense = monster.FusionBonusMagicDefense,
+                FusionBonusAttackSpeed = monster.FusionBonusAttackSpeed,
+                HasIndividualValues = monster.HasIndividualValues,
+                IndividualHp = monster.IndividualHp,
+                IndividualAttack = monster.IndividualAttack,
+                IndividualWisdom = monster.IndividualWisdom,
+                IndividualDefense = monster.IndividualDefense,
+                IndividualMagicDefense = monster.IndividualMagicDefense,
+                IndividualAttackSpeed = monster.IndividualAttackSpeed,
+                IsFavorite = monster.IsFavorite,
+                IsLocked = monster.IsLocked,
+                AcquiredOrder = monster.AcquiredOrder,
+                EquippedWeaponInstanceId = monster.EquippedWeaponInstanceId,
+                EquippedArmorInstanceId = monster.EquippedArmorInstanceId,
+                EquippedAccessoryInstanceId = monster.EquippedAccessoryInstanceId
+            };
+        }
+
+        private static StatValueParts FormatStatParts(int value, int plusValue, int equipmentValue)
+        {
+            return new StatValueParts(
+                value.ToString(),
+                FormatIntegerContributionText(plusValue, string.Empty),
+                FormatIntegerContributionText(equipmentValue, "装"));
+        }
+
+        private static StatValueParts FormatStatParts(float value, float plusValue, float equipmentValue, string format, string suffix = "")
+        {
+            return new StatValueParts(
+                value.ToString(format) + suffix,
+                FormatFloatContributionText(plusValue, string.Empty, format, suffix),
+                FormatFloatContributionText(equipmentValue, "装", format, suffix));
+        }
+
+        private static StatValueParts FormatPercentStatParts(float value, float plusValue, float equipmentValue)
+        {
+            return new StatValueParts(
+                $"{value * 100f:0.#}%",
+                FormatFloatContributionText(plusValue * 100f, string.Empty, "0.#", "%"),
+                FormatFloatContributionText(equipmentValue * 100f, "装", "0.#", "%"));
+        }
+
+        private static string FormatIntegerContributionText(int value, string label)
+        {
+            if (value == 0)
+            {
+                return string.Empty;
+            }
+
+            return $"（{label}{FormatSignedInteger(value)}）";
+        }
+
+        private static string FormatFloatContributionText(float value, string label, string format, string suffix)
+        {
+            if (Mathf.Abs(value) <= 0.0001f)
+            {
+                return string.Empty;
+            }
+
+            return $"（{label}{FormatSignedFloat(value, format)}{suffix}）";
+        }
+
+        private static string FormatSignedInteger(int value)
+        {
+            return value > 0 ? $"+{value}" : value.ToString();
+        }
+
+        private static string FormatSignedFloat(float value, string format)
+        {
+            return value > 0f ? $"+{value.ToString(format)}" : value.ToString(format);
         }
 
         private static string BuildMetaLine(OwnedMonsterData monster, MonsterDataSO monsterData)
@@ -664,6 +960,7 @@ namespace WitchTower.UI
             textComponent.fontStyle = fontStyle;
             textComponent.alignment = alignment;
             textComponent.color = color;
+            textComponent.supportRichText = true;
             textComponent.horizontalOverflow = HorizontalWrapMode.Wrap;
             textComponent.verticalOverflow = VerticalWrapMode.Overflow;
             textComponent.raycastTarget = false;
@@ -689,7 +986,8 @@ namespace WitchTower.UI
                    objectName != "LeftLabel" &&
                    objectName != "LeftValue" &&
                    objectName != "RightLabel" &&
-                   objectName != "RightValue";
+                   objectName != "RightValue" &&
+                   objectName != "StatContributionLegend";
         }
 
         private static void CreateTextBackground(

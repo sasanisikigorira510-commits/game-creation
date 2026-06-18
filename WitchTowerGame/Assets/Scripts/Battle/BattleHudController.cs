@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WitchTower.Data;
 
 namespace WitchTower.Battle
 {
@@ -27,7 +28,7 @@ namespace WitchTower.Battle
         {
             if (floorText != null)
             {
-                floorText.text = $"Floor {floor}";
+                floorText.text = $"{BattleDungeonCatalog.ResolveLocalFloor(floor)}層";
             }
         }
 

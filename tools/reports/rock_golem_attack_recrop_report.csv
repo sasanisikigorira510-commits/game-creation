@@ -1,0 +1,5 @@
+frame,component_area,source_bbox,source_origin_x,canvas_width,lost_pixels,output
+0,122761,"(84, 100, 540, 555)",-36,700,0,WitchTowerGame/Assets/Resources/MonsterBattle/mon_rock_golem_attack_0.png
+1,123954,"(678, 121, 1187, 555)",591,700,0,WitchTowerGame/Assets/Resources/MonsterBattle/mon_rock_golem_attack_1.png
+2,140935,"(1218, 110, 1853, 555)",1218,700,0,WitchTowerGame/Assets/Resources/MonsterBattle/mon_rock_golem_attack_2.png
+3,121692,"(1948, 100, 2404, 555)",1845,700,0,WitchTowerGame/Assets/Resources/MonsterBattle/mon_rock_golem_attack_3.png

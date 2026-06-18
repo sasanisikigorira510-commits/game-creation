@@ -1,0 +1,43 @@
+Unity Editor version:    6000.3.11f1 (3000ef702840)
+Branch:                  6000.3/staging
+Build type:              Release
+Batch mode:              YES
+macOS version:           Version 26.4 (Build 25E246)
+Darwin version:          25.4.0
+Architecture:            arm64
+Running under Rosetta:   NO
+Available memory:        32768 MB
+Date:                    2026-06-17T12:11:59Z
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-andou" at "2026-06-17T12:11:59.882069Z"
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.0+23225a6
+  Session Id:              6a305b82b498443388d7b90d6e749741
+  Correlation Id:          18d1931b7c4f3e06283e87b6b4069e2e
+  External correlation Id: 5321430213282160658
+  Machine Id:              zyBS9e6+K4uAoM/sx6nCKjFvybg=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-andou" (connect: 0.00s, validation: 0.00s, handshake: 0.02s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-andou-notifications" at "2026-06-17T12:11:59.906075Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 15669209694360-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.03s
+Launching external process: /Applications/Unity/Unity-6000.3.11f1/Unity.app/Contents/Resources/PackageManager/Server/UnityPackageManager
+
+COMMAND LINE ARGUMENTS:
+/Applications/Unity/Unity-6000.3.11f1/Unity.app/Contents/MacOS/Unity
+-batchmode
+-quit
+-projectPath
+/Users/andou/Desktop/あ/game-creation/WitchTowerGame
+-logFile
+/Users/andou/Desktop/あ/game-creation/tools/reports/unity-batch-check-20260617-211159.log
+Successfully changed project path to: /Users/andou/Desktop/あ/game-creation/WitchTowerGame
+/Users/andou/Desktop/あ/game-creation/WitchTowerGame
+[Package Manager] Server process was shutdown

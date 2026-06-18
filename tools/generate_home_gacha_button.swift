@@ -6,6 +6,10 @@ import ImageIO
 let projectRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
 let sourceURL = projectRoot.appendingPathComponent("WitchTowerGame/Assets/Resources/UI/HomeMenu/FusionButton.png")
 let outputURL = projectRoot.appendingPathComponent("WitchTowerGame/Assets/Resources/UI/HomeMenu/GachaButton.png")
+let bottomNavOutputURL = projectRoot.appendingPathComponent("WitchTowerGame/Assets/Resources/UI/HomeRedesign/HomeBottomNavGacha.png")
+let bottomNavBarURL = projectRoot.appendingPathComponent("WitchTowerGame/Assets/Resources/UI/HomeRedesign/HomeBottomNavBar.png")
+let generatedIconURL = projectRoot.appendingPathComponent("tools/assets/GachaButtonIcon_image2_alpha.png")
+let fallbackIconURL = projectRoot.appendingPathComponent("WitchTowerGame/Assets/Resources/UI/GachaPage/GachaCapsule.png")
 
 func rgbToHsv(_ r: Double, _ g: Double, _ b: Double) -> (h: Double, s: Double, v: Double) {
     let maxValue = max(r, max(g, b))
@@ -64,11 +68,44 @@ func clamp(_ value: Double) -> Double {
     min(1.0, max(0.0, value))
 }
 
+func aspectFitRect(for imageSize: NSSize, in targetRect: NSRect) -> NSRect {
+    let imageWidth = max(1.0, imageSize.width)
+    let imageHeight = max(1.0, imageSize.height)
+    let scale = min(targetRect.width / imageWidth, targetRect.height / imageHeight)
+    let fittedSize = NSSize(width: imageWidth * scale, height: imageHeight * scale)
+    return NSRect(
+        x: targetRect.midX - fittedSize.width * 0.5,
+        y: targetRect.midY - fittedSize.height * 0.5,
+        width: fittedSize.width,
+        height: fittedSize.height
+    )
+}
+
+func writePNG(_ bitmap: NSBitmapImageRep, to url: URL) throws {
+    guard let pngData = bitmap.representation(using: .png, properties: [:]) else {
+        fatalError("Failed to encode PNG")
+    }
+
+    try pngData.write(to: url, options: .atomic)
+}
+
+func drawSummonIcon(_ icon: NSImage, in targetRect: NSRect, imageInterpolation: NSImageInterpolation = .none) {
+    let iconRect = aspectFitRect(for: icon.size, in: targetRect)
+    NSGraphicsContext.current?.imageInterpolation = imageInterpolation
+    icon.draw(in: iconRect, from: .zero, operation: .sourceOver, fraction: 1.0)
+    NSGraphicsContext.current?.imageInterpolation = .high
+}
+
 guard
     let imageSource = CGImageSourceCreateWithURL(sourceURL as CFURL, nil),
     let sourceImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
 else {
     fatalError("Failed to load source image at \(sourceURL.path)")
+}
+
+let iconURL = FileManager.default.fileExists(atPath: generatedIconURL.path) ? generatedIconURL : fallbackIconURL
+guard let gachaIcon = NSImage(contentsOf: iconURL) else {
+    fatalError("Failed to load gacha icon at \(iconURL.path)")
 }
 
 let width = sourceImage.width
@@ -168,62 +205,56 @@ NSImage(cgImage: processedImage, size: canvasSize).draw(in: NSRect(origin: .zero
 
 let coverRect = NSRect(
     x: CGFloat(width) * 0.145,
-    y: CGFloat(height) * 0.19,
+    y: CGFloat(height) * 0.16,
     width: CGFloat(width) * 0.71,
-    height: CGFloat(height) * 0.60
+    height: CGFloat(height) * 0.66
 )
-let coverPath = NSBezierPath(roundedRect: coverRect, xRadius: 46, yRadius: 46)
+let coverPath = NSBezierPath(roundedRect: coverRect, xRadius: 42, yRadius: 42)
 NSGradient(colors: [
-    NSColor(calibratedRed: 0.055, green: 0.020, blue: 0.115, alpha: 1.0),
-    NSColor(calibratedRed: 0.190, green: 0.050, blue: 0.305, alpha: 1.0),
-    NSColor(calibratedRed: 0.065, green: 0.020, blue: 0.130, alpha: 1.0)
+    NSColor(calibratedRed: 0.025, green: 0.024, blue: 0.050, alpha: 1.0),
+    NSColor(calibratedRed: 0.055, green: 0.038, blue: 0.105, alpha: 1.0),
+    NSColor(calibratedRed: 0.018, green: 0.018, blue: 0.038, alpha: 1.0)
 ])?.draw(in: coverPath, angle: 0)
 
-NSColor(calibratedRed: 0.97, green: 0.68, blue: 0.20, alpha: 0.26).setStroke()
-coverPath.lineWidth = 2.0
+NSColor(calibratedRed: 0.78, green: 0.60, blue: 0.34, alpha: 0.58).setStroke()
+coverPath.lineWidth = 3.0
 coverPath.stroke()
 
-let center = NSPoint(x: CGFloat(width) * 0.5, y: CGFloat(height) * 0.50)
-for index in 0..<3 {
-    let inset = CGFloat(index) * 17
-    let alpha = CGFloat(0.36 - Double(index) * 0.08)
-    let ringRect = NSRect(
-        x: center.x - 142 + inset,
-        y: center.y - 92 + inset * 0.55,
-        width: 284 - inset * 2,
-        height: 184 - inset * 1.1
+let center = NSPoint(x: coverRect.midX, y: coverRect.midY + CGFloat(height) * 0.08)
+for index in 0..<16 {
+    let angle = Double(index) / 16.0 * Double.pi * 2.0
+    let end = NSPoint(
+        x: center.x + CGFloat(cos(angle)) * CGFloat(width) * 0.22,
+        y: center.y + CGFloat(sin(angle)) * CGFloat(height) * 0.17
     )
-    let ring = NSBezierPath(ovalIn: ringRect)
-    NSColor(calibratedRed: 0.98, green: 0.72, blue: 0.2, alpha: alpha).setStroke()
-    ring.lineWidth = CGFloat(4 - index)
-    ring.stroke()
+    let ray = NSBezierPath()
+    ray.move(to: center)
+    ray.line(to: end)
+    NSColor(calibratedRed: 0.42, green: 0.62, blue: 1.0, alpha: 0.13).setStroke()
+    ray.lineWidth = index % 4 == 0 ? 4.0 : 2.0
+    ray.stroke()
 }
 
-for index in 0..<18 {
-    let angle = Double(index) / 18.0 * Double.pi * 2.0
-    let radiusX = CGFloat(165 + (index % 3) * 8)
-    let radiusY = CGFloat(106 + (index % 4) * 5)
-    let point = NSPoint(
-        x: center.x + CGFloat(cos(angle)) * radiusX,
-        y: center.y + CGFloat(sin(angle)) * radiusY
-    )
-    let starSize = CGFloat(index % 3 == 0 ? 5 : 3)
-    NSColor(calibratedRed: 1.0, green: 0.78, blue: 0.28, alpha: 0.54).setFill()
-    NSBezierPath(ovalIn: NSRect(x: point.x - starSize * 0.5, y: point.y - starSize * 0.5, width: starSize, height: starSize)).fill()
-}
+let iconTargetRect = NSRect(
+    x: CGFloat(width) * 0.150,
+    y: CGFloat(height) * 0.300,
+    width: CGFloat(width) * 0.70,
+    height: CGFloat(height) * 0.58
+)
+drawSummonIcon(gachaIcon, in: iconTargetRect)
 
 let paragraph = NSMutableParagraphStyle()
 paragraph.alignment = .center
-let font = NSFont(name: "ToppanBunkyuMidashiMinchoStdN-ExtraBold", size: 108)
-    ?? NSFont(name: "YuMin-Extrabold", size: 108)
-    ?? NSFont.boldSystemFont(ofSize: 108)
+let font = NSFont(name: "ToppanBunkyuMidashiMinchoStdN-ExtraBold", size: 92)
+    ?? NSFont(name: "YuMin-Extrabold", size: 92)
+    ?? NSFont.boldSystemFont(ofSize: 92)
 let textRect = NSRect(
     x: CGFloat(width) * 0.12,
-    y: CGFloat(height) * 0.34,
+    y: CGFloat(height) * 0.185,
     width: CGFloat(width) * 0.76,
-    height: CGFloat(height) * 0.28
+    height: CGFloat(height) * 0.25
 )
-let label = "ガチャ"
+let label = "召喚"
 let glowAttributes: [NSAttributedString.Key: Any] = [
     .font: font,
     .foregroundColor: NSColor(calibratedRed: 1.0, green: 0.72, blue: 0.20, alpha: 0.45),
@@ -252,3 +283,53 @@ guard let pngData = outputRep.representation(using: .png, properties: [:]) else 
 
 try pngData.write(to: outputURL, options: .atomic)
 print("Wrote \(outputURL.path) (\(width)x\(height))")
+
+let bottomNavWidth = 216
+let bottomNavHeight = 190
+guard
+    let bottomNavRep = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: bottomNavWidth,
+        pixelsHigh: bottomNavHeight,
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0
+    )
+else {
+    fatalError("Failed to create bottom nav output image")
+}
+
+NSGraphicsContext.saveGraphicsState()
+NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bottomNavRep)
+NSColor.clear.setFill()
+NSRect(x: 0, y: 0, width: bottomNavWidth, height: bottomNavHeight).fill()
+
+if
+    let bottomNavBarSource = CGImageSourceCreateWithURL(bottomNavBarURL as CFURL, nil),
+    let bottomNavBarImage = CGImageSourceCreateImageAtIndex(bottomNavBarSource, 0, nil),
+    let croppedGachaSegment = bottomNavBarImage.cropping(to: CGRect(x: 216, y: 0, width: bottomNavWidth, height: bottomNavHeight))
+{
+    NSImage(cgImage: croppedGachaSegment, size: NSSize(width: bottomNavWidth, height: bottomNavHeight))
+        .draw(in: NSRect(x: 0, y: 0, width: bottomNavWidth, height: bottomNavHeight))
+} else if let bottomNavSource = NSImage(contentsOf: bottomNavOutputURL) {
+    bottomNavSource.draw(in: NSRect(x: 0, y: 0, width: bottomNavWidth, height: bottomNavHeight))
+}
+
+let navIconSize = CGFloat(138)
+let navIconCenterX = CGFloat(bottomNavWidth) * 0.5
+drawSummonIcon(
+    gachaIcon,
+    in: NSRect(
+        x: navIconCenterX - navIconSize * 0.5 + 10,
+        y: 51,
+        width: navIconSize,
+        height: navIconSize
+    ))
+NSGraphicsContext.restoreGraphicsState()
+
+try writePNG(bottomNavRep, to: bottomNavOutputURL)
+print("Wrote \(bottomNavOutputURL.path) (\(bottomNavWidth)x\(bottomNavHeight))")

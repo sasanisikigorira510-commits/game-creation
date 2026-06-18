@@ -114,6 +114,12 @@ namespace WitchTower.Home
             }
 
             GoldShopProductDefinition definition = product.Value;
+            if (definition.RewardType == GoldShopRewardType.Equipment && !profile.HasEquipmentStorageSpace())
+            {
+                message = "装備枠がいっぱいです。永続強化ショップで装備枠を拡張できます。";
+                return false;
+            }
+
             if (!profile.TrySpendGold(definition.Cost))
             {
                 message = $"ゴールドが不足しています。あと{Math.Max(0, definition.Cost - profile.Gold):N0}必要です。";

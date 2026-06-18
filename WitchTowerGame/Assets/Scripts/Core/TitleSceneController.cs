@@ -62,6 +62,22 @@ namespace WitchTower.Core
             Favorite
         }
 
+        private enum EquipmentInventoryFilter
+        {
+            All,
+            Weapon,
+            Armor,
+            Accessory
+        }
+
+        private enum EquipmentInventorySortMode
+        {
+            Default,
+            Rarity,
+            Power,
+            Name
+        }
+
         [SerializeField] private string homeSceneName = "HomeScene";
         [SerializeField] private string battleSceneName = "BattleScene";
         [SerializeField] private string formationSceneName = "FormationScene";
@@ -150,6 +166,10 @@ namespace WitchTower.Core
         private const string EquipmentEnhanceDestroyBasePath = "UI/EquipmentEnhance/EnhanceDestroy_";
         private const int EquipmentEnhanceEffectFrameCount = 8;
         private const float EquipmentEnhanceEffectDuration = 1.35f;
+        private const float EquipmentInventoryWidth = 872f;
+        private const float EquipmentInventoryPanelHeight = 960f;
+        private const float EquipmentInventoryControlsHeight = 104f;
+        private const float EquipmentInventoryViewportHeight = EquipmentInventoryPanelHeight - EquipmentInventoryControlsHeight;
 
         private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
         private readonly Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
@@ -161,6 +181,9 @@ namespace WitchTower.Core
         private readonly List<Image> equipmentMonsterElementFilterButtonImages = new List<Image>();
         private readonly List<Text> equipmentMonsterElementFilterButtonTexts = new List<Text>();
         private readonly List<int> equipmentMonsterElementFilterValues = new List<int>();
+        private readonly List<Image> equipmentInventoryFilterButtonImages = new List<Image>();
+        private readonly List<Text> equipmentInventoryFilterButtonTexts = new List<Text>();
+        private readonly List<EquipmentInventoryFilter> equipmentInventoryFilterValues = new List<EquipmentInventoryFilter>();
 
         private GameObject formationPanelRoot;
         private GameObject equipmentSceneRoot;
@@ -185,6 +208,8 @@ namespace WitchTower.Core
         private Text equipmentMonsterPickerSummaryText;
         private Text equipmentMonsterPickerSortButtonText;
         private InputField equipmentMonsterSearchInput;
+        private Text equipmentInventorySummaryText;
+        private Text equipmentInventorySortButtonText;
         private RectTransform equipmentInventoryContentRect;
         private GameObject equipmentEnhanceOverlayRoot;
         private RectTransform equipmentEnhanceOverlayListRect;
@@ -212,6 +237,8 @@ namespace WitchTower.Core
         private string equipmentMonsterSearchQuery = string.Empty;
         private EquipmentEnhancementResultType activeEquipmentEnhanceEffect = EquipmentEnhancementResultType.None;
         private EquipmentMonsterPickerSortMode equipmentMonsterPickerSortMode = EquipmentMonsterPickerSortMode.Default;
+        private EquipmentInventoryFilter equipmentInventoryFilter = EquipmentInventoryFilter.All;
+        private EquipmentInventorySortMode equipmentInventorySortMode = EquipmentInventorySortMode.Default;
         private float equipmentEnhanceEffectTimer;
         private int equipmentMonsterClassFilter;
         private int equipmentMonsterElementFilter = -1;
@@ -578,17 +605,37 @@ namespace WitchTower.Core
             inventoryListPanelRect.anchorMax = new Vector2(0f, 1f);
             inventoryListPanelRect.pivot = new Vector2(0f, 1f);
             inventoryListPanelRect.anchoredPosition = new Vector2(0f, -52f);
-            inventoryListPanelRect.sizeDelta = new Vector2(872f, 960f);
+            inventoryListPanelRect.sizeDelta = new Vector2(EquipmentInventoryWidth, EquipmentInventoryPanelHeight);
 
             Image inventoryListPanelImage = inventoryListPanel.AddComponent<Image>();
             inventoryListPanelImage.color = new Color(0.02f, 0.04f, 0.07f, 0.16f);
+
+            equipmentInventorySummaryText = CreateText("EquipmentInventorySummary", inventoryListPanel.transform, font, string.Empty, 17, FontStyle.Bold,
+                TextAnchor.MiddleLeft, new Color(0.92f, 0.88f, 0.76f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(18f, -12f), new Vector2(438f, 30f));
+            equipmentInventorySummaryText.resizeTextForBestFit = true;
+            equipmentInventorySummaryText.resizeTextMinSize = 12;
+            equipmentInventorySummaryText.resizeTextMaxSize = 17;
+
+            equipmentInventoryFilterButtonImages.Clear();
+            equipmentInventoryFilterButtonTexts.Clear();
+            equipmentInventoryFilterValues.Clear();
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.All, "全て", new Vector2(18f, -56f), new Vector2(92f, 36f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Weapon, "武器", new Vector2(122f, -56f), new Vector2(92f, 36f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Armor, "防具", new Vector2(226f, -56f), new Vector2(92f, 36f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Accessory, "装飾品", new Vector2(330f, -56f), new Vector2(112f, 36f));
+
+            Button inventorySortButton = CreateActionButton(inventoryListPanel.transform, font, "並び: 通常", new Vector2(1f, 1f), new Vector2(1f, 1f),
+                new Vector2(1f, 1f), new Vector2(-18f, -56f), new Vector2(190f, 36f),
+                new Color(0.18f, 0.28f, 0.38f, 0.96f), CycleEquipmentInventorySort, 14);
+            equipmentInventorySortButtonText = inventorySortButton.GetComponentInChildren<Text>();
 
             GameObject inventoryViewport = CreateUiObject("EquipmentInventoryViewport", inventoryListPanel.transform);
             RectTransform inventoryViewportRect = inventoryViewport.AddComponent<RectTransform>();
             inventoryViewportRect.anchorMin = Vector2.zero;
             inventoryViewportRect.anchorMax = Vector2.one;
             inventoryViewportRect.offsetMin = Vector2.zero;
-            inventoryViewportRect.offsetMax = Vector2.zero;
+            inventoryViewportRect.offsetMax = new Vector2(0f, -EquipmentInventoryControlsHeight);
 
             Image inventoryViewportImage = inventoryViewport.AddComponent<Image>();
             inventoryViewportImage.color = new Color(0f, 0f, 0f, 0.01f);
@@ -600,7 +647,7 @@ namespace WitchTower.Core
             equipmentInventoryContentRect.anchorMax = new Vector2(0f, 1f);
             equipmentInventoryContentRect.pivot = new Vector2(0f, 1f);
             equipmentInventoryContentRect.anchoredPosition = Vector2.zero;
-            equipmentInventoryContentRect.sizeDelta = new Vector2(872f, 960f);
+            equipmentInventoryContentRect.sizeDelta = new Vector2(EquipmentInventoryWidth, EquipmentInventoryViewportHeight);
 
             ScrollRect inventoryScrollRect = inventoryListPanel.AddComponent<ScrollRect>();
             inventoryScrollRect.viewport = inventoryViewportRect;
@@ -1468,6 +1515,281 @@ namespace WitchTower.Core
             }
         }
 
+        private Button CreateEquipmentInventoryFilterButton(
+            Transform parent,
+            Font font,
+            EquipmentInventoryFilter filter,
+            string label,
+            Vector2 anchoredPosition,
+            Vector2 size)
+        {
+            Button button = CreateActionButton(parent, font, label, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), anchoredPosition, size,
+                new Color(0.12f, 0.18f, 0.24f, 0.96f), () => SetEquipmentInventoryFilter(filter), 14);
+            equipmentInventoryFilterButtonImages.Add(button.GetComponent<Image>());
+            equipmentInventoryFilterButtonTexts.Add(button.GetComponentInChildren<Text>());
+            equipmentInventoryFilterValues.Add(filter);
+            return button;
+        }
+
+        private void SetEquipmentInventoryFilter(EquipmentInventoryFilter filter)
+        {
+            equipmentInventoryFilter = filter;
+            RefreshEquipmentScene();
+        }
+
+        private void CycleEquipmentInventorySort()
+        {
+            switch (equipmentInventorySortMode)
+            {
+                case EquipmentInventorySortMode.Default:
+                    equipmentInventorySortMode = EquipmentInventorySortMode.Rarity;
+                    break;
+                case EquipmentInventorySortMode.Rarity:
+                    equipmentInventorySortMode = EquipmentInventorySortMode.Power;
+                    break;
+                case EquipmentInventorySortMode.Power:
+                    equipmentInventorySortMode = EquipmentInventorySortMode.Name;
+                    break;
+                default:
+                    equipmentInventorySortMode = EquipmentInventorySortMode.Default;
+                    break;
+            }
+
+            RefreshEquipmentScene();
+        }
+
+        private List<OwnedEquipmentData> BuildEquipmentInventoryDisplayEquipments(PlayerProfile profile)
+        {
+            var result = new List<OwnedEquipmentData>();
+            if (profile == null)
+            {
+                return result;
+            }
+
+            for (int i = 0; i < profile.OwnedEquipments.Count; i += 1)
+            {
+                OwnedEquipmentData equipment = profile.OwnedEquipments[i];
+                EquipmentDataSO equipmentData = MasterDataManager.Instance?.GetEquipmentData(equipment.EquipmentId);
+                if (!PassesEquipmentInventoryFilter(equipmentData))
+                {
+                    continue;
+                }
+
+                result.Add(equipment);
+            }
+
+            result.Sort(CompareEquipmentInventoryEntries);
+            return result;
+        }
+
+        private bool PassesEquipmentInventoryFilter(EquipmentDataSO equipmentData)
+        {
+            if (equipmentInventoryFilter == EquipmentInventoryFilter.All)
+            {
+                return true;
+            }
+
+            if (equipmentData == null)
+            {
+                return false;
+            }
+
+            switch (equipmentInventoryFilter)
+            {
+                case EquipmentInventoryFilter.Weapon:
+                    return equipmentData.slotType == EquipmentSlotType.Weapon;
+                case EquipmentInventoryFilter.Armor:
+                    return equipmentData.slotType == EquipmentSlotType.Armor;
+                case EquipmentInventoryFilter.Accessory:
+                    return equipmentData.slotType == EquipmentSlotType.Accessory;
+                default:
+                    return true;
+            }
+        }
+
+        private int CompareEquipmentInventoryEntries(OwnedEquipmentData left, OwnedEquipmentData right)
+        {
+            EquipmentDataSO leftData = MasterDataManager.Instance?.GetEquipmentData(left.EquipmentId);
+            EquipmentDataSO rightData = MasterDataManager.Instance?.GetEquipmentData(right.EquipmentId);
+
+            switch (equipmentInventorySortMode)
+            {
+                case EquipmentInventorySortMode.Rarity:
+                {
+                    int rarityCompare = GetEquipmentClassRank(rightData, right).CompareTo(GetEquipmentClassRank(leftData, left));
+                    if (rarityCompare != 0)
+                    {
+                        return rarityCompare;
+                    }
+
+                    int powerCompare = ResolveEquipmentPowerScore(rightData, right).CompareTo(ResolveEquipmentPowerScore(leftData, left));
+                    if (powerCompare != 0)
+                    {
+                        return powerCompare;
+                    }
+
+                    break;
+                }
+                case EquipmentInventorySortMode.Power:
+                {
+                    int powerCompare = ResolveEquipmentPowerScore(rightData, right).CompareTo(ResolveEquipmentPowerScore(leftData, left));
+                    if (powerCompare != 0)
+                    {
+                        return powerCompare;
+                    }
+
+                    int rarityCompare = GetEquipmentClassRank(rightData, right).CompareTo(GetEquipmentClassRank(leftData, left));
+                    if (rarityCompare != 0)
+                    {
+                        return rarityCompare;
+                    }
+
+                    break;
+                }
+                case EquipmentInventorySortMode.Name:
+                {
+                    int nameCompare = string.Compare(ResolveEquipmentInventoryName(leftData, left), ResolveEquipmentInventoryName(rightData, right), StringComparison.CurrentCulture);
+                    if (nameCompare != 0)
+                    {
+                        return nameCompare;
+                    }
+
+                    break;
+                }
+                default:
+                {
+                    int slotCompare = ResolveEquipmentSlotOrder(leftData).CompareTo(ResolveEquipmentSlotOrder(rightData));
+                    if (slotCompare != 0)
+                    {
+                        return slotCompare;
+                    }
+
+                    break;
+                }
+            }
+
+            int equippedCompare = IsEquipmentInventoryItemEquipped(right).CompareTo(IsEquipmentInventoryItemEquipped(left));
+            if (equippedCompare != 0)
+            {
+                return equippedCompare;
+            }
+
+            int fallbackSlotCompare = ResolveEquipmentSlotOrder(leftData).CompareTo(ResolveEquipmentSlotOrder(rightData));
+            if (fallbackSlotCompare != 0)
+            {
+                return fallbackSlotCompare;
+            }
+
+            int fallbackNameCompare = string.Compare(ResolveEquipmentInventoryName(leftData, left), ResolveEquipmentInventoryName(rightData, right), StringComparison.CurrentCulture);
+            if (fallbackNameCompare != 0)
+            {
+                return fallbackNameCompare;
+            }
+
+            return string.CompareOrdinal(left.InstanceId, right.InstanceId);
+        }
+
+        private void UpdateEquipmentInventoryControls(int visibleCount, int totalCount, int storageLimit)
+        {
+            if (equipmentInventorySummaryText != null)
+            {
+                equipmentInventorySummaryText.text =
+                    $"{visibleCount}/{totalCount}個  枠 {totalCount}/{Mathf.Max(1, storageLimit)}  {GetEquipmentInventoryFilterLabel(equipmentInventoryFilter)} / {GetEquipmentInventorySortLabel()}";
+            }
+
+            for (int i = 0; i < equipmentInventoryFilterButtonImages.Count; i += 1)
+            {
+                EquipmentInventoryFilter filter = i < equipmentInventoryFilterValues.Count
+                    ? equipmentInventoryFilterValues[i]
+                    : EquipmentInventoryFilter.All;
+                bool isSelected = filter == equipmentInventoryFilter;
+                Image image = equipmentInventoryFilterButtonImages[i];
+                if (image != null)
+                {
+                    image.color = isSelected
+                        ? new Color(0.42f, 0.30f, 0.13f, 0.98f)
+                        : new Color(0.12f, 0.18f, 0.24f, 0.96f);
+                }
+
+                Text text = i < equipmentInventoryFilterButtonTexts.Count ? equipmentInventoryFilterButtonTexts[i] : null;
+                if (text != null)
+                {
+                    text.color = isSelected ? new Color(1f, 0.92f, 0.66f) : Color.white;
+                }
+            }
+
+            if (equipmentInventorySortButtonText != null)
+            {
+                equipmentInventorySortButtonText.text = "並び: " + GetEquipmentInventorySortLabel();
+            }
+        }
+
+        private static int ResolveEquipmentSlotOrder(EquipmentDataSO equipmentData)
+        {
+            return equipmentData != null ? (int)equipmentData.slotType : 99;
+        }
+
+        private static bool IsEquipmentInventoryItemEquipped(OwnedEquipmentData equipment)
+        {
+            return equipment != null && !string.IsNullOrEmpty(equipment.EquippedMonsterInstanceId);
+        }
+
+        private static float ResolveEquipmentPowerScore(EquipmentDataSO equipmentData, OwnedEquipmentData equipment)
+        {
+            if (equipmentData == null || equipment == null)
+            {
+                return 0f;
+            }
+
+            EquipmentResolvedBonus bonus = EquipmentEnhancementCatalog.ResolveEquipmentBonus(equipmentData, equipment);
+            return ((bonus.AttackPercent + bonus.WisdomPercent) * 120f)
+                + ((bonus.DefensePercent + bonus.MagicDefensePercent) * 105f)
+                + (bonus.HpPercent * 55f)
+                + (bonus.CritRate * 130f)
+                + (bonus.AttackSpeed * 45f);
+        }
+
+        private static string ResolveEquipmentInventoryName(EquipmentDataSO equipmentData, OwnedEquipmentData equipment)
+        {
+            if (equipmentData != null && !string.IsNullOrEmpty(equipmentData.equipmentName))
+            {
+                return equipmentData.equipmentName;
+            }
+
+            return equipment != null ? equipment.EquipmentId : string.Empty;
+        }
+
+        private static string GetEquipmentInventoryFilterLabel(EquipmentInventoryFilter filter)
+        {
+            switch (filter)
+            {
+                case EquipmentInventoryFilter.Weapon:
+                    return "武器";
+                case EquipmentInventoryFilter.Armor:
+                    return "防具";
+                case EquipmentInventoryFilter.Accessory:
+                    return "装飾品";
+                default:
+                    return "全て";
+            }
+        }
+
+        private string GetEquipmentInventorySortLabel()
+        {
+            switch (equipmentInventorySortMode)
+            {
+                case EquipmentInventorySortMode.Rarity:
+                    return "レア度";
+                case EquipmentInventorySortMode.Power:
+                    return "能力値";
+                case EquipmentInventorySortMode.Name:
+                    return "名前";
+                default:
+                    return "通常";
+            }
+        }
+
         private void RebuildEquipmentInventory(PlayerProfile profile, OwnedMonsterData selectedMonster)
         {
             if (equipmentInventoryContentRect == null)
@@ -1477,36 +1799,31 @@ namespace WitchTower.Core
 
             ClearChildren(equipmentInventoryContentRect);
             Font font = ResolveRuntimeFont();
+            int totalEquipmentCount = profile != null ? profile.OwnedEquipments.Count : 0;
+            int equipmentStorageLimit = profile != null ? profile.EquipmentStorageLimit : PlayerProfile.DefaultEquipmentStorageLimit;
+            List<OwnedEquipmentData> sortedEquipments = BuildEquipmentInventoryDisplayEquipments(profile);
+            UpdateEquipmentInventoryControls(sortedEquipments.Count, totalEquipmentCount, equipmentStorageLimit);
 
-            if (profile == null || profile.OwnedEquipments.Count <= 0)
+            if (totalEquipmentCount <= 0)
             {
-                equipmentInventoryContentRect.sizeDelta = new Vector2(872f, 960f);
+                equipmentInventoryContentRect.sizeDelta = new Vector2(EquipmentInventoryWidth, EquipmentInventoryViewportHeight);
                 CreateText("EquipmentEmptyState", equipmentInventoryContentRect, font, "所持装備がありません", 20, FontStyle.Bold,
                     TextAnchor.MiddleCenter, new Color(0.84f, 0.88f, 0.92f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(360f, 40f));
                 return;
             }
 
-            var sortedEquipments = new List<OwnedEquipmentData>(profile.OwnedEquipments);
-            sortedEquipments.Sort((left, right) =>
+            if (sortedEquipments.Count <= 0)
             {
-                EquipmentDataSO leftData = MasterDataManager.Instance?.GetEquipmentData(left.EquipmentId);
-                EquipmentDataSO rightData = MasterDataManager.Instance?.GetEquipmentData(right.EquipmentId);
-                int leftSlot = leftData != null ? (int)leftData.slotType : 0;
-                int rightSlot = rightData != null ? (int)rightData.slotType : 0;
-                int slotCompare = leftSlot.CompareTo(rightSlot);
-                if (slotCompare != 0)
-                {
-                    return slotCompare;
-                }
-
-                string leftName = leftData != null ? leftData.equipmentName : left.EquipmentId;
-                string rightName = rightData != null ? rightData.equipmentName : right.EquipmentId;
-                return string.Compare(leftName, rightName, StringComparison.Ordinal);
-            });
+                equipmentInventoryContentRect.sizeDelta = new Vector2(EquipmentInventoryWidth, EquipmentInventoryViewportHeight);
+                CreateText("EquipmentEmptyState", equipmentInventoryContentRect, font, "条件に合う装備がありません", 20, FontStyle.Bold,
+                    TextAnchor.MiddleCenter, new Color(0.84f, 0.88f, 0.92f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420f, 40f));
+                return;
+            }
 
             int rowCount = (sortedEquipments.Count + 1) / 2;
-            equipmentInventoryContentRect.sizeDelta = new Vector2(872f, Mathf.Max(960f, rowCount * 244f));
+            equipmentInventoryContentRect.sizeDelta = new Vector2(EquipmentInventoryWidth, Mathf.Max(EquipmentInventoryViewportHeight, rowCount * 244f));
 
             for (int i = 0; i < sortedEquipments.Count; i += 1)
             {

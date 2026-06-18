@@ -30,10 +30,10 @@ MonoBehaviour:
   plusGrowth:
     maxHpPerPlus: 2
     attackPerPlus: 1
-    magicAttackPerPlus: 0
+    magicAttackPerPlus: 1
     defensePerPlus: 2
     magicDefensePerPlus: 1
-    attackSpeedPerPlus: 0.002
+    attackSpeedPerPlus: 0.001
   levelGrowth:
     maxHpCoefficient: 1.28
     attackCoefficient: 1.1

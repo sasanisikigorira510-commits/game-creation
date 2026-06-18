@@ -16,6 +16,8 @@ namespace WitchTower.Save
         public int AttackUpgradeLevel;
         public int DefenseUpgradeLevel;
         public int HpUpgradeLevel;
+        public bool HasAutoRepeatFloorUpgrade;
+        public int AutoRepeatFloorUpgradeEnabledState;
         public string LastDailyRewardDate;
         public string DailyQuestProgressDate;
         public int DailyBattleWinCount;
@@ -29,6 +31,7 @@ namespace WitchTower.Save
         public List<OwnedMaterialData> OwnedMaterials;
         public List<OwnedEquipmentData> OwnedEquipments;
         public List<OwnedEnhancementRelicData> OwnedEnhancementRelics;
+        public int EquipmentStorageLimit;
         public int MonsterStorageLimit;
         public List<OwnedMonsterData> OwnedMonsters;
         public List<MonsterDexEntryData> MonsterDexEntries;
@@ -44,11 +47,13 @@ namespace WitchTower.Save
                 Gold = 100,
                 FreeGachaStones = 3000,
                 PaidGachaStones = 0,
-                HighestFloor = 1,
+                HighestFloor = 0,
                 CurrentFloor = 1,
                 AttackUpgradeLevel = 0,
                 DefenseUpgradeLevel = 0,
                 HpUpgradeLevel = 0,
+                HasAutoRepeatFloorUpgrade = false,
+                AutoRepeatFloorUpgradeEnabledState = 0,
                 LastDailyRewardDate = string.Empty,
                 DailyQuestProgressDate = string.Empty,
                 DailyBattleWinCount = 0,
@@ -134,6 +139,7 @@ namespace WitchTower.Save
                         Amount = 6
                     }
                 },
+                EquipmentStorageLimit = 100,
                 MonsterStorageLimit = 100,
                 OwnedMonsters = new List<OwnedMonsterData>(),
                 MonsterDexEntries = new List<MonsterDexEntryData>(),
@@ -221,11 +227,11 @@ namespace WitchTower.Save
         public string EquippedAccessoryInstanceId;
 
         public int TotalPlusValue =>
-            System.Math.Max(0, PlusHp) +
-            System.Math.Max(0, PlusAttack) +
-            System.Math.Max(0, PlusWisdom) +
-            System.Math.Max(0, PlusDefense) +
-            System.Math.Max(0, PlusMagicDefense);
+            System.Math.Max(
+                System.Math.Max(System.Math.Max(0, PlusValue), System.Math.Max(0, PlusHp)),
+                System.Math.Max(
+                    System.Math.Max(System.Math.Max(0, PlusAttack), System.Math.Max(0, PlusWisdom)),
+                    System.Math.Max(System.Math.Max(0, PlusDefense), System.Math.Max(0, PlusMagicDefense))));
     }
 
     [Serializable]

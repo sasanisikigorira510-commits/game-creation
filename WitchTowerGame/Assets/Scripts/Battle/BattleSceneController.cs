@@ -161,6 +161,8 @@ namespace WitchTower.Battle
         private const string PremiumSwordAttackEffectPath = "BattleEffects/Monster/fx_sword_saint_alvarez_attack";
         private const string PremiumMagicAttackEffectPath = "BattleEffects/Monster/fx_abyss_grand_mage_seraphis_attack";
         private const string SeraphisOrbProjectileEffectPath = "BattleEffects/Monster/fx_abyss_grand_mage_seraphis_orb_attack";
+        private const string AllyDefeatEffectPath = "BattleEffects/Defeat/AllyDefeat";
+        private const string EnemyDefeatEffectPath = "BattleEffects/Defeat/EnemyDefeat";
         private const string SpiritQueenTitaniaMonsterId = "monster_spirit_queen_titania";
         private const string TitaniaStaffBeamEffectPath = "BattleEffects/Monster/fx_spirit_queen_titania_staff_beam_attack";
         private static string ImageGeneratedMonsterAttackEffectPath(string key)
@@ -571,7 +573,7 @@ namespace WitchTower.Battle
             "BattleBackgrounds/dungeon3_1170x2532"
         };
         [SerializeField] private string bossBackdropResourcePath = "BattleBackgrounds/boss3";
-        [SerializeField] private int bossFloorInterval = 10;
+        private const float AutoRepeatResultDelaySeconds = 1.4f;
 
         private sealed class ActiveRangedAttackEffect
         {
@@ -604,6 +606,15 @@ namespace WitchTower.Battle
             public Text Label;
         }
 
+        private sealed class EnemyPreviewVisualData
+        {
+            public EnemyDataSO EnemyData;
+            public List<Sprite> IdleSprites;
+            public List<Sprite> MoveSprites;
+            public List<Sprite> AttackSprites;
+            public float AttackRange;
+        }
+
         private struct PendingHitReaction
         {
             public BattleHitInfo HitInfo;
@@ -612,6 +623,9 @@ namespace WitchTower.Battle
 
         private int currentFloor;
         private bool resultHandled;
+        private bool autoRepeatSameFloorActive;
+        private bool autoRepeatRestartQueued;
+        private float autoRepeatRestartTimer;
         private bool initialized;
         private BattleRewardResult lastReward;
         private MonsterRecruitResult lastRecruitResult;
@@ -632,6 +646,9 @@ namespace WitchTower.Battle
         private GameObject rangedEffectRoot;
         private GameObject skillPanelRoot;
         private GameObject waveHudRoot;
+        private GameObject battleAnnouncementRoot;
+        private Image battleAnnouncementBackgroundImage;
+        private Text battleAnnouncementText;
         private readonly List<Image> allyPreviewImages = new List<Image>();
         private readonly List<Image> enemyPreviewImages = new List<Image>();
         private readonly List<PreviewHpBar> allyPreviewHpBars = new List<PreviewHpBar>();
@@ -652,6 +669,9 @@ namespace WitchTower.Battle
         private List<Sprite> enemyIdleSprites = new List<Sprite>();
         private List<Sprite> enemyMoveSprites = new List<Sprite>();
         private List<Sprite> enemyAttackSprites = new List<Sprite>();
+        private readonly List<Sprite> allyDefeatEffectSprites = new List<Sprite>();
+        private readonly List<Sprite> enemyDefeatEffectSprites = new List<Sprite>();
+        private readonly Dictionary<string, EnemyPreviewVisualData> enemyPreviewVisualDataByEnemyId = new Dictionary<string, EnemyPreviewVisualData>();
         private EnemyDataSO currentPreviewEnemyData;
         private Image waveEnemyCountFillImage;
         private Text waveEnemyCountText;
@@ -675,6 +695,15 @@ namespace WitchTower.Battle
         private Text minimalResultNextFloorButtonText;
         private Text minimalResultRetryFloorButtonText;
         private Text minimalResultHomeButtonText;
+        private Button retireButton;
+        private Text retireButtonText;
+        private GameObject retireConfirmationOverlayRoot;
+        private Button confirmRetireButton;
+        private Button cancelRetireButton;
+        private bool isRetireConfirmationOpen;
+        private readonly Queue<string> battleAnnouncementQueue = new Queue<string>();
+        private string activeBattleAnnouncementText = string.Empty;
+        private float battleAnnouncementRemaining;
         private readonly List<GameObject> minimalResultRewardVisualObjects = new List<GameObject>();
         private int lastEncounterSerial = -1;
         private int lastPresentedWave = -1;
@@ -705,6 +734,14 @@ namespace WitchTower.Battle
         private readonly List<float> enemyAttackVisualRemainings = new List<float>();
         private readonly List<float> allyDefeatVanishRemainings = new List<float>();
         private readonly List<float> enemyDefeatVanishRemainings = new List<float>();
+        private readonly List<Image> allyDefeatEffectImages = new List<Image>();
+        private readonly List<float> allyDefeatEffectRemainings = new List<float>();
+        private readonly List<Vector2> allyDefeatEffectAnchors = new List<Vector2>();
+        private readonly List<Vector2> allyDefeatEffectSizes = new List<Vector2>();
+        private readonly List<Image> enemyDefeatEffectImages = new List<Image>();
+        private readonly List<float> enemyDefeatEffectRemainings = new List<float>();
+        private readonly List<Vector2> enemyDefeatEffectAnchors = new List<Vector2>();
+        private readonly List<Vector2> enemyDefeatEffectSizes = new List<Vector2>();
         private readonly List<ActiveRangedAttackEffect> activeRangedAttackEffects = new List<ActiveRangedAttackEffect>();
         private bool lastBattleWon;
         private const float EngagementDuration = 2.70f;
@@ -715,6 +752,13 @@ namespace WitchTower.Battle
         private const float EnemyKnockbackDistance = 0.028f;
         private const float AllyDefeatVanishDuration = 0.28f;
         private const float EnemyDefeatVanishDuration = 0.18f;
+        private const float AllyDefeatEffectDuration = 1.18f;
+        private const float AllyDefeatEffectScaleMultiplier = 1.95f;
+        private const float EnemyDefeatEffectDuration = 1.12f;
+        private const float EnemyDefeatEffectScaleMultiplier = 2.12f;
+        private const float BattleAnnouncementDuration = 2.85f;
+        private const float BattleAnnouncementFadeInDuration = 0.16f;
+        private const float BattleAnnouncementFadeOutDuration = 0.48f;
         private static readonly Vector2 PreviewHpBarSize = new Vector2(52f, 8f);
 
         public int DebugUpdateCount => updateCount;
@@ -841,6 +885,9 @@ namespace WitchTower.Battle
 
         private void OnDisable()
         {
+            isRetireConfirmationOpen = false;
+            StopAutoRepeatSameFloor();
+            ClearBattleAnnouncements();
             ClearActiveRangedAttackEffects();
             UnsubscribeSimulator();
         }
@@ -883,10 +930,17 @@ namespace WitchTower.Battle
             EnsureInitialized();
             updateCount += 1;
             lastDeltaTime = Time.deltaTime;
+            UpdateBattleAnnouncement(Time.deltaTime);
+
+            if (isRetireConfirmationOpen)
+            {
+                return;
+            }
 
             if (resultHandled)
             {
                 UpdateBattlePresentation(Time.deltaTime);
+                UpdateAutoRepeatRestart(Time.deltaTime);
                 return;
             }
 
@@ -990,6 +1044,8 @@ namespace WitchTower.Battle
             hasLastResultViewData = true;
             stateMachine.ShowResultPanel(resultViewData);
             ShowMinimalResultOverlay(resultViewData);
+            BringBattleAnnouncementToFront();
+            ScheduleAutoRepeatRestartIfNeeded();
         }
 
         public void OnBattleLose()
@@ -1000,16 +1056,85 @@ namespace WitchTower.Battle
             hasLastResultViewData = true;
             stateMachine.ShowResultPanel(resultViewData);
             ShowMinimalResultOverlay(resultViewData);
+            BringBattleAnnouncementToFront();
+            ScheduleAutoRepeatRestartIfNeeded();
         }
 
         public void Retreat()
         {
+            StopAutoRepeatSameFloor();
+            isRetireConfirmationOpen = false;
             SaveManager.Instance.SaveCurrentGame();
             SceneManager.LoadScene(homeSceneName);
         }
 
+        public void ShowRetireConfirmation()
+        {
+            if (resultHandled)
+            {
+                return;
+            }
+
+            EnsureMinimalCanvas();
+            EnsureRetireControls();
+            isRetireConfirmationOpen = true;
+            if (retireConfirmationOverlayRoot != null)
+            {
+                retireConfirmationOverlayRoot.SetActive(true);
+                retireConfirmationOverlayRoot.transform.SetAsLastSibling();
+            }
+        }
+
+        public void CancelRetire()
+        {
+            isRetireConfirmationOpen = false;
+            if (retireConfirmationOverlayRoot != null)
+            {
+                retireConfirmationOverlayRoot.SetActive(false);
+            }
+        }
+
+        public void ConfirmRetire()
+        {
+            Retreat();
+        }
+
+        public bool HasAutoRepeatFloorUpgrade()
+        {
+            return GameManager.Instance?.PlayerProfile != null &&
+                GameManager.Instance.PlayerProfile.HasAutoRepeatFloorUpgrade &&
+                GameManager.Instance.PlayerProfile.IsAutoRepeatFloorUpgradeEnabled;
+        }
+
+        public bool IsAutoRepeatSameFloorActive()
+        {
+            return autoRepeatSameFloorActive;
+        }
+
+        public void StartAutoRepeatSameFloor()
+        {
+            if (!HasAutoRepeatFloorUpgrade())
+            {
+                StopAutoRepeatSameFloor();
+                return;
+            }
+
+            autoRepeatSameFloorActive = true;
+            autoRepeatRestartQueued = false;
+            autoRepeatRestartTimer = 0f;
+            RetryClearedFloor();
+        }
+
+        public void StopAutoRepeatSameFloor()
+        {
+            autoRepeatSameFloorActive = false;
+            autoRepeatRestartQueued = false;
+            autoRepeatRestartTimer = 0f;
+        }
+
         public void GoToNextFloor()
         {
+            StopAutoRepeatSameFloor();
             currentFloor = GameManager.Instance.CurrentFloor;
             PrepareBattleSession();
             stateMachine.Begin(currentFloor);
@@ -1019,6 +1144,8 @@ namespace WitchTower.Battle
 
         public void RetryClearedFloor()
         {
+            autoRepeatRestartQueued = false;
+            autoRepeatRestartTimer = 0f;
             int retryFloor = hasLastResultViewData
                 ? Mathf.Max(1, lastResultViewData.ClearedFloor)
                 : Mathf.Max(1, currentFloor);
@@ -1031,8 +1158,55 @@ namespace WitchTower.Battle
             RefreshBattlePresentation(force: true);
         }
 
+        private void ScheduleAutoRepeatRestartIfNeeded()
+        {
+            if (!autoRepeatSameFloorActive)
+            {
+                return;
+            }
+
+            if (!HasAutoRepeatFloorUpgrade())
+            {
+                StopAutoRepeatSameFloor();
+                return;
+            }
+
+            autoRepeatRestartQueued = true;
+            autoRepeatRestartTimer = Mathf.Max(
+                AutoRepeatResultDelaySeconds,
+                ResolveBattleAnnouncementWaitSeconds() + 0.12f);
+        }
+
+        private void UpdateAutoRepeatRestart(float deltaTime)
+        {
+            if (!autoRepeatRestartQueued)
+            {
+                return;
+            }
+
+            if (!autoRepeatSameFloorActive || !resultHandled || !HasAutoRepeatFloorUpgrade())
+            {
+                StopAutoRepeatSameFloor();
+                return;
+            }
+
+            if (isRetireConfirmationOpen)
+            {
+                return;
+            }
+
+            autoRepeatRestartTimer -= Mathf.Max(0f, deltaTime);
+            if (autoRepeatRestartTimer > 0f)
+            {
+                return;
+            }
+
+            RetryClearedFloor();
+        }
+
         public void ReturnHome()
         {
+            StopAutoRepeatSameFloor();
             SceneManager.LoadScene(homeSceneName);
         }
 
@@ -1161,11 +1335,14 @@ namespace WitchTower.Battle
             EquipmentRarity quality = StageDropService.RollEquipmentQuality(DropRandom);
             if (!profile.AddOwnedEquipment(equipmentData.equipmentId, quality))
             {
+                lastEquipmentDropSummary = "装備枠がいっぱいで装備を入手できませんでした";
+                EnqueueBattleAnnouncement("装備枠がいっぱいです。装備枠を拡張するか整理してください。");
                 return;
             }
 
             string qualityName = EquipmentEnhancementCatalog.ResolveQualityName(quality);
             lastEquipmentDropSummary = $"装備入手: {equipmentData.equipmentName}[{qualityName}]";
+            EnqueueBattleAnnouncement($"装備ドロップ！ {equipmentData.equipmentName} [{qualityName}]");
             lastRewardVisuals.Add(new BattleResultRewardVisual(
                 equipmentData.equipmentName,
                 qualityName,
@@ -1188,6 +1365,7 @@ namespace WitchTower.Battle
                 ? relicDefinition.RelicName
                 : relicId;
             lastRelicDropSummary = $"強化遺物入手: {relicName} x1";
+            EnqueueBattleAnnouncement($"アイテムドロップ！ {relicName} x1");
             lastRewardVisuals.Add(new BattleResultRewardVisual(
                 relicName,
                 "x1",
@@ -1229,7 +1407,7 @@ namespace WitchTower.Battle
                 return stateMachine.Simulator.IsBossWave;
             }
 
-            return bossFloorInterval > 0 && currentFloor > 0 && currentFloor % bossFloorInterval == 0;
+            return BattleDungeonCatalog.ResolveIsBossEncounter(currentFloor);
         }
 
         private int ApplyPartyMonsterExp(PlayerProfile profile, int exp)
@@ -1273,6 +1451,7 @@ namespace WitchTower.Battle
             if (lastRecruitResult.Succeeded)
             {
                 MonsterDataSO monsterData = MasterDataManager.Instance?.GetMonsterData(lastRecruitResult.MonsterId);
+                EnqueueBattleAnnouncement($"捕獲成功！ {lastRecruitResult.MonsterName} が仲間になりました");
                 lastRewardVisuals.Add(new BattleResultRewardVisual(
                     lastRecruitResult.MonsterName,
                     "仲間になりました",
@@ -1343,8 +1522,14 @@ namespace WitchTower.Battle
             lastPlayerLevelBeforeReward = 0;
             lastPlayerLevelAfterReward = 0;
             hasLastResultViewData = false;
+            ClearBattleAnnouncements();
             recruitEnabledAtBattleStart = MonsterRecruitService.CanAttemptRecruitThisBattle(GameManager.Instance?.PlayerProfile);
             HideMinimalResultOverlay();
+            CancelRetire();
+            if (retireButton != null)
+            {
+                retireButton.gameObject.SetActive(true);
+            }
         }
 
         private static string BuildItemDropSummary(string equipmentDropSummary, string relicDropSummary)
@@ -1360,6 +1545,168 @@ namespace WitchTower.Battle
             }
 
             return equipmentDropSummary + "\n" + relicDropSummary;
+        }
+
+        private void EnqueueBattleAnnouncement(string message)
+        {
+            if (string.IsNullOrEmpty(message))
+            {
+                return;
+            }
+
+            battleAnnouncementQueue.Enqueue(message);
+            EnsureMinimalCanvas();
+            EnsureBattleAnnouncement();
+            if (string.IsNullOrEmpty(activeBattleAnnouncementText) && battleAnnouncementRemaining <= 0f)
+            {
+                StartNextBattleAnnouncement();
+            }
+            else
+            {
+                BringBattleAnnouncementToFront();
+            }
+        }
+
+        private void UpdateBattleAnnouncement(float deltaTime)
+        {
+            if (string.IsNullOrEmpty(activeBattleAnnouncementText))
+            {
+                if (battleAnnouncementQueue.Count <= 0)
+                {
+                    return;
+                }
+
+                StartNextBattleAnnouncement();
+            }
+
+            if (string.IsNullOrEmpty(activeBattleAnnouncementText))
+            {
+                HideBattleAnnouncement();
+                return;
+            }
+
+            battleAnnouncementRemaining = Mathf.Max(0f, battleAnnouncementRemaining - Mathf.Max(0f, deltaTime));
+            float elapsed = BattleAnnouncementDuration - battleAnnouncementRemaining;
+            float fadeIn = Mathf.SmoothStep(
+                0f,
+                1f,
+                Mathf.InverseLerp(0f, BattleAnnouncementFadeInDuration, elapsed));
+            float fadeOut = Mathf.SmoothStep(
+                0f,
+                1f,
+                Mathf.InverseLerp(0f, BattleAnnouncementFadeOutDuration, battleAnnouncementRemaining));
+            ApplyBattleAnnouncementAlpha(Mathf.Min(fadeIn, fadeOut));
+            BringBattleAnnouncementToFront();
+
+            if (battleAnnouncementRemaining > 0f)
+            {
+                return;
+            }
+
+            activeBattleAnnouncementText = string.Empty;
+            if (battleAnnouncementQueue.Count > 0)
+            {
+                StartNextBattleAnnouncement();
+            }
+            else
+            {
+                HideBattleAnnouncement();
+            }
+        }
+
+        private void StartNextBattleAnnouncement()
+        {
+            if (battleAnnouncementQueue.Count <= 0)
+            {
+                activeBattleAnnouncementText = string.Empty;
+                battleAnnouncementRemaining = 0f;
+                HideBattleAnnouncement();
+                return;
+            }
+
+            activeBattleAnnouncementText = battleAnnouncementQueue.Dequeue();
+            battleAnnouncementRemaining = BattleAnnouncementDuration;
+            EnsureBattleAnnouncement();
+            if (battleAnnouncementText != null)
+            {
+                battleAnnouncementText.text = activeBattleAnnouncementText;
+            }
+
+            if (battleAnnouncementRoot != null)
+            {
+                battleAnnouncementRoot.SetActive(true);
+            }
+
+            ApplyBattleAnnouncementAlpha(0f);
+            BringBattleAnnouncementToFront();
+        }
+
+        private void ClearBattleAnnouncements()
+        {
+            battleAnnouncementQueue.Clear();
+            activeBattleAnnouncementText = string.Empty;
+            battleAnnouncementRemaining = 0f;
+            HideBattleAnnouncement();
+        }
+
+        private void HideBattleAnnouncement()
+        {
+            ApplyBattleAnnouncementAlpha(0f);
+            if (battleAnnouncementRoot != null)
+            {
+                battleAnnouncementRoot.SetActive(false);
+            }
+        }
+
+        private void BringBattleAnnouncementToFront()
+        {
+            if (battleAnnouncementRoot != null && battleAnnouncementRoot.activeSelf && !isRetireConfirmationOpen)
+            {
+                battleAnnouncementRoot.transform.SetAsLastSibling();
+            }
+        }
+
+        private float ResolveBattleAnnouncementWaitSeconds()
+        {
+            float waitSeconds = string.IsNullOrEmpty(activeBattleAnnouncementText)
+                ? 0f
+                : Mathf.Max(0f, battleAnnouncementRemaining);
+            waitSeconds += battleAnnouncementQueue.Count * BattleAnnouncementDuration;
+            return waitSeconds;
+        }
+
+        private void ApplyBattleAnnouncementAlpha(float alpha)
+        {
+            float clampedAlpha = Mathf.Clamp01(alpha);
+            if (battleAnnouncementBackgroundImage != null)
+            {
+                battleAnnouncementBackgroundImage.color = new Color(0.035f, 0.055f, 0.085f, 0.92f * clampedAlpha);
+            }
+
+            if (battleAnnouncementText != null)
+            {
+                battleAnnouncementText.color = ResolveBattleAnnouncementTextColor(activeBattleAnnouncementText, clampedAlpha);
+            }
+        }
+
+        private static Color ResolveBattleAnnouncementTextColor(string message, float alpha)
+        {
+            Color color;
+            if (!string.IsNullOrEmpty(message) && message.Contains("捕獲"))
+            {
+                color = new Color(0.70f, 1f, 0.76f, 1f);
+            }
+            else if (!string.IsNullOrEmpty(message) && message.Contains("装備"))
+            {
+                color = new Color(1f, 0.90f, 0.48f, 1f);
+            }
+            else
+            {
+                color = new Color(0.78f, 0.93f, 1f, 1f);
+            }
+
+            color.a = alpha;
+            return color;
         }
 
         private static string ResolveEquipmentIconResourcePath(string equipmentId)
@@ -1675,7 +2022,7 @@ namespace WitchTower.Battle
                 }
                 else
                 {
-                    bool isBossFloor = bossFloorInterval > 0 && floor > 0 && floor % bossFloorInterval == 0;
+                    bool isBossFloor = BattleDungeonCatalog.ResolveIsBossEncounter(floor);
                     enemyHint.text = isBossFloor ? "単一フィールド / ボス戦" : "単一フィールド / 敵部隊";
                 }
             }
@@ -1715,6 +2062,7 @@ namespace WitchTower.Battle
 
             EnsureMonsterPreviewRoot();
             UpdatePreviewLayout();
+            EnsureRetireControls();
         }
 
         private void ApplyEditorPreview()
@@ -1743,7 +2091,7 @@ namespace WitchTower.Battle
             UpdatePreviewLayout();
             Sprite[] previewPartySprites =
             {
-                BattleVisualResolver.LoadSprite("MonsterPortraits/mon_rock_golem_portrait"),
+                BattleVisualResolver.LoadSprite("FamilyMonsterCards/Golem/rock_golem"),
                 BattleVisualResolver.LoadSprite("FormationMonsters/Goblin"),
                 BattleVisualResolver.LoadSprite("FormationMonsters/Wraith"),
                 BattleVisualResolver.LoadSprite("FormationMonsters/Centaur"),
@@ -1811,14 +2159,29 @@ namespace WitchTower.Battle
             enemyPreviewTrackedTargetXAnchors.Clear();
             enemyPreviewLockedAllyIndices.Clear();
             allyPreviewLockedEnemyIndices.Clear();
+            allyDefeatEffectRemainings.Clear();
+            allyDefeatEffectAnchors.Clear();
+            allyDefeatEffectSizes.Clear();
+            for (int i = 0; i < allyDefeatEffectImages.Count; i += 1)
+            {
+                HideAllyDefeatEffect(i);
+            }
+
             enemyKnockbackRemainings.Clear();
             enemyAttackVisualRemainings.Clear();
             enemyDefeatVanishRemainings.Clear();
+            enemyDefeatEffectRemainings.Clear();
+            enemyDefeatEffectAnchors.Clear();
+            enemyDefeatEffectSizes.Clear();
+            for (int i = 0; i < enemyDefeatEffectImages.Count; i += 1)
+            {
+                HideEnemyDefeatEffect(i);
+            }
         }
 
         private string ResolveBackdropResourcePath(int floor, bool forceBossEncounter)
         {
-            bool isBossFloor = forceBossEncounter || (bossFloorInterval > 0 && floor > 0 && floor % bossFloorInterval == 0);
+            bool isBossFloor = forceBossEncounter || BattleDungeonCatalog.ResolveIsBossEncounter(floor);
             if (isBossFloor && !string.IsNullOrEmpty(bossBackdropResourcePath))
             {
                 return bossBackdropResourcePath;
@@ -1946,14 +2309,28 @@ namespace WitchTower.Battle
 
         private Sprite SelectEnemyPreviewSprite(int index, bool isMoving, bool isAttackEngaged)
         {
+            return SelectEnemyPreviewSprite(index, isMoving, isAttackEngaged, null);
+        }
+
+        private Sprite SelectEnemyPreviewSprite(
+            int index,
+            bool isMoving,
+            bool isAttackEngaged,
+            EnemyPreviewVisualData visualData)
+        {
+            List<Sprite> idleSprites = visualData?.IdleSprites ?? enemyIdleSprites;
+            List<Sprite> moveSprites = visualData?.MoveSprites ?? enemyMoveSprites;
+            List<Sprite> attackSprites = visualData?.AttackSprites ?? enemyAttackSprites;
+            EnemyDataSO enemyData = visualData?.EnemyData ?? currentPreviewEnemyData;
+
             if (index >= 0 && index < enemyAttackVisualRemainings.Count && enemyAttackVisualRemainings[index] > 0f)
             {
                 Sprite attackSprite = SelectAttackFrame(
-                    enemyAttackSprites,
+                    attackSprites,
                     enemyAttackVisualRemainings[index],
                     index * 0.11f,
-                    ResolveResponsiveAttackStartProgress(currentPreviewEnemyData),
-                    ResolveResponsiveAttackEndProgress(currentPreviewEnemyData));
+                    ResolveResponsiveAttackStartProgress(enemyData),
+                    ResolveResponsiveAttackEndProgress(enemyData));
                 if (attackSprite != null)
                 {
                     return attackSprite;
@@ -1963,11 +2340,11 @@ namespace WitchTower.Battle
             if (isAttackEngaged)
             {
                 Sprite engagedSprite = SelectAnimatedAttackFrame(
-                    enemyAttackSprites,
+                    attackSprites,
                     6f,
                     index * 0.11f,
-                    ResolveResponsiveEngagedLoopStartProgress(currentPreviewEnemyData),
-                    ResolveResponsiveEngagedLoopEndProgress(currentPreviewEnemyData));
+                    ResolveResponsiveEngagedLoopStartProgress(enemyData),
+                    ResolveResponsiveEngagedLoopEndProgress(enemyData));
                 if (engagedSprite != null)
                 {
                     return engagedSprite;
@@ -1976,14 +2353,14 @@ namespace WitchTower.Battle
 
             if (isMoving)
             {
-                Sprite moveSprite = SelectAnimatedFrame(enemyMoveSprites, 8f, index * 0.19f);
+                Sprite moveSprite = SelectAnimatedFrame(moveSprites, 8f, index * 0.19f);
                 if (moveSprite != null)
                 {
                     return moveSprite;
                 }
             }
 
-            return SelectAnimatedFrame(enemyIdleSprites, 4f, index * 0.09f);
+            return SelectAnimatedFrame(idleSprites, 4f, index * 0.09f);
         }
 
         private BattleVisualPose ResolveEnemyPreviewPose(int index, bool isMoving, bool isAttackEngaged)
@@ -2038,27 +2415,83 @@ namespace WitchTower.Battle
 
         private IReadOnlyList<Sprite> ResolveEnemyPreviewReferenceSprites(BattleVisualPose pose)
         {
+            return ResolveEnemyPreviewReferenceSprites(pose, null);
+        }
+
+        private IReadOnlyList<Sprite> ResolveEnemyPreviewReferenceSprites(BattleVisualPose pose, EnemyPreviewVisualData visualData)
+        {
+            List<Sprite> idleSprites = visualData?.IdleSprites ?? enemyIdleSprites;
+            List<Sprite> moveSprites = visualData?.MoveSprites ?? enemyMoveSprites;
+            List<Sprite> attackSprites = visualData?.AttackSprites ?? enemyAttackSprites;
+            EnemyDataSO enemyData = visualData?.EnemyData ?? currentPreviewEnemyData;
+
             switch (pose)
             {
                 case BattleVisualPose.Attack:
-                    if (ShouldUseAttackBodyMetrics(ResolvePreviewMonsterData(currentPreviewEnemyData)) &&
-                        enemyIdleSprites != null &&
-                        enemyIdleSprites.Count > 0)
+                    if (ShouldUseAttackBodyMetrics(ResolvePreviewMonsterData(enemyData)) &&
+                        idleSprites != null &&
+                        idleSprites.Count > 0)
                     {
-                        return enemyIdleSprites;
+                        return idleSprites;
                     }
 
-                    return enemyAttackSprites != null && enemyAttackSprites.Count > 0
-                        ? enemyAttackSprites
-                        : ResolveEnemyPreviewReferenceSprites(BattleVisualPose.Idle);
+                    return attackSprites != null && attackSprites.Count > 0
+                        ? attackSprites
+                        : ResolveEnemyPreviewReferenceSprites(BattleVisualPose.Idle, visualData);
                 case BattleVisualPose.Move:
-                    return enemyMoveSprites != null && enemyMoveSprites.Count > 0
-                        ? enemyMoveSprites
-                        : ResolveEnemyPreviewReferenceSprites(BattleVisualPose.Idle);
+                    return moveSprites != null && moveSprites.Count > 0
+                        ? moveSprites
+                        : ResolveEnemyPreviewReferenceSprites(BattleVisualPose.Idle, visualData);
                 case BattleVisualPose.Idle:
                 default:
-                    return enemyIdleSprites;
+                    return idleSprites;
             }
+        }
+
+        private EnemyPreviewVisualData ResolveEnemyPreviewVisualData(BattleSimulator simulator, int index)
+        {
+            string enemyId = simulator != null && simulator.HasEnemyRuntime(index)
+                ? simulator.GetEnemyId(index)
+                : currentPreviewEnemyData?.enemyId;
+            if (string.IsNullOrEmpty(enemyId))
+            {
+                return null;
+            }
+
+            int floor = simulator != null ? simulator.CurrentFloor : currentFloor;
+            string cacheKey = floor + ":" + enemyId;
+            if (enemyPreviewVisualDataByEnemyId.TryGetValue(cacheKey, out EnemyPreviewVisualData cachedData))
+            {
+                return cachedData;
+            }
+
+            string monsterId = BattleDungeonCatalog.ResolveMonsterIdFromEnemyId(enemyId);
+            EnemyDataSO enemyData = !string.IsNullOrEmpty(monsterId)
+                ? BattleDungeonCatalog.CreateEnemyDataForMonsterAtGlobalFloor(
+                    floor,
+                    MasterDataManager.Instance,
+                    monsterId)
+                : null;
+            if (enemyData == null && currentPreviewEnemyData != null && currentPreviewEnemyData.enemyId == enemyId)
+            {
+                enemyData = currentPreviewEnemyData;
+            }
+
+            if (enemyData == null)
+            {
+                return null;
+            }
+
+            var visualData = new EnemyPreviewVisualData
+            {
+                EnemyData = enemyData,
+                IdleSprites = BattleVisualResolver.ResolveEnemyIdleSprites(enemyData),
+                MoveSprites = BattleVisualResolver.ResolveEnemyMoveSprites(enemyData),
+                AttackSprites = BattleVisualResolver.ResolveEnemyAttackSprites(enemyData),
+                AttackRange = BattleAttackRangeResolver.ResolveEnemyAttackRange(enemyData)
+            };
+            enemyPreviewVisualDataByEnemyId[cacheKey] = visualData;
+            return visualData;
         }
 
         private static PreviewMeasurementMode ResolveAllyPreviewMeasurementMode(MonsterDataSO monsterData, BattleVisualPose pose)
@@ -3382,6 +3815,14 @@ namespace WitchTower.Battle
                 }
             }
 
+            for (int i = 0; i < enemyDefeatEffectImages.Count; i += 1)
+            {
+                if (enemyDefeatEffectImages[i] != null)
+                {
+                    enemyDefeatEffectImages[i].transform.SetAsLastSibling();
+                }
+            }
+
             for (int i = 0; i < enemyPreviewHpBars.Count; i += 1)
             {
                 if (enemyPreviewHpBars[i]?.Root != null)
@@ -3395,6 +3836,14 @@ namespace WitchTower.Battle
                 if (allyPreviewImages[i] != null)
                 {
                     allyPreviewImages[i].transform.SetAsLastSibling();
+                }
+            }
+
+            for (int i = 0; i < allyDefeatEffectImages.Count; i += 1)
+            {
+                if (allyDefeatEffectImages[i] != null)
+                {
+                    allyDefeatEffectImages[i].transform.SetAsLastSibling();
                 }
             }
 
@@ -3468,16 +3917,20 @@ namespace WitchTower.Battle
                     ? 1f
                     : Mathf.Lerp(1f, 0.24f, allyVanishT);
                 BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT, false);
-                Vector2 allyPreviewSize = AllyPreviewSize * (allyScale * ResolveMonsterPreviewScale(allyData, allyPose));
+                float allyPreviewScale = ResolveMonsterPreviewScale(allyData, allyPose);
+                Vector2 allyPreviewSize = AllyPreviewSize * (allyScale * allyPreviewScale);
+                Vector2 allyEffectSize = AllyPreviewSize * allyPreviewScale;
+                Vector2 mappedAllyAnchor = MapBattlefieldAnchor(allyAnchor);
                 ApplyPreviewImageLayout(
                     allyPreviewImages[i],
-                    MapBattlefieldAnchor(allyAnchor),
+                    mappedAllyAnchor,
                     allyPreviewSize);
+                Vector2 allyMotionOffset = Vector2.zero;
                 if (allyPreviewImages[i] != null)
                 {
                     Sprite allySprite = SelectAllyPreviewSprite(i, allyApproachT, false);
                     float allyAttackRemaining = i < allyAttackVisualRemainings.Count ? allyAttackVisualRemainings[i] : 0f;
-                    Vector2 allyMotionOffset = ResolvePresentationMotionOffset(i, true, allyPose, allyAttackRemaining, allyRange >= RangedAttackThreshold);
+                    allyMotionOffset = ResolvePresentationMotionOffset(i, true, allyPose, allyAttackRemaining, allyRange >= RangedAttackThreshold);
                     SetImageSprite(allyPreviewImages[i], allySprite);
                     BattleFacingDirection allySourceFacing = BattleVisualResolver.ResolveMonsterFacing(allyData, allyPose);
                     allyPreviewImages[i].rectTransform.localScale = ResolveFacingScale(allySourceFacing, BattleFacingDirection.Right);
@@ -3491,7 +3944,7 @@ namespace WitchTower.Battle
                 int allyMaxHp = simulator != null && simulator.HasAllyRuntime(i) ? simulator.GetAllyMaxHp(i) : 0;
                 UpdatePreviewHpBar(
                     i < allyPreviewHpBars.Count ? allyPreviewHpBars[i] : null,
-                    MapBattlefieldAnchor(allyAnchor),
+                    mappedAllyAnchor,
                     allyPreviewSize,
                     allyAlive && allyMaxHp > 0,
                     allyColorAlpha: allyAlive ? 1f : Mathf.Clamp01(1f - allyVanishT),
@@ -3499,6 +3952,7 @@ namespace WitchTower.Battle
                     maxHp: allyMaxHp,
                     fillColor: new Color(0.28f, 0.88f, 0.66f, 0.95f),
                     motionOffset: allyPreviewImages[i] != null ? allyPreviewImages[i].rectTransform.anchoredPosition : Vector2.zero);
+                UpdateAllyDefeatEffectLayout(i, mappedAllyAnchor, allyEffectSize, allyMotionOffset);
             }
 
             if (isBossWave)
@@ -3536,10 +3990,13 @@ namespace WitchTower.Battle
                     float bossScale = Mathf.Lerp(1f, 0.24f, enemyVanishT);
                     bool bossMoving = contactT < 1f;
                     BattleVisualPose bossPose = ResolveEnemyPreviewPose(0, bossMoving, false);
-                    Vector2 bossPreviewSize = BossPreviewSize * (bossScale * ResolveEnemyPreviewScale(currentPreviewEnemyData, bossPose));
+                    float bossPreviewScale = ResolveEnemyPreviewScale(currentPreviewEnemyData, bossPose);
+                    Vector2 bossPreviewSize = BossPreviewSize * (bossScale * bossPreviewScale);
+                    Vector2 bossEffectSize = BossPreviewSize * bossPreviewScale;
+                    Vector2 mappedBossAnchor = MapBattlefieldAnchor(bossAnchor);
                     ApplyPreviewImageLayout(
                         enemyPreviewImages[0],
-                        MapBattlefieldAnchor(bossAnchor),
+                        mappedBossAnchor,
                         bossPreviewSize);
                     float bossAttackRemaining = enemyAttackVisualRemainings.Count > 0 ? enemyAttackVisualRemainings[0] : 0f;
                     Vector2 bossMotionOffset = ResolvePresentationMotionOffset(0, false, bossPose, bossAttackRemaining, enemyAttackRange >= RangedAttackThreshold);
@@ -3554,7 +4011,7 @@ namespace WitchTower.Battle
                     int bossMaxHp = simulator != null && simulator.HasEnemyRuntime(0) ? simulator.GetEnemyMaxHp(0) : 0;
                     UpdatePreviewHpBar(
                         enemyPreviewHpBars.Count > 0 ? enemyPreviewHpBars[0] : null,
-                        MapBattlefieldAnchor(bossAnchor),
+                        mappedBossAnchor,
                         bossPreviewSize,
                         bossMaxHp > 0,
                         1f - enemyVanishT,
@@ -3562,6 +4019,7 @@ namespace WitchTower.Battle
                         bossMaxHp,
                         new Color(0.96f, 0.44f, 0.40f, 0.95f),
                         bossMotionOffset);
+                    UpdateEnemyDefeatEffectLayout(0, mappedBossAnchor, bossEffectSize, bossMotionOffset);
                     engagedEnemyPreviewCount = contactT >= 1f ? 1 : 0;
                 }
 
@@ -3569,6 +4027,7 @@ namespace WitchTower.Battle
                 {
                     ApplyPreviewImageLayout(enemyPreviewImages[i], MapBattlefieldAnchor(BossPreviewAnchor), Vector2.zero);
                     UpdatePreviewHpBar(i < enemyPreviewHpBars.Count ? enemyPreviewHpBars[i] : null, MapBattlefieldAnchor(BossPreviewAnchor), Vector2.zero, false, 0f, 0, 0, new Color(0.96f, 0.44f, 0.40f, 0.95f));
+                    HideEnemyDefeatEffect(i);
                 }
 
                 if (Application.isPlaying && stateMachine != null)
@@ -3658,10 +4117,13 @@ namespace WitchTower.Battle
 
                 bool enemyMoving = slotProgress < combatStartProgress;
                 BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving, false);
-                Vector2 enemyPreviewSize = EnemyPreviewSize * (scale * ResolveEnemyPreviewScale(currentPreviewEnemyData, enemyPose));
+                float enemyPreviewScale = ResolveEnemyPreviewScale(currentPreviewEnemyData, enemyPose);
+                Vector2 enemyPreviewSize = EnemyPreviewSize * (scale * enemyPreviewScale);
+                Vector2 enemyEffectSize = EnemyPreviewSize * enemyPreviewScale;
+                Vector2 mappedEnemyAnchor = MapBattlefieldAnchor(anchor);
                 ApplyPreviewImageLayout(
                     image,
-                    MapBattlefieldAnchor(anchor),
+                    mappedEnemyAnchor,
                     enemyPreviewSize);
                 float enemyAttackRemaining = i < enemyAttackVisualRemainings.Count ? enemyAttackVisualRemainings[i] : 0f;
                 Vector2 enemyMotionOffset = ResolvePresentationMotionOffset(i, false, enemyPose, enemyAttackRemaining, enemyAttackRange >= RangedAttackThreshold);
@@ -3678,7 +4140,7 @@ namespace WitchTower.Battle
                 int enemyMaxHp = simulator != null && simulator.HasEnemyRuntime(i) ? simulator.GetEnemyMaxHp(i) : 0;
                 UpdatePreviewHpBar(
                     i < enemyPreviewHpBars.Count ? enemyPreviewHpBars[i] : null,
-                    MapBattlefieldAnchor(anchor),
+                    mappedEnemyAnchor,
                     enemyPreviewSize,
                     shouldShow && enemyMaxHp > 0,
                     alpha,
@@ -3686,6 +4148,7 @@ namespace WitchTower.Battle
                     enemyMaxHp,
                     new Color(0.96f, 0.44f, 0.40f, 0.95f),
                     enemyMotionOffset);
+                UpdateEnemyDefeatEffectLayout(i, mappedEnemyAnchor, enemyEffectSize, enemyMotionOffset);
             }
 
             if (Application.isPlaying && stateMachine != null)
@@ -3711,6 +4174,238 @@ namespace WitchTower.Battle
             image.useSpriteMesh = false;
             go.transform.SetAsLastSibling();
             return image;
+        }
+
+        private void UpdateAllyDefeatEffectLayout(int index, Vector2 anchor, Vector2 baseSize, Vector2 motionOffset)
+        {
+            if (index < 0 || index >= allyDefeatEffectImages.Count)
+            {
+                return;
+            }
+
+            float remaining = index < allyDefeatEffectRemainings.Count ? allyDefeatEffectRemainings[index] : 0f;
+            if (remaining <= 0f)
+            {
+                if (index < allyDefeatEffectAnchors.Count)
+                {
+                    allyDefeatEffectAnchors[index] = anchor;
+                }
+
+                if (baseSize.x > 0f && baseSize.y > 0f && index < allyDefeatEffectSizes.Count)
+                {
+                    allyDefeatEffectSizes[index] = baseSize;
+                }
+
+                HideAllyDefeatEffect(index);
+                return;
+            }
+
+            EnsureAllyDefeatEffectSprites();
+            if (allyDefeatEffectSprites.Count == 0)
+            {
+                HideAllyDefeatEffect(index);
+                return;
+            }
+
+            Image image = allyDefeatEffectImages[index];
+            if (image == null)
+            {
+                return;
+            }
+
+            float progress = AllyDefeatEffectDuration > 0f
+                ? 1f - Mathf.Clamp01(remaining / AllyDefeatEffectDuration)
+                : 1f;
+            float frameProgress = Mathf.Clamp01(progress * 1.08f);
+            int frameIndex = Mathf.Clamp(
+                Mathf.FloorToInt(frameProgress * allyDefeatEffectSprites.Count),
+                0,
+                allyDefeatEffectSprites.Count - 1);
+            Sprite sprite = allyDefeatEffectSprites[frameIndex];
+            Vector2 effectAnchor = index < allyDefeatEffectAnchors.Count
+                ? allyDefeatEffectAnchors[index]
+                : anchor;
+            Vector2 effectSize = index < allyDefeatEffectSizes.Count
+                ? allyDefeatEffectSizes[index]
+                : baseSize;
+            if (effectSize.x <= 0f || effectSize.y <= 0f)
+            {
+                effectSize = baseSize;
+            }
+
+            float storedLongestSide = Mathf.Max(effectSize.x, effectSize.y);
+            if (storedLongestSide <= 0f)
+            {
+                storedLongestSide = Mathf.Max(AllyPreviewSize.x, AllyPreviewSize.y);
+            }
+
+            float pulse = 1f + Mathf.Sin(progress * Mathf.PI) * 0.20f;
+            float longestSide = Mathf.Max(128f, storedLongestSide * AllyDefeatEffectScaleMultiplier * pulse);
+            ApplyPreviewImageLayout(image, effectAnchor, ResolveRangedAttackEffectSizeDelta(sprite, longestSide));
+            image.rectTransform.anchoredPosition = motionOffset + new Vector2(0f, Mathf.Lerp(0f, 34f, progress));
+            image.rectTransform.localScale = Vector3.one;
+            image.rectTransform.localEulerAngles = Vector3.zero;
+            image.sprite = sprite;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+            image.useSpriteMesh = false;
+            image.raycastTarget = false;
+            image.enabled = true;
+
+            float fadeIn = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, 0.06f, progress));
+            float fadeOut = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.84f, 1f, progress));
+            Color color = Color.white;
+            color.a = fadeIn * fadeOut;
+            image.color = color;
+        }
+
+        private void HideAllyDefeatEffect(int index)
+        {
+            if (index < 0 || index >= allyDefeatEffectImages.Count)
+            {
+                return;
+            }
+
+            Image image = allyDefeatEffectImages[index];
+            if (image == null)
+            {
+                return;
+            }
+
+            Color color = image.color;
+            color.a = 0f;
+            image.color = color;
+            image.rectTransform.sizeDelta = Vector2.zero;
+        }
+
+        private void EnsureAllyDefeatEffectSprites()
+        {
+            if (allyDefeatEffectSprites.Count > 0)
+            {
+                return;
+            }
+
+            List<Sprite> frames = BattleVisualResolver.ResolveSpriteFramesFromResourcePath(AllyDefeatEffectPath);
+            if (frames != null && frames.Count > 0)
+            {
+                allyDefeatEffectSprites.AddRange(frames);
+            }
+        }
+
+        private void UpdateEnemyDefeatEffectLayout(int index, Vector2 anchor, Vector2 baseSize, Vector2 motionOffset)
+        {
+            if (index < 0 || index >= enemyDefeatEffectImages.Count)
+            {
+                return;
+            }
+
+            float remaining = index < enemyDefeatEffectRemainings.Count ? enemyDefeatEffectRemainings[index] : 0f;
+            if (remaining <= 0f)
+            {
+                if (index < enemyDefeatEffectAnchors.Count)
+                {
+                    enemyDefeatEffectAnchors[index] = anchor;
+                }
+
+                if (baseSize.x > 0f && baseSize.y > 0f && index < enemyDefeatEffectSizes.Count)
+                {
+                    enemyDefeatEffectSizes[index] = baseSize;
+                }
+
+                HideEnemyDefeatEffect(index);
+                return;
+            }
+
+            EnsureEnemyDefeatEffectSprites();
+            if (enemyDefeatEffectSprites.Count == 0)
+            {
+                HideEnemyDefeatEffect(index);
+                return;
+            }
+
+            Image image = enemyDefeatEffectImages[index];
+            if (image == null)
+            {
+                return;
+            }
+
+            float progress = EnemyDefeatEffectDuration > 0f
+                ? 1f - Mathf.Clamp01(remaining / EnemyDefeatEffectDuration)
+                : 1f;
+            float frameProgress = Mathf.Clamp01(progress * 1.08f);
+            int frameIndex = Mathf.Clamp(
+                Mathf.FloorToInt(frameProgress * enemyDefeatEffectSprites.Count),
+                0,
+                enemyDefeatEffectSprites.Count - 1);
+            Sprite sprite = enemyDefeatEffectSprites[frameIndex];
+            Vector2 effectAnchor = index < enemyDefeatEffectAnchors.Count
+                ? enemyDefeatEffectAnchors[index]
+                : anchor;
+            Vector2 effectSize = index < enemyDefeatEffectSizes.Count
+                ? enemyDefeatEffectSizes[index]
+                : baseSize;
+            if (effectSize.x <= 0f || effectSize.y <= 0f)
+            {
+                effectSize = baseSize;
+            }
+
+            float storedLongestSide = Mathf.Max(effectSize.x, effectSize.y);
+            if (storedLongestSide <= 0f)
+            {
+                storedLongestSide = Mathf.Max(EnemyPreviewSize.x, EnemyPreviewSize.y);
+            }
+
+            float pulse = 1f + Mathf.Sin(progress * Mathf.PI) * 0.22f;
+            float longestSide = Mathf.Max(136f, storedLongestSide * EnemyDefeatEffectScaleMultiplier * pulse);
+            ApplyPreviewImageLayout(image, effectAnchor, ResolveRangedAttackEffectSizeDelta(sprite, longestSide));
+            image.rectTransform.anchoredPosition = motionOffset + new Vector2(0f, Mathf.Lerp(0f, 32f, progress));
+            image.rectTransform.localScale = Vector3.one;
+            image.rectTransform.localEulerAngles = Vector3.zero;
+            image.sprite = sprite;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+            image.useSpriteMesh = false;
+            image.raycastTarget = false;
+            image.enabled = true;
+
+            float fadeIn = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, 0.06f, progress));
+            float fadeOut = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.84f, 1f, progress));
+            Color color = Color.white;
+            color.a = fadeIn * fadeOut;
+            image.color = color;
+        }
+
+        private void HideEnemyDefeatEffect(int index)
+        {
+            if (index < 0 || index >= enemyDefeatEffectImages.Count)
+            {
+                return;
+            }
+
+            Image image = enemyDefeatEffectImages[index];
+            if (image == null)
+            {
+                return;
+            }
+
+            Color color = image.color;
+            color.a = 0f;
+            image.color = color;
+            image.rectTransform.sizeDelta = Vector2.zero;
+        }
+
+        private void EnsureEnemyDefeatEffectSprites()
+        {
+            if (enemyDefeatEffectSprites.Count > 0)
+            {
+                return;
+            }
+
+            List<Sprite> frames = BattleVisualResolver.ResolveSpriteFramesFromResourcePath(EnemyDefeatEffectPath);
+            if (frames != null && frames.Count > 0)
+            {
+                enemyDefeatEffectSprites.AddRange(frames);
+            }
         }
 
         private void UpdatePreviewLayoutFromSimulator(BattleSimulator simulator)
@@ -3741,10 +4436,13 @@ namespace WitchTower.Battle
                 float allyApproachT = allyMoving ? 0f : 1f;
                 bool allyAttackEngaged = allyAlive && simulator.IsAllyAttackEngaged(i);
                 BattleVisualPose allyPose = ResolveAllyPreviewPose(i, allyApproachT, allyAttackEngaged);
-                Vector2 allyPreviewSize = AllyPreviewSize * (allyScale * ResolveMonsterPreviewScale(allyData, allyPose));
+                float allyPreviewScale = ResolveMonsterPreviewScale(allyData, allyPose);
+                Vector2 allyPreviewSize = AllyPreviewSize * (allyScale * allyPreviewScale);
+                Vector2 allyEffectSize = AllyPreviewSize * allyPreviewScale;
+                Vector2 mappedAllyAnchor = MapBattlefieldAnchor(allyAnchor);
                 ApplyPreviewImageLayout(
                     allyPreviewImages[i],
-                    MapBattlefieldAnchor(allyAnchor),
+                    mappedAllyAnchor,
                     allyPreviewSize);
 
                 Sprite allySprite = SelectAllyPreviewSprite(i, allyApproachT, allyAttackEngaged);
@@ -3760,14 +4458,15 @@ namespace WitchTower.Battle
 
                 UpdatePreviewHpBar(
                     i < allyPreviewHpBars.Count ? allyPreviewHpBars[i] : null,
-                    MapBattlefieldAnchor(allyAnchor),
+                    mappedAllyAnchor,
                     allyPreviewSize,
                     simulator.HasAllyRuntime(i),
                     allyColor.a,
-                    simulator.GetAllyCurrentHp(i),
+                    stateMachine != null ? stateMachine.GetDisplayedAllyCurrentHp(i) : simulator.GetAllyCurrentHp(i),
                     simulator.GetAllyMaxHp(i),
                     new Color(0.28f, 0.88f, 0.66f, 0.95f),
                     allyMotionOffset);
+                UpdateAllyDefeatEffectLayout(i, mappedAllyAnchor, allyEffectSize, allyMotionOffset);
             }
 
             for (int i = 0; i < enemyPreviewImages.Count; i += 1)
@@ -3781,8 +4480,12 @@ namespace WitchTower.Battle
                 bool shouldShow = i < activeEnemyCount && simulator.HasEnemyRuntime(i);
                 if (!shouldShow)
                 {
-                    ApplyPreviewImageLayout(image, MapBattlefieldAnchor(new Vector2(1.10f, ResolveEnemyPreviewLaneY(i))), Vector2.zero);
-                    UpdatePreviewHpBar(i < enemyPreviewHpBars.Count ? enemyPreviewHpBars[i] : null, MapBattlefieldAnchor(new Vector2(1.10f, ResolveEnemyPreviewLaneY(i))), Vector2.zero, false, 0f, 0, 0, new Color(0.96f, 0.44f, 0.40f, 0.95f));
+                    Vector2 hiddenAnchor = MapBattlefieldAnchor(new Vector2(1.10f, ResolveEnemyPreviewLaneY(i)));
+                    ApplyPreviewImageLayout(image, hiddenAnchor, Vector2.zero);
+                    UpdatePreviewHpBar(i < enemyPreviewHpBars.Count ? enemyPreviewHpBars[i] : null, hiddenAnchor, Vector2.zero, false, 0f, 0, 0, new Color(0.96f, 0.44f, 0.40f, 0.95f));
+                    Vector2 defeatAnchor = i < enemyDefeatEffectAnchors.Count ? enemyDefeatEffectAnchors[i] : hiddenAnchor;
+                    Vector2 defeatSize = i < enemyDefeatEffectSizes.Count ? enemyDefeatEffectSizes[i] : EnemyPreviewSize;
+                    UpdateEnemyDefeatEffectLayout(i, defeatAnchor, defeatSize, Vector2.zero);
                     continue;
                 }
 
@@ -3796,29 +4499,40 @@ namespace WitchTower.Battle
                 float scale = Mathf.Lerp(1f, 0.24f, enemyVanishT);
                 bool enemyAttackEngaged = simulator.IsEnemyAttackEngaged(i);
                 BattleVisualPose enemyPose = ResolveEnemyPreviewPose(i, enemyMoving, enemyAttackEngaged);
-                float enemyPreviewScale = ResolveEnemyPreviewScale(currentPreviewEnemyData, enemyPose);
+                EnemyPreviewVisualData enemyVisualData = ResolveEnemyPreviewVisualData(simulator, i);
+                EnemyDataSO enemyData = enemyVisualData?.EnemyData ?? currentPreviewEnemyData;
+                float slotEnemyAttackRange = enemyVisualData != null ? enemyVisualData.AttackRange : enemyAttackRange;
+                float enemyPreviewScale = ResolveEnemyPreviewScale(enemyData, enemyPose);
                 Vector2 previewSize = (simulator.IsBossWave && i == 0 ? BossPreviewSize : EnemyPreviewSize) * (scale * enemyPreviewScale);
-                ApplyPreviewImageLayout(image, MapBattlefieldAnchor(enemyAnchor), previewSize);
+                Vector2 defeatEffectSize = (simulator.IsBossWave && i == 0 ? BossPreviewSize : EnemyPreviewSize) * enemyPreviewScale;
+                Vector2 mappedEnemyAnchor = MapBattlefieldAnchor(enemyAnchor);
+                ApplyPreviewImageLayout(image, mappedEnemyAnchor, previewSize);
 
-                SetImageSprite(image, SelectEnemyPreviewSprite(i, enemyMoving, enemyAttackEngaged));
-                Vector2 enemyMotionOffset = ResolvePresentationMotionOffset(i, false, enemyPose, enemyAttackRemaining, enemyAttackRange >= RangedAttackThreshold);
-                BattleFacingDirection enemySourceFacing = BattleVisualResolver.ResolveEnemyFacing(currentPreviewEnemyData, enemyPose);
+                SetImageSprite(image, SelectEnemyPreviewSprite(i, enemyMoving, enemyAttackEngaged, enemyVisualData));
+                Vector2 enemyMotionOffset = ResolvePresentationMotionOffset(i, false, enemyPose, enemyAttackRemaining, slotEnemyAttackRange >= RangedAttackThreshold);
+                BattleFacingDirection enemySourceFacing = BattleVisualResolver.ResolveEnemyFacing(enemyData, enemyPose);
                 image.rectTransform.localScale = ResolveFacingScale(enemySourceFacing, BattleFacingDirection.Left);
-                ApplyPreviewVisualLayout(image, previewSize, enemyMotionOffset, ResolveEnemyPreviewReferenceSprites(enemyPose), ResolveEnemyPreviewMeasurementMode(currentPreviewEnemyData, enemyPose));
+                ApplyPreviewVisualLayout(
+                    image,
+                    previewSize,
+                    enemyMotionOffset,
+                    ResolveEnemyPreviewReferenceSprites(enemyPose, enemyVisualData),
+                    ResolveEnemyPreviewMeasurementMode(enemyData, enemyPose));
                 Color color = image.color;
                 color.a = 1f - enemyVanishT;
                 image.color = color;
 
                 UpdatePreviewHpBar(
                     i < enemyPreviewHpBars.Count ? enemyPreviewHpBars[i] : null,
-                    MapBattlefieldAnchor(enemyAnchor),
+                    mappedEnemyAnchor,
                     previewSize,
                     true,
                     color.a,
-                    simulator.GetEnemyCurrentHp(i),
+                    stateMachine != null ? stateMachine.GetDisplayedEnemyCurrentHp(i) : simulator.GetEnemyCurrentHp(i),
                     simulator.GetEnemyMaxHp(i),
                     new Color(0.96f, 0.44f, 0.40f, 0.95f),
                     enemyMotionOffset);
+                UpdateEnemyDefeatEffectLayout(i, mappedEnemyAnchor, defeatEffectSize, enemyMotionOffset);
             }
 
             if (stateMachine != null)
@@ -4223,6 +4937,16 @@ namespace WitchTower.Battle
         {
             if (hitInfo.TargetIsPlayer)
             {
+                BattleSimulator simulator = stateMachine != null ? stateMachine.Simulator : null;
+                string runtimeEnemyId = simulator != null && simulator.HasEnemyRuntime(hitInfo.AttackerIndex)
+                    ? simulator.GetEnemyId(hitInfo.AttackerIndex)
+                    : string.Empty;
+                string runtimeMonsterId = BattleDungeonCatalog.ResolveMonsterIdFromEnemyId(runtimeEnemyId);
+                if (!string.IsNullOrEmpty(runtimeMonsterId))
+                {
+                    return MasterDataManager.Instance?.GetMonsterData(runtimeMonsterId);
+                }
+
                 if (currentPreviewEnemyData == null || string.IsNullOrEmpty(currentPreviewEnemyData.enemyId))
                 {
                     return null;
@@ -5085,6 +5809,246 @@ namespace WitchTower.Battle
             EnsureSkillPanel();
             EnsureWaveHud();
             EnsureRangedEffectRoot();
+            EnsureRetireControls();
+            EnsureBattleAnnouncement();
+        }
+
+        private void EnsureBattleAnnouncement()
+        {
+            if (minimalCanvasRoot == null)
+            {
+                return;
+            }
+
+            if (battleAnnouncementRoot == null)
+            {
+                Transform existingRoot = minimalCanvasRoot.transform.Find("BattleAnnouncementBanner");
+                if (existingRoot != null)
+                {
+                    battleAnnouncementRoot = existingRoot.gameObject;
+                    battleAnnouncementBackgroundImage = battleAnnouncementRoot.GetComponent<Image>();
+                    battleAnnouncementText = existingRoot.Find("Label")?.GetComponent<Text>();
+                }
+            }
+
+            if (battleAnnouncementRoot == null)
+            {
+                battleAnnouncementRoot = new GameObject(
+                    "BattleAnnouncementBanner",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+                RegisterSceneObjectIfEditing(battleAnnouncementRoot);
+                RectTransform rect = battleAnnouncementRoot.GetComponent<RectTransform>();
+                rect.SetParent(minimalCanvasRoot.transform, false);
+                battleAnnouncementBackgroundImage = battleAnnouncementRoot.GetComponent<Image>();
+                battleAnnouncementBackgroundImage.raycastTarget = false;
+            }
+
+            ApplyBattleAnnouncementLayout();
+
+            if (battleAnnouncementText == null)
+            {
+                battleAnnouncementText = CreateMinimalResultText(
+                    "Label",
+                    battleAnnouncementRoot.transform,
+                    new Vector2(0.05f, 0.08f),
+                    new Vector2(0.95f, 0.92f),
+                    34,
+                    FontStyle.Bold,
+                    TextAnchor.MiddleCenter,
+                    new Color(1f, 0.90f, 0.48f, 0f));
+                battleAnnouncementText.resizeTextMinSize = 18;
+                battleAnnouncementText.resizeTextMaxSize = 34;
+                battleAnnouncementText.raycastTarget = false;
+            }
+
+            if (string.IsNullOrEmpty(activeBattleAnnouncementText) && battleAnnouncementQueue.Count <= 0)
+            {
+                HideBattleAnnouncement();
+            }
+        }
+
+        private void ApplyBattleAnnouncementLayout()
+        {
+            if (battleAnnouncementRoot == null)
+            {
+                return;
+            }
+
+            RectTransform rect = battleAnnouncementRoot.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(0.10f, 0.888f);
+                rect.anchorMax = new Vector2(0.90f, 0.952f);
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+            }
+
+            if (battleAnnouncementText != null)
+            {
+                RectTransform textRect = battleAnnouncementText.rectTransform;
+                textRect.anchorMin = new Vector2(0.05f, 0.08f);
+                textRect.anchorMax = new Vector2(0.95f, 0.92f);
+                textRect.offsetMin = Vector2.zero;
+                textRect.offsetMax = Vector2.zero;
+            }
+        }
+
+        private void EnsureRetireControls()
+        {
+            if (minimalCanvasRoot == null)
+            {
+                return;
+            }
+
+            if (retireButton == null)
+            {
+                Transform existingButton = minimalCanvasRoot.transform.Find("RetireButton");
+                if (existingButton != null)
+                {
+                    retireButton = existingButton.GetComponent<Button>();
+                    retireButtonText = existingButton.Find("Label")?.GetComponent<Text>();
+                }
+            }
+
+            if (retireButton == null)
+            {
+                retireButton = CreateMinimalResultButton(
+                    "RetireButton",
+                    minimalCanvasRoot.transform,
+                    new Vector2(0.025f, 0.915f),
+                    new Vector2(0.225f, 0.965f),
+                    new Color(0.50f, 0.16f, 0.10f, 0.98f),
+                    out retireButtonText);
+            }
+
+            if (retireButton != null)
+            {
+                retireButton.onClick.RemoveAllListeners();
+                retireButton.onClick.AddListener(ShowRetireConfirmation);
+                retireButton.gameObject.SetActive(!resultHandled);
+            }
+
+            if (retireButtonText != null)
+            {
+                retireButtonText.text = "リタイア";
+                retireButtonText.fontSize = 25;
+                retireButtonText.resizeTextMaxSize = 25;
+            }
+
+            if (retireConfirmationOverlayRoot == null)
+            {
+                Transform existingOverlay = minimalCanvasRoot.transform.Find("RetireConfirmationOverlay");
+                if (existingOverlay != null)
+                {
+                    retireConfirmationOverlayRoot = existingOverlay.gameObject;
+                    confirmRetireButton = existingOverlay.Find("ConfirmationCard/ConfirmRetireButton")?.GetComponent<Button>();
+                    cancelRetireButton = existingOverlay.Find("ConfirmationCard/CancelRetireButton")?.GetComponent<Button>();
+                }
+            }
+
+            if (retireConfirmationOverlayRoot == null)
+            {
+                CreateRetireConfirmationOverlay();
+            }
+
+            if (confirmRetireButton != null)
+            {
+                confirmRetireButton.onClick.RemoveAllListeners();
+                confirmRetireButton.onClick.AddListener(ConfirmRetire);
+            }
+
+            if (cancelRetireButton != null)
+            {
+                cancelRetireButton.onClick.RemoveAllListeners();
+                cancelRetireButton.onClick.AddListener(CancelRetire);
+            }
+
+            if (retireConfirmationOverlayRoot != null)
+            {
+                retireConfirmationOverlayRoot.SetActive(isRetireConfirmationOpen);
+            }
+
+            if (isRetireConfirmationOpen && retireConfirmationOverlayRoot != null)
+            {
+                retireConfirmationOverlayRoot.transform.SetAsLastSibling();
+            }
+            else if (retireButton != null)
+            {
+                retireButton.transform.SetAsLastSibling();
+            }
+        }
+
+        private void CreateRetireConfirmationOverlay()
+        {
+            retireConfirmationOverlayRoot = new GameObject(
+                "RetireConfirmationOverlay",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image));
+            RegisterSceneObjectIfEditing(retireConfirmationOverlayRoot);
+            RectTransform overlayRect = retireConfirmationOverlayRoot.GetComponent<RectTransform>();
+            overlayRect.SetParent(minimalCanvasRoot.transform, false);
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+            Image overlayImage = retireConfirmationOverlayRoot.GetComponent<Image>();
+            overlayImage.color = new Color(0f, 0f, 0f, 0.72f);
+            overlayImage.raycastTarget = true;
+
+            GameObject card = new GameObject("ConfirmationCard", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            RegisterSceneObjectIfEditing(card);
+            RectTransform cardRect = card.GetComponent<RectTransform>();
+            cardRect.SetParent(retireConfirmationOverlayRoot.transform, false);
+            cardRect.anchorMin = new Vector2(0.12f, 0.36f);
+            cardRect.anchorMax = new Vector2(0.88f, 0.64f);
+            cardRect.offsetMin = Vector2.zero;
+            cardRect.offsetMax = Vector2.zero;
+            card.GetComponent<Image>().color = new Color(0.035f, 0.055f, 0.085f, 0.99f);
+
+            Text title = CreateMinimalResultText(
+                "Title",
+                card.transform,
+                new Vector2(0.08f, 0.70f),
+                new Vector2(0.92f, 0.91f),
+                38,
+                FontStyle.Bold,
+                TextAnchor.MiddleCenter,
+                new Color(1f, 0.88f, 0.58f, 1f));
+            title.text = "リタイアしますか？";
+
+            Text message = CreateMinimalResultText(
+                "Message",
+                card.transform,
+                new Vector2(0.08f, 0.42f),
+                new Vector2(0.92f, 0.68f),
+                25,
+                FontStyle.Bold,
+                TextAnchor.MiddleCenter,
+                Color.white);
+            message.text = "現在の戦闘を終了してホームへ戻ります。";
+
+            confirmRetireButton = CreateMinimalResultButton(
+                "ConfirmRetireButton",
+                card.transform,
+                new Vector2(0.08f, 0.10f),
+                new Vector2(0.46f, 0.32f),
+                new Color(0.58f, 0.18f, 0.10f, 1f),
+                out Text confirmText);
+            confirmText.text = "リタイアする";
+
+            cancelRetireButton = CreateMinimalResultButton(
+                "CancelRetireButton",
+                card.transform,
+                new Vector2(0.54f, 0.10f),
+                new Vector2(0.92f, 0.32f),
+                new Color(0.20f, 0.42f, 0.58f, 1f),
+                out Text cancelText);
+            cancelText.text = "戦闘に戻る";
+
+            retireConfirmationOverlayRoot.SetActive(false);
         }
 
         private void EnsureRangedEffectRoot()
@@ -5261,6 +6225,23 @@ namespace WitchTower.Battle
 
             minimalResultOverlayRoot.SetActive(true);
             minimalResultOverlayRoot.transform.SetAsLastSibling();
+            CancelRetire();
+            if (retireButton != null)
+            {
+                retireButton.gameObject.SetActive(false);
+            }
+
+            bool entersNextDungeon = BattleDungeonCatalog.IsDungeonTransition(viewData.ClearedFloor, viewData.NextFloor);
+            int clearedLocalFloor = BattleDungeonCatalog.ResolveLocalFloor(viewData.ClearedFloor);
+            int nextLocalFloor = BattleDungeonCatalog.ResolveLocalFloor(viewData.NextFloor);
+            string clearedStageName = BattleDungeonCatalog.ResolveStageName(viewData.ClearedFloor);
+            string nextDungeonName = BattleDungeonCatalog.ResolveDungeonName(viewData.NextFloor);
+            string nextFloorSummary = entersNextDungeon
+                ? $"次のステージ: {nextDungeonName} 第{nextLocalFloor}階層"
+                : $"次の階層: 第{nextLocalFloor}階層";
+            string nextFloorAction = entersNextDungeon
+                ? $"{nextDungeonName}\n第{nextLocalFloor}階層へ"
+                : $"第{nextLocalFloor}階層へ";
 
             if (minimalResultTitleText != null)
             {
@@ -5273,7 +6254,7 @@ namespace WitchTower.Battle
             if (minimalResultSummaryText != null)
             {
                 minimalResultSummaryText.text = viewData.IsWin
-                    ? $"第{viewData.ClearedFloor}階層を突破\n次の階層: 第{viewData.NextFloor}階層"
+                    ? $"{clearedStageName}\n第{clearedLocalFloor}階層を突破\n{nextFloorSummary}"
                     : "戦闘に敗北しました\n編成や装備を見直しましょう";
             }
 
@@ -5299,19 +6280,38 @@ namespace WitchTower.Battle
 
             if (minimalResultNextFloorButtonText != null)
             {
-                minimalResultNextFloorButtonText.text = $"第{viewData.NextFloor}階層へ";
+                minimalResultNextFloorButtonText.text = nextFloorAction;
             }
 
             if (minimalResultRetryFloorButton != null)
             {
+                bool canAutoRepeat = HasAutoRepeatFloorUpgrade();
+                bool isAutoRepeatActive = IsAutoRepeatSameFloorActive();
                 minimalResultRetryFloorButton.gameObject.SetActive(true);
                 minimalResultRetryFloorButton.onClick.RemoveAllListeners();
-                minimalResultRetryFloorButton.onClick.AddListener(RetryClearedFloor);
+                minimalResultRetryFloorButton.interactable = !isAutoRepeatActive;
+                if (!isAutoRepeatActive)
+                {
+                    if (canAutoRepeat)
+                    {
+                        minimalResultRetryFloorButton.onClick.AddListener(StartAutoRepeatSameFloor);
+                    }
+                    else
+                    {
+                        minimalResultRetryFloorButton.onClick.AddListener(RetryClearedFloor);
+                    }
+                }
             }
 
             if (minimalResultRetryFloorButtonText != null)
             {
-                minimalResultRetryFloorButtonText.text = "この階層に再挑戦";
+                bool canAutoRepeat = HasAutoRepeatFloorUpgrade();
+                bool isAutoRepeatActive = IsAutoRepeatSameFloorActive();
+                minimalResultRetryFloorButtonText.text = isAutoRepeatActive
+                    ? "自動再挑戦中"
+                    : canAutoRepeat
+                        ? "繰り返し挑戦"
+                        : "この階層に再挑戦";
             }
 
             if (minimalResultHomeButton != null)
@@ -5406,7 +6406,7 @@ namespace WitchTower.Battle
             cardImage.raycastTarget = true;
 
             minimalResultTitleText = CreateMinimalResultText("Title", card.transform, new Vector2(0.06f, 0.83f), new Vector2(0.94f, 0.96f), 54, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(1f, 0.88f, 0.42f, 1f));
-            minimalResultSummaryText = CreateMinimalResultText("Summary", card.transform, new Vector2(0.08f, 0.68f), new Vector2(0.92f, 0.80f), 26, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.94f, 0.95f, 0.92f, 1f));
+            minimalResultSummaryText = CreateMinimalResultText("Summary", card.transform, new Vector2(0.08f, 0.66f), new Vector2(0.92f, 0.81f), 23, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.94f, 0.95f, 0.92f, 1f));
             minimalResultRewardText = CreateMinimalResultText("Rewards", card.transform, new Vector2(0.10f, 0.46f), new Vector2(0.90f, 0.66f), 22, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.84f, 0.93f, 1f, 1f));
             minimalResultRewardVisualRoot = CreateMinimalResultRewardVisualRoot(card.transform);
             minimalResultForecastText = CreateMinimalResultText("Forecast", card.transform, new Vector2(0.08f, 0.23f), new Vector2(0.92f, 0.31f), 22, FontStyle.Normal, TextAnchor.MiddleCenter, new Color(1f, 0.90f, 0.66f, 1f));
@@ -5459,6 +6459,7 @@ namespace WitchTower.Battle
             ConfigureMinimalResultButtonRect(minimalResultNextFloorButton, new Vector2(0.06f, 0.08f), new Vector2(0.32f, 0.19f));
             ConfigureMinimalResultButtonRect(minimalResultRetryFloorButton, new Vector2(0.37f, 0.08f), new Vector2(0.63f, 0.19f));
             ConfigureMinimalResultButtonRect(minimalResultHomeButton, new Vector2(0.68f, 0.08f), new Vector2(0.94f, 0.19f));
+            ConfigureMinimalResultTextRect(minimalResultSummaryText, new Vector2(0.08f, 0.66f), new Vector2(0.92f, 0.81f), 23);
 
             minimalResultNextFloorButtonText = minimalResultNextFloorButtonText != null
                 ? minimalResultNextFloorButtonText
@@ -5488,6 +6489,30 @@ namespace WitchTower.Battle
             rect.anchorMax = anchorMax;
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
+        }
+
+        private static void ConfigureMinimalResultTextRect(Text text, Vector2 anchorMin, Vector2 anchorMax, int maxFontSize)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            RectTransform rect = text.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = anchorMin;
+                rect.anchorMax = anchorMax;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+            }
+
+            text.fontSize = maxFontSize;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 16;
+            text.resizeTextMaxSize = maxFontSize;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
         }
 
         private void ShowMinimalResultRewardVisuals(BattleResultViewData viewData)
@@ -5667,6 +6692,9 @@ namespace WitchTower.Battle
             text.color = color;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 16;
+            text.resizeTextMaxSize = fontSize;
 
             Outline outline = textObject.GetComponent<Outline>();
             outline.effectColor = new Color(0f, 0f, 0f, 0.82f);
@@ -6339,6 +7367,12 @@ namespace WitchTower.Battle
                         allyDefeatVanishRemainings[i] = 0f;
                     }
 
+                    for (int i = 0; i < allyDefeatEffectRemainings.Count; i += 1)
+                    {
+                        allyDefeatEffectRemainings[i] = 0f;
+                        HideAllyDefeatEffect(i);
+                    }
+
                     for (int i = 0; i < enemyKnockbackRemainings.Count; i += 1)
                     {
                         enemyKnockbackRemainings[i] = 0f;
@@ -6411,9 +7445,19 @@ namespace WitchTower.Battle
                 allyDefeatVanishRemainings[i] = Mathf.Max(0f, allyDefeatVanishRemainings[i] - deltaTime);
             }
 
+            for (int i = 0; i < allyDefeatEffectRemainings.Count; i += 1)
+            {
+                allyDefeatEffectRemainings[i] = Mathf.Max(0f, allyDefeatEffectRemainings[i] - deltaTime);
+            }
+
             for (int i = 0; i < enemyDefeatVanishRemainings.Count; i += 1)
             {
                 enemyDefeatVanishRemainings[i] = Mathf.Max(0f, enemyDefeatVanishRemainings[i] - deltaTime);
+            }
+
+            for (int i = 0; i < enemyDefeatEffectRemainings.Count; i += 1)
+            {
+                enemyDefeatEffectRemainings[i] = Mathf.Max(0f, enemyDefeatEffectRemainings[i] - deltaTime);
             }
 
             UpdateDisplayedEnemyPreviewCount(simulator);
@@ -6528,7 +7572,38 @@ namespace WitchTower.Battle
         {
             if (defeatedPreviewIndex >= 0)
             {
-                pendingEnemyPreviewRemovalIndices.Add(defeatedPreviewIndex);
+                if (!pendingEnemyPreviewRemovalIndices.Contains(defeatedPreviewIndex))
+                {
+                    pendingEnemyPreviewRemovalIndices.Add(defeatedPreviewIndex);
+                }
+
+                if (minimalMonsterPresentation)
+                {
+                    EnsureMonsterPreviewRoot();
+                    if (monsterPreviewRoot != null)
+                    {
+                        EnsureEnemyPreviewCapacity(defeatedPreviewIndex + 1);
+                        if (defeatedPreviewIndex < enemyDefeatEffectRemainings.Count)
+                        {
+                            enemyDefeatEffectRemainings[defeatedPreviewIndex] = EnemyDefeatEffectDuration;
+                        }
+
+                        if (defeatedPreviewIndex < enemyPreviewImages.Count && enemyPreviewImages[defeatedPreviewIndex] != null)
+                        {
+                            RectTransform rect = enemyPreviewImages[defeatedPreviewIndex].rectTransform;
+                            if (defeatedPreviewIndex < enemyDefeatEffectAnchors.Count)
+                            {
+                                enemyDefeatEffectAnchors[defeatedPreviewIndex] = rect.anchorMin;
+                            }
+
+                            if (defeatedPreviewIndex < enemyDefeatEffectSizes.Count && rect.sizeDelta.x > 0f && rect.sizeDelta.y > 0f)
+                            {
+                                enemyDefeatEffectSizes[defeatedPreviewIndex] = rect.sizeDelta;
+                            }
+                        }
+                    }
+                }
+
                 if (defeatedPreviewIndex < enemyDefeatVanishRemainings.Count)
                 {
                     enemyDefeatVanishRemainings[defeatedPreviewIndex] = EnemyDefeatVanishDuration;
@@ -6548,6 +7623,30 @@ namespace WitchTower.Battle
             }
 
             allyDefeatVanishRemainings[allyIndex] = AllyDefeatVanishDuration;
+            if (minimalMonsterPresentation)
+            {
+                EnsureMonsterPreviewRoot();
+                EnsureAllyPreviewEffectCapacity();
+                if (allyIndex < allyDefeatEffectRemainings.Count)
+                {
+                    allyDefeatEffectRemainings[allyIndex] = AllyDefeatEffectDuration;
+                }
+
+                if (allyIndex < allyPreviewImages.Count && allyPreviewImages[allyIndex] != null)
+                {
+                    RectTransform rect = allyPreviewImages[allyIndex].rectTransform;
+                    if (allyIndex < allyDefeatEffectAnchors.Count)
+                    {
+                        allyDefeatEffectAnchors[allyIndex] = rect.anchorMin;
+                    }
+
+                    if (allyIndex < allyDefeatEffectSizes.Count && rect.sizeDelta.x > 0f && rect.sizeDelta.y > 0f)
+                    {
+                        allyDefeatEffectSizes[allyIndex] = rect.sizeDelta;
+                    }
+                }
+            }
+
             if (allyIndex < allyKnockbackRemainings.Count)
             {
                 allyKnockbackRemainings[allyIndex] = 0f;
@@ -6607,7 +7706,9 @@ namespace WitchTower.Battle
                         continue;
                     }
 
-                    if (enemyDefeatVanishRemainings[removalIndex] > 0f)
+                    bool defeatEffectActive = removalIndex < enemyDefeatEffectRemainings.Count &&
+                        enemyDefeatEffectRemainings[removalIndex] > 0f;
+                    if (enemyDefeatVanishRemainings[removalIndex] > 0f || defeatEffectActive)
                     {
                         continue;
                     }
@@ -6658,6 +7759,19 @@ namespace WitchTower.Battle
             enemyKnockbackRemainings.RemoveAt(removalIndex);
             enemyAttackVisualRemainings.RemoveAt(removalIndex);
             enemyDefeatVanishRemainings.RemoveAt(removalIndex);
+            if (removalIndex < enemyDefeatEffectRemainings.Count)
+            {
+                enemyDefeatEffectRemainings.RemoveAt(removalIndex);
+            }
+            if (removalIndex < enemyDefeatEffectAnchors.Count)
+            {
+                enemyDefeatEffectAnchors.RemoveAt(removalIndex);
+            }
+            if (removalIndex < enemyDefeatEffectSizes.Count)
+            {
+                enemyDefeatEffectSizes.RemoveAt(removalIndex);
+            }
+            HideEnemyDefeatEffect(removalIndex);
             AppendEnemyPreviewSlotMetadata();
         }
 
@@ -6665,6 +7779,10 @@ namespace WitchTower.Battle
         {
             allyPreviewImages.Clear();
             allyPreviewHpBars.Clear();
+            allyDefeatEffectImages.Clear();
+            allyDefeatEffectRemainings.Clear();
+            allyDefeatEffectAnchors.Clear();
+            allyDefeatEffectSizes.Clear();
             allyPreviewTrackedTargetXAnchors.Clear();
             allyPreviewTrackedTargetYAnchors.Clear();
             allyPreviewLockedEnemyIndices.Clear();
@@ -6674,6 +7792,13 @@ namespace WitchTower.Battle
                 if (image != null)
                 {
                     allyPreviewImages.Add(image);
+                    Image effectImage = existingRoot.Find($"AllyDefeatEffect_{i}")?.GetComponent<Image>();
+                    if (effectImage != null)
+                    {
+                        ConfigureDefeatEffectImage(effectImage);
+                    }
+
+                    allyDefeatEffectImages.Add(effectImage);
                 }
 
                 allyPreviewHpBars.Add(existingRoot.Find($"AllyMonsterHp_{i}") != null
@@ -6692,6 +7817,10 @@ namespace WitchTower.Battle
         {
             enemyPreviewImages.Clear();
             enemyPreviewHpBars.Clear();
+            enemyDefeatEffectImages.Clear();
+            enemyDefeatEffectRemainings.Clear();
+            enemyDefeatEffectAnchors.Clear();
+            enemyDefeatEffectSizes.Clear();
             enemyPreviewTrackedTargetXAnchors.Clear();
             enemyPreviewTrackedTargetYAnchors.Clear();
             enemyPreviewLockedAllyIndices.Clear();
@@ -6707,6 +7836,13 @@ namespace WitchTower.Battle
                     enemyPreviewHpBars.Add(existingRoot.Find($"EnemyMonsterHp_{index}") != null
                         ? CollectPreviewHpBar(existingRoot.Find($"EnemyMonsterHp_{index}"))
                         : null);
+                    Image effectImage = existingRoot.Find($"EnemyDefeatEffect_{index}")?.GetComponent<Image>();
+                    if (effectImage != null)
+                    {
+                        ConfigureDefeatEffectImage(effectImage);
+                    }
+
+                    enemyDefeatEffectImages.Add(effectImage);
                     enemyPreviewTrackedTargetXAnchors.Add(0.76f);
                     enemyPreviewTrackedTargetYAnchors.Add(0.40f);
                     enemyPreviewLockedAllyIndices.Add(-1);
@@ -6756,6 +7892,70 @@ namespace WitchTower.Battle
             {
                 allyDefeatVanishRemainings.Add(0f);
             }
+
+            while (allyDefeatEffectRemainings.Count < allyPreviewImages.Count)
+            {
+                allyDefeatEffectRemainings.Add(0f);
+            }
+
+            while (allyDefeatEffectAnchors.Count < allyPreviewImages.Count)
+            {
+                int index = allyDefeatEffectAnchors.Count;
+                Vector2 anchor = index < AllyPreviewAnchors.Length ? AllyPreviewAnchors[index] : new Vector2(0.32f, 0.5f);
+                allyDefeatEffectAnchors.Add(MapBattlefieldAnchor(anchor));
+            }
+
+            while (allyDefeatEffectSizes.Count < allyPreviewImages.Count)
+            {
+                allyDefeatEffectSizes.Add(AllyPreviewSize);
+            }
+
+            EnsureAllyDefeatEffectImageCapacity();
+        }
+
+        private void EnsureAllyDefeatEffectImageCapacity()
+        {
+            if (monsterPreviewRoot == null)
+            {
+                return;
+            }
+
+            while (allyDefeatEffectImages.Count < allyPreviewImages.Count)
+            {
+                int index = allyDefeatEffectImages.Count + 1;
+                allyDefeatEffectImages.Add(ResolveOrCreateAllyDefeatEffectImage(index));
+            }
+
+            for (int i = 0; i < allyPreviewImages.Count; i += 1)
+            {
+                if (i < allyDefeatEffectImages.Count && allyDefeatEffectImages[i] != null)
+                {
+                    continue;
+                }
+
+                Image image = ResolveOrCreateAllyDefeatEffectImage(i + 1);
+                if (i < allyDefeatEffectImages.Count)
+                {
+                    allyDefeatEffectImages[i] = image;
+                }
+                else
+                {
+                    allyDefeatEffectImages.Add(image);
+                }
+            }
+        }
+
+        private Image ResolveOrCreateAllyDefeatEffectImage(int oneBasedIndex)
+        {
+            string objectName = $"AllyDefeatEffect_{oneBasedIndex}";
+            Image image = monsterPreviewRoot.transform.Find(objectName)?.GetComponent<Image>();
+            if (image == null)
+            {
+                image = CreatePreviewImage(objectName, monsterPreviewRoot.transform);
+            }
+
+            ConfigureDefeatEffectImage(image);
+            return image;
         }
 
         private void EnsureAllyPreviewHpBarCapacity()
@@ -6813,6 +8013,8 @@ namespace WitchTower.Battle
                 enemyPreviewHpBars.Add(CreatePreviewHpBar($"EnemyMonsterHp_{index}", monsterPreviewRoot.transform));
             }
 
+            EnsureEnemyDefeatEffectCapacity();
+
             for (int i = 0; i < enemyPreviewImages.Count; i += 1)
             {
                 if (enemyPreviewHpBars[i] != null)
@@ -6824,6 +8026,86 @@ namespace WitchTower.Battle
             }
 
             ArrangeMonsterPreviewLayers();
+        }
+
+        private void EnsureEnemyDefeatEffectCapacity()
+        {
+            if (monsterPreviewRoot == null)
+            {
+                return;
+            }
+
+            while (enemyDefeatEffectImages.Count < enemyPreviewImages.Count)
+            {
+                int index = enemyDefeatEffectImages.Count + 1;
+                enemyDefeatEffectImages.Add(ResolveOrCreateEnemyDefeatEffectImage(index));
+            }
+
+            for (int i = 0; i < enemyPreviewImages.Count; i += 1)
+            {
+                if (i < enemyDefeatEffectImages.Count && enemyDefeatEffectImages[i] != null)
+                {
+                    continue;
+                }
+
+                Image image = ResolveOrCreateEnemyDefeatEffectImage(i + 1);
+                if (i < enemyDefeatEffectImages.Count)
+                {
+                    enemyDefeatEffectImages[i] = image;
+                }
+                else
+                {
+                    enemyDefeatEffectImages.Add(image);
+                }
+            }
+
+            while (enemyDefeatEffectRemainings.Count < enemyPreviewImages.Count)
+            {
+                enemyDefeatEffectRemainings.Add(0f);
+            }
+
+            while (enemyDefeatEffectAnchors.Count < enemyPreviewImages.Count)
+            {
+                int index = enemyDefeatEffectAnchors.Count;
+                enemyDefeatEffectAnchors.Add(MapBattlefieldAnchor(new Vector2(0.76f, ResolveEnemyPreviewLaneY(index))));
+            }
+
+            while (enemyDefeatEffectSizes.Count < enemyPreviewImages.Count)
+            {
+                enemyDefeatEffectSizes.Add(EnemyPreviewSize);
+            }
+        }
+
+        private Image ResolveOrCreateEnemyDefeatEffectImage(int oneBasedIndex)
+        {
+            string objectName = $"EnemyDefeatEffect_{oneBasedIndex}";
+            Image image = monsterPreviewRoot.transform.Find(objectName)?.GetComponent<Image>();
+            if (image == null)
+            {
+                image = CreatePreviewImage(objectName, monsterPreviewRoot.transform);
+            }
+
+            ConfigureEnemyDefeatEffectImage(image);
+            return image;
+        }
+
+        private static void ConfigureEnemyDefeatEffectImage(Image image)
+        {
+            ConfigureDefeatEffectImage(image);
+        }
+
+        private static void ConfigureDefeatEffectImage(Image image)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            image.raycastTarget = false;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+            image.useSpriteMesh = false;
+            image.color = new Color(1f, 1f, 1f, 0f);
         }
 
         private PreviewHpBar CollectPreviewHpBar(Transform root)
@@ -6857,6 +8139,9 @@ namespace WitchTower.Battle
             enemyKnockbackRemainings.Add(0f);
             enemyAttackVisualRemainings.Add(0f);
             enemyDefeatVanishRemainings.Add(0f);
+            enemyDefeatEffectRemainings.Add(0f);
+            enemyDefeatEffectAnchors.Add(MapBattlefieldAnchor(new Vector2(0.76f, ResolveEnemyPreviewLaneY(slotIndex))));
+            enemyDefeatEffectSizes.Add(EnemyPreviewSize);
         }
 
         private static float ResolveEnemyPreviewLaneY(int slotIndex)

@@ -12,8 +12,11 @@ namespace WitchTower.Battle
         public BattleFlowState CurrentState { get; private set; }
         public BattleSimulator Simulator => simulator;
         private readonly List<PendingPresentedHit> pendingPresentedHits = new List<PendingPresentedHit>();
+        private readonly List<int> displayedAllyHpBySlot = new List<int>();
+        private readonly List<int> displayedEnemyHpByIndex = new List<int>();
         private int displayedPlayerHp;
         private int displayedEnemyHp;
+        private BattleResult pendingResult;
 
         private struct PendingPresentedHit
         {
@@ -44,6 +47,7 @@ namespace WitchTower.Battle
             SetState(BattleFlowState.Init);
             simulator.Setup(floor);
             pendingPresentedHits.Clear();
+            pendingResult = BattleResult.None;
             SyncDisplayedHpToActual();
             hudController.ShowFloor(floor);
             hudController.ShowEncounterReadout(floor, simulator.PlayerStats, simulator.EnemyStats);
@@ -68,10 +72,32 @@ namespace WitchTower.Battle
                 return BattleResult.None;
             }
 
-            var result = simulator.Tick(deltaTime);
+            if (pendingResult != BattleResult.None)
+            {
+                TickPendingPresentedHits(deltaTime);
+                UpdateDisplayedHpHud();
+                RefreshSkillHud();
+
+                if (pendingPresentedHits.Count > 0)
+                {
+                    return BattleResult.None;
+                }
+
+                BattleResult resolvedPendingResult = pendingResult;
+                pendingResult = BattleResult.None;
+                return resolvedPendingResult;
+            }
+
+            BattleResult result = simulator.Tick(deltaTime);
             TickPendingPresentedHits(deltaTime);
             UpdateDisplayedHpHud();
             RefreshSkillHud();
+            if (result != BattleResult.None && pendingPresentedHits.Count > 0)
+            {
+                pendingResult = result;
+                return BattleResult.None;
+            }
+
             return result;
         }
 
@@ -150,6 +176,7 @@ namespace WitchTower.Battle
             hudController.ShowFloor(simulator.CurrentFloor);
             hudController.ShowEncounterReadout(simulator.CurrentFloor, simulator.PlayerStats, simulator.EnemyStats);
             pendingPresentedHits.Clear();
+            pendingResult = BattleResult.None;
             SyncDisplayedHpToActual();
             UpdateDisplayedHpHud();
         }
@@ -178,6 +205,8 @@ namespace WitchTower.Battle
                 feedbackController.ShowHit(hitInfo);
             }
 
+            ApplyDisplayedUnitDamage(hitInfo);
+
             if (hitInfo.TargetIsPlayer)
             {
                 displayedPlayerHp = Mathf.Max(0, displayedPlayerHp - hitInfo.Damage);
@@ -191,10 +220,82 @@ namespace WitchTower.Battle
             UpdateDisplayedHpHud();
         }
 
+        public int GetDisplayedAllyCurrentHp(int index)
+        {
+            if (simulator == null || !simulator.HasAllyRuntime(index))
+            {
+                return 0;
+            }
+
+            EnsureDisplayedAllyHpCapacity();
+            return index >= 0 && index < displayedAllyHpBySlot.Count
+                ? Mathf.Clamp(displayedAllyHpBySlot[index], simulator.GetAllyCurrentHp(index), simulator.GetAllyMaxHp(index))
+                : simulator.GetAllyCurrentHp(index);
+        }
+
+        public int GetDisplayedEnemyCurrentHp(int index)
+        {
+            if (simulator == null || !simulator.HasEnemyRuntime(index))
+            {
+                return 0;
+            }
+
+            EnsureDisplayedEnemyHpCapacity();
+            return index >= 0 && index < displayedEnemyHpByIndex.Count
+                ? Mathf.Clamp(displayedEnemyHpByIndex[index], simulator.GetEnemyCurrentHp(index), simulator.GetEnemyMaxHp(index))
+                : simulator.GetEnemyCurrentHp(index);
+        }
+
+        private void ApplyDisplayedUnitDamage(BattleHitInfo hitInfo)
+        {
+            if (hitInfo.TargetIsPlayer)
+            {
+                EnsureDisplayedAllyHpCapacity();
+                ApplyDisplayedDamage(displayedAllyHpBySlot, hitInfo);
+                return;
+            }
+
+            EnsureDisplayedEnemyHpCapacity();
+            ApplyDisplayedDamage(displayedEnemyHpByIndex, hitInfo);
+        }
+
+        private static void ApplyDisplayedDamage(List<int> displayedHpValues, BattleHitInfo hitInfo)
+        {
+            if (displayedHpValues == null)
+            {
+                return;
+            }
+
+            if (hitInfo.HasTargetHits)
+            {
+                for (int i = 0; i < hitInfo.TargetHits.Count; i += 1)
+                {
+                    BattleHitTargetInfo targetHit = hitInfo.TargetHits[i];
+                    ApplyDisplayedDamage(displayedHpValues, targetHit.TargetIndex, targetHit.Damage);
+                }
+
+                return;
+            }
+
+            ApplyDisplayedDamage(displayedHpValues, hitInfo.TargetIndex, hitInfo.Damage);
+        }
+
+        private static void ApplyDisplayedDamage(List<int> displayedHpValues, int targetIndex, int damage)
+        {
+            if (targetIndex < 0 || targetIndex >= displayedHpValues.Count || damage <= 0)
+            {
+                return;
+            }
+
+            displayedHpValues[targetIndex] = Mathf.Max(0, displayedHpValues[targetIndex] - damage);
+        }
+
         private void SyncDisplayedHpToActual()
         {
             displayedPlayerHp = simulator != null && simulator.PlayerStats != null ? simulator.PlayerStats.CurrentHp : 0;
             displayedEnemyHp = simulator != null && simulator.EnemyStats != null ? simulator.EnemyStats.CurrentHp : 0;
+            SyncDisplayedAllyHpToActual();
+            SyncDisplayedEnemyHpToActual();
         }
 
         private void ClampDisplayedHpToActualBounds()
@@ -207,6 +308,117 @@ namespace WitchTower.Battle
             if (simulator?.EnemyStats != null)
             {
                 displayedEnemyHp = Mathf.Clamp(displayedEnemyHp, simulator.EnemyStats.CurrentHp, simulator.EnemyStats.MaxHp);
+            }
+
+            ClampDisplayedAllyHpToActualBounds();
+            ClampDisplayedEnemyHpToActualBounds();
+        }
+
+        private void SyncDisplayedAllyHpToActual()
+        {
+            displayedAllyHpBySlot.Clear();
+            if (simulator == null)
+            {
+                return;
+            }
+
+            int allyCount = Mathf.Max(0, simulator.CurrentAllyRuntimeCount);
+            for (int i = 0; i < allyCount; i += 1)
+            {
+                displayedAllyHpBySlot.Add(simulator.HasAllyRuntime(i) ? simulator.GetAllyCurrentHp(i) : 0);
+            }
+        }
+
+        private void SyncDisplayedEnemyHpToActual()
+        {
+            displayedEnemyHpByIndex.Clear();
+            if (simulator == null)
+            {
+                return;
+            }
+
+            int enemyCount = Mathf.Max(0, simulator.CurrentActiveEnemyCount);
+            for (int i = 0; i < enemyCount; i += 1)
+            {
+                displayedEnemyHpByIndex.Add(simulator.HasEnemyRuntime(i) ? simulator.GetEnemyCurrentHp(i) : 0);
+            }
+        }
+
+        private void EnsureDisplayedAllyHpCapacity()
+        {
+            if (simulator == null)
+            {
+                displayedAllyHpBySlot.Clear();
+                return;
+            }
+
+            int allyCount = Mathf.Max(0, simulator.CurrentAllyRuntimeCount);
+            while (displayedAllyHpBySlot.Count < allyCount)
+            {
+                int index = displayedAllyHpBySlot.Count;
+                displayedAllyHpBySlot.Add(simulator.HasAllyRuntime(index) ? simulator.GetAllyCurrentHp(index) : 0);
+            }
+
+            if (displayedAllyHpBySlot.Count > allyCount)
+            {
+                displayedAllyHpBySlot.RemoveRange(allyCount, displayedAllyHpBySlot.Count - allyCount);
+            }
+        }
+
+        private void EnsureDisplayedEnemyHpCapacity()
+        {
+            if (simulator == null)
+            {
+                displayedEnemyHpByIndex.Clear();
+                return;
+            }
+
+            int enemyCount = Mathf.Max(0, simulator.CurrentActiveEnemyCount);
+            while (displayedEnemyHpByIndex.Count < enemyCount)
+            {
+                int index = displayedEnemyHpByIndex.Count;
+                displayedEnemyHpByIndex.Add(simulator.HasEnemyRuntime(index) ? simulator.GetEnemyCurrentHp(index) : 0);
+            }
+
+            if (displayedEnemyHpByIndex.Count > enemyCount)
+            {
+                displayedEnemyHpByIndex.RemoveRange(enemyCount, displayedEnemyHpByIndex.Count - enemyCount);
+            }
+        }
+
+        private void ClampDisplayedAllyHpToActualBounds()
+        {
+            EnsureDisplayedAllyHpCapacity();
+            for (int i = 0; i < displayedAllyHpBySlot.Count; i += 1)
+            {
+                if (!simulator.HasAllyRuntime(i))
+                {
+                    displayedAllyHpBySlot[i] = 0;
+                    continue;
+                }
+
+                displayedAllyHpBySlot[i] = Mathf.Clamp(
+                    displayedAllyHpBySlot[i],
+                    simulator.GetAllyCurrentHp(i),
+                    simulator.GetAllyMaxHp(i));
+            }
+        }
+
+        private void ClampDisplayedEnemyHpToActualBounds()
+        {
+            EnsureDisplayedEnemyHpCapacity();
+            for (int i = 0; i < displayedEnemyHpByIndex.Count; i += 1)
+            {
+                if (!simulator.HasEnemyRuntime(i))
+                {
+                    displayedEnemyHpByIndex[i] = 0;
+                    continue;
+                }
+
+                displayedEnemyHpByIndex[i] = Mathf.Clamp(
+                    displayedEnemyHpByIndex[i],
+                    simulator.GetEnemyCurrentHp(i),
+                    simulator.GetEnemyMaxHp(i));
             }
         }
 

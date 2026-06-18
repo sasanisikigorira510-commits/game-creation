@@ -39,6 +39,7 @@ namespace WitchTower.Home
         [SerializeField] private MissionPanelController missionPanelController;
         [SerializeField] private MonsterDexPanelController monsterDexPanelController;
         [SerializeField] private GoldShopPanelController goldShopPanelController;
+        [SerializeField] private PaidShopPanelController paidShopPanelController;
         [SerializeField] private DungeonSelectionPanelController dungeonSelectionPanelController;
         [SerializeField] private string battleSceneName = "BattleScene";
         [SerializeField] private string formationSceneName = "FormationScene";
@@ -48,13 +49,59 @@ namespace WitchTower.Home
         private const string FreeStoneIconPath = "UI/GachaPage/GachaStoneFreeIcon";
         private const string PaidStoneIconPath = "UI/GachaPage/GachaStonePaidIcon";
         private const string QuestButtonSpritePath = "UI/HomeMenu/QuestButtonRound";
+        private const string PaidShopIconSpritePath = "UI/HomeMenu/PaidShopIcon";
+        private const string PaidShopButtonFrameSpritePath = "UI/HomeMenu/PaidShopButtonFrame";
+        private const string PermanentUpgradeIconSpritePath = "UI/HomeMenu/PermanentUpgradeIcon";
+        private const string PermanentUpgradeButtonFrameSpritePath = "UI/HomeMenu/PermanentUpgradeButtonFrame";
+        private const string PaidShopLabel = "宝晶商店";
+        private const string PermanentUpgradeLabel = "永続強化";
+        private const string GoldShopLabel = "商店";
         private const string HomeTopHudFramePath = "UI/HomeRedesign/HomeTopHudFrame";
         private const string HomeBottomNavBarPath = "UI/HomeRedesign/HomeBottomNavBar";
+        private const string HomeTopHudProfileFramePath = "UI/HomeRedesign/HomeTopHudProfile";
+        private const string HomeTopHudGoldFramePath = "UI/HomeRedesign/HomeTopHudGold";
+        private const string HomeTopHudFreeStoneFramePath = "UI/HomeRedesign/HomeTopHudFreeStone";
+        private const string HomeTopHudPaidStoneFramePath = "UI/HomeRedesign/HomeTopHudPaidStone";
         private const string HomeFallbackHeroSpritePath = "FamilyMonsterCards/Dragon/dragon_whelp";
+        private const string RockGolemMonsterId = "monster_rock_golem";
+        private const string RockGolemHomeHeroSpritePath = "MonsterBattle/mon_rock_golem_attack_0";
         private const float HomeAdReservedHeight = 170f;
         private static readonly Vector2 HomeMenuButtonSize = new Vector2(480f, 250f);
         private static readonly Vector2 HomeMainActionButtonSize = new Vector2(470f, 220f);
         private static readonly Vector2 HomeBottomNavButtonSize = new Vector2(196f, 152f);
+        private const float HomeBottomNavVisualWidth = 1064f;
+        private const float HomeBottomNavSlotWidth = HomeBottomNavVisualWidth / 5f;
+        private const float HomeBottomNavHeight = 190f;
+        private const float HomeBottomNavCenterOffsetX = 4f;
+        private const float HomeBottomNavCenterY = HomeAdReservedHeight + 94f;
+        private static readonly Vector2 HomeBottomNavButtonHitSize = new Vector2(HomeBottomNavSlotWidth, HomeBottomNavHeight);
+        private static readonly Vector2 HomeBottomNavSegmentSize = new Vector2(HomeBottomNavSlotWidth, HomeBottomNavHeight);
+        private static readonly Vector2 HomeBottomNavLabelPosition = new Vector2(9f, 42f);
+        private static readonly Vector2 HomeBottomNavLabelSize = new Vector2(HomeBottomNavSlotWidth, 46f);
+        private static readonly Vector2[] HomeBottomNavLabelPositions =
+        {
+            new Vector2(18f, 37f),
+            new Vector2(10f, 42f),
+            new Vector2(-1f, 42f),
+            new Vector2(-14f, 42f),
+            new Vector2(-22f, 42f)
+        };
+        private static readonly string[] HomeBottomNavButtonNames =
+        {
+            "GoldShopNavButton",
+            "GachaButton",
+            "MonsterDexButton",
+            "EquipmentButton",
+            "FusionButton"
+        };
+        private static readonly string[] HomeBottomNavPartPaths =
+        {
+            "UI/HomeRedesign/HomeBottomNavShop",
+            "UI/HomeRedesign/HomeBottomNavGacha",
+            "UI/HomeRedesign/HomeBottomNavDex",
+            "UI/HomeRedesign/HomeBottomNavEquipment",
+            "UI/HomeRedesign/HomeBottomNavFusion"
+        };
         private static readonly Vector2 HomeMenuLeftTopPosition = new Vector2(-260f, 715f);
         private static readonly Vector2 HomeMenuRightTopPosition = new Vector2(260f, 715f);
         private static readonly Vector2 HomeMenuLeftMiddlePosition = new Vector2(-260f, 445f);
@@ -64,10 +111,31 @@ namespace WitchTower.Home
         private static readonly Vector2 MonsterDexButtonPosition = HomeMenuRightBottomPosition;
         private static readonly Vector2 MonsterDexButtonSize = HomeMenuButtonSize;
         private static readonly Vector2 HomeStoneBarSize = new Vector2(1040f, 136f);
+        private static readonly Vector2 HomeTopHudProfilePosition = new Vector2(-319f, -68f);
+        private static readonly Vector2 HomeTopHudProfileSize = new Vector2(190f, 132f);
+        private static readonly Vector2 HomeTopHudGoldPosition = new Vector2(-118f, -68f);
+        private static readonly Vector2 HomeTopHudGoldSize = new Vector2(232f, 132f);
+        private static readonly Vector2 HomeTopHudFreeStonePosition = new Vector2(90f, -68f);
+        private static readonly Vector2 HomeTopHudFreeStoneSize = new Vector2(224f, 132f);
+        private static readonly Vector2 HomeTopHudPaidStonePosition = new Vector2(301f, -68f);
+        private static readonly Vector2 HomeTopHudPaidStoneSize = new Vector2(226f, 132f);
+        private const float HomeResourceAmountLeftReserve = 64f;
+        private const float HomeResourceAmountRightPadding = 46f;
+        private const float HomeResourceAmountNarrowRightPadding = 56f;
+        private const float HomeResourceAmountVerticalOffset = -4f;
+        private const float HomeYellowResourceAmountVerticalOffset = -2f;
+        private static readonly Vector2 HomePlayerLevelTextAnchor = new Vector2(0.5f, 0.45f);
+        private static readonly Vector2 HomePlayerExpTextAnchor = new Vector2(0.5f, 0.45f);
+        private static readonly Vector2 HomePlayerLevelTextOffset = new Vector2(14f, 4f);
+        private static readonly Vector2 HomePlayerExpTextOffset = new Vector2(0f, 4f);
+        private static readonly Vector2 HomePlayerLevelTextSize = new Vector2(154f, 42f);
+        private static readonly Vector2 HomePlayerExpTextSize = new Vector2(164f, 42f);
         private static readonly Vector2 HomeShopButtonPosition = new Vector2(-438f, -210f);
-        private static readonly Vector2 HomeShopButtonSize = new Vector2(154f, 136f);
+        private static readonly Vector2 HomeShopButtonSize = new Vector2(204f, 186f);
+        private static readonly Vector2 PermanentUpgradeButtonPosition = new Vector2(-438f, -405f);
+        private static readonly Vector2 PermanentUpgradeButtonSize = new Vector2(204f, 186f);
         private static readonly Vector2 HomeQuestButtonPosition = new Vector2(456f, -210f);
-        private static readonly Vector2 HomeQuestButtonSize = new Vector2(118f, 118f);
+        private static readonly Vector2 HomeQuestButtonSize = new Vector2(168f, 168f);
         private static readonly string[] LegacyHomeObjectNames =
         {
             "ContentRoot",
@@ -88,6 +156,7 @@ namespace WitchTower.Home
         private Text homeGoldText;
         private Text homeExpText;
         private Text homePlayerLevelText;
+        private bool homePlayerExpDetailsVisible;
         private Text homeGuideText;
         private Text homeNextFloorText;
         private Text homeHeroNameText;
@@ -97,6 +166,9 @@ namespace WitchTower.Home
         private Button homeQuestButton;
         private Text homeShopButtonText;
         private Button homeShopButton;
+        private Text permanentUpgradeButtonText;
+        private Text permanentUpgradeStatusText;
+        private Button permanentUpgradeButton;
         private GameObject dailyQuestListRoot;
         private Text dailyQuestStatusText;
         private readonly List<DailyQuestCardView> dailyQuestCards = new List<DailyQuestCardView>();
@@ -139,6 +211,8 @@ namespace WitchTower.Home
                 {
                     EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
                 }
+
+                EnsureBottomNavigationLayout(unifiedMenuRoot.transform);
 
                 if (dailyQuestListRoot == null || dailyQuestCards.Count != DailyRewardService.GetDefinitions().Count)
                 {
@@ -345,6 +419,8 @@ namespace WitchTower.Home
                 else
                 {
                     unifiedMenuRoot.SetActive(true);
+                    RemoveHomeAtmosphereOverlays(unifiedMenuRoot.transform);
+                    RemoveHomeGuidePanel(unifiedMenuRoot.transform);
                     EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
                     RefreshHomeStoneBalanceBar();
                     unifiedMenuRoot.transform.SetAsLastSibling();
@@ -379,7 +455,7 @@ namespace WitchTower.Home
             CreateHomeAtmosphere(unifiedMenuRoot.transform);
             CreateAdReservedSpace(unifiedMenuRoot.transform);
             CreateHomeHeroShowcase(unifiedMenuRoot.transform);
-            CreateHomeGuidePanel(unifiedMenuRoot.transform);
+            RemoveHomeGuidePanel(unifiedMenuRoot.transform);
 
             Sprite battleSprite = Resources.Load<Sprite>("UI/HomeMenu/BattleButton");
             Sprite formationSprite = Resources.Load<Sprite>("UI/HomeMenu/FormationButton");
@@ -484,6 +560,59 @@ namespace WitchTower.Home
                     RefreshHomeStoneBalanceBar();
                 }
             });
+        }
+
+        public void OpenPaidShopMenu()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            HideUnifiedMenu();
+            PaidShopPanelController shopPanel = EnsurePaidShopPanel();
+            if (shopPanel == null)
+            {
+                BuildUnifiedMenu();
+                return;
+            }
+
+            shopPanel.Show(() =>
+            {
+                if (unifiedMenuRoot != null)
+                {
+                    unifiedMenuRoot.SetActive(true);
+                    unifiedMenuRoot.transform.SetAsLastSibling();
+                    RefreshHomeStoneBalanceBar();
+                }
+            });
+        }
+
+        public void OpenPermanentUpgradeShop()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            HideUnifiedMenu();
+            PaidShopPanelController shopPanel = EnsurePaidShopPanel();
+            if (shopPanel == null)
+            {
+                BuildUnifiedMenu();
+                return;
+            }
+
+            shopPanel.Show(() =>
+            {
+                if (unifiedMenuRoot != null)
+                {
+                    unifiedMenuRoot.SetActive(true);
+                    unifiedMenuRoot.transform.SetAsLastSibling();
+                    RefreshHomeStoneBalanceBar();
+                }
+            });
+            shopPanel.OpenPurchasedPermanentUpgradeList();
         }
 
         private void HideUnifiedMenu()
@@ -594,6 +723,35 @@ namespace WitchTower.Home
             return goldShopPanelController;
         }
 
+        private PaidShopPanelController EnsurePaidShopPanel()
+        {
+            if (paidShopPanelController != null)
+            {
+                return paidShopPanelController;
+            }
+
+            Canvas canvas = FindObjectOfType<Canvas>(true);
+            if (canvas == null)
+            {
+                return null;
+            }
+
+            Transform existingPanel = canvas.transform.Find("PaidShopPanel");
+            GameObject panelObject = existingPanel != null
+                ? existingPanel.gameObject
+                : CreateUiRoot("PaidShopPanel", canvas.transform);
+
+            paidShopPanelController = panelObject.GetComponent<PaidShopPanelController>();
+            if (paidShopPanelController == null)
+            {
+                paidShopPanelController = panelObject.AddComponent<PaidShopPanelController>();
+            }
+
+            panelObject.SetActive(false);
+            panelObject.transform.SetAsLastSibling();
+            return paidShopPanelController;
+        }
+
         private DungeonSelectionPanelController EnsureDungeonSelectionPanel()
         {
             if (dungeonSelectionPanelController != null)
@@ -672,30 +830,33 @@ namespace WitchTower.Home
 
         private void CreateHomeAtmosphere(Transform menuRoot)
         {
-            CreateTintPanel(
-                "HomeTopShade",
-                menuRoot,
-                new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f),
-                new Vector2(0f, -224f),
-                new Vector2(1080f, 448f),
-                new Color(0.03f, 0.02f, 0.06f, 0.42f));
-            CreateTintPanel(
-                "HomeHeroGlow",
-                menuRoot,
-                new Vector2(0.5f, 0f),
-                new Vector2(0.5f, 0f),
-                new Vector2(0f, HomeAdReservedHeight + 574f),
-                new Vector2(720f, 420f),
-                new Color(0.12f, 0.72f, 1f, 0.10f));
-            CreateTintPanel(
-                "HomeLowerShade",
-                menuRoot,
-                new Vector2(0.5f, 0f),
-                new Vector2(0.5f, 0f),
-                new Vector2(0f, HomeAdReservedHeight + 230f),
-                new Vector2(1080f, 430f),
-                new Color(0.01f, 0.01f, 0.018f, 0.58f));
+            RemoveHomeAtmosphereOverlays(menuRoot);
+        }
+
+        private static void RemoveHomeAtmosphereOverlays(Transform menuRoot)
+        {
+            if (menuRoot == null)
+            {
+                return;
+            }
+
+            RemoveDirectChild(menuRoot, "HomeTopShade");
+            RemoveDirectChild(menuRoot, "HomeHeroGlow");
+            RemoveDirectChild(menuRoot, "HomeLowerShade");
+            Transform showcase = menuRoot.Find("HomeHeroShowcase");
+            if (showcase != null)
+            {
+                RemoveDirectChild(showcase, "HomeHeroShadow");
+            }
+        }
+
+        private static void RemoveDirectChild(Transform parent, string childName)
+        {
+            Transform child = parent != null ? parent.Find(childName) : null;
+            if (child != null)
+            {
+                DestroySceneObject(child.gameObject);
+            }
         }
 
         private void CreateAdReservedSpace(Transform menuRoot)
@@ -722,19 +883,10 @@ namespace WitchTower.Home
             showcaseRect.anchoredPosition = new Vector2(0f, HomeAdReservedHeight + 760f);
             showcaseRect.sizeDelta = new Vector2(720f, 620f);
 
-            CreateTintPanel(
-                "HomeHeroShadow",
-                showcase.transform,
-                new Vector2(0.5f, 0f),
-                new Vector2(0.5f, 0f),
-                new Vector2(0f, 54f),
-                new Vector2(520f, 86f),
-                new Color(0f, 0f, 0f, 0.34f));
-
             homeHeroImage = CreateMenuImage(
                 "HomeHeroImage",
                 showcase.transform,
-                ResolveHomeHeroSprite(GetRuntimeProfile(), out _, out _),
+                ResolveHomeHeroSprite(GetRuntimeProfile()),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0f, 30f),
@@ -742,70 +894,25 @@ namespace WitchTower.Home
                 true);
             homeHeroImage.color = Color.white;
 
-            homeHeroNameText = CreateUiText(
-                "HomeHeroName",
-                showcase.transform,
-                string.Empty,
-                28,
-                FontStyle.Bold,
-                new Vector2(0.5f, 0f),
-                new Vector2(0.5f, 0f),
-                new Vector2(0f, 124f),
-                new Vector2(520f, 42f),
-                Color.white,
-                TextAnchor.MiddleCenter);
-            homeHeroLevelText = CreateUiText(
-                "HomeHeroLevel",
-                showcase.transform,
-                string.Empty,
-                22,
-                FontStyle.Bold,
-                new Vector2(0.5f, 0f),
-                new Vector2(0.5f, 0f),
-                new Vector2(0f, 88f),
-                new Vector2(360f, 34f),
-                new Color(1f, 0.86f, 0.42f, 1f),
-                TextAnchor.MiddleCenter);
+            homeHeroNameText = null;
+            homeHeroLevelText = null;
         }
 
-        private void CreateHomeGuidePanel(Transform menuRoot)
+        private void RemoveHomeGuidePanel(Transform menuRoot)
         {
-            Image panel = CreateTintPanel(
-                "HomeGuidePanel",
-                menuRoot,
-                new Vector2(0.5f, 0.5f),
-                new Vector2(0.5f, 0.5f),
-                new Vector2(0f, 170f),
-                new Vector2(800f, 196f),
-                new Color(0.02f, 0.035f, 0.045f, 0.70f));
-            Outline outline = panel.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(1f, 1f, 1f, 0.78f);
-            outline.effectDistance = new Vector2(2f, -2f);
+            if (menuRoot == null)
+            {
+                return;
+            }
 
-            homeNextFloorText = CreateUiText(
-                "HomeNextFloorText",
-                panel.transform,
-                string.Empty,
-                20,
-                FontStyle.Bold,
-                new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f),
-                new Vector2(0f, -36f),
-                new Vector2(700f, 34f),
-                new Color(1f, 0.86f, 0.42f, 1f),
-                TextAnchor.MiddleCenter);
-            homeGuideText = CreateUiText(
-                "HomeGuideText",
-                panel.transform,
-                string.Empty,
-                31,
-                FontStyle.Bold,
-                new Vector2(0.5f, 0.5f),
-                new Vector2(0.5f, 0.5f),
-                new Vector2(0f, -10f),
-                new Vector2(700f, 110f),
-                Color.white,
-                TextAnchor.MiddleLeft);
+            Transform existingPanel = menuRoot.Find("HomeGuidePanel");
+            if (existingPanel != null)
+            {
+                DestroySceneObject(existingPanel.gameObject);
+            }
+
+            homeGuideText = null;
+            homeNextFloorText = null;
         }
 
         private void CreateHomeBottomNavigation(
@@ -816,23 +923,27 @@ namespace WitchTower.Home
             Sprite equipmentSprite,
             Sprite fusionSprite)
         {
+            Sprite[] navPartSprites = LoadBottomNavPartSprites();
+            if (navPartSprites != null)
+            {
+                CreateSegmentedNavButton("GoldShopNavButton", menuRoot, GoldShopLabel, 0, OpenGoldShopMenu, navPartSprites[0]);
+                CreateSegmentedNavButton("GachaButton", menuRoot, "召喚", 1, OpenGachaMenu, navPartSprites[1]);
+                CreateSegmentedNavButton("MonsterDexButton", menuRoot, "図鑑", 2, OpenMonsterDexMenu, navPartSprites[2]);
+                CreateSegmentedNavButton("EquipmentButton", menuRoot, "装備", 3, OpenEquipmentMenu, navPartSprites[3]);
+                CreateSegmentedNavButton("FusionButton", menuRoot, "配合", 4, OpenFusionMenu, navPartSprites[4]);
+                EnsureBottomNavigationLayout(menuRoot, navPartSprites);
+                return;
+            }
+
             Sprite navBarSprite = LoadSpriteResource(HomeBottomNavBarPath, "HomeBottomNavBar");
             if (navBarSprite != null)
             {
-                CreateMenuImage(
-                    "HomeBottomNavBarArt",
-                    menuRoot,
-                    navBarSprite,
-                    new Vector2(0.5f, 0f),
-                    new Vector2(0.5f, 0f),
-                    new Vector2(0f, HomeAdReservedHeight + 94f),
-                    new Vector2(1080f, 190f),
-                    false);
-                CreateSegmentedNavButton("GoldShopNavButton", menuRoot, "ショップ", 0, OpenGoldShopMenu);
-                CreateSegmentedNavButton("GachaButton", menuRoot, "ガチャ", 1, OpenGachaMenu);
-                CreateSegmentedNavButton("MonsterDexButton", menuRoot, "図鑑", 2, OpenMonsterDexMenu);
-                CreateSegmentedNavButton("EquipmentButton", menuRoot, "装備", 3, OpenEquipmentMenu);
-                CreateSegmentedNavButton("FusionButton", menuRoot, "配合", 4, OpenFusionMenu);
+                CreateSegmentedNavButton("GoldShopNavButton", menuRoot, GoldShopLabel, 0, OpenGoldShopMenu, null, navBarSprite);
+                CreateSegmentedNavButton("GachaButton", menuRoot, "召喚", 1, OpenGachaMenu, null, navBarSprite);
+                CreateSegmentedNavButton("MonsterDexButton", menuRoot, "図鑑", 2, OpenMonsterDexMenu, null, navBarSprite);
+                CreateSegmentedNavButton("EquipmentButton", menuRoot, "装備", 3, OpenEquipmentMenu, null, navBarSprite);
+                CreateSegmentedNavButton("FusionButton", menuRoot, "配合", 4, OpenFusionMenu, null, navBarSprite);
+                EnsureBottomNavigationLayout(menuRoot, null, navBarSprite);
                 return;
             }
 
@@ -861,42 +972,287 @@ namespace WitchTower.Home
             }
 
             float navY = HomeAdReservedHeight + 86f;
-            CreateBottomTextButton("GoldShopNavButton", menuRoot, "ショップ", "G", new Vector2(-432f, navY), OpenGoldShopMenu);
-            CreateHomeSpriteButton("GachaButton", menuRoot, gachaSprite, "ガチャ", new Vector2(-216f, navY), HomeBottomNavButtonSize, OpenGachaMenu, 24);
+            CreateBottomTextButton("GoldShopNavButton", menuRoot, GoldShopLabel, "G", new Vector2(-432f, navY), OpenGoldShopMenu);
+            CreateHomeSpriteButton("GachaButton", menuRoot, gachaSprite, "召喚", new Vector2(-216f, navY), HomeBottomNavButtonSize, OpenGachaMenu, 24);
             CreateHomeSpriteButton("MonsterDexButton", menuRoot, dexSprite, "図鑑", new Vector2(0f, navY), HomeBottomNavButtonSize, OpenMonsterDexMenu, 24);
             CreateHomeSpriteButton("EquipmentButton", menuRoot, equipmentSprite, "装備", new Vector2(216f, navY), HomeBottomNavButtonSize, OpenEquipmentMenu, 24);
             CreateHomeSpriteButton("FusionButton", menuRoot, fusionSprite, "合成", new Vector2(432f, navY), HomeBottomNavButtonSize, OpenFusionMenu, 24);
         }
 
-        private void CreateSegmentedNavButton(string name, Transform parent, string label, int index, UnityEngine.Events.UnityAction action)
+        private void CreateSegmentedNavButton(
+            string name,
+            Transform parent,
+            string label,
+            int index,
+            UnityEngine.Events.UnityAction action,
+            Sprite navPartSprite,
+            Sprite navBarSprite = null)
         {
-            const float slotWidth = 216f;
-            const float navHeight = 190f;
-            float x = -432f + index * slotWidth;
             Button button = CreatePlainButton(
                 name,
                 parent,
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
-                new Vector2(x, HomeAdReservedHeight + 94f),
-                new Vector2(slotWidth, navHeight),
+                new Vector2(GetBottomNavButtonX(index), HomeBottomNavCenterY),
+                HomeBottomNavButtonHitSize,
                 new Color(1f, 1f, 1f, 0.001f),
                 action);
             button.targetGraphic.raycastTarget = true;
+            EnsureBottomNavSegmentVisual(button.transform, navPartSprite, navBarSprite, index);
 
             Text labelText = CreateUiText(
                 name + "Label",
                 button.transform,
                 label,
-                28,
+                26,
                 FontStyle.Bold,
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
-                new Vector2(0f, 34f),
-                new Vector2(180f, 44f),
+                GetBottomNavLabelPosition(index),
+                HomeBottomNavLabelSize,
                 Color.white,
                 TextAnchor.MiddleCenter);
-            AddTextShadow(labelText, new Color(0f, 0f, 0f, 0.82f), new Vector2(2f, -2f));
+            ConfigureBottomNavLabel(labelText);
+            AddTextShadow(labelText, new Color(0f, 0f, 0f, 0.82f), new Vector2(0f, -2f));
+        }
+
+        private static float GetBottomNavButtonX(int index)
+        {
+            return HomeBottomNavCenterOffsetX - HomeBottomNavVisualWidth * 0.5f + HomeBottomNavSlotWidth * (index + 0.5f);
+        }
+
+        private static Vector2 GetBottomNavLabelPosition(int index)
+        {
+            if (index >= 0 && index < HomeBottomNavLabelPositions.Length)
+            {
+                return HomeBottomNavLabelPositions[index];
+            }
+
+            return HomeBottomNavLabelPosition;
+        }
+
+        private static Sprite[] LoadBottomNavPartSprites()
+        {
+            Sprite[] sprites = new Sprite[HomeBottomNavPartPaths.Length];
+            for (int i = 0; i < HomeBottomNavPartPaths.Length; i += 1)
+            {
+                Sprite sprite = LoadSpriteResource(HomeBottomNavPartPaths[i], HomeBottomNavButtonNames[i] + "Art");
+                if (sprite == null)
+                {
+                    return null;
+                }
+
+                sprites[i] = sprite;
+            }
+
+            return sprites;
+        }
+
+        private static Sprite GetBottomNavPartSprite(Sprite[] navPartSprites, int index)
+        {
+            if (navPartSprites == null || index < 0 || index >= navPartSprites.Length)
+            {
+                return null;
+            }
+
+            return navPartSprites[index];
+        }
+
+        private static void EnsureBottomNavigationLayout(Transform menuRoot, Sprite[] navPartSprites = null, Sprite navBarSprite = null)
+        {
+            if (menuRoot == null)
+            {
+                return;
+            }
+
+            navPartSprites ??= LoadBottomNavPartSprites();
+            if (navPartSprites == null)
+            {
+                navBarSprite ??= LoadSpriteResource(HomeBottomNavBarPath, "HomeBottomNavBar");
+            }
+
+            Transform artTransform = menuRoot.Find("HomeBottomNavBarArt");
+            if (artTransform != null)
+            {
+                DestroySceneObject(artTransform.gameObject);
+            }
+
+            for (int i = 0; i < HomeBottomNavButtonNames.Length; i += 1)
+            {
+                string buttonName = HomeBottomNavButtonNames[i];
+                Transform buttonTransform = menuRoot.Find(buttonName);
+                if (buttonTransform == null)
+                {
+                    continue;
+                }
+
+                RectTransform buttonRect = buttonTransform as RectTransform;
+                if (buttonRect != null)
+                {
+                    ConfigureBottomAnchoredRect(
+                        buttonRect,
+                        new Vector2(GetBottomNavButtonX(i), HomeBottomNavCenterY),
+                        HomeBottomNavButtonHitSize);
+                }
+
+                EnsureBottomNavSegmentVisual(buttonTransform, GetBottomNavPartSprite(navPartSprites, i), navBarSprite, i);
+
+                Transform labelTransform = buttonTransform.Find(buttonName + "Label");
+                Text labelText = labelTransform != null ? labelTransform.GetComponent<Text>() : null;
+                if (labelText == null)
+                {
+                    continue;
+                }
+
+                RectTransform labelRect = labelText.transform as RectTransform;
+                if (labelRect != null)
+                {
+                    labelRect.anchorMin = new Vector2(0.5f, 0f);
+                    labelRect.anchorMax = new Vector2(0.5f, 0f);
+                    labelRect.pivot = new Vector2(0.5f, 0.5f);
+                    labelRect.anchoredPosition = GetBottomNavLabelPosition(i);
+                    labelRect.sizeDelta = HomeBottomNavLabelSize;
+                }
+
+                ConfigureBottomNavLabel(labelText);
+            }
+        }
+
+        private static void EnsureBottomNavSegmentVisual(Transform buttonTransform, Sprite navPartSprite, Sprite navBarSprite, int index)
+        {
+            if (buttonTransform == null)
+            {
+                return;
+            }
+
+            if (navPartSprite != null)
+            {
+                EnsureBottomNavSpriteVisual(buttonTransform, navPartSprite, index);
+                return;
+            }
+
+            if (navBarSprite == null || navBarSprite.texture == null)
+            {
+                return;
+            }
+
+            Transform existing = buttonTransform.Find("BottomNavSegmentVisual");
+            RawImage segmentImage = existing != null ? existing.GetComponent<RawImage>() : null;
+            if (segmentImage == null)
+            {
+                if (existing != null)
+                {
+                    DestroySceneObject(existing.gameObject);
+                }
+
+                segmentImage = CreateMenuRawImage(
+                    "BottomNavSegmentVisual",
+                    buttonTransform,
+                    navBarSprite.texture,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    Vector2.zero,
+                    HomeBottomNavSegmentSize);
+                segmentImage.transform.SetAsFirstSibling();
+            }
+
+            RectTransform segmentRect = segmentImage.transform as RectTransform;
+            if (segmentRect != null)
+            {
+                segmentRect.anchorMin = new Vector2(0.5f, 0.5f);
+                segmentRect.anchorMax = new Vector2(0.5f, 0.5f);
+                segmentRect.pivot = new Vector2(0.5f, 0.5f);
+                segmentRect.anchoredPosition = Vector2.zero;
+                segmentRect.sizeDelta = HomeBottomNavSegmentSize;
+            }
+
+            segmentImage.texture = navBarSprite.texture;
+            segmentImage.uvRect = BuildBottomNavSegmentUv(navBarSprite, index);
+            segmentImage.color = Color.white;
+            segmentImage.raycastTarget = false;
+            segmentImage.transform.SetAsFirstSibling();
+        }
+
+        private static void EnsureBottomNavSpriteVisual(Transform buttonTransform, Sprite navPartSprite, int index)
+        {
+            Transform existing = buttonTransform.Find("BottomNavSegmentVisual");
+            Image segmentImage = existing != null ? existing.GetComponent<Image>() : null;
+            if (segmentImage == null)
+            {
+                if (existing != null)
+                {
+                    DestroySceneObject(existing.gameObject);
+                }
+
+                segmentImage = CreateMenuImage(
+                    "BottomNavSegmentVisual",
+                    buttonTransform,
+                    navPartSprite,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    Vector2.zero,
+                    HomeBottomNavSegmentSize,
+                    false);
+                segmentImage.transform.SetAsFirstSibling();
+            }
+
+            RectTransform segmentRect = segmentImage.transform as RectTransform;
+            if (segmentRect != null)
+            {
+                segmentRect.anchorMin = new Vector2(0.5f, 0.5f);
+                segmentRect.anchorMax = new Vector2(0.5f, 0.5f);
+                segmentRect.pivot = new Vector2(0.5f, 0.5f);
+                segmentRect.anchoredPosition = Vector2.zero;
+                segmentRect.sizeDelta = HomeBottomNavSegmentSize;
+            }
+
+            segmentImage.sprite = navPartSprite;
+            segmentImage.color = Color.white;
+            segmentImage.preserveAspect = false;
+            segmentImage.raycastTarget = false;
+            segmentImage.transform.SetAsFirstSibling();
+        }
+
+        private static Rect BuildBottomNavSegmentUv(Sprite navBarSprite, int index)
+        {
+            Texture2D texture = navBarSprite.texture;
+            Rect spriteRect = navBarSprite.rect;
+            float segmentWidth = spriteRect.width / 5f;
+            return new Rect(
+                (spriteRect.x + segmentWidth * Mathf.Clamp(index, 0, 4)) / texture.width,
+                spriteRect.y / texture.height,
+                segmentWidth / texture.width,
+                spriteRect.height / texture.height);
+        }
+
+        private static void ConfigureBottomAnchoredRect(RectTransform rectTransform, Vector2 anchoredPosition, Vector2 size)
+        {
+            if (rectTransform == null)
+            {
+                return;
+            }
+
+            rectTransform.anchorMin = new Vector2(0.5f, 0f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+        }
+
+        private static void ConfigureBottomNavLabel(Text labelText)
+        {
+            if (labelText == null)
+            {
+                return;
+            }
+
+            labelText.alignByGeometry = true;
+            labelText.resizeTextForBestFit = true;
+            labelText.resizeTextMinSize = 22;
+            labelText.resizeTextMaxSize = 26;
+            labelText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            labelText.verticalOverflow = VerticalWrapMode.Truncate;
+            labelText.lineSpacing = 1f;
         }
 
         private void CreateHomeSpriteButton(
@@ -982,7 +1338,12 @@ namespace WitchTower.Home
             return button;
         }
 
-        private void CreatePlayerBadge(Transform parent, bool useGeneratedHudFrame)
+        private void CreatePlayerBadge(
+            Transform parent,
+            bool useGeneratedHudFrame,
+            Sprite frameSprite = null,
+            Vector2? anchoredPosition = null,
+            Vector2? size = null)
         {
             GameObject root = new GameObject("PlayerBadge", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             root.transform.SetParent(parent, false);
@@ -990,53 +1351,152 @@ namespace WitchTower.Home
             rootRect.anchorMin = new Vector2(0.5f, 1f);
             rootRect.anchorMax = new Vector2(0.5f, 1f);
             rootRect.pivot = new Vector2(0.5f, 0.5f);
-            rootRect.anchoredPosition = new Vector2(-420f, -68f);
-            rootRect.sizeDelta = new Vector2(214f, 70f);
+            rootRect.anchoredPosition = anchoredPosition ?? new Vector2(-420f, -68f);
+            rootRect.sizeDelta = size ?? new Vector2(214f, 70f);
 
             Image background = root.GetComponent<Image>();
-            background.color = useGeneratedHudFrame
+            background.sprite = frameSprite;
+            background.preserveAspect = false;
+            background.color = frameSprite != null
+                ? Color.white
+                : useGeneratedHudFrame
                 ? new Color(1f, 1f, 1f, 0.001f)
                 : new Color(0.04f, 0.035f, 0.07f, 0.96f);
-            background.raycastTarget = false;
+            background.raycastTarget = true;
 
-            Sprite portrait = ResolveHomeHeroSprite(GetRuntimeProfile(), out _, out _);
-            if (portrait != null)
-            {
-                CreateMenuImage(
-                    "PlayerPortrait",
-                    root.transform,
-                    portrait,
-                    new Vector2(0f, 0.5f),
-                    new Vector2(0f, 0.5f),
-                    new Vector2(37f, 0f),
-                    new Vector2(58f, 58f),
-                    true);
-            }
-
-            CreateUiText(
-                "PlayerName",
-                root.transform,
-                "探索者",
-                20,
-                FontStyle.Bold,
-                new Vector2(0.63f, 0.63f),
-                new Vector2(0.63f, 0.63f),
-                Vector2.zero,
-                new Vector2(126f, 28f),
-                Color.white,
-                TextAnchor.MiddleLeft);
             homePlayerLevelText = CreateUiText(
                 "PlayerLevel",
                 root.transform,
-                "Lv.1",
-                20,
+                "Lv.-",
+                22,
                 FontStyle.Bold,
-                new Vector2(0.63f, 0.30f),
-                new Vector2(0.63f, 0.30f),
-                Vector2.zero,
-                new Vector2(126f, 28f),
+                HomePlayerLevelTextAnchor,
+                HomePlayerLevelTextAnchor,
+                HomePlayerLevelTextOffset,
+                HomePlayerLevelTextSize,
                 new Color(1f, 0.86f, 0.42f, 1f),
-                TextAnchor.MiddleLeft);
+                TextAnchor.MiddleCenter);
+            homeExpText = CreatePlayerBadgeExpText(root.transform);
+            ConfigurePlayerBadgeLevelAndExp(root.transform, homePlayerLevelText, homeExpText);
+            EnsurePlayerBadgeInteraction(root.transform);
+        }
+
+        private static Text CreatePlayerBadgeExpText(Transform badgeTransform)
+        {
+            if (badgeTransform == null)
+            {
+                return null;
+            }
+
+            return CreateUiText(
+                "PlayerExp",
+                badgeTransform,
+                "EXP -/-",
+                16,
+                FontStyle.Bold,
+                HomePlayerExpTextAnchor,
+                HomePlayerExpTextAnchor,
+                HomePlayerExpTextOffset,
+                HomePlayerExpTextSize,
+                new Color(1f, 0.90f, 0.54f, 1f),
+                TextAnchor.MiddleCenter);
+        }
+
+        private static void ConfigurePlayerBadgeLevelAndExp(Transform badgeTransform, Text levelText, Text expText)
+        {
+            if (badgeTransform == null)
+            {
+                return;
+            }
+
+            Transform nameTransform = badgeTransform.Find("PlayerName");
+            if (nameTransform != null)
+            {
+                DestroySceneObject(nameTransform.gameObject);
+            }
+
+            RemoveDirectChild(badgeTransform, "PlayerPortrait");
+
+            if (levelText == null)
+            {
+                return;
+            }
+
+            RectTransform levelRect = levelText.transform as RectTransform;
+            if (levelRect != null)
+            {
+                levelRect.anchorMin = HomePlayerLevelTextAnchor;
+                levelRect.anchorMax = HomePlayerLevelTextAnchor;
+                levelRect.pivot = new Vector2(0.5f, 0.5f);
+                levelRect.anchoredPosition = HomePlayerLevelTextOffset;
+                levelRect.sizeDelta = HomePlayerLevelTextSize;
+            }
+
+            levelText.fontSize = 22;
+            levelText.fontStyle = FontStyle.Bold;
+            levelText.alignment = TextAnchor.MiddleCenter;
+            levelText.alignByGeometry = true;
+            levelText.resizeTextForBestFit = true;
+            levelText.resizeTextMinSize = 16;
+            levelText.resizeTextMaxSize = 24;
+            levelText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            levelText.verticalOverflow = VerticalWrapMode.Truncate;
+
+            if (expText == null)
+            {
+                return;
+            }
+
+            RectTransform expRect = expText.transform as RectTransform;
+            if (expRect != null)
+            {
+                expRect.anchorMin = HomePlayerExpTextAnchor;
+                expRect.anchorMax = HomePlayerExpTextAnchor;
+                expRect.pivot = new Vector2(0.5f, 0.5f);
+                expRect.anchoredPosition = HomePlayerExpTextOffset;
+                expRect.sizeDelta = HomePlayerExpTextSize;
+            }
+
+            expText.fontSize = 16;
+            expText.fontStyle = FontStyle.Bold;
+            expText.alignment = TextAnchor.MiddleCenter;
+            expText.alignByGeometry = true;
+            expText.resizeTextForBestFit = true;
+            expText.resizeTextMinSize = 12;
+            expText.resizeTextMaxSize = 17;
+            expText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            expText.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
+        private void EnsurePlayerBadgeInteraction(Transform badgeTransform)
+        {
+            if (badgeTransform == null)
+            {
+                return;
+            }
+
+            Image background = badgeTransform.GetComponent<Image>();
+            if (background != null)
+            {
+                background.raycastTarget = true;
+            }
+
+            Button button = badgeTransform.GetComponent<Button>();
+            if (button == null)
+            {
+                button = badgeTransform.gameObject.AddComponent<Button>();
+            }
+
+            button.targetGraphic = background;
+            button.transition = Selectable.Transition.None;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(TogglePlayerExpDetails);
+        }
+
+        private void TogglePlayerExpDetails()
+        {
+            homePlayerExpDetailsVisible = !homePlayerExpDetailsVisible;
+            RefreshPlayerBadgeDisplay(GetRuntimeProfile());
         }
 
         private static Text CreateHomeResourcePill(
@@ -1049,7 +1509,7 @@ namespace WitchTower.Home
             Vector2 size,
             Color accentColor)
         {
-            return CreateHomeResourcePill(parent, rootName, amountName, iconPath, fallbackIcon, anchoredPosition, size, accentColor, true);
+            return CreateHomeResourcePill(parent, rootName, amountName, iconPath, fallbackIcon, anchoredPosition, size, accentColor, true, null);
         }
 
         private static Text CreateHomeResourcePill(
@@ -1061,7 +1521,8 @@ namespace WitchTower.Home
             Vector2 anchoredPosition,
             Vector2 size,
             Color accentColor,
-            bool showIcon)
+            bool showIcon,
+            Sprite frameSprite = null)
         {
             GameObject root = new GameObject(rootName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             root.transform.SetParent(parent, false);
@@ -1073,12 +1534,18 @@ namespace WitchTower.Home
             rootRect.sizeDelta = size;
 
             Image background = root.GetComponent<Image>();
-            background.color = showIcon
+            bool useFrameSprite = frameSprite != null;
+            bool shouldDrawGeneratedIcon = showIcon && !useFrameSprite;
+            background.sprite = frameSprite;
+            background.preserveAspect = false;
+            background.color = useFrameSprite
+                ? Color.white
+                : showIcon
                 ? new Color(0.018f, 0.018f, 0.030f, 0.96f)
                 : new Color(1f, 1f, 1f, 0.001f);
             background.raycastTarget = false;
 
-            if (showIcon)
+            if (shouldDrawGeneratedIcon)
             {
                 Outline outline = root.AddComponent<Outline>();
                 outline.effectColor = new Color(accentColor.r, accentColor.g, accentColor.b, 0.52f);
@@ -1086,7 +1553,7 @@ namespace WitchTower.Home
             }
 
             Sprite iconSprite = !string.IsNullOrEmpty(iconPath) ? Resources.Load<Sprite>(iconPath) : null;
-            if (showIcon && iconSprite != null)
+            if (shouldDrawGeneratedIcon && iconSprite != null)
             {
                 CreateMenuImage(
                     rootName + "Icon",
@@ -1098,7 +1565,7 @@ namespace WitchTower.Home
                     new Vector2(52f, 52f),
                     true);
             }
-            else if (showIcon && !string.IsNullOrEmpty(fallbackIcon))
+            else if (shouldDrawGeneratedIcon && !string.IsNullOrEmpty(fallbackIcon))
             {
                 CreateUiText(
                     rootName + "Icon",
@@ -1114,7 +1581,7 @@ namespace WitchTower.Home
                     TextAnchor.MiddleCenter);
             }
 
-            return CreateUiText(
+            Text amountText = CreateUiText(
                 amountName,
                 root.transform,
                 "0",
@@ -1126,6 +1593,62 @@ namespace WitchTower.Home
                 new Vector2(Mathf.Max(90f, size.x - 80f), 38f),
                 Color.white,
                 TextAnchor.MiddleLeft);
+            ConfigureHomeResourceAmountText(amountText);
+            return amountText;
+        }
+
+        private static void ConfigureHomeResourceAmountText(Text amountText)
+        {
+            if (amountText == null)
+            {
+                return;
+            }
+
+            RectTransform amountRect = amountText.transform as RectTransform;
+            RectTransform parentRect = amountText.transform.parent as RectTransform;
+            if (amountRect != null)
+            {
+                float rightPadding = ResolveHomeResourceAmountRightPadding(amountText);
+                float parentWidth = 0f;
+                if (parentRect != null)
+                {
+                    parentWidth = Mathf.Abs(parentRect.rect.width);
+                    if (parentWidth <= 0f)
+                    {
+                        parentWidth = Mathf.Abs(parentRect.sizeDelta.x);
+                    }
+                }
+
+                float textWidth = parentWidth > 0f
+                    ? Mathf.Max(90f, parentWidth - HomeResourceAmountLeftReserve - rightPadding)
+                    : Mathf.Max(90f, amountRect.sizeDelta.x);
+                amountRect.anchorMin = new Vector2(1f, 0.5f);
+                amountRect.anchorMax = new Vector2(1f, 0.5f);
+                amountRect.pivot = new Vector2(1f, 0.5f);
+                amountRect.anchoredPosition = new Vector2(-rightPadding, HomeResourceAmountVerticalOffset);
+                amountRect.sizeDelta = new Vector2(textWidth, 38f);
+            }
+
+            amountText.alignment = TextAnchor.MiddleRight;
+            amountText.alignByGeometry = true;
+            amountText.resizeTextForBestFit = true;
+            amountText.resizeTextMinSize = 16;
+            amountText.resizeTextMaxSize = 22;
+            amountText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            amountText.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
+        private static float ResolveHomeResourceAmountRightPadding(Text amountText)
+        {
+            if (amountText == null)
+            {
+                return HomeResourceAmountRightPadding;
+            }
+
+            string amountName = amountText.gameObject.name;
+            return amountName == "PaidStoneAmount"
+                ? HomeResourceAmountNarrowRightPadding
+                : HomeResourceAmountRightPadding;
         }
 
         private static Image CreateTintPanel(
@@ -1159,24 +1682,47 @@ namespace WitchTower.Home
                 return;
             }
 
+            RemoveHomeGuidePanel(menuRoot);
+
             Transform existingBar = menuRoot.Find("HomeStoneBalanceBar");
             if (existingBar != null)
             {
-                bool isModernLayout = existingBar.Find("HomeHudLayoutMarker") != null;
+                bool isModernLayout = existingBar.Find("HomeHudLayoutMarker") != null &&
+                    existingBar.Find("HomeHudSplitLayoutMarker") != null;
                 homeFreeStoneText = existingBar.Find("FreeStoneCounter/FreeStoneAmount")?.GetComponent<Text>();
                 homePaidStoneText = existingBar.Find("PaidStoneCounter/PaidStoneAmount")?.GetComponent<Text>();
                 homeGoldText = existingBar.Find("GoldCounter/GoldAmount")?.GetComponent<Text>();
-                homeExpText = existingBar.Find("ExpCounter/ExpAmount")?.GetComponent<Text>();
                 homePlayerLevelText = existingBar.Find("PlayerBadge/PlayerLevel")?.GetComponent<Text>();
+                Transform playerBadge = existingBar.Find("PlayerBadge");
+                homeExpText = playerBadge != null ? playerBadge.Find("PlayerExp")?.GetComponent<Text>() : null;
+                if (playerBadge != null && homeExpText == null)
+                {
+                    homeExpText = CreatePlayerBadgeExpText(playerBadge);
+                }
+                ConfigurePlayerBadgeLevelAndExp(playerBadge, homePlayerLevelText, homeExpText);
+                EnsurePlayerBadgeInteraction(playerBadge);
+                RemoveDirectChild(existingBar, "ExpCounter");
                 homeGuideText = menuRoot.Find("HomeGuidePanel/HomeGuideText")?.GetComponent<Text>();
                 homeNextFloorText = menuRoot.Find("HomeGuidePanel/HomeNextFloorText")?.GetComponent<Text>();
                 homeHeroImage = menuRoot.Find("HomeHeroShowcase/HomeHeroImage")?.GetComponent<Image>();
                 homeHeroNameText = menuRoot.Find("HomeHeroShowcase/HomeHeroName")?.GetComponent<Text>();
                 homeHeroLevelText = menuRoot.Find("HomeHeroShowcase/HomeHeroLevel")?.GetComponent<Text>();
+                HideHomeHeroLabels();
                 homeQuestButtonText = existingBar.Find("QuestButton/QuestButtonLabel")?.GetComponent<Text>();
                 homeQuestButton = existingBar.Find("QuestButton")?.GetComponent<Button>();
                 homeShopButtonText = existingBar.Find("GoldShopButton/GoldShopButtonLabel")?.GetComponent<Text>();
                 homeShopButton = existingBar.Find("GoldShopButton")?.GetComponent<Button>();
+                if (homeShopButton != null)
+                {
+                    homeShopButton.onClick.RemoveAllListeners();
+                    homeShopButton.onClick.AddListener(OpenPaidShopMenu);
+                }
+                ConfigureGoldShopButtonVisual(homeShopButton != null ? homeShopButton.transform : null, homeShopButtonText);
+                EnsurePermanentUpgradeShortcutButton(existingBar);
+                ConfigureHomeResourceAmountText(homeFreeStoneText);
+                ConfigureHomeResourceAmountText(homePaidStoneText);
+                ConfigureHomeResourceAmountText(homeGoldText);
+                AlignHomeResourceAmountYToPaidStone();
                 RectTransform questButtonRect = homeQuestButton != null ? homeQuestButton.GetComponent<RectTransform>() : null;
                 Image questButtonImage = homeQuestButton != null ? homeQuestButton.GetComponent<Image>() : null;
                 bool hasRoundQuestButton = questButtonRect != null &&
@@ -1189,12 +1735,13 @@ namespace WitchTower.Home
                     homeGoldText != null &&
                     homeExpText != null &&
                     homePlayerLevelText != null &&
-                    homeGuideText != null &&
-                    homeNextFloorText != null &&
                     homeQuestButtonText != null &&
                     homeQuestButton != null &&
                     homeShopButtonText != null &&
                     homeShopButton != null &&
+                    permanentUpgradeButtonText != null &&
+                    permanentUpgradeStatusText != null &&
+                    permanentUpgradeButton != null &&
                     isModernLayout &&
                     hasRoundQuestButton)
                 {
@@ -1218,9 +1765,17 @@ namespace WitchTower.Home
             barImage.color = new Color(0.012f, 0.012f, 0.022f, 0.10f);
             barImage.raycastTarget = false;
 
-            Sprite hudFrameSprite = LoadSpriteResource(HomeTopHudFramePath, "HomeTopHudFrame");
-            bool useGeneratedHudFrame = hudFrameSprite != null;
-            if (useGeneratedHudFrame)
+            Sprite profileHudFrameSprite = LoadSpriteResource(HomeTopHudProfileFramePath, "HomeTopHudProfile");
+            Sprite goldHudFrameSprite = LoadSpriteResource(HomeTopHudGoldFramePath, "HomeTopHudGold");
+            Sprite freeStoneHudFrameSprite = LoadSpriteResource(HomeTopHudFreeStoneFramePath, "HomeTopHudFreeStone");
+            Sprite paidStoneHudFrameSprite = LoadSpriteResource(HomeTopHudPaidStoneFramePath, "HomeTopHudPaidStone");
+            bool useSplitHudFrame = profileHudFrameSprite != null &&
+                goldHudFrameSprite != null &&
+                freeStoneHudFrameSprite != null &&
+                paidStoneHudFrameSprite != null;
+            Sprite hudFrameSprite = useSplitHudFrame ? null : LoadSpriteResource(HomeTopHudFramePath, "HomeTopHudFrame");
+            bool useGeneratedHudFrame = useSplitHudFrame || hudFrameSprite != null;
+            if (!useSplitHudFrame && useGeneratedHudFrame)
             {
                 Image hudFrame = CreateMenuImage(
                     "HomeTopHudFrameArt",
@@ -1236,55 +1791,94 @@ namespace WitchTower.Home
 
             GameObject marker = new GameObject("HomeHudLayoutMarker", typeof(RectTransform));
             marker.transform.SetParent(bar.transform, false);
+            GameObject splitMarker = new GameObject("HomeHudSplitLayoutMarker", typeof(RectTransform));
+            splitMarker.transform.SetParent(bar.transform, false);
 
-            CreatePlayerBadge(bar.transform, useGeneratedHudFrame);
+            CreatePlayerBadge(
+                bar.transform,
+                useGeneratedHudFrame,
+                useSplitHudFrame ? profileHudFrameSprite : null,
+                useSplitHudFrame ? HomeTopHudProfilePosition : (Vector2?)null,
+                useSplitHudFrame ? HomeTopHudProfileSize : (Vector2?)null);
             homeGoldText = CreateHomeResourcePill(
                 bar.transform,
                 "GoldCounter",
                 "GoldAmount",
                 null,
                 "G",
-                new Vector2(-198f, -68f),
-                new Vector2(180f, 58f),
+                useSplitHudFrame ? HomeTopHudGoldPosition : new Vector2(-198f, -68f),
+                useSplitHudFrame ? HomeTopHudGoldSize : new Vector2(180f, 58f),
                 new Color(1f, 0.74f, 0.22f, 1f),
-                !useGeneratedHudFrame);
+                !useGeneratedHudFrame,
+                useSplitHudFrame ? goldHudFrameSprite : null);
             homeFreeStoneText = CreateHomeResourcePill(
                 bar.transform,
                 "FreeStoneCounter",
                 "FreeStoneAmount",
                 FreeStoneIconPath,
                 string.Empty,
-                new Vector2(12f, -68f),
-                new Vector2(204f, 58f),
+                useSplitHudFrame ? HomeTopHudFreeStonePosition : new Vector2(12f, -68f),
+                useSplitHudFrame ? HomeTopHudFreeStoneSize : new Vector2(204f, 58f),
                 new Color(0.54f, 0.94f, 1f, 1f),
-                !useGeneratedHudFrame);
+                !useGeneratedHudFrame,
+                useSplitHudFrame ? freeStoneHudFrameSprite : null);
             homePaidStoneText = CreateHomeResourcePill(
                 bar.transform,
                 "PaidStoneCounter",
                 "PaidStoneAmount",
                 PaidStoneIconPath,
                 string.Empty,
-                new Vector2(238f, -68f),
-                new Vector2(204f, 58f),
+                useSplitHudFrame ? HomeTopHudPaidStonePosition : new Vector2(238f, -68f),
+                useSplitHudFrame ? HomeTopHudPaidStoneSize : new Vector2(204f, 58f),
                 new Color(1f, 0.54f, 1f, 1f),
-                !useGeneratedHudFrame);
-            homeExpText = CreateHomeResourcePill(
-                bar.transform,
-                "ExpCounter",
-                "ExpAmount",
-                null,
-                "EXP",
-                new Vector2(438f, -68f),
-                new Vector2(190f, 58f),
-                new Color(1f, 0.88f, 0.28f, 1f),
-                !useGeneratedHudFrame);
+                !useGeneratedHudFrame,
+                useSplitHudFrame ? paidStoneHudFrameSprite : null);
+            AlignHomeResourceAmountYToPaidStone();
             homeShopButton = CreateGoldShopButton(bar.transform, HomeShopButtonPosition, HomeShopButtonSize);
+            permanentUpgradeButton = CreatePermanentUpgradeShortcutButton(bar.transform, PermanentUpgradeButtonPosition, PermanentUpgradeButtonSize);
             homeQuestButton = CreateQuestButton(bar.transform, HomeQuestButtonPosition, HomeQuestButtonSize);
             EnsureDailyQuestList(menuRoot);
         }
 
+        private void AlignHomeResourceAmountYToPaidStone()
+        {
+            RectTransform paidRect = homePaidStoneText != null ? homePaidStoneText.transform as RectTransform : null;
+            if (paidRect == null)
+            {
+                return;
+            }
+
+            float targetY = paidRect.anchoredPosition.y;
+            AlignHomeResourceAmountY(homeGoldText, targetY + HomeYellowResourceAmountVerticalOffset);
+            AlignHomeResourceAmountY(homeFreeStoneText, targetY);
+        }
+
+        private static void AlignHomeResourceAmountY(Text amountText, float targetY)
+        {
+            RectTransform rectTransform = amountText != null ? amountText.transform as RectTransform : null;
+            if (rectTransform == null)
+            {
+                return;
+            }
+
+            rectTransform.anchoredPosition = new Vector2(rectTransform.anchoredPosition.x, targetY);
+        }
+
         private void RefreshHomeStoneBalanceBar()
         {
+            Transform existingMenuRoot = ResolveUnifiedMenuRootTransform();
+            Transform existingStoneBar = existingMenuRoot != null ? existingMenuRoot.Find("HomeStoneBalanceBar") : null;
+            if (existingStoneBar != null)
+            {
+                homeShopButtonText = homeShopButtonText != null
+                    ? homeShopButtonText
+                    : existingStoneBar.Find("GoldShopButton/GoldShopButtonLabel")?.GetComponent<Text>();
+                homeShopButton = homeShopButton != null
+                    ? homeShopButton
+                    : existingStoneBar.Find("GoldShopButton")?.GetComponent<Button>();
+                EnsurePermanentUpgradeShortcutButton(existingStoneBar);
+            }
+
             if (homeFreeStoneText == null &&
                 homePaidStoneText == null &&
                 homeGoldText == null &&
@@ -1292,9 +1886,16 @@ namespace WitchTower.Home
                 homePlayerLevelText == null &&
                 homeGuideText == null &&
                 homeQuestButtonText == null &&
-                homeShopButtonText == null)
+                homeShopButtonText == null &&
+                permanentUpgradeButtonText == null &&
+                permanentUpgradeStatusText == null)
             {
-                return;
+                if (existingMenuRoot == null)
+                {
+                    return;
+                }
+
+                EnsureHomeStoneBalanceBar(existingMenuRoot);
             }
 
             PlayerProfile profile = GetRuntimeProfile();
@@ -1315,15 +1916,7 @@ namespace WitchTower.Home
                     homeGoldText.text = "-";
                 }
 
-                if (homeExpText != null)
-                {
-                    homeExpText.text = "-";
-                }
-
-                if (homePlayerLevelText != null)
-                {
-                    homePlayerLevelText.text = "Lv.-";
-                }
+                RefreshPlayerBadgeDisplay(null);
 
                 if (homeGuideText != null)
                 {
@@ -1342,8 +1935,10 @@ namespace WitchTower.Home
 
                 if (homeShopButtonText != null)
                 {
-                    homeShopButtonText.text = "ショップ";
+                    homeShopButtonText.text = PaidShopLabel;
                 }
+
+                RefreshPermanentUpgradeShortcutDisplay(null);
 
                 if (homeQuestButton != null)
                 {
@@ -1374,15 +1969,7 @@ namespace WitchTower.Home
                 homeGoldText.text = profile.Gold.ToString("N0");
             }
 
-            if (homeExpText != null)
-            {
-                homeExpText.text = profile.Exp.ToString("N0");
-            }
-
-            if (homePlayerLevelText != null)
-            {
-                homePlayerLevelText.text = $"Lv.{Mathf.Max(1, profile.Level)}";
-            }
+            RefreshPlayerBadgeDisplay(profile);
 
             if (homeGuideText != null)
             {
@@ -1401,8 +1988,10 @@ namespace WitchTower.Home
 
             if (homeShopButtonText != null)
             {
-                homeShopButtonText.text = "ショップ";
+                homeShopButtonText.text = PaidShopLabel;
             }
+
+            RefreshPermanentUpgradeShortcutDisplay(profile);
 
             if (homeQuestButton != null)
             {
@@ -1417,9 +2006,56 @@ namespace WitchTower.Home
             RefreshHomeHeroShowcase(profile);
         }
 
+        private Transform ResolveUnifiedMenuRootTransform()
+        {
+            if (unifiedMenuRoot != null)
+            {
+                return unifiedMenuRoot.transform;
+            }
+
+            Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+            foreach (Canvas canvas in canvases)
+            {
+                if (canvas == null)
+                {
+                    continue;
+                }
+
+                Transform existingMenu = canvas.transform.Find("UnifiedHomeMenu");
+                if (existingMenu == null)
+                {
+                    continue;
+                }
+
+                unifiedMenuRoot = existingMenu.gameObject;
+                return existingMenu;
+            }
+
+            return null;
+        }
+
+        private void RefreshPlayerBadgeDisplay(PlayerProfile profile)
+        {
+            if (homePlayerLevelText != null)
+            {
+                homePlayerLevelText.text = profile != null
+                    ? $"Lv.{Mathf.Max(1, profile.Level)}"
+                    : "Lv.-";
+                homePlayerLevelText.gameObject.SetActive(!homePlayerExpDetailsVisible);
+            }
+
+            if (homeExpText != null)
+            {
+                homeExpText.text = profile != null
+                    ? $"EXP {Mathf.Max(0, profile.Exp):N0}/{Mathf.Max(1, profile.GetRequiredExpForNextLevel()):N0}"
+                    : "EXP -/-";
+                homeExpText.gameObject.SetActive(homePlayerExpDetailsVisible);
+            }
+        }
+
         private void RefreshHomeHeroShowcase(PlayerProfile profile)
         {
-            Sprite sprite = ResolveHomeHeroSprite(profile, out string heroName, out string heroLevelText);
+            Sprite sprite = ResolveHomeHeroSprite(profile);
             if (homeHeroImage != null)
             {
                 homeHeroImage.sprite = sprite;
@@ -1427,18 +2063,25 @@ namespace WitchTower.Home
                 homeHeroImage.preserveAspect = true;
             }
 
+            HideHomeHeroLabels();
+        }
+
+        private void HideHomeHeroLabels()
+        {
             if (homeHeroNameText != null)
             {
-                homeHeroNameText.text = heroName;
+                homeHeroNameText.text = string.Empty;
+                homeHeroNameText.gameObject.SetActive(false);
             }
 
             if (homeHeroLevelText != null)
             {
-                homeHeroLevelText.text = heroLevelText;
+                homeHeroLevelText.text = string.Empty;
+                homeHeroLevelText.gameObject.SetActive(false);
             }
         }
 
-        private static Sprite ResolveHomeHeroSprite(PlayerProfile profile, out string heroName, out string heroLevelText)
+        private static Sprite ResolveHomeHeroSprite(PlayerProfile profile)
         {
             OwnedMonsterData leadMonster = ResolveLeadMonster(profile);
             MonsterDataSO monsterData = null;
@@ -1447,14 +2090,12 @@ namespace WitchTower.Home
                 monsterData = MasterDataManager.Instance.GetMonsterData(leadMonster.MonsterId);
             }
 
-            heroName = monsterData != null && !string.IsNullOrEmpty(monsterData.monsterName)
-                ? monsterData.monsterName
-                : "ヒナドラ";
-            heroLevelText = leadMonster != null
-                ? $"Lv.{Mathf.Max(1, leadMonster.Level)}"
-                : "Lv.1";
-
             Sprite sprite = monsterData != null ? monsterData.illustrationSprite : null;
+            if (monsterData != null && monsterData.monsterId == RockGolemMonsterId)
+            {
+                sprite = Resources.Load<Sprite>(RockGolemHomeHeroSpritePath);
+            }
+
             if (sprite == null && monsterData != null)
             {
                 sprite = monsterData.portraitSprite;
@@ -1533,8 +2174,10 @@ namespace WitchTower.Home
             {
                 if (dailyQuestListRoot == existingPanel.gameObject &&
                     dailyQuestCards.Count == definitions.Count &&
-                    dailyQuestStatusText != null)
+                    dailyQuestStatusText != null &&
+                    existingPanel.Find("DailyQuestDecorMarker") != null)
                 {
+                    ConfigureDailyQuestInputBlocking(existingPanel);
                     return;
                 }
 
@@ -1549,6 +2192,9 @@ namespace WitchTower.Home
             rootRect.anchorMax = Vector2.one;
             rootRect.offsetMin = Vector2.zero;
             rootRect.offsetMax = Vector2.zero;
+
+            GameObject decorMarker = new GameObject("DailyQuestDecorMarker", typeof(RectTransform));
+            decorMarker.transform.SetParent(dailyQuestListRoot.transform, false);
 
             Button shadeButton = CreatePlainButton(
                 "DailyQuestShade",
@@ -1571,10 +2217,29 @@ namespace WitchTower.Home
             panelRect.sizeDelta = new Vector2(860f, 820f);
 
             Image panelImage = panel.GetComponent<Image>();
-            panelImage.color = new Color(0.018f, 0.024f, 0.030f, 0.96f);
-            panelImage.raycastTarget = false;
+            panelImage.color = new Color(0.014f, 0.018f, 0.024f, 0.97f);
+            panelImage.raycastTarget = true;
+            AddUiOutline(panel, new Color(0.82f, 0.64f, 0.28f, 0.56f), new Vector2(2f, -2f));
+            EnsureDailyQuestInputBlocker(panel.transform);
 
-            CreateUiText(
+            CreateTintPanel(
+                "DailyQuestTopLine",
+                panel.transform,
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -112f),
+                new Vector2(560f, 3f),
+                new Color(1f, 0.78f, 0.30f, 0.70f));
+            CreateTintPanel(
+                "DailyQuestBottomLine",
+                panel.transform,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 110f),
+                new Vector2(560f, 2f),
+                new Color(0.25f, 0.83f, 1f, 0.34f));
+
+            Text titleText = CreateUiText(
                 "DailyQuestTitle",
                 panel.transform,
                 "デイリークエスト",
@@ -1586,8 +2251,9 @@ namespace WitchTower.Home
                 new Vector2(520f, 52f),
                 new Color(1f, 0.86f, 0.42f, 1f),
                 TextAnchor.MiddleCenter);
+            AddTextShadow(titleText, new Color(0f, 0f, 0f, 0.86f), new Vector2(2f, -2f));
 
-            CreatePlainButton(
+            Button closeButton = CreatePlainButton(
                 "DailyQuestCloseButton",
                 panel.transform,
                 new Vector2(1f, 1f),
@@ -1596,9 +2262,10 @@ namespace WitchTower.Home
                 new Vector2(78f, 52f),
                 new Color(0.24f, 0.10f, 0.09f, 0.96f),
                 CloseDailyQuestList);
+            AddUiOutline(closeButton.gameObject, new Color(1f, 0.70f, 0.45f, 0.34f), new Vector2(1f, -1f));
             CreateUiText(
                 "DailyQuestCloseLabel",
-                panel.transform.Find("DailyQuestCloseButton"),
+                closeButton.transform,
                 "閉じる",
                 18,
                 FontStyle.Bold,
@@ -1630,6 +2297,62 @@ namespace WitchTower.Home
             dailyQuestListRoot.SetActive(false);
         }
 
+        private static void ConfigureDailyQuestInputBlocking(Transform dailyQuestPanelRoot)
+        {
+            Transform panelBody = dailyQuestPanelRoot != null ? dailyQuestPanelRoot.Find("DailyQuestPanelBody") : null;
+            Image panelImage = panelBody != null ? panelBody.GetComponent<Image>() : null;
+            if (panelImage != null)
+            {
+                panelImage.raycastTarget = true;
+            }
+
+            EnsureDailyQuestInputBlocker(panelBody);
+        }
+
+        private static void EnsureDailyQuestInputBlocker(Transform panelBody)
+        {
+            RectTransform panelRect = panelBody as RectTransform;
+            if (panelRect == null)
+            {
+                return;
+            }
+
+            Transform existingBlocker = panelBody.Find("DailyQuestInputBlocker");
+            if (existingBlocker == null)
+            {
+                Button blocker = CreatePlainButton(
+                    "DailyQuestInputBlocker",
+                    panelBody,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    Vector2.zero,
+                    panelRect.sizeDelta + new Vector2(8f, 8f),
+                    new Color(0f, 0f, 0f, 0.001f),
+                    null);
+                blocker.transition = Selectable.Transition.None;
+                existingBlocker = blocker.transform;
+            }
+
+            RectTransform blockerRect = existingBlocker as RectTransform;
+            if (blockerRect != null)
+            {
+                blockerRect.anchorMin = new Vector2(0.5f, 0.5f);
+                blockerRect.anchorMax = new Vector2(0.5f, 0.5f);
+                blockerRect.pivot = new Vector2(0.5f, 0.5f);
+                blockerRect.anchoredPosition = Vector2.zero;
+                blockerRect.sizeDelta = panelRect.sizeDelta + new Vector2(8f, 8f);
+            }
+
+            Image blockerImage = existingBlocker.GetComponent<Image>();
+            if (blockerImage != null)
+            {
+                blockerImage.color = new Color(0f, 0f, 0f, 0.001f);
+                blockerImage.raycastTarget = true;
+            }
+
+            existingBlocker.SetAsFirstSibling();
+        }
+
         private void CreateDailyQuestCard(Transform parent, DailyQuestDefinition definition, int index)
         {
             GameObject card = new GameObject("DailyQuestCard_" + definition.Id, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -1642,8 +2365,25 @@ namespace WitchTower.Home
             cardRect.sizeDelta = new Vector2(760f, 150f);
 
             Image cardImage = card.GetComponent<Image>();
-            cardImage.color = new Color(0.034f, 0.044f, 0.052f, 0.94f);
+            cardImage.color = new Color(0.028f, 0.037f, 0.044f, 0.96f);
             cardImage.raycastTarget = false;
+            AddUiOutline(card, new Color(0.56f, 0.78f, 0.82f, 0.20f), new Vector2(1f, -1f));
+            CreateTintPanel(
+                "DailyQuestCardAccent",
+                card.transform,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(8f, 0f),
+                new Vector2(4f, 106f),
+                new Color(1f, 0.74f, 0.24f, 0.78f));
+            CreateTintPanel(
+                "DailyQuestCardShine",
+                card.transform,
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -2f),
+                new Vector2(724f, 2f),
+                new Color(1f, 1f, 1f, 0.10f));
 
             CreateUiText(
                 "DailyQuestName",
@@ -1693,6 +2433,7 @@ namespace WitchTower.Home
                 new Vector2(178f, 84f),
                 new Color(0.10f, 0.32f, 0.30f, 0.98f),
                 () => ClaimDailyQuestReward(definition.Id));
+            AddUiOutline(claimButton.gameObject, new Color(0.40f, 0.90f, 1f, 0.25f), new Vector2(1f, -1f));
 
             Graphic claimStoneGraphic = null;
             Sprite freeStoneSprite = Resources.Load<Sprite>(FreeStoneIconPath);
@@ -2035,45 +2776,21 @@ namespace WitchTower.Home
             rectTransform.sizeDelta = size;
 
             Image image = root.GetComponent<Image>();
-            image.color = new Color(0.20f, 0.12f, 0.05f, 0.98f);
+            image.color = new Color(0.045f, 0.030f, 0.075f, 0.96f);
             image.raycastTarget = true;
 
             Outline outline = root.AddComponent<Outline>();
-            outline.effectColor = new Color(1f, 0.72f, 0.24f, 0.92f);
+            outline.effectColor = new Color(0.92f, 0.66f, 0.24f, 0.88f);
             outline.effectDistance = new Vector2(2f, -2f);
 
             Button button = root.GetComponent<Button>();
             button.targetGraphic = image;
-            button.onClick.AddListener(OpenGoldShopMenu);
+            button.onClick.AddListener(OpenPaidShopMenu);
 
-            CreateUiText(
-                "GoldShopTopLabel",
-                root.transform,
-                "SHOP",
-                24,
-                FontStyle.Bold,
-                new Vector2(0.5f, 0.70f),
-                new Vector2(0.5f, 0.70f),
-                Vector2.zero,
-                new Vector2(130f, 34f),
-                new Color(1f, 0.62f, 0.20f, 1f),
-                TextAnchor.MiddleCenter);
-            CreateUiText(
-                "GoldShopIcon",
-                root.transform,
-                "G",
-                42,
-                FontStyle.Bold,
-                new Vector2(0.5f, 0.47f),
-                new Vector2(0.5f, 0.47f),
-                Vector2.zero,
-                new Vector2(120f, 50f),
-                new Color(1f, 0.82f, 0.26f, 1f),
-                TextAnchor.MiddleCenter);
             homeShopButtonText = CreateUiText(
                 "GoldShopButtonLabel",
                 root.transform,
-                "ショップ",
+                PaidShopLabel,
                 18,
                 FontStyle.Bold,
                 new Vector2(0.5f, 0.18f),
@@ -2082,7 +2799,377 @@ namespace WitchTower.Home
                 new Vector2(132f, 34f),
                 new Color(1f, 0.92f, 0.68f, 1f),
                 TextAnchor.MiddleCenter);
+            ConfigureGoldShopButtonVisual(root.transform, homeShopButtonText);
             return button;
+        }
+
+        private static void ConfigureGoldShopButtonVisual(Transform buttonTransform, Text labelText)
+        {
+            if (buttonTransform == null)
+            {
+                return;
+            }
+
+            RectTransform buttonRect = buttonTransform as RectTransform;
+            if (buttonRect != null)
+            {
+                buttonRect.anchorMin = new Vector2(0.5f, 1f);
+                buttonRect.anchorMax = new Vector2(0.5f, 1f);
+                buttonRect.pivot = new Vector2(0.5f, 0.5f);
+                buttonRect.anchoredPosition = HomeShopButtonPosition;
+                buttonRect.sizeDelta = HomeShopButtonSize;
+            }
+
+            Sprite paidShopFrame = LoadSpriteResource(PaidShopButtonFrameSpritePath, "PaidShopButtonFrame");
+            Image image = buttonTransform.GetComponent<Image>();
+            if (image != null)
+            {
+                if (paidShopFrame != null)
+                {
+                    image.sprite = paidShopFrame;
+                    image.type = Image.Type.Simple;
+                    image.preserveAspect = false;
+                    image.color = Color.white;
+                }
+                else
+                {
+                    image.sprite = null;
+                    image.color = new Color(0.045f, 0.030f, 0.075f, 0.96f);
+                }
+
+                image.raycastTarget = true;
+            }
+
+            Outline outline = buttonTransform.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = buttonTransform.gameObject.AddComponent<Outline>();
+            }
+
+            outline.enabled = paidShopFrame == null;
+            outline.effectColor = new Color(0.92f, 0.66f, 0.24f, 0.88f);
+            outline.effectDistance = new Vector2(2f, -2f);
+
+            Transform topLabel = buttonTransform.Find("GoldShopTopLabel");
+            if (topLabel != null)
+            {
+                DestroySceneObject(topLabel.gameObject);
+            }
+
+            Transform oldIcon = buttonTransform.Find("GoldShopIcon");
+            if (oldIcon != null)
+            {
+                DestroySceneObject(oldIcon.gameObject);
+            }
+
+            Vector2 buttonSize = ResolveRectSize(buttonRect, HomeShopButtonSize);
+            Vector2 paidShopIconSize = new Vector2(buttonSize.x * 0.75f, buttonSize.y * 0.62f);
+            Sprite paidShopIcon = LoadSpriteResource(PaidShopIconSpritePath, "PaidShopIcon");
+            if (paidShopIcon != null)
+            {
+                CreateMenuImage(
+                    "GoldShopIcon",
+                    buttonTransform,
+                    paidShopIcon,
+                    new Vector2(0.5f, 0.60f),
+                    new Vector2(0.5f, 0.60f),
+                    new Vector2(0f, -5f),
+                    paidShopIconSize,
+                    true);
+            }
+
+            if (labelText == null)
+            {
+                return;
+            }
+
+            RectTransform labelRect = labelText.transform as RectTransform;
+            if (labelRect != null)
+            {
+                labelRect.anchorMin = new Vector2(0.5f, 0.18f);
+                labelRect.anchorMax = new Vector2(0.5f, 0.18f);
+                labelRect.pivot = new Vector2(0.5f, 0.5f);
+                labelRect.anchoredPosition = Vector2.zero;
+                labelRect.sizeDelta = new Vector2(132f, 34f);
+            }
+
+            labelText.fontSize = 18;
+            labelText.fontStyle = FontStyle.Bold;
+            labelText.alignment = TextAnchor.MiddleCenter;
+            labelText.resizeTextForBestFit = true;
+            labelText.resizeTextMinSize = 12;
+            labelText.resizeTextMaxSize = 18;
+            labelText.color = new Color(1f, 0.92f, 0.68f, 1f);
+            labelText.text = PaidShopLabel;
+        }
+
+        private void EnsurePermanentUpgradeShortcutButton(Transform parent)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            Transform existing = parent.Find("PermanentUpgradeButton");
+            if (existing == null)
+            {
+                permanentUpgradeButton = CreatePermanentUpgradeShortcutButton(parent, PermanentUpgradeButtonPosition, PermanentUpgradeButtonSize);
+                return;
+            }
+
+            permanentUpgradeButton = existing.GetComponent<Button>();
+            permanentUpgradeButtonText = existing.Find("PermanentUpgradeButtonLabel")?.GetComponent<Text>();
+            permanentUpgradeStatusText = existing.Find("PermanentUpgradeStatus")?.GetComponent<Text>();
+            if (permanentUpgradeButton == null ||
+                permanentUpgradeButtonText == null ||
+                permanentUpgradeStatusText == null)
+            {
+                DestroySceneObject(existing.gameObject);
+                permanentUpgradeButton = CreatePermanentUpgradeShortcutButton(parent, PermanentUpgradeButtonPosition, PermanentUpgradeButtonSize);
+                return;
+            }
+
+            RectTransform rectTransform = existing as RectTransform;
+            if (rectTransform != null)
+            {
+                rectTransform.anchorMin = new Vector2(0.5f, 1f);
+                rectTransform.anchorMax = new Vector2(0.5f, 1f);
+                rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                rectTransform.anchoredPosition = PermanentUpgradeButtonPosition;
+                rectTransform.sizeDelta = PermanentUpgradeButtonSize;
+            }
+
+            permanentUpgradeButton.onClick.RemoveAllListeners();
+            permanentUpgradeButton.onClick.AddListener(OpenPermanentUpgradeShop);
+            ConfigurePermanentUpgradeShortcutVisual(existing, permanentUpgradeButtonText, permanentUpgradeStatusText);
+        }
+
+        private Button CreatePermanentUpgradeShortcutButton(Transform parent, Vector2 anchoredPosition, Vector2 size)
+        {
+            GameObject root = new GameObject("PermanentUpgradeButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            root.transform.SetParent(parent, false);
+            RectTransform rectTransform = root.GetComponent<RectTransform>();
+            rectTransform.anchorMin = new Vector2(0.5f, 1f);
+            rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+
+            Button button = root.GetComponent<Button>();
+            button.targetGraphic = root.GetComponent<Image>();
+            button.onClick.AddListener(OpenPermanentUpgradeShop);
+
+            permanentUpgradeStatusText = CreateUiText(
+                "PermanentUpgradeStatus",
+                root.transform,
+                string.Empty,
+                14,
+                FontStyle.Bold,
+                new Vector2(0.5f, 0.42f),
+                new Vector2(0.5f, 0.42f),
+                Vector2.zero,
+                new Vector2(164f, 38f),
+                new Color(0.72f, 1f, 0.96f, 1f),
+                TextAnchor.MiddleCenter);
+            AddTextShadow(permanentUpgradeStatusText, new Color(0f, 0f, 0f, 0.88f), new Vector2(1.4f, -1.4f));
+
+            permanentUpgradeButtonText = CreateUiText(
+                "PermanentUpgradeButtonLabel",
+                root.transform,
+                PermanentUpgradeLabel,
+                18,
+                FontStyle.Bold,
+                new Vector2(0.5f, 0.18f),
+                new Vector2(0.5f, 0.18f),
+                Vector2.zero,
+                new Vector2(142f, 34f),
+                new Color(1f, 0.92f, 0.68f, 1f),
+                TextAnchor.MiddleCenter);
+            AddTextShadow(permanentUpgradeButtonText, new Color(0f, 0f, 0f, 0.82f), new Vector2(1.5f, -1.5f));
+
+            ConfigurePermanentUpgradeShortcutVisual(root.transform, permanentUpgradeButtonText, permanentUpgradeStatusText);
+            return button;
+        }
+
+        private static void ConfigurePermanentUpgradeShortcutVisual(Transform buttonTransform, Text labelText, Text statusText)
+        {
+            if (buttonTransform == null)
+            {
+                return;
+            }
+
+            Sprite frameSprite = LoadSpriteResource(PermanentUpgradeButtonFrameSpritePath, "PermanentUpgradeButtonFrame");
+            Image image = buttonTransform.GetComponent<Image>();
+            if (image != null)
+            {
+                if (frameSprite != null)
+                {
+                    image.sprite = frameSprite;
+                    image.type = Image.Type.Simple;
+                    image.preserveAspect = false;
+                    image.color = Color.white;
+                }
+                else
+                {
+                    image.sprite = null;
+                    image.color = new Color(0.025f, 0.055f, 0.070f, 0.96f);
+                }
+
+                image.raycastTarget = true;
+            }
+
+            Outline outline = buttonTransform.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = buttonTransform.gameObject.AddComponent<Outline>();
+            }
+
+            outline.enabled = frameSprite == null;
+            outline.effectColor = new Color(0.30f, 0.92f, 1f, 0.80f);
+            outline.effectDistance = new Vector2(2f, -2f);
+
+            Transform oldIcon = buttonTransform.Find("PermanentUpgradeIcon");
+            if (oldIcon != null)
+            {
+                DestroySceneObject(oldIcon.gameObject);
+            }
+
+            Vector2 buttonSize = ResolveRectSize(buttonTransform as RectTransform, PermanentUpgradeButtonSize);
+            Sprite iconSprite = LoadSpriteResource(PermanentUpgradeIconSpritePath, "PermanentUpgradeIcon");
+            if (iconSprite != null)
+            {
+                Image iconImage = CreateMenuImage(
+                    "PermanentUpgradeIcon",
+                    buttonTransform,
+                    iconSprite,
+                    new Vector2(0.5f, 0.58f),
+                    new Vector2(0.5f, 0.58f),
+                    new Vector2(0f, -8f),
+                    new Vector2(buttonSize.x * 0.42f, buttonSize.y * 0.42f),
+                    true);
+                iconImage.transform.SetAsFirstSibling();
+            }
+
+            ConfigurePermanentUpgradeShortcutText(labelText, statusText);
+            if (statusText != null)
+            {
+                statusText.transform.SetAsLastSibling();
+            }
+
+            if (labelText != null)
+            {
+                labelText.transform.SetAsLastSibling();
+            }
+        }
+
+        private static void ConfigurePermanentUpgradeShortcutText(Text labelText, Text statusText)
+        {
+            if (labelText != null)
+            {
+                RectTransform labelRect = labelText.transform as RectTransform;
+                if (labelRect != null)
+                {
+                    labelRect.anchorMin = new Vector2(0.5f, 0.18f);
+                    labelRect.anchorMax = new Vector2(0.5f, 0.18f);
+                    labelRect.pivot = new Vector2(0.5f, 0.5f);
+                    labelRect.anchoredPosition = Vector2.zero;
+                    labelRect.sizeDelta = new Vector2(142f, 34f);
+                }
+
+                labelText.fontSize = 18;
+                labelText.fontStyle = FontStyle.Bold;
+                labelText.alignment = TextAnchor.MiddleCenter;
+                labelText.resizeTextForBestFit = true;
+                labelText.resizeTextMinSize = 12;
+                labelText.resizeTextMaxSize = 18;
+                labelText.color = new Color(1f, 0.92f, 0.68f, 1f);
+                labelText.text = PermanentUpgradeLabel;
+            }
+
+            if (statusText != null)
+            {
+                RectTransform statusRect = statusText.transform as RectTransform;
+                if (statusRect != null)
+                {
+                    statusRect.anchorMin = new Vector2(0.5f, 0.36f);
+                    statusRect.anchorMax = new Vector2(0.5f, 0.36f);
+                    statusRect.pivot = new Vector2(0.5f, 0.5f);
+                    statusRect.anchoredPosition = new Vector2(0f, -4f);
+                    statusRect.sizeDelta = new Vector2(164f, 38f);
+                }
+
+                statusText.fontSize = 14;
+                statusText.fontStyle = FontStyle.Bold;
+                statusText.alignment = TextAnchor.MiddleCenter;
+                statusText.resizeTextForBestFit = true;
+                statusText.resizeTextMinSize = 9;
+                statusText.resizeTextMaxSize = 14;
+                statusText.horizontalOverflow = HorizontalWrapMode.Wrap;
+                statusText.verticalOverflow = VerticalWrapMode.Truncate;
+            }
+        }
+
+        private void RefreshPermanentUpgradeShortcutDisplay(PlayerProfile profile)
+        {
+            if (permanentUpgradeButton != null)
+            {
+                permanentUpgradeButton.interactable = profile != null;
+            }
+
+            if (permanentUpgradeStatusText == null)
+            {
+                return;
+            }
+
+            if (profile == null)
+            {
+                permanentUpgradeStatusText.text = "読込中";
+                permanentUpgradeStatusText.color = new Color(0.72f, 0.80f, 0.90f, 1f);
+                return;
+            }
+
+            if (profile.HasAutoRepeatFloorUpgrade && profile.IsAutoRepeatFloorUpgradeEnabled)
+            {
+                permanentUpgradeStatusText.text = "同階層再挑戦 有効";
+                permanentUpgradeStatusText.color = new Color(0.45f, 1f, 0.78f, 1f);
+            }
+            else if (profile.HasAutoRepeatFloorUpgrade)
+            {
+                permanentUpgradeStatusText.text = "同階層再挑戦 無効";
+                permanentUpgradeStatusText.color = new Color(0.86f, 0.78f, 0.70f, 1f);
+            }
+            else if (profile.MonsterStorageLimit > PlayerProfile.DefaultMonsterStorageLimit ||
+                     profile.EquipmentStorageLimit > PlayerProfile.DefaultEquipmentStorageLimit)
+            {
+                permanentUpgradeStatusText.text = "枠拡張 有効";
+                permanentUpgradeStatusText.color = new Color(0.45f, 1f, 0.78f, 1f);
+            }
+            else
+            {
+                permanentUpgradeStatusText.text = "有効化なし";
+                permanentUpgradeStatusText.color = new Color(0.86f, 0.78f, 0.70f, 1f);
+            }
+        }
+
+        private static Vector2 ResolveRectSize(RectTransform rectTransform, Vector2 fallback)
+        {
+            if (rectTransform == null)
+            {
+                return fallback;
+            }
+
+            Vector2 size = rectTransform.rect.size;
+            if (size.x <= 0f || size.y <= 0f)
+            {
+                size = rectTransform.sizeDelta;
+            }
+
+            if (size.x <= 0f || size.y <= 0f)
+            {
+                return fallback;
+            }
+
+            return size;
         }
 
         private static Sprite LoadSpriteResource(string path, string fallbackName)
@@ -2184,6 +3271,24 @@ namespace WitchTower.Home
             Shadow shadow = text.gameObject.AddComponent<Shadow>();
             shadow.effectColor = color;
             shadow.effectDistance = distance;
+        }
+
+        private static Outline AddUiOutline(GameObject target, Color color, Vector2 distance)
+        {
+            if (target == null)
+            {
+                return null;
+            }
+
+            Outline outline = target.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = target.AddComponent<Outline>();
+            }
+
+            outline.effectColor = color;
+            outline.effectDistance = distance;
+            return outline;
         }
 
         private static void CreateSpriteButton(string name, Transform parent, Sprite sprite, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction action)

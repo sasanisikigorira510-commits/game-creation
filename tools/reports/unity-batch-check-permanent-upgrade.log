@@ -1,0 +1,34 @@
+Unity Editor version:    6000.4.1f1 (8535861f39e1)
+Branch:                  6000.4/staging
+Build type:              Release
+Batch mode:              YES
+macOS version:           Version 26.4 (Build 25E246)
+Darwin version:          25.4.0
+Architecture:            arm64
+Running under Rosetta:   NO
+Available memory:        32768 MB
+Date:                    2026-06-17T09:54:01Z
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-andou" at "2026-06-17T09:54:01.009429Z"
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.1'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-andou"
+[Licensing::IpcConnector] LicenseClient-andou channel disconnected successfully.
+[Licensing::IpcConnector] Channel LicenseClient-andou-6000.4.1 doesn't exist
+Launching external process: /Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/Helpers/UnityLicensingClient.app/Contents/MacOS/Unity.Licensing.Client
+[Licensing::Module] Successfully launched the LicensingClient (PId: 7800)
+Launching external process: /Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/Helpers/PackageManager/Server/UnityPackageManager
+
+COMMAND LINE ARGUMENTS:
+/Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/MacOS/Unity
+-batchmode
+-nographics
+-quit
+-projectPath
+/Users/andou/Desktop/あ/game-creation/WitchTowerGame
+-logFile
+/Users/andou/Desktop/あ/game-creation/tools/reports/unity-batch-check-permanent-upgrade.log
+Successfully changed project path to: /Users/andou/Desktop/あ/game-creation/WitchTowerGame
+/Users/andou/Desktop/あ/game-creation/WitchTowerGame
+[Package Manager] Server process was shutdown

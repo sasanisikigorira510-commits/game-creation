@@ -8,6 +8,8 @@ namespace WitchTower.Data
     public sealed partial class PlayerProfile
     {
         public const int PartySlotCount = 5;
+        public const int DefaultMonsterStorageLimit = 100;
+        public const int DefaultEquipmentStorageLimit = 100;
         private const string LegacyPrimaryDailyQuestId = "daily_battle_win_1";
 
         public int Level { get; set; }
@@ -19,6 +21,8 @@ namespace WitchTower.Data
         public int AttackUpgradeLevel { get; set; }
         public int DefenseUpgradeLevel { get; set; }
         public int HpUpgradeLevel { get; set; }
+        public bool HasAutoRepeatFloorUpgrade { get; set; }
+        public bool IsAutoRepeatFloorUpgradeEnabled { get; set; }
         public string LastDailyRewardDate { get; set; }
         public string DailyQuestProgressDate { get; set; }
         public int DailyBattleWinCount { get; set; }
@@ -28,6 +32,7 @@ namespace WitchTower.Data
         public List<OwnedMaterialData> OwnedMaterials { get; }
         public List<OwnedEquipmentData> OwnedEquipments { get; }
         public List<OwnedEnhancementRelicData> OwnedEnhancementRelics { get; }
+        public int EquipmentStorageLimit { get; set; }
         public int MonsterStorageLimit { get; set; }
         public List<OwnedMonsterData> OwnedMonsters { get; }
         public List<MonsterDexEntryData> MonsterDexEntries { get; }
@@ -45,6 +50,8 @@ namespace WitchTower.Data
             AttackUpgradeLevel = saveData.AttackUpgradeLevel;
             DefenseUpgradeLevel = saveData.DefenseUpgradeLevel;
             HpUpgradeLevel = saveData.HpUpgradeLevel;
+            HasAutoRepeatFloorUpgrade = saveData.HasAutoRepeatFloorUpgrade;
+            IsAutoRepeatFloorUpgradeEnabled = HasAutoRepeatFloorUpgrade && saveData.AutoRepeatFloorUpgradeEnabledState != 2;
             LastDailyRewardDate = saveData.LastDailyRewardDate ?? string.Empty;
             DailyQuestProgressDate = saveData.DailyQuestProgressDate ?? string.Empty;
             DailyBattleWinCount = Math.Max(0, saveData.DailyBattleWinCount);
@@ -54,7 +61,10 @@ namespace WitchTower.Data
             OwnedMaterials = saveData.OwnedMaterials ?? new List<OwnedMaterialData>();
             OwnedEquipments = saveData.OwnedEquipments ?? new List<OwnedEquipmentData>();
             OwnedEnhancementRelics = saveData.OwnedEnhancementRelics ?? new List<OwnedEnhancementRelicData>();
-            MonsterStorageLimit = saveData.MonsterStorageLimit > 0 ? saveData.MonsterStorageLimit : 100;
+            EquipmentStorageLimit = Math.Max(
+                saveData.EquipmentStorageLimit > 0 ? saveData.EquipmentStorageLimit : DefaultEquipmentStorageLimit,
+                OwnedEquipments.Count);
+            MonsterStorageLimit = saveData.MonsterStorageLimit > 0 ? saveData.MonsterStorageLimit : DefaultMonsterStorageLimit;
             OwnedMonsters = saveData.OwnedMonsters ?? new List<OwnedMonsterData>();
             MonsterDexEntries = saveData.MonsterDexEntries ?? new List<MonsterDexEntryData>();
             PartyMonsterInstanceIds = saveData.PartyMonsterInstanceIds ?? new List<string>();
@@ -230,6 +240,11 @@ namespace WitchTower.Data
             return OwnedMonsters.Count < MonsterStorageLimit;
         }
 
+        public bool HasEquipmentStorageSpace()
+        {
+            return OwnedEquipments.Count < EquipmentStorageLimit;
+        }
+
         public OwnedMonsterData GetOwnedMonster(string instanceId)
         {
             return OwnedMonsters.FirstOrDefault(x => x != null && x.InstanceId == instanceId);
@@ -271,18 +286,19 @@ namespace WitchTower.Data
                 acquiredOrder = Math.Max(acquiredOrder, ownedMonster.AcquiredOrder + 1);
             }
 
+            int normalizedPlus = Math.Max(0, plusValue);
             var newMonster = new OwnedMonsterData
             {
                 InstanceId = monsterId + "_" + Guid.NewGuid().ToString("N"),
                 MonsterId = monsterId,
                 Level = Math.Max(1, level),
                 Exp = 0,
-                PlusValue = Math.Max(0, plusValue),
-                PlusHp = Math.Max(0, plusValue),
-                PlusAttack = Math.Max(0, plusValue),
-                PlusWisdom = Math.Max(0, plusValue),
-                PlusDefense = Math.Max(0, plusValue),
-                PlusMagicDefense = Math.Max(0, plusValue),
+                PlusValue = normalizedPlus,
+                PlusHp = normalizedPlus,
+                PlusAttack = normalizedPlus,
+                PlusWisdom = normalizedPlus,
+                PlusDefense = normalizedPlus,
+                PlusMagicDefense = normalizedPlus,
                 FusionBonusHp = 0,
                 FusionBonusAttack = 0,
                 FusionBonusWisdom = 0,
@@ -313,28 +329,13 @@ namespace WitchTower.Data
                 return false;
             }
 
-            switch (statType)
+            if (!Enum.IsDefined(typeof(MonsterPlusStatType), statType))
             {
-                case MonsterPlusStatType.Hp:
-                    monster.PlusHp += amount;
-                    break;
-                case MonsterPlusStatType.Attack:
-                    monster.PlusAttack += amount;
-                    break;
-                case MonsterPlusStatType.Wisdom:
-                    monster.PlusWisdom += amount;
-                    break;
-                case MonsterPlusStatType.Defense:
-                    monster.PlusDefense += amount;
-                    break;
-                case MonsterPlusStatType.MagicDefense:
-                    monster.PlusMagicDefense += amount;
-                    break;
-                default:
-                    return false;
+                return false;
             }
 
-            monster.PlusValue = monster.TotalPlusValue;
+            monster.PlusValue = Math.Max(0, monster.PlusValue) + amount;
+            SyncMonsterPlusFields(monster);
             return true;
         }
 
@@ -347,37 +348,37 @@ namespace WitchTower.Data
                     continue;
                 }
 
-                monster.PlusHp = Math.Max(0, monster.PlusHp);
-                monster.PlusAttack = Math.Max(0, monster.PlusAttack);
-                monster.PlusWisdom = Math.Max(0, monster.PlusWisdom);
-                monster.PlusDefense = Math.Max(0, monster.PlusDefense);
-                monster.PlusMagicDefense = Math.Max(0, monster.PlusMagicDefense);
+                int singlePlus = Math.Max(0, monster.PlusValue);
+                singlePlus = Math.Max(singlePlus, Math.Max(0, monster.PlusHp));
+                singlePlus = Math.Max(singlePlus, Math.Max(0, monster.PlusAttack));
+                singlePlus = Math.Max(singlePlus, Math.Max(0, monster.PlusWisdom));
+                singlePlus = Math.Max(singlePlus, Math.Max(0, monster.PlusDefense));
+                singlePlus = Math.Max(singlePlus, Math.Max(0, monster.PlusMagicDefense));
+                monster.PlusValue = singlePlus;
+                SyncMonsterPlusFields(monster);
                 monster.FusionBonusHp = Math.Max(0, monster.FusionBonusHp);
                 monster.FusionBonusAttack = Math.Max(0, monster.FusionBonusAttack);
                 monster.FusionBonusWisdom = Math.Max(0, monster.FusionBonusWisdom);
                 monster.FusionBonusDefense = Math.Max(0, monster.FusionBonusDefense);
                 monster.FusionBonusMagicDefense = Math.Max(0, monster.FusionBonusMagicDefense);
                 monster.FusionBonusAttackSpeed = Math.Max(0f, monster.FusionBonusAttackSpeed);
-                monster.PlusValue = Math.Max(0, monster.PlusValue);
-
-                bool hasItemizedPlus =
-                    monster.PlusHp > 0 ||
-                    monster.PlusAttack > 0 ||
-                    monster.PlusWisdom > 0 ||
-                    monster.PlusDefense > 0 ||
-                    monster.PlusMagicDefense > 0;
-
-                if (!hasItemizedPlus && monster.PlusValue > 0)
-                {
-                    // Legacy migration: old single plus value affected multiple combat stats at once,
-                    // so copy it across the new per-stat fields to preserve relative strength.
-                    monster.PlusHp = monster.PlusValue;
-                    monster.PlusAttack = monster.PlusValue;
-                    monster.PlusWisdom = monster.PlusValue;
-                    monster.PlusDefense = monster.PlusValue;
-                    monster.PlusMagicDefense = monster.PlusValue;
-                }
             }
+        }
+
+        private static void SyncMonsterPlusFields(OwnedMonsterData monster)
+        {
+            if (monster == null)
+            {
+                return;
+            }
+
+            int plusValue = Math.Max(0, monster.PlusValue);
+            monster.PlusValue = plusValue;
+            monster.PlusHp = plusValue;
+            monster.PlusAttack = plusValue;
+            monster.PlusWisdom = plusValue;
+            monster.PlusDefense = plusValue;
+            monster.PlusMagicDefense = plusValue;
         }
 
         private void NormalizeMonsterIndividualValues()
@@ -483,6 +484,12 @@ namespace WitchTower.Data
                 AttackUpgradeLevel = AttackUpgradeLevel,
                 DefenseUpgradeLevel = DefenseUpgradeLevel,
                 HpUpgradeLevel = HpUpgradeLevel,
+                HasAutoRepeatFloorUpgrade = HasAutoRepeatFloorUpgrade,
+                AutoRepeatFloorUpgradeEnabledState = !HasAutoRepeatFloorUpgrade
+                    ? 0
+                    : IsAutoRepeatFloorUpgradeEnabled
+                        ? 1
+                        : 2,
                 LastDailyRewardDate = LastDailyRewardDate,
                 DailyQuestProgressDate = DailyQuestProgressDate,
                 DailyBattleWinCount = DailyBattleWinCount,
@@ -496,6 +503,7 @@ namespace WitchTower.Data
                 OwnedMaterials = new List<OwnedMaterialData>(OwnedMaterials),
                 OwnedEquipments = new List<OwnedEquipmentData>(OwnedEquipments),
                 OwnedEnhancementRelics = new List<OwnedEnhancementRelicData>(OwnedEnhancementRelics),
+                EquipmentStorageLimit = EquipmentStorageLimit,
                 MonsterStorageLimit = MonsterStorageLimit,
                 OwnedMonsters = new List<OwnedMonsterData>(OwnedMonsters),
                 MonsterDexEntries = new List<MonsterDexEntryData>(MonsterDexEntries),

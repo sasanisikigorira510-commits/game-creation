@@ -44,6 +44,7 @@ TITANIA_ATTACK_CANVAS = (675, 675)
 TITANIA_ATTACK_BODY_TARGET_HEIGHT = 581
 TITANIA_ATTACK_BODY_BOTTOM_MARGIN = 44
 TITANIA_ATTACK_CONTENT_MARGIN = 8
+PALE_MOVE_REPAIR_KEYS = {"seraph_michael", "spirit_queen_titania"}
 
 
 def normalize_name(value: str) -> str:
@@ -81,6 +82,48 @@ def is_background_candidate(pixel: tuple[int, int, int, int]) -> bool:
     min_rgb = min(red, green, blue)
     max_rgb = max(red, green, blue)
     return min_rgb >= 180 and (max_rgb - min_rgb) <= 72
+
+
+def is_pale_move_background_candidate(pixel: tuple[int, int, int, int]) -> bool:
+    red, green, blue, alpha = pixel
+    if alpha == 0:
+        return False
+    min_rgb = min(red, green, blue)
+    max_rgb = max(red, green, blue)
+    return min_rgb >= 238 and (max_rgb - min_rgb) <= 20
+
+
+def clear_edge_background_with_predicate(image: Image.Image, predicate) -> Image.Image:
+    result = image.convert("RGBA")
+    pixels = result.load()
+    width, height = result.size
+    visited = [[False for _ in range(width)] for _ in range(height)]
+    queue: deque[tuple[int, int]] = deque()
+
+    def enqueue(x: int, y: int) -> None:
+        if x < 0 or y < 0 or x >= width or y >= height or visited[y][x]:
+            return
+        if predicate(pixels[x, y]):
+            visited[y][x] = True
+            queue.append((x, y))
+
+    for x in range(width):
+        enqueue(x, 0)
+        enqueue(x, height - 1)
+    for y in range(height):
+        enqueue(0, y)
+        enqueue(width - 1, y)
+
+    while queue:
+        x, y = queue.popleft()
+        pixels[x, y] = (0, 0, 0, 0)
+        for neighbor_y in range(max(0, y - 1), min(height - 1, y + 1) + 1):
+            for neighbor_x in range(max(0, x - 1), min(width - 1, x + 1) + 1):
+                if neighbor_x == x and neighbor_y == y:
+                    continue
+                enqueue(neighbor_x, neighbor_y)
+
+    return result
 
 
 def clear_edge_background(image: Image.Image, remove_detached: bool = True) -> Image.Image:
@@ -601,11 +644,13 @@ def remove_stale_frames(output_dir: Path, key: str, pose: str, frame_count: int)
 
 
 def repair_sheet(source: Path, output_dir: Path, key: str, pose: str, padding: int, apply: bool) -> dict[str, object]:
-    image = clear_edge_background(Image.open(source), remove_detached=False)
-    width, height = image.size
+    source_image = Image.open(source).convert("RGBA")
+    image = clear_edge_background(source_image, remove_detached=False)
+    width, height = source_image.size
     frame_count = detected_frame_count(width, height)
     template_meta = output_dir / f"mon_{key}_{pose}_0.png.meta"
     frame_reports = []
+    uses_pale_move_repair = key in PALE_MOVE_REPAIR_KEYS and pose == "move"
 
     if apply:
         remove_stale_frames(output_dir, key, pose, frame_count)
@@ -613,8 +658,13 @@ def repair_sheet(source: Path, output_dir: Path, key: str, pose: str, padding: i
     for index in range(frame_count):
         x0 = round(index * width / frame_count)
         x1 = round((index + 1) * width / frame_count)
-        frame = image.crop((x0, 0, x1, height))
-        frame = remove_neighbor_slivers(clear_edge_background(frame))
+        if uses_pale_move_repair:
+            raw_frame = source_image.crop((x0, 0, x1, height))
+            frame = clear_edge_background_with_predicate(raw_frame, is_pale_move_background_candidate)
+            frame = remove_neighbor_slivers(frame)
+        else:
+            frame = image.crop((x0, 0, x1, height))
+            frame = remove_neighbor_slivers(clear_edge_background(frame))
         source_bounds = content_bounds(frame)
         source_edge_flags = edge_flags_for_bounds(source_bounds, frame.size)
         source_margins = edge_margins_for_bounds(source_bounds, frame.size)
@@ -725,6 +775,11 @@ def main() -> None:
         help="Comma-separated monster keys to process. Defaults to every class 4 monster.",
     )
     parser.add_argument(
+        "--poses",
+        default="",
+        help="Comma-separated pose keys to process (idle,move,attack). Defaults to every pose.",
+    )
+    parser.add_argument(
         "--strict-frame-edges",
         action="store_true",
         help="Exit non-zero when source cells touch a frame edge before padding.",
@@ -739,12 +794,15 @@ def main() -> None:
     reports_dir = repo_root / "tools" / "reports"
 
     selected_keys = {key.strip() for key in args.keys.split(",") if key.strip()}
+    selected_poses = {pose.strip() for pose in args.poses.split(",") if pose.strip()}
     report: list[dict[str, object]] = []
     for source_folder, key in CLASS4_ENTRIES:
         if selected_keys and key not in selected_keys:
             continue
         monster_dir = find_child(class4_source_root, source_folder)
         for pose_file, pose in POSES:
+            if selected_poses and pose not in selected_poses and pose_file not in selected_poses:
+                continue
             source = find_pose_image(monster_dir, pose_file)
             report.append(repair_sheet(source, battle_output_dir, key, pose, args.padding, args.apply))
 

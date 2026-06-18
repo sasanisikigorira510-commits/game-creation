@@ -36,6 +36,7 @@ namespace WitchTower.Data
         private const float IntegerStatMaxMultiplier = 1.15f;
         private const float SpeedMinMultiplier = 0.90f;
         private const float SpeedMaxMultiplier = 1.10f;
+        private const int HighQualityRollCount = 3;
 
         private static readonly System.Random Random = new System.Random();
 
@@ -52,13 +53,13 @@ namespace WitchTower.Data
 
         public static MonsterIndividualValues RollHighQuality()
         {
-            return new MonsterIndividualValues(
-                RollHighQualityOne(),
-                RollHighQualityOne(),
-                RollHighQualityOne(),
-                RollHighQualityOne(),
-                RollHighQualityOne(),
-                RollHighQualityOne());
+            MonsterIndividualValues bestValues = Roll();
+            for (int i = 1; i < HighQualityRollCount; i += 1)
+            {
+                bestValues = MaxEachIndividualValue(bestValues, Roll());
+            }
+
+            return bestValues;
         }
 
         public static MonsterIndividualValues Inherit(OwnedMonsterData parentA, OwnedMonsterData parentB)
@@ -154,11 +155,6 @@ namespace WitchTower.Data
             return Random.Next(MinValue, MaxValue + 1);
         }
 
-        private static int RollHighQualityOne()
-        {
-            return Math.Max(RollOne(), RollOne());
-        }
-
         private static MonsterIndividualValues RollForExistingMonster(OwnedMonsterData monster)
         {
             var stableRandom = new System.Random(BuildStableSeed(monster));
@@ -169,6 +165,17 @@ namespace WitchTower.Data
                 stableRandom.Next(MinValue, MaxValue + 1),
                 stableRandom.Next(MinValue, MaxValue + 1),
                 stableRandom.Next(MinValue, MaxValue + 1));
+        }
+
+        private static MonsterIndividualValues MaxEachIndividualValue(MonsterIndividualValues first, MonsterIndividualValues second)
+        {
+            return new MonsterIndividualValues(
+                Math.Max(first.Hp, second.Hp),
+                Math.Max(first.Attack, second.Attack),
+                Math.Max(first.Wisdom, second.Wisdom),
+                Math.Max(first.Defense, second.Defense),
+                Math.Max(first.MagicDefense, second.MagicDefense),
+                Math.Max(first.AttackSpeed, second.AttackSpeed));
         }
 
         private static int InheritOne(int first, int second)

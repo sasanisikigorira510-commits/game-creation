@@ -17,11 +17,12 @@ namespace WitchTower.Home
         private const string DungeonCardFramePath = "UI/DungeonSelect/DungeonCardFrame_Elite";
         private const string FloorNodeUnlockedPath = "UI/DungeonSelect/FloorNodeUnlocked";
         private const string FloorNodeSelectedPath = "UI/DungeonSelect/FloorNodeSelected";
-        private const string FloorNodeLockedPath = "UI/DungeonSelect/FloorNodeLocked";
 
         private readonly List<Image> dungeonCardFrames = new List<Image>();
+        private readonly List<string> dungeonCardIds = new List<string>();
         private readonly List<Image> floorNodeImages = new List<Image>();
         private readonly List<Text> floorNodeLabels = new List<Text>();
+        private readonly List<int> floorNodeLocalFloors = new List<int>();
 
         private GameObject panelRoot;
         private RectTransform dungeonListRoot;
@@ -57,6 +58,7 @@ namespace WitchTower.Home
                 return;
             }
 
+            BuildDungeonCards();
             SelectDungeon(GameManager.Instance != null ? GameManager.Instance.CurrentDungeonId : BattleDungeonCatalog.Dungeons[0].DungeonId);
             panelRoot.SetActive(true);
             panelRoot.transform.SetAsLastSibling();
@@ -154,8 +156,6 @@ namespace WitchTower.Home
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 66f), new Vector2(560f, 92f), new Color(0.48f, 0.18f, 0.08f, 0.98f), StartSelectedBattle, 27);
 
-            BuildDungeonCards();
-            BuildFloorNodes();
             panelRoot.SetActive(false);
         }
 
@@ -163,22 +163,29 @@ namespace WitchTower.Home
         {
             ClearChildren(dungeonListRoot);
             dungeonCardFrames.Clear();
+            dungeonCardIds.Clear();
             IReadOnlyList<BattleDungeonDefinition> dungeons = BattleDungeonCatalog.Dungeons;
             const int columns = 2;
             const float cardWidth = 392f;
             const float cardHeight = 194f;
             const float columnGap = 26f;
             const float rowGap = 22f;
+            int visibleIndex = 0;
             for (int i = 0; i < dungeons.Count; i += 1)
             {
                 BattleDungeonDefinition dungeon = dungeons[i];
+                if (!IsDungeonUnlocked(dungeon))
+                {
+                    continue;
+                }
+
                 GameObject card = CreateUiObject("DungeonCard_" + dungeon.DungeonId, dungeonListRoot);
                 RectTransform cardRect = card.GetComponent<RectTransform>();
                 cardRect.anchorMin = new Vector2(0.5f, 1f);
                 cardRect.anchorMax = new Vector2(0.5f, 1f);
                 cardRect.pivot = new Vector2(0.5f, 1f);
-                int row = i / columns;
-                int column = i % columns;
+                int row = visibleIndex / columns;
+                int column = visibleIndex % columns;
                 float x = (column - 0.5f) * (cardWidth + columnGap);
                 float y = -row * (cardHeight + rowGap);
                 cardRect.anchoredPosition = new Vector2(x, y);
@@ -201,61 +208,90 @@ namespace WitchTower.Home
                 frame.color = new Color(0.70f, 0.78f, 0.92f, 0.74f);
                 frame.raycastTarget = false;
                 dungeonCardFrames.Add(frame);
+                dungeonCardIds.Add(dungeon.DungeonId);
 
                 CreateText("DungeonName", card.transform, dungeon.DungeonName, 23, FontStyle.Bold,
                     TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(1f, 1f),
                     new Vector2(0f, 1f), new Vector2(24f, -18f), new Vector2(-48f, 34f));
+                visibleIndex += 1;
             }
         }
 
-        private void BuildFloorNodes()
+        private void BuildFloorNodes(BattleDungeonDefinition dungeon)
         {
             ClearChildren(floorListRoot);
             floorNodeImages.Clear();
             floorNodeLabels.Clear();
-            for (int i = 0; i < 5; i += 1)
+            floorNodeLocalFloors.Clear();
+            if (dungeon == null)
             {
-                GameObject node = CreateUiObject("FloorNode_" + (i + 1), floorListRoot);
+                return;
+            }
+
+            int visibleIndex = 0;
+            for (int i = 0; i < dungeon.Floors.Count; i += 1)
+            {
+                int localFloor = dungeon.Floors[i].LocalFloor;
+                if (!IsFloorUnlocked(dungeon.DungeonId, localFloor))
+                {
+                    continue;
+                }
+
+                GameObject node = CreateUiObject("FloorNode_" + localFloor, floorListRoot);
                 RectTransform rect = node.GetComponent<RectTransform>();
                 rect.anchorMin = new Vector2(0f, 0.5f);
                 rect.anchorMax = new Vector2(0f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(92f + i * 159f, 0f);
+                rect.anchoredPosition = new Vector2(92f + visibleIndex * 159f, 0f);
                 rect.sizeDelta = new Vector2(128f, 128f);
 
                 Image hitArea = node.AddComponent<Image>();
                 hitArea.color = new Color(1f, 1f, 1f, 0.001f);
                 Button button = node.AddComponent<Button>();
                 button.targetGraphic = hitArea;
-                int localFloor = i + 1;
-                button.onClick.AddListener(() => SelectFloor(localFloor));
+                int capturedLocalFloor = localFloor;
+                button.onClick.AddListener(() => SelectFloor(capturedLocalFloor));
 
                 Image visual = CreateImage("Visual", node.transform, LoadSprite(FloorNodeUnlockedPath),
                     Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, true);
                 visual.raycastTarget = false;
                 floorNodeImages.Add(visual);
 
-                Text label = CreateText("Label", node.transform, (i + 1).ToString(), 30, FontStyle.Bold,
+                Text label = CreateText("Label", node.transform, localFloor.ToString(), 30, FontStyle.Bold,
                     TextAnchor.MiddleCenter, Color.white, Vector2.zero, Vector2.one,
                     new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
                 floorNodeLabels.Add(label);
+                floorNodeLocalFloors.Add(localFloor);
+                visibleIndex += 1;
             }
         }
 
         private void SelectDungeon(string dungeonId)
         {
-            selectedDungeonId = BattleDungeonCatalog.GetDungeon(dungeonId).DungeonId;
+            BattleDungeonDefinition dungeon = BattleDungeonCatalog.GetDungeon(dungeonId);
+            if (!IsDungeonUnlocked(dungeon))
+            {
+                dungeon = GetLatestUnlockedDungeon();
+            }
+
+            selectedDungeonId = dungeon.DungeonId;
             selectedLocalFloor = Mathf.Clamp(
                 GameManager.Instance != null && GameManager.Instance.CurrentDungeonId == selectedDungeonId
                     ? GameManager.Instance.CurrentDungeonFloor
                     : 1,
                 1,
-                BattleDungeonCatalog.GetDungeon(selectedDungeonId).Floors.Count);
+                ResolveMaxUnlockedLocalFloor(dungeon));
+            BuildFloorNodes(dungeon);
             RefreshSelection();
         }
 
         private void SelectFloor(int localFloor)
         {
+            if (!IsFloorUnlocked(selectedDungeonId, localFloor))
+            {
+                return;
+            }
+
             selectedLocalFloor = Mathf.Max(1, localFloor);
             RefreshSelection();
         }
@@ -270,8 +306,7 @@ namespace WitchTower.Home
 
             for (int i = 0; i < dungeonCardFrames.Count; i += 1)
             {
-                bool selected = i < BattleDungeonCatalog.Dungeons.Count &&
-                    BattleDungeonCatalog.Dungeons[i].DungeonId == dungeon.DungeonId;
+                bool selected = i < dungeonCardIds.Count && dungeonCardIds[i] == dungeon.DungeonId;
                 dungeonCardFrames[i].color = selected
                     ? new Color(1f, 0.86f, 0.44f, 1f)
                     : new Color(0.70f, 0.78f, 0.92f, 0.74f);
@@ -284,7 +319,7 @@ namespace WitchTower.Home
 
             for (int i = 0; i < floorNodeImages.Count; i += 1)
             {
-                bool selected = i + 1 == selectedLocalFloor;
+                bool selected = i < floorNodeLocalFloors.Count && floorNodeLocalFloors[i] == selectedLocalFloor;
                 floorNodeImages[i].sprite = LoadSprite(selected ? FloorNodeSelectedPath : FloorNodeUnlockedPath);
                 floorNodeLabels[i].color = selected ? new Color(0.08f, 0.12f, 0.09f) : Color.white;
             }
@@ -311,8 +346,59 @@ namespace WitchTower.Home
             ManagerFactory.EnsureSaveManager();
             ManagerFactory.EnsureMasterDataManager();
             MasterDataManager.Instance?.Initialize();
+            if (!IsFloorUnlocked(selectedDungeonId, selectedLocalFloor))
+            {
+                return;
+            }
+
             GameManager.Instance?.SetCurrentDungeonFloor(selectedDungeonId, selectedLocalFloor);
             SceneManager.LoadScene(battleSceneName);
+        }
+
+        private static int ResolveMaxUnlockedGlobalFloor()
+        {
+            PlayerProfile profile = GameManager.Instance?.PlayerProfile;
+            return Mathf.Max(1, (profile?.HighestFloor ?? 0) + 1);
+        }
+
+        private static bool IsDungeonUnlocked(BattleDungeonDefinition dungeon)
+        {
+            return dungeon != null && dungeon.GlobalFloorStart <= ResolveMaxUnlockedGlobalFloor();
+        }
+
+        private static bool IsFloorUnlocked(string dungeonId, int localFloor)
+        {
+            return BattleDungeonCatalog.ResolveGlobalFloor(dungeonId, localFloor) <= ResolveMaxUnlockedGlobalFloor();
+        }
+
+        private static int ResolveMaxUnlockedLocalFloor(BattleDungeonDefinition dungeon)
+        {
+            if (!IsDungeonUnlocked(dungeon))
+            {
+                return 1;
+            }
+
+            return Mathf.Clamp(
+                ResolveMaxUnlockedGlobalFloor() - dungeon.GlobalFloorStart + 1,
+                1,
+                dungeon.Floors.Count);
+        }
+
+        private static BattleDungeonDefinition GetLatestUnlockedDungeon()
+        {
+            IReadOnlyList<BattleDungeonDefinition> dungeons = BattleDungeonCatalog.Dungeons;
+            BattleDungeonDefinition latestUnlocked = dungeons[0];
+            for (int i = 0; i < dungeons.Count; i += 1)
+            {
+                if (!IsDungeonUnlocked(dungeons[i]))
+                {
+                    break;
+                }
+
+                latestUnlocked = dungeons[i];
+            }
+
+            return latestUnlocked;
         }
 
         private void Close()

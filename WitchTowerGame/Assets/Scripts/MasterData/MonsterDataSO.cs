@@ -127,5 +127,16 @@ namespace WitchTower.MasterData
 
         [Header("Compendium")]
         [TextArea] public string description;
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            MonsterPlusGrowth resolvedPlusGrowth = MonsterGrowthUtility.ResolvePlusGrowth(this);
+            if (!MonsterGrowthUtility.AreEqual(plusGrowth, resolvedPlusGrowth))
+            {
+                plusGrowth = resolvedPlusGrowth;
+            }
+        }
+#endif
     }
 }

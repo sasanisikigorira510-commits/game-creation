@@ -34,11 +34,11 @@ MonoBehaviour:
   normalAttackKnockbackDuration: 0.18
   plusValueCap: 99
   plusGrowth:
-    maxHpPerPlus: 2
-    attackPerPlus: 2
+    maxHpPerPlus: 1
+    attackPerPlus: 1
     magicAttackPerPlus: 2
-    defensePerPlus: 2
-    magicDefensePerPlus: 1
+    defensePerPlus: 1
+    magicDefensePerPlus: 2
     attackSpeedPerPlus: 0.002
   levelGrowth:
     maxHpCoefficient: 0.88

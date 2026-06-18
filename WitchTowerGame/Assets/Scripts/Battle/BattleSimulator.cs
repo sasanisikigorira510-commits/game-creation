@@ -127,6 +127,7 @@ namespace WitchTower.Battle
             public BattleUnitStats Stats;
             public EnemyDataSO Data;
             public EnemyTraitRuntime Trait;
+            public bool IsBoss;
             public float AttackTimer;
             public Vector2 HomeAnchor;
             public Vector2 PositionAnchor;
@@ -173,13 +174,16 @@ namespace WitchTower.Battle
         private float enemySpawnTimer;
         private int engagedEnemyCount;
         private bool isBossEncounter;
+        private bool currentEnemyIsBoss;
+        private string finalBossMonsterId;
         private bool openingBurstSpawned;
         private int nextAllyRuntimeId = 1;
         private int nextEnemyRuntimeId = 1;
         private readonly List<AllyRuntime> activeAllyRuntimes = new List<AllyRuntime>();
         private readonly List<EnemyRuntime> activeEnemyRuntimes = new List<EnemyRuntime>();
-        private const float MagicPresentationDelay = 0.60f;
         private const float MeleePresentationDelay = 0.18f;
+        private const float TargetImpactPresentationDelay = 0.22f;
+        private const float DefaultRangedImpactPresentationDelay = 0.32f;
         private const float RangedAttackThreshold = 1.35f;
         private const float AttackMotionLockDuration = 0.34f;
         private const float MinMeleeAllyAttackReach = 0.04f;
@@ -192,6 +196,19 @@ namespace WitchTower.Battle
         private const float ResponsiveMeleeAdvancedRearMoveMultiplier = 0.70f;
         private const float ResponsiveMeleeClass2OpeningAttackReadiness = 0.82f;
         private const float RearMeleeMoveSpeedMultiplier = 1.6f;
+        private static readonly Dictionary<string, float> ProjectileImpactPresentationDelays = new Dictionary<string, float>
+        {
+            { "monster_dragon_whelp", 0.34f },
+            { "monster_flare_drake", 0.42f },
+            { "monster_abyss_dragon", 0.58f },
+            { "monster_abyss_grand_mage_seraphis", 0.48f },
+            { "monster_mecha_dragon_valdrake", 0.60f },
+            { "monster_abyss_dragon_mage_valflare", 0.50f },
+            { "monster_fortress_machine_gigafort", 0.34f },
+            { "monster_bat", 0.30f },
+            { "monster_bee", 0.26f },
+            { "monster_centaur", 0.30f }
+        };
 
         public event System.Action<BattleHitInfo> HitResolved;
         public event System.Action EncounterChanged;
@@ -209,7 +226,7 @@ namespace WitchTower.Battle
         public int CurrentFloor => currentFloor;
         public int CurrentWave => currentWave;
         public int TotalWaveCount => 1;
-        public bool IsBossWave => isBossEncounter;
+        public bool IsBossWave => isBossEncounter || currentEnemyIsBoss;
         public int EncounterSerial => encounterSerial;
         public EnemyDataSO CurrentEnemyData => currentEnemyData;
         public int CurrentEnemyCountTarget => Mathf.Max(1, encounterEnemyCountTarget);
@@ -238,6 +255,8 @@ namespace WitchTower.Battle
             currentFloor = Mathf.Max(1, floor);
             currentWave = 1;
             isBossEncounter = ResolveBossEncounter(currentFloor);
+            finalBossMonsterId = isBossEncounter ? string.Empty : BattleDungeonCatalog.ResolveBossMonsterId(currentFloor);
+            currentEnemyIsBoss = false;
             encounterEnemyCountTarget = ResolveEncounterEnemyCount();
             defeatedEnemiesInCurrentWave = 0;
             spawnedEnemiesInCurrentWave = 0;
@@ -501,6 +520,7 @@ namespace WitchTower.Battle
             int totalDamage = 0;
             bool anyCritical = false;
             int primaryTargetIndex = targetIndices[0];
+            var targetHits = new List<BattleHitTargetInfo>();
 
             for (int i = 0; i < targetIndices.Count; i += 1)
             {
@@ -520,6 +540,7 @@ namespace WitchTower.Battle
                 int damage = Mathf.Max(1, result.Damage);
                 targetEnemy.Stats.ApplyDamage(damage);
                 totalDamage += damage;
+                targetHits.Add(new BattleHitTargetInfo(targetIndex, damage));
                 anyCritical |= result.IsCritical;
                 if (targetIndex == 0)
                 {
@@ -541,6 +562,7 @@ namespace WitchTower.Battle
                 false,
                 primaryTargetIndex,
                 attacker.SlotIndex,
+                targetHits,
                 ResolvePlayerPresentationDelay(attacker.Data)));
         }
 
@@ -2092,6 +2114,27 @@ namespace WitchTower.Battle
             return BattleDungeonCatalog.ResolveIsBossEncounter(floor);
         }
 
+        private bool HasFinalBossEnemy()
+        {
+            return !isBossEncounter && !string.IsNullOrEmpty(finalBossMonsterId);
+        }
+
+        private bool IsFinalBossSpawnIndex(int spawnIndex)
+        {
+            return HasFinalBossEnemy() && spawnIndex >= CurrentEnemyCountTarget - 1;
+        }
+
+        private bool ShouldDelayFinalBossSpawn()
+        {
+            if (!HasFinalBossEnemy() || spawnedEnemiesInCurrentWave != CurrentEnemyCountTarget - 1)
+            {
+                return false;
+            }
+
+            int requiredDefeatedMinions = Mathf.Max(0, CurrentEnemyCountTarget - 1);
+            return defeatedEnemiesInCurrentWave < requiredDefeatedMinions || activeEnemyRuntimes.Count > 0;
+        }
+
         private int ResolveEncounterEnemyCount()
         {
             if (isBossEncounter)
@@ -2238,7 +2281,9 @@ namespace WitchTower.Battle
         private void SpawnEnemyForCurrentEncounter()
         {
             int spawnIndex = Mathf.Max(0, spawnedEnemiesInCurrentWave - 1);
-            BattleUnitStats spawnedStats = CreateEnemyStats(currentFloor, IsBossWave, out EnemyTraitRuntime spawnedTrait, out EnemyDataSO spawnedData);
+            bool isBossEnemy = isBossEncounter || IsFinalBossSpawnIndex(spawnIndex);
+            string forcedMonsterId = isBossEnemy && !isBossEncounter ? finalBossMonsterId : string.Empty;
+            BattleUnitStats spawnedStats = CreateEnemyStats(currentFloor, isBossEnemy, forcedMonsterId, out EnemyTraitRuntime spawnedTrait, out EnemyDataSO spawnedData);
             Vector2 homeAnchor = new Vector2(EnemySpawnX, ResolveEnemySpawnLaneY(spawnIndex));
             var runtime = new EnemyRuntime
             {
@@ -2246,6 +2291,7 @@ namespace WitchTower.Battle
                 Stats = spawnedStats,
                 Data = spawnedData,
                 Trait = spawnedTrait,
+                IsBoss = isBossEnemy,
                 AttackTimer = 0f,
                 HomeAnchor = homeAnchor,
                 PositionAnchor = homeAnchor,
@@ -2280,10 +2326,21 @@ namespace WitchTower.Battle
                 return;
             }
 
+            if (ShouldDelayFinalBossSpawn())
+            {
+                enemySpawnTimer = 0f;
+                return;
+            }
+
             enemySpawnTimer += deltaTime;
             float interval = ResolveEnemySpawnInterval();
             while (spawnedEnemiesInCurrentWave < CurrentEnemyCountTarget && enemySpawnTimer >= interval)
             {
+                if (ShouldDelayFinalBossSpawn())
+                {
+                    break;
+                }
+
                 enemySpawnTimer -= interval;
                 int burstSize = !openingBurstSpawned
                     ? ResolveOpeningSpawnBurst()
@@ -2298,6 +2355,11 @@ namespace WitchTower.Battle
             int burstCount = Mathf.Max(1, count);
             for (int i = 0; i < burstCount && spawnedEnemiesInCurrentWave < CurrentEnemyCountTarget; i += 1)
             {
+                if (ShouldDelayFinalBossSpawn())
+                {
+                    break;
+                }
+
                 QueueEnemySpawn(activateImmediately && i == 0);
             }
         }
@@ -2531,11 +2593,13 @@ namespace WitchTower.Battle
             return 1;
         }
 
-        private BattleUnitStats CreateEnemyStats(int floor, bool isBossEncounter, out EnemyTraitRuntime runtime, out EnemyDataSO enemyData)
+        private BattleUnitStats CreateEnemyStats(int floor, bool applyBossModifiers, string forcedMonsterId, out EnemyTraitRuntime runtime, out EnemyDataSO enemyData)
         {
             var masterDataManager = MasterDataManager.Instance;
             var floorData = masterDataManager != null ? masterDataManager.GetFloorData(floor) : null;
-            enemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, masterDataManager);
+            enemyData = !string.IsNullOrEmpty(forcedMonsterId)
+                ? BattleDungeonCatalog.CreateEnemyDataForMonsterAtGlobalFloor(floor, masterDataManager, forcedMonsterId)
+                : BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, masterDataManager, true);
             if (enemyData == null)
             {
                 enemyData = floorData != null ? floorData.enemyData : null;
@@ -2547,7 +2611,7 @@ namespace WitchTower.Battle
                 int fallbackHp = 40;
                 int fallbackAttack = 8;
                 int fallbackDefense = 2;
-                if (isBossEncounter)
+                if (applyBossModifiers)
                 {
                     fallbackHp = Mathf.RoundToInt(fallbackHp * bossHpMultiplier);
                     fallbackAttack = Mathf.RoundToInt(fallbackAttack * bossAttackMultiplier);
@@ -2577,7 +2641,7 @@ namespace WitchTower.Battle
             float attackSpeed = enemyData.attackSpeed * runtime.AttackSpeedMultiplier;
             float critRate = enemyData.critRate + runtime.CritRateBonus;
 
-            if (isBossEncounter)
+            if (applyBossModifiers)
             {
                 maxHp = Mathf.Max(maxHp + 1, Mathf.RoundToInt(maxHp * bossHpMultiplier));
                 attack = Mathf.Max(attack + 1, Mathf.RoundToInt(attack * bossAttackMultiplier));
@@ -2669,14 +2733,11 @@ namespace WitchTower.Battle
                 return 0f;
             }
 
-            if (monsterData.rangeType == MonsterRangeType.Melee)
-            {
-                return MeleePresentationDelay;
-            }
-
-            return monsterData.damageType == MonsterDamageType.Magic
-                ? MagicPresentationDelay
-                : 0f;
+            float attackRange = BattleAttackRangeResolver.ResolveMonsterAttackRange(monsterData);
+            return ResolveAttackImpactPresentationDelay(
+                monsterData.monsterId,
+                attackRange,
+                monsterData.damageType);
         }
 
         private static float ResolveEnemyPresentationDelay(EnemyDataSO enemyData)
@@ -2686,14 +2747,32 @@ namespace WitchTower.Battle
                 return 0f;
             }
 
-            if (enemyData.attackRange < RangedAttackThreshold)
+            string monsterId = !string.IsNullOrEmpty(enemyData.enemyId)
+                ? BattleDungeonCatalog.ResolveMonsterIdFromEnemyId(enemyData.enemyId)
+                : string.Empty;
+            float attackRange = BattleAttackRangeResolver.ResolveEnemyAttackRange(enemyData);
+            return ResolveAttackImpactPresentationDelay(
+                monsterId,
+                attackRange,
+                enemyData.damageType);
+        }
+
+        private static float ResolveAttackImpactPresentationDelay(string monsterId, float attackRange, MonsterDamageType damageType)
+        {
+            if (!string.IsNullOrEmpty(monsterId) &&
+                ProjectileImpactPresentationDelays.TryGetValue(monsterId, out float projectileImpactDelay))
+            {
+                return projectileImpactDelay;
+            }
+
+            if (attackRange < RangedAttackThreshold)
             {
                 return MeleePresentationDelay;
             }
 
-            return enemyData.damageType == MonsterDamageType.Magic
-                ? MagicPresentationDelay
-                : 0f;
+            return damageType == MonsterDamageType.Magic
+                ? TargetImpactPresentationDelay
+                : DefaultRangedImpactPresentationDelay;
         }
 
         private float GetCurrentEnemyAttackInterval(BattleUnitStats stats)
@@ -2735,6 +2814,7 @@ namespace WitchTower.Battle
                 enemyStats = null;
                 currentEnemyData = null;
                 enemyTraitRuntime = default;
+                currentEnemyIsBoss = false;
                 enemyAttackTimer = 0f;
                 return;
             }
@@ -2743,6 +2823,7 @@ namespace WitchTower.Battle
             enemyStats = leadEnemy.Stats;
             currentEnemyData = leadEnemy.Data;
             enemyTraitRuntime = leadEnemy.Trait;
+            currentEnemyIsBoss = leadEnemy.IsBoss;
             enemyAttackTimer = leadEnemy.AttackTimer;
         }
 

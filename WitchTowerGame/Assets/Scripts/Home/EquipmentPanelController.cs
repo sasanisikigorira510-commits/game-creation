@@ -13,6 +13,33 @@ namespace WitchTower.Home
 {
     public sealed class EquipmentPanelController : MonoBehaviour
     {
+        private enum EquipmentListFilter
+        {
+            All,
+            Weapon,
+            Armor,
+            Accessory
+        }
+
+        private enum EquipmentListSortMode
+        {
+            Default,
+            Rarity,
+            Power,
+            Name
+        }
+
+        private sealed class EquipmentOptionBinding
+        {
+            public string EquipmentId;
+            public Button Button;
+            public TMP_Text StatusText;
+            public Vector2 ButtonPosition;
+            public Vector2 StatusPosition;
+            public int OriginalIndex;
+            public bool HasCapturedLayout;
+        }
+
         [SerializeField] private PlayerStatusView playerStatusView;
         [SerializeField] private ResourceView resourceView;
         [SerializeField] private EquipmentStatusView equipmentStatusView;
@@ -76,6 +103,22 @@ namespace WitchTower.Home
         private string enhancementLastMessage = string.Empty;
         private EquipmentEnhancementResultType activeEnhancementEffect = EquipmentEnhancementResultType.None;
         private float enhancementEffectTimer;
+        private readonly List<EquipmentOptionBinding> equipmentOptionBindings = new List<EquipmentOptionBinding>();
+        private bool equipmentListControlsBuilt;
+        private GameObject equipmentListControlsRoot;
+        private Button allEquipmentFilterButton;
+        private Button weaponEquipmentFilterButton;
+        private Button armorEquipmentFilterButton;
+        private Button accessoryEquipmentFilterButton;
+        private Button equipmentSortButton;
+        private TMP_Text allEquipmentFilterLabel;
+        private TMP_Text weaponEquipmentFilterLabel;
+        private TMP_Text armorEquipmentFilterLabel;
+        private TMP_Text accessoryEquipmentFilterLabel;
+        private TMP_Text equipmentSortLabel;
+        private TMP_Text equipmentListSummaryText;
+        private EquipmentListFilter currentEquipmentListFilter = EquipmentListFilter.All;
+        private EquipmentListSortMode currentEquipmentListSortMode = EquipmentListSortMode.Default;
 
         private void OnEnable()
         {
@@ -126,6 +169,9 @@ namespace WitchTower.Home
             BindEquipmentOption(boneMailButton, boneMailStatusText, profile, "equip_bone_mail", "未所持");
             BindEquipmentOption(ashenRingButton, ashenRingStatusText, profile, "equip_ashen_ring", "未所持");
             BindEquipmentOption(quickCharmButton, quickCharmStatusText, profile, "equip_quick_charm", "未所持");
+            EnsureEquipmentListControls();
+            RefreshEquipmentListControls(profile);
+            ApplyEquipmentListFilterAndSort(profile);
 
             if (ctaText != null)
             {
@@ -210,6 +256,370 @@ namespace WitchTower.Home
             SaveManager.Instance.SaveCurrentGame();
             Refresh();
             Object.FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
+        }
+
+        private void EnsureEquipmentListControls()
+        {
+            EnsureEquipmentOptionBindings();
+            if (equipmentListControlsBuilt)
+            {
+                return;
+            }
+
+            equipmentListControlsRoot = CreatePanel("EquipmentListControls", transform,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -150f), new Vector2(930f, 96f), new Color(0.025f, 0.04f, 0.058f, 0.90f));
+
+            CreateText("Title", equipmentListControlsRoot.transform, "装備一覧", 20f, FontStyles.Bold,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(20f, -10f), new Vector2(130f, 26f), TextAlignmentOptions.Left, new Color(1f, 0.86f, 0.54f, 1f));
+
+            equipmentListSummaryText = CreateText("Summary", equipmentListControlsRoot.transform, string.Empty, 15f, FontStyles.Bold,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f),
+                new Vector2(150f, -12f), new Vector2(-170f, 24f), TextAlignmentOptions.Left, EnhanceSubTextColor);
+
+            allEquipmentFilterButton = CreateButton("AllFilterButton", equipmentListControlsRoot.transform, "全て",
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(20f, 14f), new Vector2(120f, 42f), UnlockedButtonColor,
+                () => SetEquipmentListFilter(EquipmentListFilter.All), out allEquipmentFilterLabel);
+
+            weaponEquipmentFilterButton = CreateButton("WeaponFilterButton", equipmentListControlsRoot.transform, "武器",
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(148f, 14f), new Vector2(120f, 42f), UnlockedButtonColor,
+                () => SetEquipmentListFilter(EquipmentListFilter.Weapon), out weaponEquipmentFilterLabel);
+
+            armorEquipmentFilterButton = CreateButton("ArmorFilterButton", equipmentListControlsRoot.transform, "防具",
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(276f, 14f), new Vector2(120f, 42f), UnlockedButtonColor,
+                () => SetEquipmentListFilter(EquipmentListFilter.Armor), out armorEquipmentFilterLabel);
+
+            accessoryEquipmentFilterButton = CreateButton("AccessoryFilterButton", equipmentListControlsRoot.transform, "装飾品",
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(404f, 14f), new Vector2(138f, 42f), UnlockedButtonColor,
+                () => SetEquipmentListFilter(EquipmentListFilter.Accessory), out accessoryEquipmentFilterLabel);
+
+            equipmentSortButton = CreateButton("SortButton", equipmentListControlsRoot.transform, string.Empty,
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(-20f, 14f), new Vector2(260f, 42f), new Color(0.23f, 0.31f, 0.42f, 0.98f),
+                CycleEquipmentListSortMode, out equipmentSortLabel);
+
+            equipmentListControlsBuilt = true;
+        }
+
+        private void EnsureEquipmentOptionBindings()
+        {
+            if (equipmentOptionBindings.Count > 0)
+            {
+                return;
+            }
+
+            AddEquipmentOptionBinding("equip_bronze_blade", bronzeBladeButton, bronzeBladeStatusText);
+            AddEquipmentOptionBinding("equip_iron_sword", ironSwordButton, ironSwordStatusText);
+            AddEquipmentOptionBinding("equip_guard_cloth", guardClothButton, guardClothStatusText);
+            AddEquipmentOptionBinding("equip_bone_mail", boneMailButton, boneMailStatusText);
+            AddEquipmentOptionBinding("equip_ashen_ring", ashenRingButton, ashenRingStatusText);
+            AddEquipmentOptionBinding("equip_quick_charm", quickCharmButton, quickCharmStatusText);
+        }
+
+        private void AddEquipmentOptionBinding(string equipmentId, Button button, TMP_Text statusText)
+        {
+            var binding = new EquipmentOptionBinding
+            {
+                EquipmentId = equipmentId,
+                Button = button,
+                StatusText = statusText,
+                OriginalIndex = equipmentOptionBindings.Count
+            };
+            CaptureEquipmentOptionLayout(binding);
+            equipmentOptionBindings.Add(binding);
+        }
+
+        private static void CaptureEquipmentOptionLayout(EquipmentOptionBinding binding)
+        {
+            if (binding == null || binding.HasCapturedLayout)
+            {
+                return;
+            }
+
+            RectTransform buttonRect = binding.Button != null ? binding.Button.GetComponent<RectTransform>() : null;
+            RectTransform statusRect = binding.StatusText != null ? binding.StatusText.GetComponent<RectTransform>() : null;
+            binding.ButtonPosition = buttonRect != null ? buttonRect.anchoredPosition : Vector2.zero;
+            binding.StatusPosition = statusRect != null ? statusRect.anchoredPosition : Vector2.zero;
+            binding.HasCapturedLayout = true;
+        }
+
+        private void SetEquipmentListFilter(EquipmentListFilter filter)
+        {
+            currentEquipmentListFilter = filter;
+            Refresh();
+        }
+
+        private void CycleEquipmentListSortMode()
+        {
+            currentEquipmentListSortMode = currentEquipmentListSortMode switch
+            {
+                EquipmentListSortMode.Default => EquipmentListSortMode.Rarity,
+                EquipmentListSortMode.Rarity => EquipmentListSortMode.Power,
+                EquipmentListSortMode.Power => EquipmentListSortMode.Name,
+                _ => EquipmentListSortMode.Default
+            };
+            Refresh();
+        }
+
+        private void RefreshEquipmentListControls(PlayerProfile profile)
+        {
+            SetFilterButtonState(allEquipmentFilterButton, allEquipmentFilterLabel, currentEquipmentListFilter == EquipmentListFilter.All);
+            SetFilterButtonState(weaponEquipmentFilterButton, weaponEquipmentFilterLabel, currentEquipmentListFilter == EquipmentListFilter.Weapon);
+            SetFilterButtonState(armorEquipmentFilterButton, armorEquipmentFilterLabel, currentEquipmentListFilter == EquipmentListFilter.Armor);
+            SetFilterButtonState(accessoryEquipmentFilterButton, accessoryEquipmentFilterLabel, currentEquipmentListFilter == EquipmentListFilter.Accessory);
+
+            if (equipmentSortLabel != null)
+            {
+                equipmentSortLabel.text = "並び替え: " + GetEquipmentSortLabel(currentEquipmentListSortMode);
+            }
+
+            if (equipmentListSummaryText != null)
+            {
+                int visibleCount = CountVisibleEquipmentOptions(profile);
+                equipmentListSummaryText.text = $"{GetEquipmentFilterLabel(currentEquipmentListFilter)} / {GetEquipmentSortLabel(currentEquipmentListSortMode)} / 表示 {visibleCount}件";
+            }
+        }
+
+        private void ApplyEquipmentListFilterAndSort(PlayerProfile profile)
+        {
+            EnsureEquipmentOptionBindings();
+            var visibleBindings = new List<EquipmentOptionBinding>();
+            for (int i = 0; i < equipmentOptionBindings.Count; i += 1)
+            {
+                EquipmentOptionBinding binding = equipmentOptionBindings[i];
+                CaptureEquipmentOptionLayout(binding);
+                if (PassesEquipmentFilter(binding))
+                {
+                    visibleBindings.Add(binding);
+                }
+                else
+                {
+                    SetEquipmentOptionActive(binding, false);
+                }
+            }
+
+            visibleBindings.Sort((left, right) => CompareEquipmentOptions(left, right, profile));
+            for (int i = 0; i < visibleBindings.Count; i += 1)
+            {
+                EquipmentOptionBinding binding = visibleBindings[i];
+                EquipmentOptionBinding slotBinding = equipmentOptionBindings[Mathf.Clamp(i, 0, equipmentOptionBindings.Count - 1)];
+                SetEquipmentOptionActive(binding, true);
+                ApplyEquipmentOptionPosition(binding, slotBinding);
+            }
+        }
+
+        private int CountVisibleEquipmentOptions(PlayerProfile profile)
+        {
+            EnsureEquipmentOptionBindings();
+            int count = 0;
+            for (int i = 0; i < equipmentOptionBindings.Count; i += 1)
+            {
+                if (PassesEquipmentFilter(equipmentOptionBindings[i]))
+                {
+                    count += 1;
+                }
+            }
+
+            return count;
+        }
+
+        private bool PassesEquipmentFilter(EquipmentOptionBinding binding)
+        {
+            EquipmentDataSO equipmentData = GetEquipmentData(binding);
+            if (equipmentData == null)
+            {
+                return currentEquipmentListFilter == EquipmentListFilter.All;
+            }
+
+            switch (currentEquipmentListFilter)
+            {
+                case EquipmentListFilter.Weapon:
+                    return equipmentData.slotType == EquipmentSlotType.Weapon;
+                case EquipmentListFilter.Armor:
+                    return equipmentData.slotType == EquipmentSlotType.Armor;
+                case EquipmentListFilter.Accessory:
+                    return equipmentData.slotType == EquipmentSlotType.Accessory;
+                default:
+                    return true;
+            }
+        }
+
+        private static void SetFilterButtonState(Button button, TMP_Text label, bool isActive)
+        {
+            if (button != null)
+            {
+                Image image = button.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = isActive
+                        ? new Color(0.28f, 0.48f, 0.36f, 0.98f)
+                        : new Color(0.14f, 0.20f, 0.27f, 0.92f);
+                }
+            }
+
+            if (label != null)
+            {
+                label.color = isActive ? Color.white : new Color(0.74f, 0.84f, 0.92f, 0.95f);
+            }
+        }
+
+        private int CompareEquipmentOptions(EquipmentOptionBinding left, EquipmentOptionBinding right, PlayerProfile profile)
+        {
+            if (left == null || right == null)
+            {
+                return left == null ? right == null ? 0 : 1 : -1;
+            }
+
+            int result;
+            switch (currentEquipmentListSortMode)
+            {
+                case EquipmentListSortMode.Rarity:
+                    result = ResolveEquipmentRarityRank(right, profile).CompareTo(ResolveEquipmentRarityRank(left, profile));
+                    if (result != 0) return result;
+                    result = ResolveEquipmentPowerScore(right, profile).CompareTo(ResolveEquipmentPowerScore(left, profile));
+                    if (result != 0) return result;
+                    break;
+                case EquipmentListSortMode.Power:
+                    result = ResolveEquipmentPowerScore(right, profile).CompareTo(ResolveEquipmentPowerScore(left, profile));
+                    if (result != 0) return result;
+                    result = ResolveEquipmentRarityRank(right, profile).CompareTo(ResolveEquipmentRarityRank(left, profile));
+                    if (result != 0) return result;
+                    break;
+                case EquipmentListSortMode.Name:
+                    result = string.Compare(ResolveEquipmentDisplayName(left), ResolveEquipmentDisplayName(right), System.StringComparison.CurrentCulture);
+                    if (result != 0) return result;
+                    break;
+            }
+
+            return left.OriginalIndex.CompareTo(right.OriginalIndex);
+        }
+
+        private static void SetEquipmentOptionActive(EquipmentOptionBinding binding, bool isActive)
+        {
+            if (binding == null)
+            {
+                return;
+            }
+
+            if (binding.Button != null)
+            {
+                binding.Button.gameObject.SetActive(isActive);
+            }
+
+            if (binding.StatusText != null && !IsStatusTextChildOfButton(binding))
+            {
+                binding.StatusText.gameObject.SetActive(isActive);
+            }
+        }
+
+        private static void ApplyEquipmentOptionPosition(EquipmentOptionBinding binding, EquipmentOptionBinding slotBinding)
+        {
+            if (binding == null || slotBinding == null)
+            {
+                return;
+            }
+
+            RectTransform buttonRect = binding.Button != null ? binding.Button.GetComponent<RectTransform>() : null;
+            if (buttonRect != null)
+            {
+                buttonRect.anchoredPosition = slotBinding.ButtonPosition;
+            }
+
+            RectTransform statusRect = binding.StatusText != null ? binding.StatusText.GetComponent<RectTransform>() : null;
+            if (statusRect != null && !IsStatusTextChildOfButton(binding))
+            {
+                statusRect.anchoredPosition = slotBinding.StatusPosition;
+            }
+        }
+
+        private static bool IsStatusTextChildOfButton(EquipmentOptionBinding binding)
+        {
+            return binding != null &&
+                binding.Button != null &&
+                binding.StatusText != null &&
+                binding.StatusText.transform.IsChildOf(binding.Button.transform);
+        }
+
+        private static int ResolveEquipmentRarityRank(EquipmentOptionBinding binding, PlayerProfile profile)
+        {
+            EquipmentDataSO equipmentData = GetEquipmentData(binding);
+            OwnedEquipmentData ownedEquipment = profile != null && binding != null
+                ? profile.GetFirstOwnedEquipmentByEquipmentId(binding.EquipmentId)
+                : null;
+            return EquipmentEnhancementCatalog.ResolveQualityRank(equipmentData, ownedEquipment);
+        }
+
+        private static float ResolveEquipmentPowerScore(EquipmentOptionBinding binding, PlayerProfile profile)
+        {
+            EquipmentDataSO equipmentData = GetEquipmentData(binding);
+            if (equipmentData == null)
+            {
+                return 0f;
+            }
+
+            OwnedEquipmentData ownedEquipment = profile != null && binding != null
+                ? profile.GetFirstOwnedEquipmentByEquipmentId(binding.EquipmentId)
+                : null;
+            float qualityMultiplier = EquipmentEnhancementCatalog.ResolveQualityMultiplier(equipmentData, ownedEquipment);
+            float enhancementMultiplier = ownedEquipment != null ? 1f + Mathf.Max(0f, ownedEquipment.EnhancementBonusRate) : 1f;
+            float flatScore =
+                equipmentData.baseAttack * 1.20f +
+                equipmentData.baseWisdom * 1.20f +
+                equipmentData.baseDefense * 1.00f +
+                equipmentData.baseMagicDefense * 1.00f +
+                equipmentData.baseHp * 0.24f;
+            float specialScore =
+                equipmentData.bonusCritRate * 120f +
+                equipmentData.bonusAttackSpeed * 45f;
+            return (flatScore * enhancementMultiplier + specialScore) * qualityMultiplier;
+        }
+
+        private static EquipmentDataSO GetEquipmentData(EquipmentOptionBinding binding)
+        {
+            return binding != null && MasterDataManager.Instance != null
+                ? MasterDataManager.Instance.GetEquipmentData(binding.EquipmentId)
+                : null;
+        }
+
+        private static string ResolveEquipmentDisplayName(EquipmentOptionBinding binding)
+        {
+            EquipmentDataSO equipmentData = GetEquipmentData(binding);
+            return equipmentData != null ? equipmentData.equipmentName : binding != null ? binding.EquipmentId : string.Empty;
+        }
+
+        private static string GetEquipmentFilterLabel(EquipmentListFilter filter)
+        {
+            switch (filter)
+            {
+                case EquipmentListFilter.Weapon:
+                    return "武器";
+                case EquipmentListFilter.Armor:
+                    return "防具";
+                case EquipmentListFilter.Accessory:
+                    return "装飾品";
+                default:
+                    return "全て";
+            }
+        }
+
+        private static string GetEquipmentSortLabel(EquipmentListSortMode sortMode)
+        {
+            switch (sortMode)
+            {
+                case EquipmentListSortMode.Rarity:
+                    return "レア度";
+                case EquipmentListSortMode.Power:
+                    return "能力値";
+                case EquipmentListSortMode.Name:
+                    return "名前";
+                default:
+                    return "初期順";
+            }
         }
 
         private void EnsureEnhancementUi()

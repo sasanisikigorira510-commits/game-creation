@@ -61,13 +61,16 @@ namespace WitchTower.Home
             if (playerStatusText != null)
             {
                 playerStatusText.text = profile != null
-                    ? $"冒険者 Lv.{profile.Level}  EXP {profile.Exp:N0}/{profile.GetRequiredExpForNextLevel():N0}    モンスター枠 {profile.OwnedMonsters.Count}/{profile.MonsterStorageLimit}"
+                    ? $"冒険者 Lv.{profile.Level}  EXP {profile.Exp:N0}/{profile.GetRequiredExpForNextLevel():N0}    モンスター枠 {profile.OwnedMonsters.Count}/{profile.MonsterStorageLimit}    装備枠 {profile.OwnedEquipments.Count}/{profile.EquipmentStorageLimit}"
                     : string.Empty;
             }
 
             foreach (ProductCardView card in productCards)
             {
-                bool canBuy = profile != null && profile.Gold >= card.Product.Cost;
+                bool equipmentStorageFull = profile != null &&
+                    card.Product.RewardType == GoldShopRewardType.Equipment &&
+                    !profile.HasEquipmentStorageSpace();
+                bool canBuy = profile != null && profile.Gold >= card.Product.Cost && !equipmentStorageFull;
                 if (card.BuyButton != null)
                 {
                     card.BuyButton.interactable = canBuy;
@@ -106,7 +109,7 @@ namespace WitchTower.Home
             GameObject panel = CreatePanel("ShopMainPanel", transform, "UI/FusionPage/FusionMainFrame",
                 Vector2.zero, new Vector2(1000f, 1710f), PanelColor);
 
-            CreateText("Title", panel.transform, "ゴールドショップ", 50, FontStyle.Bold,
+            CreateText("Title", panel.transform, "商店", 50, FontStyle.Bold,
                 new Vector2(0f, -48f), new Vector2(650f, 68f), AccentGold, TextAnchor.MiddleCenter);
             CreateText("Subtitle", panel.transform, "冒険で集めたゴールドを、次の挑戦の力に変えよう", 22, FontStyle.Bold,
                 new Vector2(0f, -108f), new Vector2(760f, 42f), TextSub, TextAnchor.MiddleCenter);

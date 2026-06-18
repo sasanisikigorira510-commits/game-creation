@@ -23,13 +23,14 @@ namespace WitchTower.Formation
             public int Level;
             public int MaxLevel;
             public int ClassRank;
+            public int PlusValue;
             public int IndividualAverage;
             public int AcquiredOrder;
             public bool IsFavorite;
             public bool IsLocked;
             public MonsterDamageType DamageType;
 
-            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int maxLevel, int classRank, int individualAverage, int acquiredOrder, bool isFavorite, bool isLocked, MonsterDamageType damageType = MonsterDamageType.Physical)
+            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int maxLevel, int classRank, int plusValue, int individualAverage, int acquiredOrder, bool isFavorite, bool isLocked, MonsterDamageType damageType = MonsterDamageType.Physical)
             {
                 InstanceId = instanceId;
                 Name = name;
@@ -37,6 +38,7 @@ namespace WitchTower.Formation
                 Level = level;
                 MaxLevel = maxLevel;
                 ClassRank = classRank;
+                PlusValue = plusValue;
                 IndividualAverage = individualAverage;
                 AcquiredOrder = acquiredOrder;
                 IsFavorite = isFavorite;
@@ -54,6 +56,11 @@ namespace WitchTower.Formation
             public Image Portrait;
             public Text NameLabel;
             public Text StatusLabel;
+            public Image StatusTypeBadge;
+            public Text StatusTypeText;
+            public Image StatusActionBadge;
+            public Text StatusActionText;
+            public Button StatusActionButton;
             public Button Button;
         }
 
@@ -78,10 +85,29 @@ namespace WitchTower.Formation
             Unselected
         }
 
+        private enum BulkReleaseClassFilter
+        {
+            All,
+            Class1,
+            Class2,
+            Class3,
+            Class4Plus
+        }
+
+        private enum BulkReleaseIvFilter
+        {
+            All,
+            Under30,
+            Under50,
+            Under70
+        }
+
         [SerializeField] private string homeSceneName = "HomeScene";
 
         private const int MaxPartySize = 5;
         private const int DefaultStorageLimit = 100;
+        private const int PlusPreviewTotalValue = 15;
+        private const string PlusPreviewMonsterInstanceId = "formation_plus_preview_15";
         private const int GridColumnCount = 4;
         private const float RosterPanelWidth = 1000f;
         private const float RosterPanelTopInset = 870f;
@@ -89,9 +115,9 @@ namespace WitchTower.Formation
         private const float RosterViewportHorizontalInset = 26f;
         private const float RosterViewportTopInset = 44f;
         private const float RosterViewportBottomInset = 34f;
-        private const float SelectedSlotWidth = 180f;
-        private const float SelectedSlotHeight = 182f;
-        private const float SelectedSlotSpacing = 28f;
+        private const float SelectedSlotWidth = 196f;
+        private const float SelectedSlotHeight = 252f;
+        private const float SelectedSlotSpacing = 4f;
 
         private static readonly string[] HiddenObjectNames =
         {
@@ -127,6 +153,7 @@ namespace WitchTower.Formation
         private readonly List<MonsterEntry> selectedMonsters = new List<MonsterEntry>();
         private readonly List<MonsterCardView> rosterViews = new List<MonsterCardView>();
         private readonly List<FormationSlotView> slotViews = new List<FormationSlotView>();
+        private readonly HashSet<string> bulkReleaseSelectedInstanceIds = new HashSet<string>();
         private Sprite favoriteHeartFilledSprite;
         private Sprite favoriteHeartOutlineSprite;
 
@@ -187,11 +214,22 @@ namespace WitchTower.Formation
         private Text summaryText;
         private Text sortModeLabel;
         private Text filterModeLabel;
+        private Text bulkReleaseToggleLabel;
+        private Text bulkReleaseClassFilterLabel;
+        private Text bulkReleaseIvFilterLabel;
+        private Text bulkReleaseSelectFilteredLabel;
+        private Text bulkReleaseExecuteLabel;
+        private Text bulkReleaseStatusLabel;
         private Text emptyStateLabel;
+        private GameObject bulkReleasePanel;
         private Font runtimeFont;
         private bool scaffoldCreated;
         private SortMode currentSortMode = SortMode.Favorite;
         private FilterMode currentFilterMode = FilterMode.All;
+        private BulkReleaseClassFilter currentBulkReleaseClassFilter = BulkReleaseClassFilter.All;
+        private BulkReleaseIvFilter currentBulkReleaseIvFilter = BulkReleaseIvFilter.Under50;
+        private bool bulkReleaseModeActive;
+        private bool bulkReleaseConfirmArmed;
         private int activeSlotIndex;
 
         private void OnEnable()
@@ -344,6 +382,7 @@ namespace WitchTower.Formation
                     MonsterLevelService.ClampLevelToMax(ownedMonster.Level, monsterData),
                     MonsterLevelService.GetMaxLevel(monsterData),
                     Mathf.Max(1, monsterData.classRank),
+                    Mathf.Max(0, ownedMonster.TotalPlusValue),
                     MonsterIndividualValueService.GetAverage(ownedMonster),
                     ownedMonster.AcquiredOrder,
                     ownedMonster.IsFavorite,
@@ -391,6 +430,68 @@ namespace WitchTower.Formation
             {
                 SaveManager.Instance?.SaveCurrentGame();
             }
+
+            if (EnsurePlusPreviewMonster(profile, masterDataManager))
+            {
+                SaveManager.Instance?.SaveCurrentGame();
+            }
+        }
+
+        private static bool EnsurePlusPreviewMonster(PlayerProfile profile, MasterDataManager masterDataManager)
+        {
+            if (profile?.OwnedMonsters == null || masterDataManager == null)
+            {
+                return false;
+            }
+
+            OwnedMonsterData existingPreview = profile.GetOwnedMonster(PlusPreviewMonsterInstanceId);
+            if (existingPreview != null)
+            {
+                return NormalizePlusPreviewMonster(existingPreview);
+            }
+
+            MonsterDataSO monsterData = masterDataManager.GetMonsterData(MonsterFusionCatalog.SeraphMichaelId);
+            if (monsterData == null)
+            {
+                return false;
+            }
+
+            OwnedMonsterData previewMonster = profile.AddOwnedMonster(
+                monsterData.monsterId,
+                MonsterLevelService.GetMaxLevel(monsterData));
+            if (previewMonster == null)
+            {
+                return false;
+            }
+
+            previewMonster.InstanceId = PlusPreviewMonsterInstanceId;
+            previewMonster.IsFavorite = true;
+            NormalizePlusPreviewMonster(previewMonster);
+            return true;
+        }
+
+        private static bool NormalizePlusPreviewMonster(OwnedMonsterData monster)
+        {
+            if (monster == null)
+            {
+                return false;
+            }
+
+            bool changed =
+                monster.PlusValue != PlusPreviewTotalValue ||
+                monster.PlusHp != PlusPreviewTotalValue ||
+                monster.PlusAttack != PlusPreviewTotalValue ||
+                monster.PlusWisdom != PlusPreviewTotalValue ||
+                monster.PlusDefense != PlusPreviewTotalValue ||
+                monster.PlusMagicDefense != PlusPreviewTotalValue;
+
+            monster.PlusValue = PlusPreviewTotalValue;
+            monster.PlusHp = PlusPreviewTotalValue;
+            monster.PlusAttack = PlusPreviewTotalValue;
+            monster.PlusWisdom = PlusPreviewTotalValue;
+            monster.PlusDefense = PlusPreviewTotalValue;
+            monster.PlusMagicDefense = PlusPreviewTotalValue;
+            return changed;
         }
 
         private static string GetPortraitResourcePath(MonsterDataSO monsterData)
@@ -415,11 +516,11 @@ namespace WitchTower.Formation
 
         private void SeedFallbackRoster()
         {
-            roster.Add(new MonsterEntry("dragon_whelp_a", "ヒナドラ", "FamilyMonsterCards/Dragon/dragon_whelp", 14, 20, 1, 50, 9, false, false, MonsterDamageType.Magic));
-            roster.Add(new MonsterEntry("chibi_gear_a", "チビギア", "FamilyMonsterCards/Robot/chibi_gear", 12, 20, 1, 50, 8, false, false, MonsterDamageType.Physical));
-            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "FamilyMonsterCards/Golem/rock_golem", 18, 20, 1, 50, 7, false, false, MonsterDamageType.Physical));
-            roster.Add(new MonsterEntry("apprentice_swordsman_a", "見習い剣士", "FamilyMonsterCards/Swordsman/apprentice_swordsman", 20, 20, 1, 50, 6, false, false, MonsterDamageType.Physical));
-            roster.Add(new MonsterEntry("apprentice_mage_a", "見習い魔導士", "FamilyMonsterCards/Mage/apprentice_mage", 20, 20, 1, 50, 5, false, false, MonsterDamageType.Magic));
+            roster.Add(new MonsterEntry("dragon_whelp_a", "ヒナドラ", "FamilyMonsterCards/Dragon/dragon_whelp", 14, 20, 1, 0, 50, 9, false, false, MonsterDamageType.Magic));
+            roster.Add(new MonsterEntry("chibi_gear_a", "チビギア", "FamilyMonsterCards/Robot/chibi_gear", 12, 20, 1, 0, 50, 8, false, false, MonsterDamageType.Physical));
+            roster.Add(new MonsterEntry("rock_golem_a", "ロックゴーレム", "FamilyMonsterCards/Golem/rock_golem", 18, 20, 1, PlusPreviewTotalValue, 50, 7, false, false, MonsterDamageType.Physical));
+            roster.Add(new MonsterEntry("apprentice_swordsman_a", "見習い剣士", "FamilyMonsterCards/Swordsman/apprentice_swordsman", 20, 20, 1, 0, 50, 6, false, false, MonsterDamageType.Physical));
+            roster.Add(new MonsterEntry("apprentice_mage_a", "見習い魔導士", "FamilyMonsterCards/Mage/apprentice_mage", 20, 20, 1, 0, 50, 5, false, false, MonsterDamageType.Magic));
 
             EnsureSelectedSlotCapacity();
             selectedMonsters[0] = roster[0];
@@ -479,7 +580,7 @@ namespace WitchTower.Formation
 
             GameObject teamPanel = CreatePanel("SelectedPanel", root.transform,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -404f), new Vector2(1000f, 300f), new Color(0.03f, 0.06f, 0.1f, 0.82f));
+                new Vector2(0f, -352f), new Vector2(1020f, 370f), new Color(0.03f, 0.06f, 0.1f, 0.82f));
 
             CreateText("SelectedTitle", teamPanel.transform, runtimeFont, "出撃メンバー", 28, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -495,7 +596,7 @@ namespace WitchTower.Formation
             {
                 GameObject slotObject = CreatePanel("SelectedSlot" + i, teamPanel.transform,
                     new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(startX + i * (SelectedSlotWidth + SelectedSlotSpacing), -48f), new Vector2(SelectedSlotWidth, SelectedSlotHeight),
+                    new Vector2(startX + i * (SelectedSlotWidth + SelectedSlotSpacing), -42f), new Vector2(SelectedSlotWidth, SelectedSlotHeight),
                     new Color(0.07f, 0.1f, 0.14f, 0.82f));
 
                 FormationSlotView slotView = new FormationSlotView();
@@ -507,7 +608,7 @@ namespace WitchTower.Formation
                 slotFrameRect.anchorMax = new Vector2(0.5f, 0.5f);
                 slotFrameRect.pivot = new Vector2(0.5f, 0.5f);
                 slotFrameRect.anchoredPosition = Vector2.zero;
-                slotFrameRect.sizeDelta = new Vector2(188f, 188f);
+                slotFrameRect.sizeDelta = new Vector2(232f, 232f);
                 slotView.FrameArt = slotFrameObject.AddComponent<RawImage>();
                 slotView.FrameArt.color = new Color(1f, 1f, 1f, 0.94f);
                 slotView.FrameArt.raycastTarget = false;
@@ -520,24 +621,29 @@ namespace WitchTower.Formation
                 portraitRect.anchorMin = new Vector2(0.5f, 1f);
                 portraitRect.anchorMax = new Vector2(0.5f, 1f);
                 portraitRect.pivot = new Vector2(0.5f, 1f);
-                portraitRect.anchoredPosition = new Vector2(0f, -48f);
-                portraitRect.sizeDelta = new Vector2(78f, 78f);
+                portraitRect.anchoredPosition = new Vector2(0f, -64f);
+                portraitRect.sizeDelta = new Vector2(112f, 112f);
                 slotView.Portrait = portraitObject.AddComponent<Image>();
                 slotView.Portrait.preserveAspect = true;
 
                 slotView.NameLabel = CreateText("NameLabel", slotObject.transform, runtimeFont, string.Empty, 18, FontStyle.Bold,
                     new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                    new Vector2(0f, 42f), new Vector2(154f, 24f), TextAnchor.MiddleCenter,
+                    new Vector2(0f, 62f), new Vector2(180f, 30f), TextAnchor.MiddleCenter,
                     new Color(0.96f, 0.98f, 1f, 1f));
 
                 slotView.StatusLabel = CreateText("StatusLabel", slotObject.transform, runtimeFont, string.Empty, 16, FontStyle.Normal,
                     new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                    new Vector2(0f, 18f), new Vector2(160f, 20f), TextAnchor.MiddleCenter,
+                    new Vector2(0f, 34f), new Vector2(184f, 24f), TextAnchor.MiddleCenter,
                     new Color(0.82f, 0.89f, 0.95f, 0.85f));
+                EnsureSelectedSlotStatusBadges(slotView, slotObject.transform);
 
                 slotView.Button = slotObject.AddComponent<Button>();
                 int slotIndex = i;
                 slotView.Button.onClick.AddListener(() => OnSlotPressed(slotIndex));
+                if (slotView.StatusActionButton != null)
+                {
+                    slotView.StatusActionButton.onClick.AddListener(() => OnSlotActionPressed(slotIndex));
+                }
 
                 slotFrameObject.transform.SetAsFirstSibling();
 
@@ -555,15 +661,24 @@ namespace WitchTower.Formation
 
             GameObject sortButton = CreateActionButton("SortButton", controlPanel.transform, runtimeFont, string.Empty,
                 new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-                new Vector2(-36f, 0f), new Vector2(280f, 74f),
+                new Vector2(-36f, 0f), new Vector2(260f, 64f),
                 new Color(0.15f, 0.25f, 0.31f, 0.96f), CycleSortMode);
             sortModeLabel = FindChildText(sortButton);
 
             GameObject filterButton = CreateActionButton("FilterButton", controlPanel.transform, runtimeFont, string.Empty,
                 new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-                new Vector2(-334f, 0f), new Vector2(240f, 74f),
+                new Vector2(-318f, 0f), new Vector2(190f, 64f),
                 new Color(0.11f, 0.2f, 0.15f, 0.96f), CycleFilterMode);
             filterModeLabel = FindChildText(filterButton);
+
+            GameObject bulkReleaseButton = CreateActionButton("BulkReleaseToggleButton", controlPanel.transform, runtimeFont, string.Empty,
+                new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
+                new Vector2(-530f, 0f), new Vector2(190f, 64f),
+                new Color(0.36f, 0.14f, 0.10f, 0.96f), ToggleBulkReleaseMode);
+            bulkReleaseToggleLabel = FindChildText(bulkReleaseButton);
+            AddUiOutline(bulkReleaseButton, new Color(1f, 0.48f, 0.34f, 0.64f), new Vector2(1f, -1f));
+
+            CreateBulkReleasePanel(root.transform);
 
             GameObject rosterPanel = CreatePanel("RosterPanel", root.transform,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -623,7 +738,9 @@ namespace WitchTower.Formation
             summaryText = FindText(root, "FormationHeader/SummaryText");
             sortModeLabel = FindText(root, "ControlPanel/SortButton/Label");
             filterModeLabel = FindText(root, "ControlPanel/FilterButton/Label");
+            bulkReleaseToggleLabel = FindText(root, "ControlPanel/BulkReleaseToggleButton/Label");
             emptyStateLabel = FindText(root, "RosterPanel/Viewport/EmptyState");
+            EnsureBulkReleaseControls(root);
 
             Transform rosterContentTransform = root.Find("RosterPanel/Viewport/Content");
             if (summaryText == null || sortModeLabel == null || filterModeLabel == null || emptyStateLabel == null || rosterContentTransform == null)
@@ -651,6 +768,11 @@ namespace WitchTower.Formation
                     Portrait = FindImage(slotTransform, "Portrait"),
                     NameLabel = FindText(slotTransform, "NameLabel"),
                     StatusLabel = FindText(slotTransform, "StatusLabel"),
+                    StatusTypeBadge = FindImage(slotTransform, "StatusTypeBadge"),
+                    StatusTypeText = FindText(slotTransform, "StatusTypeBadge/Label"),
+                    StatusActionBadge = FindImage(slotTransform, "StatusActionBadge"),
+                    StatusActionText = FindText(slotTransform, "StatusActionBadge/Label"),
+                    StatusActionButton = slotTransform.Find("StatusActionBadge")?.GetComponent<Button>(),
                     Button = slotTransform.GetComponent<Button>()
                 };
 
@@ -662,7 +784,7 @@ namespace WitchTower.Formation
                     slotFrameRect.anchorMax = new Vector2(0.5f, 0.5f);
                     slotFrameRect.pivot = new Vector2(0.5f, 0.5f);
                     slotFrameRect.anchoredPosition = Vector2.zero;
-                    slotFrameRect.sizeDelta = new Vector2(188f, 188f);
+                    slotFrameRect.sizeDelta = new Vector2(232f, 232f);
                     slotView.FrameArt = slotFrameObject.AddComponent<RawImage>();
                     slotView.FrameArt.color = new Color(1f, 1f, 1f, 0.94f);
                     slotView.FrameArt.raycastTarget = false;
@@ -674,6 +796,7 @@ namespace WitchTower.Formation
                 }
 
                 EnsureSlotRoleChrome(slotView, slotTransform, i);
+                EnsureSelectedSlotStatusBadges(slotView, slotTransform);
 
                 if (slotView.Background == null || slotView.FrameArt == null || slotView.Portrait == null || slotView.NameLabel == null || slotView.StatusLabel == null)
                 {
@@ -722,13 +845,331 @@ namespace WitchTower.Formation
                 filterButton.onClick.AddListener(CycleFilterMode);
             }
 
+            Button bulkReleaseButton = root.Find("ControlPanel/BulkReleaseToggleButton")?.GetComponent<Button>();
+            if (bulkReleaseButton != null)
+            {
+                bulkReleaseButton.onClick.RemoveAllListeners();
+                bulkReleaseButton.onClick.AddListener(ToggleBulkReleaseMode);
+            }
+
+            Button classFilterButton = root.Find("BulkReleasePanel/ClassFilterButton")?.GetComponent<Button>();
+            if (classFilterButton != null)
+            {
+                classFilterButton.onClick.RemoveAllListeners();
+                classFilterButton.onClick.AddListener(CycleBulkReleaseClassFilter);
+            }
+
+            Button ivFilterButton = root.Find("BulkReleasePanel/IvFilterButton")?.GetComponent<Button>();
+            if (ivFilterButton != null)
+            {
+                ivFilterButton.onClick.RemoveAllListeners();
+                ivFilterButton.onClick.AddListener(CycleBulkReleaseIvFilter);
+            }
+
+            Button selectFilteredButton = root.Find("BulkReleasePanel/SelectFilteredButton")?.GetComponent<Button>();
+            if (selectFilteredButton != null)
+            {
+                selectFilteredButton.onClick.RemoveAllListeners();
+                selectFilteredButton.onClick.AddListener(SelectBulkReleaseFilteredCandidates);
+            }
+
+            Button executeButton = root.Find("BulkReleasePanel/ExecuteButton")?.GetComponent<Button>();
+            if (executeButton != null)
+            {
+                executeButton.onClick.RemoveAllListeners();
+                executeButton.onClick.AddListener(ConfirmBulkReleaseSelection);
+            }
+
             for (int i = 0; i < slotViews.Count; i++)
             {
                 int slotIndex = i;
                 Button button = slotViews[i].Button;
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() => OnSlotPressed(slotIndex));
+
+                Button statusActionButton = slotViews[i].StatusActionButton;
+                if (statusActionButton != null)
+                {
+                    statusActionButton.onClick.RemoveAllListeners();
+                    statusActionButton.onClick.AddListener(() => OnSlotActionPressed(slotIndex));
+                }
             }
+        }
+
+        private void EnsureBulkReleaseControls(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Transform controlPanel = root.Find("ControlPanel");
+            if (controlPanel != null && controlPanel.Find("BulkReleaseToggleButton") == null)
+            {
+                GameObject bulkReleaseButton = CreateActionButton(
+                    "BulkReleaseToggleButton",
+                    controlPanel,
+                    runtimeFont,
+                    string.Empty,
+                    new Vector2(1f, 0.5f),
+                    new Vector2(1f, 0.5f),
+                    new Vector2(1f, 0.5f),
+                    new Vector2(-530f, 0f),
+                    new Vector2(190f, 64f),
+                    new Color(0.36f, 0.14f, 0.10f, 0.96f),
+                    ToggleBulkReleaseMode);
+                AddUiOutline(bulkReleaseButton, new Color(1f, 0.48f, 0.34f, 0.64f), new Vector2(1f, -1f));
+            }
+
+            bulkReleaseToggleLabel = FindText(root, "ControlPanel/BulkReleaseToggleButton/Label");
+
+            if (root.Find("BulkReleasePanel") == null)
+            {
+                CreateBulkReleasePanel(root);
+            }
+
+            Transform panel = root.Find("BulkReleasePanel");
+            bulkReleasePanel = panel != null ? panel.gameObject : null;
+            bulkReleaseStatusLabel = FindText(root, "BulkReleasePanel/StatusLabel");
+            bulkReleaseClassFilterLabel = FindText(root, "BulkReleasePanel/ClassFilterButton/Label");
+            bulkReleaseIvFilterLabel = FindText(root, "BulkReleasePanel/IvFilterButton/Label");
+            bulkReleaseSelectFilteredLabel = FindText(root, "BulkReleasePanel/SelectFilteredButton/Label");
+            bulkReleaseExecuteLabel = FindText(root, "BulkReleasePanel/ExecuteButton/Label");
+            ApplyBulkReleaseLayout(root);
+            UpdateBulkReleaseControls();
+        }
+
+        private void CreateBulkReleasePanel(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            bulkReleasePanel = CreatePanel(
+                "BulkReleasePanel",
+                root,
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -926f),
+                new Vector2(1000f, 236f),
+                new Color(0.025f, 0.025f, 0.03f, 0.97f));
+            AddUiOutline(bulkReleasePanel, new Color(1f, 0.56f, 0.28f, 0.78f), new Vector2(2f, -2f));
+
+            bulkReleaseStatusLabel = CreateText(
+                "StatusLabel",
+                bulkReleasePanel.transform,
+                runtimeFont,
+                string.Empty,
+                18,
+                FontStyle.Bold,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(28f, 86f),
+                new Vector2(944f, 42f),
+                TextAnchor.MiddleLeft,
+                new Color(1f, 0.9f, 0.66f, 1f));
+
+            GameObject classFilterButton = CreateActionButton(
+                "ClassFilterButton",
+                bulkReleasePanel.transform,
+                runtimeFont,
+                string.Empty,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(28f, 16f),
+                new Vector2(450f, 70f),
+                new Color(0.12f, 0.2f, 0.28f, 0.98f),
+                CycleBulkReleaseClassFilter);
+            bulkReleaseClassFilterLabel = FindChildText(classFilterButton);
+
+            GameObject ivFilterButton = CreateActionButton(
+                "IvFilterButton",
+                bulkReleasePanel.transform,
+                runtimeFont,
+                string.Empty,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(522f, 16f),
+                new Vector2(450f, 70f),
+                new Color(0.12f, 0.2f, 0.28f, 0.98f),
+                CycleBulkReleaseIvFilter);
+            bulkReleaseIvFilterLabel = FindChildText(ivFilterButton);
+
+            GameObject selectFilteredButton = CreateActionButton(
+                "SelectFilteredButton",
+                bulkReleasePanel.transform,
+                runtimeFont,
+                string.Empty,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(28f, -72f),
+                new Vector2(450f, 70f),
+                new Color(0.12f, 0.32f, 0.2f, 0.98f),
+                SelectBulkReleaseFilteredCandidates);
+            bulkReleaseSelectFilteredLabel = FindChildText(selectFilteredButton);
+
+            GameObject executeButton = CreateActionButton(
+                "ExecuteButton",
+                bulkReleasePanel.transform,
+                runtimeFont,
+                string.Empty,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(522f, -72f),
+                new Vector2(450f, 70f),
+                new Color(0.52f, 0.09f, 0.06f, 0.98f),
+                ConfirmBulkReleaseSelection);
+            bulkReleaseExecuteLabel = FindChildText(executeButton);
+
+            bulkReleasePanel.SetActive(false);
+        }
+
+        private static void ApplyBulkReleaseLayout(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            SetActionButtonRect(root.Find("ControlPanel/BulkReleaseToggleButton"),
+                new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f),
+                new Vector2(-530f, 0f),
+                new Vector2(190f, 64f));
+            SetRect(root.Find("BulkReleasePanel"),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -926f),
+                new Vector2(1000f, 236f));
+            SetRect(root.Find("BulkReleasePanel/StatusLabel"),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(28f, 86f),
+                new Vector2(944f, 42f));
+            SetActionButtonRect(root.Find("BulkReleasePanel/ClassFilterButton"),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(28f, 16f),
+                new Vector2(450f, 70f));
+            SetActionButtonRect(root.Find("BulkReleasePanel/IvFilterButton"),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(522f, 16f),
+                new Vector2(450f, 70f));
+            SetActionButtonRect(root.Find("BulkReleasePanel/SelectFilteredButton"),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(28f, -72f),
+                new Vector2(450f, 70f));
+            SetActionButtonRect(root.Find("BulkReleasePanel/ExecuteButton"),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(522f, -72f),
+                new Vector2(450f, 70f));
+            ApplyBulkReleaseVisualStyle(root);
+        }
+
+        private static void ApplyBulkReleaseVisualStyle(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Transform panel = root.Find("BulkReleasePanel");
+            SetImageColor(panel, new Color(0.025f, 0.025f, 0.03f, 0.97f));
+            if (panel != null)
+            {
+                AddUiOutline(panel.gameObject, new Color(1f, 0.56f, 0.28f, 0.78f), new Vector2(2f, -2f));
+            }
+
+            Text statusText = root.Find("BulkReleasePanel/StatusLabel")?.GetComponent<Text>();
+            if (statusText != null)
+            {
+                statusText.fontSize = 21;
+                statusText.color = new Color(1f, 0.9f, 0.66f, 1f);
+                statusText.resizeTextForBestFit = true;
+                statusText.resizeTextMinSize = 13;
+                statusText.resizeTextMaxSize = 21;
+                statusText.verticalOverflow = VerticalWrapMode.Truncate;
+            }
+
+            SetImageColor(root.Find("BulkReleasePanel/ClassFilterButton"), new Color(0.12f, 0.2f, 0.28f, 0.98f));
+            SetImageColor(root.Find("BulkReleasePanel/IvFilterButton"), new Color(0.12f, 0.2f, 0.28f, 0.98f));
+            SetImageColor(root.Find("BulkReleasePanel/SelectFilteredButton"), new Color(0.12f, 0.32f, 0.2f, 0.98f));
+            SetImageColor(root.Find("BulkReleasePanel/ExecuteButton"), new Color(0.52f, 0.09f, 0.06f, 0.98f));
+            ConfigureBulkReleaseButtonLabel(root.Find("BulkReleasePanel/ClassFilterButton/Label"));
+            ConfigureBulkReleaseButtonLabel(root.Find("BulkReleasePanel/IvFilterButton/Label"));
+            ConfigureBulkReleaseButtonLabel(root.Find("BulkReleasePanel/SelectFilteredButton/Label"));
+            ConfigureBulkReleaseButtonLabel(root.Find("BulkReleasePanel/ExecuteButton/Label"));
+        }
+
+        private static void ConfigureBulkReleaseButtonLabel(Transform labelTransform)
+        {
+            Text label = labelTransform != null ? labelTransform.GetComponent<Text>() : null;
+            if (label == null)
+            {
+                return;
+            }
+
+            label.fontSize = 22;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 13;
+            label.resizeTextMaxSize = 22;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
+        private static void ApplyControlPanelLayout(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            SetRect(root.Find("ControlPanel"),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -734f),
+                new Vector2(1000f, 124f));
+            SetRect(root.Find("ControlPanel/RosterTitle"),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(36f, 0f),
+                new Vector2(220f, 32f));
+            SetActionButtonRect(root.Find("ControlPanel/BulkReleaseToggleButton"),
+                new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f),
+                new Vector2(-530f, 0f),
+                new Vector2(190f, 64f));
+            SetActionButtonRect(root.Find("ControlPanel/FilterButton"),
+                new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f),
+                new Vector2(-318f, 0f),
+                new Vector2(190f, 64f));
+            SetActionButtonRect(root.Find("ControlPanel/SortButton"),
+                new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f),
+                new Vector2(-36f, 0f),
+                new Vector2(260f, 64f));
         }
 
         private void EnsureSelectedPanelRoleGuides(Transform selectedPanel)
@@ -809,7 +1250,7 @@ namespace WitchTower.Formation
                 {
                     GameObject roleBandObject = CreatePanel("RoleBand", slotTransform,
                         new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                        new Vector2(0f, -6f), new Vector2(146f, 30f), ResolveSlotRoleColor(slotIndex, 0.96f));
+                        new Vector2(0f, -6f), new Vector2(158f, 32f), ResolveSlotRoleColor(slotIndex, 0.96f));
                     slotView.RoleBand = roleBandObject.GetComponent<Image>();
                 }
             }
@@ -823,7 +1264,7 @@ namespace WitchTower.Formation
                 {
                     slotView.RoleLabel = CreateText("RoleLabel", slotView.RoleBand.transform, runtimeFont, string.Empty, 16, FontStyle.Bold,
                         new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                        Vector2.zero, new Vector2(132f, 22f), TextAnchor.MiddleCenter,
+                        Vector2.zero, new Vector2(144f, 24f), TextAnchor.MiddleCenter,
                         Color.white);
                 }
             }
@@ -844,6 +1285,131 @@ namespace WitchTower.Formation
             }
         }
 
+        private void EnsureSelectedSlotStatusBadges(FormationSlotView slotView, Transform slotTransform)
+        {
+            if (slotView == null || slotTransform == null)
+            {
+                return;
+            }
+
+            if (slotView.StatusTypeBadge == null)
+            {
+                Transform existingTypeBadge = slotTransform.Find("StatusTypeBadge");
+                if (existingTypeBadge != null)
+                {
+                    slotView.StatusTypeBadge = existingTypeBadge.GetComponent<Image>();
+                    if (slotView.StatusTypeBadge == null)
+                    {
+                        slotView.StatusTypeBadge = existingTypeBadge.gameObject.AddComponent<Image>();
+                    }
+                }
+                else
+                {
+                    GameObject badgeObject = CreatePanel("StatusTypeBadge", slotTransform,
+                        new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f),
+                        new Vector2(-52f, 34f), new Vector2(78f, 24f), new Color(0.10f, 0.20f, 0.25f, 0.92f));
+                    slotView.StatusTypeBadge = badgeObject.GetComponent<Image>();
+                }
+            }
+
+            if (slotView.StatusTypeText == null)
+            {
+                slotView.StatusTypeText = FindText(slotTransform, "StatusTypeBadge/Label");
+                if (slotView.StatusTypeText == null)
+                {
+                    slotView.StatusTypeText = CreateText("Label", slotView.StatusTypeBadge.transform, runtimeFont, string.Empty, 14, FontStyle.Bold,
+                        new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                        Vector2.zero, new Vector2(70f, 20f), TextAnchor.MiddleCenter,
+                        Color.white);
+                }
+            }
+
+            if (slotView.StatusActionBadge == null)
+            {
+                Transform existingActionBadge = slotTransform.Find("StatusActionBadge");
+                if (existingActionBadge != null)
+                {
+                    slotView.StatusActionBadge = existingActionBadge.GetComponent<Image>();
+                    if (slotView.StatusActionBadge == null)
+                    {
+                        slotView.StatusActionBadge = existingActionBadge.gameObject.AddComponent<Image>();
+                    }
+                }
+                else
+                {
+                    GameObject badgeObject = CreatePanel("StatusActionBadge", slotTransform,
+                        new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f),
+                        new Vector2(52f, 34f), new Vector2(66f, 24f), new Color(0.24f, 0.10f, 0.10f, 0.92f));
+                    slotView.StatusActionBadge = badgeObject.GetComponent<Image>();
+                }
+            }
+
+            slotView.StatusActionButton = slotView.StatusActionBadge.GetComponent<Button>();
+            if (slotView.StatusActionButton == null)
+            {
+                slotView.StatusActionButton = slotView.StatusActionBadge.gameObject.AddComponent<Button>();
+            }
+            slotView.StatusActionButton.targetGraphic = slotView.StatusActionBadge;
+            slotView.StatusActionButton.transition = Selectable.Transition.ColorTint;
+
+            if (slotView.StatusActionText == null)
+            {
+                slotView.StatusActionText = FindText(slotTransform, "StatusActionBadge/Label");
+                if (slotView.StatusActionText == null)
+                {
+                    slotView.StatusActionText = CreateText("Label", slotView.StatusActionBadge.transform, runtimeFont, string.Empty, 14, FontStyle.Bold,
+                        new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                        Vector2.zero, new Vector2(58f, 20f), TextAnchor.MiddleCenter,
+                        Color.white);
+                }
+            }
+
+            ConfigureStatusBadge(slotView.StatusTypeBadge, new Color(0.10f, 0.20f, 0.25f, 0.92f), new Color(0.52f, 0.86f, 1f, 0.72f));
+            ConfigureStatusBadge(slotView.StatusActionBadge, new Color(0.24f, 0.10f, 0.10f, 0.92f), new Color(1f, 0.68f, 0.45f, 0.72f));
+            ConfigureStatusBadgeText(slotView.StatusTypeText, 14);
+            ConfigureStatusBadgeText(slotView.StatusActionText, 14);
+            SetSelectedSlotStatusBadgeLayout(slotTransform);
+            SetSelectedSlotStatusBadgesVisible(slotView, false);
+        }
+
+        private static void ConfigureStatusBadge(Image badge, Color backgroundColor, Color outlineColor)
+        {
+            if (badge == null)
+            {
+                return;
+            }
+
+            badge.color = backgroundColor;
+            badge.raycastTarget = badge.GetComponent<Button>() != null;
+
+            Outline outline = badge.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = badge.gameObject.AddComponent<Outline>();
+            }
+
+            outline.effectColor = outlineColor;
+            outline.effectDistance = new Vector2(1f, -1f);
+        }
+
+        private static void ConfigureStatusBadgeText(Text text, int fontSize)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            text.fontSize = fontSize;
+            text.fontStyle = FontStyle.Bold;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.raycastTarget = false;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 10;
+            text.resizeTextMaxSize = fontSize;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
         private static void ApplySlotRoleStyle(FormationSlotView slotView, int slotIndex, bool strong)
         {
             if (slotView?.RoleBand == null)
@@ -862,8 +1428,9 @@ namespace WitchTower.Formation
             {
                 HomeReturnButtonStyle.Apply(returnButton);
             }
-            SetRect(root.Find("SelectedPanel"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -404f), new Vector2(1000f, 300f));
-            SetRect(root.Find("ControlPanel"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -734f), new Vector2(1000f, 124f));
+            SetRect(root.Find("SelectedPanel"), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -352f), new Vector2(1020f, 370f));
+            ApplyControlPanelLayout(root);
+            ApplyBulkReleaseLayout(root);
             SetCenteredVerticalStretchRect(root.Find("RosterPanel"), RosterPanelWidth, RosterPanelTopInset, RosterPanelBottomInset);
             SetInsetStretchRect(
                 root.Find("RosterPanel/Viewport"),
@@ -885,7 +1452,7 @@ namespace WitchTower.Formation
                     new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f),
-                    new Vector2(startX + i * (SelectedSlotWidth + SelectedSlotSpacing), -48f),
+                    new Vector2(startX + i * (SelectedSlotWidth + SelectedSlotSpacing), -42f),
                     new Vector2(SelectedSlotWidth, SelectedSlotHeight));
 
                 SetRect(root.Find("SelectedPanel/SelectedSlot" + i + "/FrameArt"),
@@ -893,7 +1460,7 @@ namespace WitchTower.Formation
                     new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f),
                     Vector2.zero,
-                    new Vector2(188f, 188f));
+                    new Vector2(232f, 232f));
 
                 SetSlotRoleLayout(root.Find("SelectedPanel/SelectedSlot" + i), i);
 
@@ -901,8 +1468,8 @@ namespace WitchTower.Formation
                     new Vector2(0.5f, 1f),
                     new Vector2(0.5f, 1f),
                     new Vector2(0.5f, 1f),
-                    new Vector2(0f, -48f),
-                    new Vector2(78f, 78f));
+                    new Vector2(0f, -64f),
+                    new Vector2(112f, 112f));
             }
 
             Transform guideText = root.Find("FormationHeader/GuideText");
@@ -923,15 +1490,16 @@ namespace WitchTower.Formation
                     new Vector2(0.5f, 0f),
                     new Vector2(0.5f, 0f),
                     new Vector2(0.5f, 0f),
-                    new Vector2(0f, 42f),
-                    new Vector2(154f, 24f));
+                    new Vector2(0f, 62f),
+                    new Vector2(180f, 30f));
 
                 SetRect(root.Find("SelectedPanel/SelectedSlot" + i + "/StatusLabel"),
                     new Vector2(0.5f, 0f),
                     new Vector2(0.5f, 0f),
                     new Vector2(0.5f, 0f),
-                    new Vector2(0f, 18f),
-                    new Vector2(160f, 20f));
+                    new Vector2(0f, 34f),
+                    new Vector2(184f, 24f));
+                SetSelectedSlotStatusBadgeLayout(root.Find("SelectedPanel/SelectedSlot" + i));
             }
         }
 
@@ -994,19 +1562,53 @@ namespace WitchTower.Formation
                 new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f),
                 new Vector2(0f, -6f),
-                new Vector2(146f, 30f));
+                new Vector2(158f, 32f));
             SetRect(slotTransform.Find("RoleBand/RoleLabel"),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 Vector2.zero,
-                new Vector2(132f, 22f));
+                new Vector2(144f, 24f));
 
             Text roleLabel = FindText(slotTransform, "RoleBand/RoleLabel");
             if (roleLabel != null)
             {
                 roleLabel.text = ResolveSlotRoleLabel(slotIndex);
             }
+        }
+
+        private static void SetSelectedSlotStatusBadgeLayout(Transform slotTransform)
+        {
+            if (slotTransform == null)
+            {
+                return;
+            }
+
+            SetRect(slotTransform.Find("StatusTypeBadge"),
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(-52f, 34f),
+                new Vector2(78f, 24f));
+            SetRect(slotTransform.Find("StatusTypeBadge/Label"),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(70f, 20f));
+
+            SetRect(slotTransform.Find("StatusActionBadge"),
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(52f, 34f),
+                new Vector2(66f, 24f));
+            SetRect(slotTransform.Find("StatusActionBadge/Label"),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(58f, 20f));
         }
 
         private static string ResolveSlotRoleLabel(int slotIndex)
@@ -1133,6 +1735,7 @@ namespace WitchTower.Formation
 
             RefreshSelectedSlots();
             RefreshRosterCards();
+            UpdateBulkReleaseControls();
         }
 
         private void RefreshSelectedSlots()
@@ -1161,14 +1764,12 @@ namespace WitchTower.Formation
                     }
                     view.Portrait.sprite = LoadPortrait(entry.ResourcePath);
                     view.Portrait.color = Color.white;
-                    ApplySelectedSlotNameLabel(view.NameLabel, entry.Name);
-                    view.StatusLabel.text = isActiveSlot
-                        ? $"{ResolveDamageTypeLabel(entry.DamageType)} / 配置先"
-                        : $"{ResolveDamageTypeLabel(entry.DamageType)} / 外す";
-                    view.StatusLabel.color = ResolveDamageTypeColor(entry.DamageType, 0.96f);
+                    ApplySelectedSlotNameLabel(view.NameLabel, BuildMonsterDisplayName(entry));
+                    ApplySelectedSlotStatusBadges(view, entry.DamageType, isActiveSlot ? "配置先" : "外す");
                 }
                 else
                 {
+                    SetSelectedSlotStatusBadgesVisible(view, false);
                     view.Background.color = isActiveSlot
                         ? new Color(0.10f, 0.16f, 0.21f, 0.78f)
                         : new Color(0.06f, 0.09f, 0.13f, 0.66f);
@@ -1188,6 +1789,70 @@ namespace WitchTower.Formation
             }
         }
 
+        private static void ApplySelectedSlotStatusBadges(FormationSlotView view, MonsterDamageType damageType, string actionLabel)
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            SetSelectedSlotStatusBadgesVisible(view, true);
+
+            Color damageTextColor = ResolveDamageTypeColor(damageType, 1f);
+            ConfigureStatusBadge(
+                view.StatusTypeBadge,
+                ResolveDamageTypeBadgeBackground(damageType),
+                ResolveDamageTypeColor(damageType, 0.76f));
+            if (view.StatusTypeText != null)
+            {
+                view.StatusTypeText.text = ResolveDamageTypeLabel(damageType);
+                view.StatusTypeText.color = damageTextColor;
+            }
+
+            bool isRemoveAction = actionLabel == "外す";
+            ConfigureStatusBadge(
+                view.StatusActionBadge,
+                isRemoveAction ? new Color(0.30f, 0.10f, 0.09f, 0.94f) : new Color(0.07f, 0.22f, 0.20f, 0.94f),
+                isRemoveAction ? new Color(1f, 0.56f, 0.42f, 0.76f) : new Color(0.42f, 1f, 0.82f, 0.70f));
+            if (view.StatusActionText != null)
+            {
+                view.StatusActionText.text = actionLabel;
+                view.StatusActionText.color = isRemoveAction
+                    ? new Color(1f, 0.82f, 0.70f, 1f)
+                    : new Color(0.76f, 1f, 0.92f, 1f);
+            }
+        }
+
+        private static void SetSelectedSlotStatusBadgesVisible(FormationSlotView view, bool visible)
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            if (view.StatusLabel != null)
+            {
+                view.StatusLabel.gameObject.SetActive(!visible);
+            }
+
+            if (view.StatusTypeBadge != null)
+            {
+                view.StatusTypeBadge.gameObject.SetActive(visible);
+            }
+
+            if (view.StatusActionBadge != null)
+            {
+                view.StatusActionBadge.gameObject.SetActive(visible);
+            }
+        }
+
+        private static Color ResolveDamageTypeBadgeBackground(MonsterDamageType damageType)
+        {
+            return damageType == MonsterDamageType.Magic
+                ? new Color(0.06f, 0.18f, 0.28f, 0.94f)
+                : new Color(0.30f, 0.20f, 0.08f, 0.94f);
+        }
+
         private static void ApplySelectedSlotNameLabel(Text label, string monsterName)
         {
             if (label == null)
@@ -1200,13 +1865,25 @@ namespace WitchTower.Formation
             label.text = displayName;
             label.resizeTextForBestFit = true;
             label.resizeTextMinSize = usesTwoLines ? 12 : 13;
-            label.resizeTextMaxSize = 18;
+            label.resizeTextMaxSize = 20;
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
             label.verticalOverflow = VerticalWrapMode.Truncate;
 
             RectTransform rect = label.rectTransform;
-            rect.anchoredPosition = new Vector2(0f, usesTwoLines ? 40f : 42f);
-            rect.sizeDelta = new Vector2(154f, usesTwoLines ? 46f : 24f);
+            rect.anchoredPosition = new Vector2(0f, usesTwoLines ? 58f : 62f);
+            rect.sizeDelta = new Vector2(180f, usesTwoLines ? 54f : 30f);
+        }
+
+        private static string BuildMonsterDisplayName(MonsterEntry entry)
+        {
+            if (entry == null)
+            {
+                return string.Empty;
+            }
+
+            return entry.PlusValue > 0
+                ? $"{entry.Name} +{entry.PlusValue}"
+                : entry.Name;
         }
 
         private static string FormatSelectedSlotMonsterName(string monsterName)
@@ -1288,24 +1965,113 @@ namespace WitchTower.Formation
             }
         }
 
+        private Color ResolveMonsterCardBackgroundColor(bool isSelected, bool isBulkSelected, bool isBulkProtected)
+        {
+            if (bulkReleaseModeActive)
+            {
+                if (isBulkSelected)
+                {
+                    return new Color(0.48f, 0.20f, 0.10f, 0.34f);
+                }
+
+                return isBulkProtected
+                    ? new Color(0.10f, 0.12f, 0.15f, 0.16f)
+                    : new Color(0.20f, 0.14f, 0.10f, 0.20f);
+            }
+
+            return isSelected
+                ? new Color(0.14f, 0.34f, 0.26f, 0.22f)
+                : new Color(0.12f, 0.16f, 0.22f, 0.12f);
+        }
+
+        private Color ResolveMonsterCardBodyColor(bool isSelected, bool isBulkSelected, bool isBulkProtected)
+        {
+            if (bulkReleaseModeActive)
+            {
+                if (isBulkSelected)
+                {
+                    return new Color(0.20f, 0.08f, 0.05f, 0.98f);
+                }
+
+                return isBulkProtected
+                    ? new Color(0.045f, 0.055f, 0.065f, 0.88f)
+                    : new Color(0.10f, 0.07f, 0.06f, 0.96f);
+            }
+
+            return isSelected
+                ? new Color(0.09f, 0.17f, 0.14f, 0.98f)
+                : new Color(0.06f, 0.09f, 0.13f, 0.98f);
+        }
+
+        private string ResolveMonsterCardActionLabel(bool isSelected, bool isBulkSelected, bool canBulkSelect)
+        {
+            if (!bulkReleaseModeActive)
+            {
+                return isSelected ? "外す" : "編成";
+            }
+
+            if (!canBulkSelect)
+            {
+                return "保護";
+            }
+
+            return isBulkSelected ? "解除" : "選択";
+        }
+
+        private Color ResolveMonsterCardActionColor(bool isSelected, bool isBulkSelected, bool canBulkSelect)
+        {
+            if (!bulkReleaseModeActive)
+            {
+                return isSelected ? new Color(0.23f, 0.12f, 0.12f, 0.94f) : new Color(0.12f, 0.29f, 0.20f, 0.94f);
+            }
+
+            if (!canBulkSelect)
+            {
+                return new Color(0.12f, 0.13f, 0.15f, 0.76f);
+            }
+
+            return isBulkSelected ? new Color(0.52f, 0.16f, 0.10f, 0.96f) : new Color(0.24f, 0.18f, 0.14f, 0.96f);
+        }
+
+        private Color ResolveMonsterCardActionOutlineColor(bool isSelected, bool isBulkSelected, bool canBulkSelect)
+        {
+            if (!bulkReleaseModeActive)
+            {
+                return isSelected ? new Color(1f, 0.54f, 0.42f, 0.70f) : new Color(0.48f, 1f, 0.72f, 0.64f);
+            }
+
+            if (!canBulkSelect)
+            {
+                return new Color(0.55f, 0.58f, 0.62f, 0.36f);
+            }
+
+            return isBulkSelected ? new Color(1f, 0.52f, 0.34f, 0.82f) : new Color(1f, 0.78f, 0.44f, 0.50f);
+        }
+
         private MonsterCardView CreateMonsterCard(MonsterEntry entry, Vector2 anchoredPosition, Vector2 size)
         {
             bool isSelected = IsRosterEntrySelected(entry);
+            bool isBulkSelected = IsBulkReleaseEntrySelected(entry);
+            bool canBulkSelect = CanBulkReleaseSelect(entry);
 
             GameObject card = CreatePanel("Card_" + entry.InstanceId, rosterContent,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
                 anchoredPosition, size, new Color(0f, 0f, 0f, 0f));
 
             Image cardImage = card.GetComponent<Image>();
-            cardImage.color = isSelected
-                ? new Color(0.14f, 0.34f, 0.26f, 0.22f)
-                : new Color(0.12f, 0.16f, 0.22f, 0.12f);
+            cardImage.color = ResolveMonsterCardBackgroundColor(isSelected, isBulkSelected, bulkReleaseModeActive && !canBulkSelect);
             cardImage.raycastTarget = true;
 
             Button cardButton = card.AddComponent<Button>();
             cardButton.targetGraphic = cardImage;
             cardButton.onClick.AddListener(() =>
             {
+                if (bulkReleaseModeActive)
+                {
+                    ToggleBulkReleaseEntry(entry);
+                    return;
+                }
+
                 ShowMonsterDetail(entry);
             });
 
@@ -1318,7 +2084,7 @@ namespace WitchTower.Formation
             frameRect.sizeDelta = new Vector2(size.x + 16f, size.y + 16f);
             RawImage frameImage = frameObject.AddComponent<RawImage>();
             frameImage.texture = LoadFrameTexture(ResolveMonsterCardFrameTexturePath(entry.ClassRank));
-            frameImage.color = isSelected
+            frameImage.color = isSelected || isBulkSelected
                 ? Color.white
                 : new Color(1f, 1f, 1f, 0.96f);
             frameImage.raycastTarget = false;
@@ -1327,7 +2093,7 @@ namespace WitchTower.Formation
             GameObject body = CreatePanel("Body", card.transform,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 Vector2.zero, new Vector2(size.x - 34f, size.y - 44f),
-                isSelected ? new Color(0.09f, 0.17f, 0.14f, 0.98f) : new Color(0.06f, 0.09f, 0.13f, 0.98f));
+                ResolveMonsterCardBodyColor(isSelected, isBulkSelected, bulkReleaseModeActive && !canBulkSelect));
             body.GetComponent<Image>().raycastTarget = false;
 
             Sprite portraitSprite = LoadPortrait(entry.ResourcePath);
@@ -1364,7 +2130,7 @@ namespace WitchTower.Formation
             portraitImage.color = Color.white;
             portraitImage.raycastTarget = false;
 
-            Text nameLabel = CreateText("NameLabel", body.transform, runtimeFont, entry.Name, 15, FontStyle.Bold,
+            Text nameLabel = CreateText("NameLabel", body.transform, runtimeFont, BuildMonsterDisplayName(entry), 15, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, -180f), new Vector2(174f, 34f), TextAnchor.MiddleCenter,
                 new Color(0.96f, 0.98f, 1f, 1f));
@@ -1394,11 +2160,29 @@ namespace WitchTower.Formation
             CreateMonsterLockButton(body.transform, entry);
 
             GameObject selectionButton = CreateActionButton("SelectionButton", body.transform, runtimeFont,
-                isSelected ? "外す" : "編成",
+                ResolveMonsterCardActionLabel(isSelected, isBulkSelected, canBulkSelect),
                 new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(-10f, 10f), new Vector2(74f, 28f),
-                isSelected ? new Color(0.23f, 0.12f, 0.12f, 0.94f) : new Color(0.12f, 0.29f, 0.20f, 0.94f),
-                () => ToggleSelection(entry));
+                new Vector2(-4f, 10f), new Vector2(74f, 28f),
+                ResolveMonsterCardActionColor(isSelected, isBulkSelected, canBulkSelect),
+                () =>
+                {
+                    if (bulkReleaseModeActive)
+                    {
+                        ToggleBulkReleaseEntry(entry);
+                        return;
+                    }
+
+                    ToggleSelection(entry);
+                });
+            Button actionButton = selectionButton.GetComponent<Button>();
+            if (actionButton != null)
+            {
+                actionButton.interactable = !bulkReleaseModeActive || canBulkSelect;
+            }
+            AddUiOutline(
+                selectionButton,
+                ResolveMonsterCardActionOutlineColor(isSelected, isBulkSelected, canBulkSelect),
+                new Vector2(1f, -1f));
             Text selectionText = FindChildText(selectionButton);
             if (selectionText != null)
             {
@@ -1673,6 +2457,374 @@ namespace WitchTower.Formation
             return true;
         }
 
+        private void ToggleBulkReleaseMode()
+        {
+            bulkReleaseModeActive = !bulkReleaseModeActive;
+            bulkReleaseSelectedInstanceIds.Clear();
+            bulkReleaseConfirmArmed = false;
+            RefreshView();
+        }
+
+        private void CycleBulkReleaseClassFilter()
+        {
+            currentBulkReleaseClassFilter = (BulkReleaseClassFilter)(((int)currentBulkReleaseClassFilter + 1) % Enum.GetValues(typeof(BulkReleaseClassFilter)).Length);
+            bulkReleaseConfirmArmed = false;
+            RefreshView();
+        }
+
+        private void CycleBulkReleaseIvFilter()
+        {
+            currentBulkReleaseIvFilter = (BulkReleaseIvFilter)(((int)currentBulkReleaseIvFilter + 1) % Enum.GetValues(typeof(BulkReleaseIvFilter)).Length);
+            bulkReleaseConfirmArmed = false;
+            RefreshView();
+        }
+
+        private void ToggleBulkReleaseEntry(MonsterEntry entry)
+        {
+            if (!bulkReleaseModeActive || entry == null || string.IsNullOrEmpty(entry.InstanceId))
+            {
+                return;
+            }
+
+            bulkReleaseConfirmArmed = false;
+            if (bulkReleaseSelectedInstanceIds.Contains(entry.InstanceId))
+            {
+                bulkReleaseSelectedInstanceIds.Remove(entry.InstanceId);
+                RefreshView();
+                return;
+            }
+
+            if (!CanBulkReleaseSelect(entry))
+            {
+                SetBulkReleasePanelMessage("保護対象のため選択できません。");
+                return;
+            }
+
+            int maxSelectable = ResolveBulkReleaseMaxSelectableCount();
+            if (bulkReleaseSelectedInstanceIds.Count >= maxSelectable)
+            {
+                SetBulkReleasePanelMessage("最後の1体を残すため、これ以上は選択できません。");
+                return;
+            }
+
+            bulkReleaseSelectedInstanceIds.Add(entry.InstanceId);
+            RefreshView();
+        }
+
+        private void SelectBulkReleaseFilteredCandidates()
+        {
+            if (!bulkReleaseModeActive)
+            {
+                bulkReleaseModeActive = true;
+            }
+
+            bulkReleaseConfirmArmed = false;
+            bulkReleaseSelectedInstanceIds.Clear();
+            int maxSelectable = ResolveBulkReleaseMaxSelectableCount();
+            for (int i = 0; i < roster.Count && bulkReleaseSelectedInstanceIds.Count < maxSelectable; i += 1)
+            {
+                MonsterEntry entry = roster[i];
+                if (entry == null || !PassesBulkReleaseFilters(entry) || !CanBulkReleaseSelect(entry))
+                {
+                    continue;
+                }
+
+                bulkReleaseSelectedInstanceIds.Add(entry.InstanceId);
+            }
+
+            RefreshView();
+        }
+
+        private void ConfirmBulkReleaseSelection()
+        {
+            if (!bulkReleaseModeActive)
+            {
+                bulkReleaseModeActive = true;
+                RefreshView();
+                return;
+            }
+
+            PruneBulkReleaseSelection();
+            if (bulkReleaseSelectedInstanceIds.Count <= 0)
+            {
+                SetBulkReleasePanelMessage("逃がすモンスターを選択してください。");
+                return;
+            }
+
+            if (!bulkReleaseConfirmArmed)
+            {
+                bulkReleaseConfirmArmed = true;
+                UpdateBulkReleaseControls();
+                return;
+            }
+
+            ExecuteBulkReleaseSelection();
+        }
+
+        private void ExecuteBulkReleaseSelection()
+        {
+            PlayerProfile profile = GameManager.Instance?.PlayerProfile;
+            if (profile?.OwnedMonsters == null)
+            {
+                SetSummaryMessage("プレイヤーデータがありません。");
+                return;
+            }
+
+            var releaseIds = new List<string>(bulkReleaseSelectedInstanceIds);
+            int releasedCount = 0;
+            int skippedCount = 0;
+            for (int i = 0; i < releaseIds.Count; i += 1)
+            {
+                string instanceId = releaseIds[i];
+                OwnedMonsterData ownedMonster = profile.GetOwnedMonster(instanceId);
+                MonsterEntry entry = FindRosterEntry(instanceId);
+                if (!CanReleaseMonster(profile, ownedMonster, entry, out _))
+                {
+                    skippedCount += 1;
+                    continue;
+                }
+
+                string monsterId = ownedMonster.MonsterId;
+                ClearReleasedMonsterReferences(profile, instanceId);
+                profile.OwnedMonsters.Remove(ownedMonster);
+                UpdateDexOwnedCount(profile, monsterId);
+                releasedCount += 1;
+            }
+
+            bulkReleaseSelectedInstanceIds.Clear();
+            bulkReleaseConfirmArmed = false;
+            if (releasedCount > 0)
+            {
+                SaveManager.Instance?.SaveCurrentGame();
+            }
+
+            SeedRoster();
+            RefreshView();
+            string skippedText = skippedCount > 0 ? $"（保護などで{skippedCount}体は除外）" : string.Empty;
+            SetSummaryMessage($"{releasedCount}体を逃がしました。{skippedText}");
+        }
+
+        private void UpdateBulkReleaseControls()
+        {
+            PruneBulkReleaseSelection();
+            if (bulkReleaseToggleLabel != null)
+            {
+                bulkReleaseToggleLabel.text = bulkReleaseModeActive ? "選択終了" : "一括で逃す";
+            }
+
+            if (bulkReleasePanel != null)
+            {
+                bulkReleasePanel.SetActive(bulkReleaseModeActive);
+                if (bulkReleaseModeActive)
+                {
+                    bulkReleasePanel.transform.SetAsLastSibling();
+                }
+            }
+
+            if (bulkReleaseClassFilterLabel != null)
+            {
+                bulkReleaseClassFilterLabel.text = "クラス: " + GetBulkReleaseClassFilterLabel(currentBulkReleaseClassFilter);
+            }
+
+            if (bulkReleaseIvFilterLabel != null)
+            {
+                bulkReleaseIvFilterLabel.text = "IV: " + GetBulkReleaseIvFilterLabel(currentBulkReleaseIvFilter);
+            }
+
+            if (bulkReleaseSelectFilteredLabel != null)
+            {
+                bulkReleaseSelectFilteredLabel.text = "条件で選択";
+            }
+
+            int selectedCount = bulkReleaseSelectedInstanceIds.Count;
+            if (bulkReleaseExecuteLabel != null)
+            {
+                bulkReleaseExecuteLabel.text = selectedCount <= 0
+                    ? "一括で逃す"
+                    : bulkReleaseConfirmArmed ? "もう一度押して実行" : $"{selectedCount}体を逃す";
+            }
+
+            if (bulkReleaseStatusLabel != null)
+            {
+                int candidateCount = CountBulkReleaseFilteredCandidates();
+                bulkReleaseStatusLabel.text = bulkReleaseConfirmArmed
+                    ? $"最終確認: {selectedCount}体を逃がします。右下の赤いボタンをもう一度押すと実行します。"
+                    : $"選択 {selectedCount}体 / 条件候補 {candidateCount}体   条件を選んでまとめて選択できます。";
+                bulkReleaseStatusLabel.color = bulkReleaseConfirmArmed
+                    ? new Color(1f, 0.62f, 0.38f, 1f)
+                    : new Color(1f, 0.9f, 0.66f, 1f);
+            }
+
+            Button executeButton = bulkReleasePanel != null
+                ? bulkReleasePanel.transform.Find("ExecuteButton")?.GetComponent<Button>()
+                : null;
+            if (executeButton != null)
+            {
+                executeButton.interactable = selectedCount > 0;
+                Image executeImage = executeButton.GetComponent<Image>();
+                if (executeImage != null)
+                {
+                    executeImage.color = bulkReleaseConfirmArmed
+                        ? new Color(0.76f, 0.08f, 0.04f, 1f)
+                        : new Color(0.52f, 0.09f, 0.06f, 0.98f);
+                }
+            }
+        }
+
+        private void PruneBulkReleaseSelection()
+        {
+            if (bulkReleaseSelectedInstanceIds.Count <= 0)
+            {
+                return;
+            }
+
+            var removeIds = new List<string>();
+            foreach (string instanceId in bulkReleaseSelectedInstanceIds)
+            {
+                MonsterEntry entry = FindRosterEntry(instanceId);
+                if (entry == null || !CanBulkReleaseSelect(entry))
+                {
+                    removeIds.Add(instanceId);
+                }
+            }
+
+            for (int i = 0; i < removeIds.Count; i += 1)
+            {
+                bulkReleaseSelectedInstanceIds.Remove(removeIds[i]);
+            }
+
+            if (removeIds.Count > 0)
+            {
+                bulkReleaseConfirmArmed = false;
+            }
+        }
+
+        private bool IsBulkReleaseEntrySelected(MonsterEntry entry)
+        {
+            return entry != null &&
+                !string.IsNullOrEmpty(entry.InstanceId) &&
+                bulkReleaseSelectedInstanceIds.Contains(entry.InstanceId);
+        }
+
+        private bool CanBulkReleaseSelect(MonsterEntry entry)
+        {
+            PlayerProfile profile = GameManager.Instance?.PlayerProfile;
+            OwnedMonsterData ownedMonster = profile?.GetOwnedMonster(entry != null ? entry.InstanceId : string.Empty);
+            return CanReleaseMonster(profile, ownedMonster, entry, out _);
+        }
+
+        private int ResolveBulkReleaseMaxSelectableCount()
+        {
+            PlayerProfile profile = GameManager.Instance?.PlayerProfile;
+            return Mathf.Max(0, CountOwnedMonsters(profile) - 1);
+        }
+
+        private int CountBulkReleaseFilteredCandidates()
+        {
+            int count = 0;
+            for (int i = 0; i < roster.Count; i += 1)
+            {
+                MonsterEntry entry = roster[i];
+                if (entry != null && PassesBulkReleaseFilters(entry) && CanBulkReleaseSelect(entry))
+                {
+                    count += 1;
+                }
+            }
+
+            return Mathf.Min(count, ResolveBulkReleaseMaxSelectableCount());
+        }
+
+        private bool PassesBulkReleaseFilters(MonsterEntry entry)
+        {
+            return entry != null &&
+                PassesBulkReleaseClassFilter(entry) &&
+                PassesBulkReleaseIvFilter(entry);
+        }
+
+        private bool PassesBulkReleaseClassFilter(MonsterEntry entry)
+        {
+            switch (currentBulkReleaseClassFilter)
+            {
+                case BulkReleaseClassFilter.Class1:
+                    return entry.ClassRank == 1;
+                case BulkReleaseClassFilter.Class2:
+                    return entry.ClassRank == 2;
+                case BulkReleaseClassFilter.Class3:
+                    return entry.ClassRank == 3;
+                case BulkReleaseClassFilter.Class4Plus:
+                    return entry.ClassRank >= 4;
+                default:
+                    return true;
+            }
+        }
+
+        private bool PassesBulkReleaseIvFilter(MonsterEntry entry)
+        {
+            switch (currentBulkReleaseIvFilter)
+            {
+                case BulkReleaseIvFilter.Under30:
+                    return entry.IndividualAverage <= 30;
+                case BulkReleaseIvFilter.Under50:
+                    return entry.IndividualAverage <= 50;
+                case BulkReleaseIvFilter.Under70:
+                    return entry.IndividualAverage <= 70;
+                default:
+                    return true;
+            }
+        }
+
+        private static string GetBulkReleaseClassFilterLabel(BulkReleaseClassFilter filter)
+        {
+            switch (filter)
+            {
+                case BulkReleaseClassFilter.Class1:
+                    return "1";
+                case BulkReleaseClassFilter.Class2:
+                    return "2";
+                case BulkReleaseClassFilter.Class3:
+                    return "3";
+                case BulkReleaseClassFilter.Class4Plus:
+                    return "4+";
+                default:
+                    return "全て";
+            }
+        }
+
+        private static string GetBulkReleaseIvFilterLabel(BulkReleaseIvFilter filter)
+        {
+            switch (filter)
+            {
+                case BulkReleaseIvFilter.Under30:
+                    return "30以下";
+                case BulkReleaseIvFilter.Under50:
+                    return "50以下";
+                case BulkReleaseIvFilter.Under70:
+                    return "70以下";
+                default:
+                    return "全て";
+            }
+        }
+
+        private void SetSummaryMessage(string message)
+        {
+            if (summaryText != null)
+            {
+                summaryText.text = message;
+            }
+        }
+
+        private void SetBulkReleasePanelMessage(string message)
+        {
+            if (bulkReleaseModeActive && bulkReleaseStatusLabel != null)
+            {
+                bulkReleaseStatusLabel.text = message;
+                bulkReleaseStatusLabel.color = new Color(1f, 0.68f, 0.44f, 1f);
+                return;
+            }
+
+            SetSummaryMessage(message);
+        }
+
         private MonsterEntry FindRosterEntry(string instanceId)
         {
             if (string.IsNullOrEmpty(instanceId))
@@ -1795,12 +2947,26 @@ namespace WitchTower.Formation
             }
 
             activeSlotIndex = slotIndex;
-            if (selectedMonsters[slotIndex] != null)
+            RefreshView();
+        }
+
+        private void OnSlotActionPressed(int slotIndex)
+        {
+            EnsureSelectedSlotCapacity();
+            if (!IsValidSlotIndex(slotIndex))
             {
-                selectedMonsters[slotIndex] = null;
-                SyncProfileSelection();
+                return;
             }
 
+            if (slotIndex == activeSlotIndex || selectedMonsters[slotIndex] == null)
+            {
+                OnSlotPressed(slotIndex);
+                return;
+            }
+
+            selectedMonsters[slotIndex] = null;
+            activeSlotIndex = slotIndex;
+            SyncProfileSelection();
             RefreshView();
         }
 
@@ -2233,11 +3399,33 @@ namespace WitchTower.Formation
             button.targetGraphic = buttonObject.GetComponent<Image>();
             button.onClick.AddListener(onClick);
 
-            CreateText("Label", buttonObject.transform, font, text, 20, FontStyle.Bold,
+            Text label = CreateText("Label", buttonObject.transform, font, text, 20, FontStyle.Bold,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 Vector2.zero, new Vector2(size.x - 18f, 30f), TextAnchor.MiddleCenter, Color.white);
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 11;
+            label.resizeTextMaxSize = 20;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
 
             return buttonObject;
+        }
+
+        private static Outline AddUiOutline(GameObject target, Color color, Vector2 distance)
+        {
+            if (target == null)
+            {
+                return null;
+            }
+
+            Outline outline = target.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = target.AddComponent<Outline>();
+            }
+
+            outline.effectColor = color;
+            outline.effectDistance = distance;
+            return outline;
         }
 
         private static Text CreateText(
@@ -2295,6 +3483,41 @@ namespace WitchTower.Formation
             rect.pivot = pivot;
             rect.anchoredPosition = anchoredPosition;
             rect.sizeDelta = size;
+        }
+
+        private static void SetActionButtonRect(Transform target, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPosition, Vector2 size)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            SetRect(target, anchorMin, anchorMax, pivot, anchoredPosition, size);
+            SetRect(
+                target.Find("Label"),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(Mathf.Max(24f, size.x - 18f), Mathf.Max(24f, size.y - 20f)));
+
+            Text label = target.Find("Label")?.GetComponent<Text>();
+            if (label != null)
+            {
+                label.resizeTextForBestFit = true;
+                label.resizeTextMinSize = 11;
+                label.resizeTextMaxSize = 20;
+                label.verticalOverflow = VerticalWrapMode.Truncate;
+            }
+        }
+
+        private static void SetImageColor(Transform target, Color color)
+        {
+            Image image = target != null ? target.GetComponent<Image>() : null;
+            if (image != null)
+            {
+                image.color = color;
+            }
         }
 
         private static void SetCenteredVerticalStretchRect(Transform target, float width, float topInset, float bottomInset)

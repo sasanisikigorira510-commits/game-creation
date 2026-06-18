@@ -12,7 +12,7 @@ namespace WitchTower.Managers
         public int CurrentFloor { get; private set; }
         public string CurrentDungeonId { get; private set; } = "blight_cavern";
         public int CurrentDungeonFloor { get; private set; } = 1;
-        public int HighestFloor => PlayerProfile?.HighestFloor ?? 1;
+        public int HighestFloor => PlayerProfile?.HighestFloor ?? 0;
 
         private void Awake()
         {
@@ -29,6 +29,14 @@ namespace WitchTower.Managers
         public void InitializeFromSave(PlayerSaveData saveData)
         {
             PlayerProfile = new PlayerProfile(saveData);
+            if (PlayerProfile != null &&
+                saveData.HighestFloor == 1 &&
+                saveData.CurrentFloor <= 1 &&
+                !HasRecordedBattleWin(saveData))
+            {
+                PlayerProfile.HighestFloor = 0;
+            }
+
             int nextProgressFloor = PlayerProfile != null ? PlayerProfile.HighestFloor + 1 : 1;
             CurrentFloor = Mathf.Max(1, Mathf.Max(saveData.CurrentFloor, nextProgressFloor));
             SyncDungeonSelectionFromCurrentFloor();
@@ -72,6 +80,25 @@ namespace WitchTower.Managers
             var dungeon = BattleDungeonCatalog.GetDungeonForGlobalFloor(CurrentFloor);
             CurrentDungeonId = dungeon != null ? dungeon.DungeonId : "blight_cavern";
             CurrentDungeonFloor = BattleDungeonCatalog.ResolveLocalFloor(CurrentFloor);
+        }
+
+        private static bool HasRecordedBattleWin(PlayerSaveData saveData)
+        {
+            if (saveData?.MissionProgressList == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < saveData.MissionProgressList.Count; i += 1)
+            {
+                MissionProgressData mission = saveData.MissionProgressList[i];
+                if (mission != null && mission.MissionId == "mission_clear_1" && mission.Progress > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
