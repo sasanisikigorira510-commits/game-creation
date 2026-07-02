@@ -24,6 +24,8 @@ namespace WitchTower.Home
         private const string NormalEffectSpritePath = "UI/GachaPage/Effects/GachaContractEffect_Normal";
         private const string RareEffectSpritePath = "UI/GachaPage/Effects/GachaContractEffect_Rare";
         private const string LegendaryEffectSpritePath = "UI/GachaPage/Effects/GachaContractEffect_Legendary";
+        private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
+        private const string TutorialHighlightFramePath = "UI/Tutorial/TutorialSummonHighlightFrameImage2";
         private const int GachaStoneCostPerPull = 300;
         private const int PaidTenPullGuaranteedClassRank = 3;
         private const int FreeClass3SummonRatePercent = 1;
@@ -47,10 +49,22 @@ namespace WitchTower.Home
         private Text paidStoneText;
         private Text storageText;
         private Text statusText;
+        private GameObject ritePanelRoot;
         private Button singlePullButton;
+        private Image singlePullButtonBackgroundImage;
+        private Sprite singlePullButtonOriginalSprite;
+        private Color singlePullButtonOriginalColor;
+        private Image.Type singlePullButtonOriginalType;
+        private bool singlePullButtonBackgroundMuted;
         private Button tenPullButton;
         private Button paidSinglePullButton;
         private Button paidTenPullButton;
+        private GameObject summonTutorialGuideRoot;
+        private Text summonTutorialGuideTitleText;
+        private Text summonTutorialGuideBodyText;
+        private Text summonTutorialGuideFooterText;
+        private Image summonTutorialGuideCharacterImage;
+        private Image summonTutorialSinglePullHighlight;
         private CanvasGroup effectCanvasGroup;
         private Image effectImage;
         private Image effectFlashImage;
@@ -65,6 +79,9 @@ namespace WitchTower.Home
         private Button resultAgainButton;
         private Button resultBackButton;
         private Button resultHomeButton;
+        private GameObject resultTutorialGuideRoot;
+        private Image resultTutorialGuideCharacterImage;
+        private Image resultTutorialHomeHighlight;
         private readonly List<ResultSlotView> resultSlotViews = new List<ResultSlotView>();
         private Coroutine effectRoutine;
         private bool contractInProgress;
@@ -129,10 +146,22 @@ namespace WitchTower.Home
             paidStoneText = null;
             storageText = null;
             statusText = null;
+            ritePanelRoot = null;
             singlePullButton = null;
+            singlePullButtonBackgroundImage = null;
+            singlePullButtonOriginalSprite = null;
+            singlePullButtonOriginalColor = Color.white;
+            singlePullButtonOriginalType = Image.Type.Simple;
+            singlePullButtonBackgroundMuted = false;
             tenPullButton = null;
             paidSinglePullButton = null;
             paidTenPullButton = null;
+            summonTutorialGuideRoot = null;
+            summonTutorialGuideTitleText = null;
+            summonTutorialGuideBodyText = null;
+            summonTutorialGuideFooterText = null;
+            summonTutorialGuideCharacterImage = null;
+            summonTutorialSinglePullHighlight = null;
             effectCanvasGroup = null;
             effectImage = null;
             effectFlashImage = null;
@@ -147,6 +176,9 @@ namespace WitchTower.Home
             resultAgainButton = null;
             resultBackButton = null;
             resultHomeButton = null;
+            resultTutorialGuideRoot = null;
+            resultTutorialGuideCharacterImage = null;
+            resultTutorialHomeHighlight = null;
             resultSlotViews.Clear();
             effectRoutine = null;
             contractInProgress = false;
@@ -182,11 +214,11 @@ namespace WitchTower.Home
             storageText = CreateText("StorageCount", ticketPanel.transform, "所持 0/0", 22, FontStyle.Bold,
                 new Vector2(0.5f, 0.5f), new Vector2(292f, 0f), new Vector2(220f, 42f), PaleTextColor);
 
-            GameObject ritePanel = CreatePanel("ContractRitePanel", contractHomeRoot.transform, null,
+            ritePanelRoot = CreatePanel("ContractRitePanel", contractHomeRoot.transform, null,
                 new Vector2(0.5f, 0.5f), new Vector2(0f, -116f), new Vector2(780f, 250f), new Color(0.018f, 0.014f, 0.020f, 0.54f));
-            CreateText("RiteLabel", ritePanel.transform, "契約陣 起動待機", 34, FontStyle.Bold,
+            CreateText("RiteLabel", ritePanelRoot.transform, "契約陣 起動待機", 34, FontStyle.Bold,
                 new Vector2(0.5f, 0.76f), Vector2.zero, new Vector2(620f, 50f), GoldTextColor);
-            statusText = CreateText("RiteStatus", ritePanel.transform, "未召喚", 24, FontStyle.Bold,
+            statusText = CreateText("RiteStatus", ritePanelRoot.transform, "未召喚", 24, FontStyle.Bold,
                 new Vector2(0.5f, 0.40f), Vector2.zero, new Vector2(700f, 138f), PaleTextColor);
 
             GameObject benefitPanel = CreatePanel("GachaBenefitPanel", contractHomeRoot.transform, null,
@@ -218,7 +250,9 @@ namespace WitchTower.Home
                 new Vector2(205f, 246f), () => RunContract(1, true));
             paidTenPullButton = CreateStoneCostButton("PaidTenPullButton", contractHomeRoot.transform, 10, true,
                 new Vector2(205f, 136f), () => RunContract(10, true));
+            CaptureSinglePullButtonBackground();
             Button closeButton = HomeReturnButtonStyle.Create(contractHomeRoot.transform, Close);
+            BuildSummonTutorialGuide();
             singlePullButton.interactable = true;
             tenPullButton.interactable = true;
             paidSinglePullButton.interactable = true;
@@ -226,6 +260,155 @@ namespace WitchTower.Home
             closeButton.interactable = true;
 
             CreateContractEffectOverlay();
+        }
+
+        private void BuildSummonTutorialGuide()
+        {
+            if (contractHomeRoot == null || singlePullButton == null || summonTutorialGuideRoot != null)
+            {
+                return;
+            }
+
+            summonTutorialGuideRoot = CreatePanel(
+                "GachaSummonTutorialGuideRoot",
+                contractHomeRoot.transform,
+                null,
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 608f),
+                new Vector2(940f, 218f),
+                new Color(0.025f, 0.035f, 0.055f, 0.98f));
+
+            Outline panelOutline = summonTutorialGuideRoot.AddComponent<Outline>();
+            panelOutline.effectColor = new Color(1f, 0.78f, 0.24f, 0.94f);
+            panelOutline.effectDistance = new Vector2(4f, -4f);
+            panelOutline.useGraphicAlpha = false;
+
+            summonTutorialGuideCharacterImage = CreateImage(
+                "GachaSummonTutorialGuideLuse",
+                summonTutorialGuideRoot.transform,
+                TutorialGuideSpritePath,
+                new Vector2(0f, 0.5f),
+                new Vector2(96f, -4f),
+                new Vector2(172f, 172f),
+                true,
+                Color.white);
+
+            Text badgeText = CreateText(
+                "GachaSummonTutorialGuideBadge",
+                summonTutorialGuideRoot.transform,
+                "TUTORIAL",
+                16,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(318f, -24f),
+                new Vector2(140f, 28f),
+                GoldTextColor);
+            badgeText.alignment = TextAnchor.MiddleLeft;
+
+            summonTutorialGuideTitleText = CreateText(
+                "GachaSummonTutorialGuideTitle",
+                summonTutorialGuideRoot.transform,
+                "ルシェの召喚案内",
+                28,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(560f, -60f),
+                new Vector2(620f, 42f),
+                new Color(1f, 0.96f, 0.78f, 1f));
+            summonTutorialGuideTitleText.alignment = TextAnchor.MiddleLeft;
+
+            summonTutorialGuideBodyText = CreateText(
+                "GachaSummonTutorialGuideBody",
+                summonTutorialGuideRoot.transform,
+                "今回の召喚用に、魔晶石を300個用意しました。\n契約炉に石を捧げて、最初の眷属を呼び戻しましょう。",
+                20,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(560f, -116f),
+                new Vector2(620f, 70f),
+                PaleTextColor);
+            summonTutorialGuideBodyText.alignment = TextAnchor.UpperLeft;
+            summonTutorialGuideBodyText.resizeTextMinSize = 15;
+
+            summonTutorialGuideFooterText = CreateText(
+                "GachaSummonTutorialGuideFooter",
+                summonTutorialGuideRoot.transform,
+                "次の操作: 枠で囲まれた「1回 / 300個」をタップ",
+                17,
+                FontStyle.Bold,
+                new Vector2(0f, 0f),
+                new Vector2(560f, 24f),
+                new Vector2(620f, 32f),
+                new Color(0.78f, 0.92f, 1f, 1f));
+            summonTutorialGuideFooterText.alignment = TextAnchor.MiddleLeft;
+
+            summonTutorialSinglePullHighlight = CreateTutorialImageFrame(
+                "GachaSummonTutorialSinglePullHighlight",
+                singlePullButton.transform,
+                new Vector2(364f, 118f));
+
+            summonTutorialGuideRoot.SetActive(false);
+            summonTutorialSinglePullHighlight.gameObject.SetActive(false);
+        }
+
+        private static Image CreateTutorialImageFrame(string name, Transform parent, Vector2 size)
+        {
+            GameObject imageObject = CreateUiObject(
+                name,
+                parent,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                size);
+
+            Image image = imageObject.AddComponent<Image>();
+            image.sprite = LoadSpriteIncludingTexture(TutorialHighlightFramePath);
+            image.color = image.sprite != null ? Color.white : new Color(1f, 0.78f, 0.12f, 0.96f);
+            image.preserveAspect = false;
+            image.raycastTarget = false;
+            imageObject.transform.SetAsLastSibling();
+            return image;
+        }
+
+        private void CaptureSinglePullButtonBackground()
+        {
+            singlePullButtonBackgroundImage = singlePullButton != null ? singlePullButton.GetComponent<Image>() : null;
+            if (singlePullButtonBackgroundImage == null)
+            {
+                return;
+            }
+
+            singlePullButtonOriginalSprite = singlePullButtonBackgroundImage.sprite;
+            singlePullButtonOriginalColor = singlePullButtonBackgroundImage.color;
+            singlePullButtonOriginalType = singlePullButtonBackgroundImage.type;
+            singlePullButtonBackgroundMuted = false;
+        }
+
+        private void SetSinglePullButtonBackgroundMuted(bool muted)
+        {
+            if (singlePullButtonBackgroundImage == null || singlePullButtonBackgroundMuted == muted)
+            {
+                return;
+            }
+
+            singlePullButtonBackgroundMuted = muted;
+            if (muted)
+            {
+                singlePullButtonBackgroundImage.sprite = null;
+                singlePullButtonBackgroundImage.type = Image.Type.Simple;
+                singlePullButtonBackgroundImage.color = new Color(0.32f, 0.20f, 0.07f, 0.90f);
+                return;
+            }
+
+            singlePullButtonBackgroundImage.sprite = singlePullButtonOriginalSprite;
+            singlePullButtonBackgroundImage.type = singlePullButtonOriginalType;
+            singlePullButtonBackgroundImage.color = singlePullButtonOriginalColor;
+        }
+
+        private void Update()
+        {
+            AnimateSummonTutorialGuide();
+            AnimateResultTutorialGuide();
         }
 
         private void UpdatePreviewState()
@@ -239,6 +422,7 @@ namespace WitchTower.Home
             }
 
             SetPullButtonsInteractable(!contractInProgress);
+            RefreshSummonTutorialGuide();
         }
 
         private void UpdateInventoryHeader()
@@ -282,14 +466,6 @@ namespace WitchTower.Home
                 return "セーブ読込待ち";
             }
 
-            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "GachaScene");
-            if (tutorialEvent != null && tutorialEvent.IsValid)
-            {
-                return string.IsNullOrEmpty(tutorialEvent.Title)
-                    ? tutorialEvent.Body
-                    : $"{tutorialEvent.Title}\n{tutorialEvent.Body}";
-            }
-
             if (GetAvailableMonsterStorageSlots(profile) <= 0)
             {
                 return "所持枠がいっぱいです";
@@ -314,6 +490,7 @@ namespace WitchTower.Home
             int requestedCount = Mathf.Max(1, count);
             if (!Application.isPlaying)
             {
+                AudioManager.Instance?.PlaySe(AudioCue.Error);
                 SetStatus("再生中に契約できます");
                 return;
             }
@@ -322,6 +499,7 @@ namespace WitchTower.Home
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             if (profile == null)
             {
+                AudioManager.Instance?.PlaySe(AudioCue.Error);
                 SetStatus("セーブデータを読み込めませんでした");
                 return;
             }
@@ -329,6 +507,7 @@ namespace WitchTower.Home
             int availableSlots = GetAvailableMonsterStorageSlots(profile);
             if (availableSlots < requestedCount)
             {
+                AudioManager.Instance?.PlaySe(AudioCue.Error);
                 UpdateInventoryHeader();
                 SetPullButtonsInteractable(true);
                 SetStatus(BuildStorageShortageText(requestedCount, availableSlots));
@@ -338,6 +517,7 @@ namespace WitchTower.Home
             int stoneCost = GetContractCost(requestedCount);
             if (!CanSpendGachaStones(profile, stoneCost, usePaidStones))
             {
+                AudioManager.Instance?.PlaySe(AudioCue.Error);
                 UpdateInventoryHeader();
                 SetPullButtonsInteractable(true);
                 SetStatus(BuildStoneShortageText(profile, stoneCost, usePaidStones));
@@ -347,12 +527,14 @@ namespace WitchTower.Home
             List<MonsterDataSO> summonPool = CollectSummonPool(usePaidStones);
             if (summonPool.Count == 0)
             {
+                AudioManager.Instance?.PlaySe(AudioCue.Error);
                 SetStatus("召喚候補が登録されていません");
                 return;
             }
 
             if (!SpendGachaStones(profile, stoneCost, usePaidStones))
             {
+                AudioManager.Instance?.PlaySe(AudioCue.Error);
                 UpdateInventoryHeader();
                 SetPullButtonsInteractable(true);
                 SetStatus(BuildStoneShortageText(profile, stoneCost, usePaidStones));
@@ -363,6 +545,7 @@ namespace WitchTower.Home
             lastRequestedCount = requestedCount;
             lastUsedPaidStones = usePaidStones;
             SetStatus("契約空間へ転移中");
+            AudioManager.Instance?.PlaySe(AudioCue.GachaStart);
             var results = new List<MonsterDataSO>();
             bool paidTenPullGuarantee = usePaidStones && requestedCount >= 10;
             bool hasGuaranteedClass = false;
@@ -704,6 +887,20 @@ namespace WitchTower.Home
             return string.IsNullOrEmpty(path) ? null : Resources.Load<Sprite>(path);
         }
 
+        private static Sprite LoadSpriteIncludingTexture(string path)
+        {
+            Sprite sprite = LoadSprite(path);
+            if (sprite != null || string.IsNullOrEmpty(path))
+            {
+                return sprite;
+            }
+
+            Texture2D texture = Resources.Load<Texture2D>(path);
+            return texture != null
+                ? Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f)
+                : null;
+        }
+
         private void CreateContractEffectOverlay()
         {
             resultStageRoot = CreateUiObject("GachaResultStageRoot", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -760,9 +957,101 @@ namespace WitchTower.Home
             resultBackButton = CreateSpriteButton("ResultBackButton", resultStageRoot.transform, SmallButtonSpritePath, "契約画面へ",
                 new Vector2(210f, 82f), new Vector2(310f, 84f), ReturnToContractHome);
             resultHomeButton = HomeReturnButtonStyle.Create(resultStageRoot.transform, "ResultHomeReturnButton", Close);
+            BuildResultTutorialGuide();
 
             SetResultButtonsVisible(false);
             resultStageRoot.SetActive(false);
+        }
+
+        private void BuildResultTutorialGuide()
+        {
+            if (resultStageRoot == null || resultHomeButton == null || resultTutorialGuideRoot != null)
+            {
+                return;
+            }
+
+            resultTutorialGuideRoot = CreatePanel(
+                "GachaResultTutorialGuideRoot",
+                resultStageRoot.transform,
+                null,
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 226f),
+                new Vector2(920f, 220f),
+                new Color(0.025f, 0.035f, 0.055f, 0.98f));
+
+            Outline panelOutline = resultTutorialGuideRoot.AddComponent<Outline>();
+            panelOutline.effectColor = new Color(1f, 0.78f, 0.24f, 0.94f);
+            panelOutline.effectDistance = new Vector2(4f, -4f);
+            panelOutline.useGraphicAlpha = false;
+
+            resultTutorialGuideCharacterImage = CreateImage(
+                "GachaResultTutorialGuideLuse",
+                resultTutorialGuideRoot.transform,
+                TutorialGuideSpritePath,
+                new Vector2(0f, 0.5f),
+                new Vector2(92f, -4f),
+                new Vector2(164f, 164f),
+                true,
+                Color.white);
+
+            Text badgeText = CreateText(
+                "GachaResultTutorialGuideBadge",
+                resultTutorialGuideRoot.transform,
+                "TUTORIAL",
+                16,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(318f, -24f),
+                new Vector2(140f, 28f),
+                GoldTextColor);
+            badgeText.alignment = TextAnchor.MiddleLeft;
+
+            Text titleText = CreateText(
+                "GachaResultTutorialGuideTitle",
+                resultTutorialGuideRoot.transform,
+                "召喚に成功しました！",
+                28,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(560f, -62f),
+                new Vector2(620f, 42f),
+                new Color(1f, 0.96f, 0.78f, 1f));
+            titleText.alignment = TextAnchor.MiddleLeft;
+
+            Text bodyText = CreateText(
+                "GachaResultTutorialGuideBody",
+                resultTutorialGuideRoot.transform,
+                "仲間を呼び戻せました。\n次はホームで探索隊を編成します。",
+                20,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(560f, -116f),
+                new Vector2(620f, 70f),
+                PaleTextColor);
+            bodyText.alignment = TextAnchor.UpperLeft;
+            bodyText.resizeTextMinSize = 15;
+
+            Text footerText = CreateText(
+                "GachaResultTutorialGuideFooter",
+                resultTutorialGuideRoot.transform,
+                "次の操作: 左上の「ホームへ戻る」をタップ",
+                17,
+                FontStyle.Bold,
+                new Vector2(0f, 0f),
+                new Vector2(560f, 24f),
+                new Vector2(620f, 32f),
+                new Color(0.78f, 0.92f, 1f, 1f));
+            footerText.alignment = TextAnchor.MiddleLeft;
+
+            resultTutorialHomeHighlight = CreateTutorialImageFrame(
+                "GachaResultTutorialHomeHighlight",
+                resultHomeButton.transform,
+                HomeReturnButtonStyle.Size + new Vector2(34f, 30f));
+            resultTutorialHomeHighlight.raycastTarget = false;
+            resultTutorialHomeHighlight.transform.SetAsLastSibling();
+
+            resultTutorialGuideRoot.SetActive(false);
+            resultTutorialHomeHighlight.gameObject.SetActive(false);
         }
 
         private void StartContractEffect(List<MonsterDataSO> results, int requestedCount, int actualCount)
@@ -788,6 +1077,7 @@ namespace WitchTower.Home
             Sprite effectSprite = LoadSprite(GetEffectSpritePath(tier));
             if (effectSprite == null || effectCanvasGroup == null || effectImage == null || effectFlashImage == null || effectImageRect == null || resultStageRoot == null)
             {
+                AudioManager.Instance?.PlaySe(ResolveGachaRevealCue(tier));
                 SetStatus(resultText);
                 SetPullButtonsInteractable(true);
                 contractInProgress = false;
@@ -837,6 +1127,8 @@ namespace WitchTower.Home
             {
                 resultTitleText.text = GetEffectRevealTitle(tier);
             }
+
+            AudioManager.Instance?.PlaySe(ResolveGachaRevealCue(tier));
 
             if (resultSummaryText != null)
             {
@@ -907,8 +1199,107 @@ namespace WitchTower.Home
 
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             int normalizedCount = Mathf.Max(1, requestedCount);
+            bool isFirstSummonTutorial = profile != null &&
+                !profile.HasCompletedTutorial &&
+                profile.TutorialStepId == StoryTutorialService.StepFirstSummon;
+            if (isFirstSummonTutorial && (normalizedCount != 1 || usePaidStones))
+            {
+                return false;
+            }
+
             return GetAvailableMonsterStorageSlots(profile) >= normalizedCount &&
                 CanSpendGachaStones(profile, GetContractCost(normalizedCount), usePaidStones);
+        }
+
+        private void RefreshSummonTutorialGuide()
+        {
+            StoryTutorialEvent tutorialEvent = GetFirstSummonTutorialEvent();
+            bool shouldShow = tutorialEvent != null &&
+                !contractInProgress &&
+                contractHomeRoot != null &&
+                contractHomeRoot.activeInHierarchy;
+
+            if (ritePanelRoot != null)
+            {
+                ritePanelRoot.SetActive(!shouldShow);
+            }
+
+            SetSinglePullButtonBackgroundMuted(shouldShow);
+
+            if (summonTutorialGuideRoot != null)
+            {
+                summonTutorialGuideRoot.SetActive(shouldShow);
+                if (shouldShow)
+                {
+                    summonTutorialGuideRoot.transform.SetAsLastSibling();
+                }
+            }
+
+            if (summonTutorialGuideTitleText != null && shouldShow)
+            {
+                summonTutorialGuideTitleText.text = "ルシェの召喚案内";
+            }
+
+            if (summonTutorialGuideBodyText != null && shouldShow)
+            {
+                summonTutorialGuideBodyText.text = tutorialEvent.Body;
+            }
+
+            if (summonTutorialGuideFooterText != null && shouldShow)
+            {
+                summonTutorialGuideFooterText.text = "次の操作: 枠で囲まれた「1回 / 300個」をタップ";
+            }
+
+            if (summonTutorialSinglePullHighlight != null)
+            {
+                summonTutorialSinglePullHighlight.gameObject.SetActive(shouldShow);
+                if (shouldShow)
+                {
+                    summonTutorialSinglePullHighlight.transform.SetAsLastSibling();
+                }
+            }
+
+            if (shouldShow && singlePullButton != null)
+            {
+                singlePullButton.transform.SetAsLastSibling();
+            }
+        }
+
+        private static StoryTutorialEvent GetFirstSummonTutorialEvent()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "GachaScene");
+            if (tutorialEvent == null || !tutorialEvent.IsValid)
+            {
+                return null;
+            }
+
+            return tutorialEvent.StepId == StoryTutorialService.StepFirstSummon &&
+                string.Equals(tutorialEvent.TargetKey, "gacha.single_free", StringComparison.Ordinal)
+                    ? tutorialEvent
+                    : null;
+        }
+
+        private void AnimateSummonTutorialGuide()
+        {
+            if (summonTutorialGuideRoot == null || !summonTutorialGuideRoot.activeInHierarchy)
+            {
+                return;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.1f);
+            if (summonTutorialGuideCharacterImage != null)
+            {
+                float characterScale = Mathf.Lerp(0.985f, 1.035f, pulse);
+                summonTutorialGuideCharacterImage.rectTransform.localScale = new Vector3(characterScale, characterScale, 1f);
+            }
+
+            if (summonTutorialSinglePullHighlight != null && summonTutorialSinglePullHighlight.gameObject.activeSelf)
+            {
+                float frameScale = Mathf.Lerp(0.99f, 1.035f, pulse);
+                summonTutorialSinglePullHighlight.rectTransform.localScale = new Vector3(frameScale, frameScale, 1f);
+                summonTutorialSinglePullHighlight.color = new Color(1f, 1f, 1f, Mathf.Lerp(0.82f, 1f, pulse));
+            }
         }
 
         private void ReturnToContractHome()
@@ -935,22 +1326,81 @@ namespace WitchTower.Home
 
         private void SetResultButtonsVisible(bool visible)
         {
+            bool showTutorialGuide = visible && ShouldShowResultTutorialGuide();
             if (resultAgainButton != null)
             {
-                resultAgainButton.gameObject.SetActive(visible);
-                resultAgainButton.interactable = visible && CanRequestContract(lastRequestedCount, lastUsedPaidStones);
+                resultAgainButton.gameObject.SetActive(visible && !showTutorialGuide);
+                resultAgainButton.interactable = visible && !showTutorialGuide && CanRequestContract(lastRequestedCount, lastUsedPaidStones);
             }
 
             if (resultBackButton != null)
             {
-                resultBackButton.gameObject.SetActive(visible);
-                resultBackButton.interactable = visible;
+                resultBackButton.gameObject.SetActive(visible && !showTutorialGuide);
+                resultBackButton.interactable = visible && !showTutorialGuide;
             }
 
             if (resultHomeButton != null)
             {
                 resultHomeButton.gameObject.SetActive(visible);
                 resultHomeButton.interactable = visible;
+            }
+
+            RefreshResultTutorialGuide(showTutorialGuide);
+        }
+
+        private static bool ShouldShowResultTutorialGuide()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            return profile != null &&
+                !profile.HasCompletedTutorial &&
+                string.Equals(profile.TutorialStepId, StoryTutorialService.StepFirstExplorationIntro, StringComparison.Ordinal);
+        }
+
+        private void RefreshResultTutorialGuide(bool visible)
+        {
+            if (resultTutorialGuideRoot != null)
+            {
+                resultTutorialGuideRoot.SetActive(visible);
+                if (visible)
+                {
+                    resultTutorialGuideRoot.transform.SetAsLastSibling();
+                }
+            }
+
+            if (resultTutorialHomeHighlight != null)
+            {
+                resultTutorialHomeHighlight.gameObject.SetActive(visible);
+                if (visible)
+                {
+                    resultTutorialHomeHighlight.transform.SetAsLastSibling();
+                }
+            }
+
+            if (visible && resultHomeButton != null)
+            {
+                resultHomeButton.transform.SetAsLastSibling();
+            }
+        }
+
+        private void AnimateResultTutorialGuide()
+        {
+            if (resultTutorialGuideRoot == null || !resultTutorialGuideRoot.activeInHierarchy)
+            {
+                return;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.1f);
+            if (resultTutorialGuideCharacterImage != null)
+            {
+                float characterScale = Mathf.Lerp(0.985f, 1.035f, pulse);
+                resultTutorialGuideCharacterImage.rectTransform.localScale = new Vector3(characterScale, characterScale, 1f);
+            }
+
+            if (resultTutorialHomeHighlight != null && resultTutorialHomeHighlight.gameObject.activeSelf)
+            {
+                resultTutorialHomeHighlight.color = new Color(1f, 1f, 1f, Mathf.Lerp(0.72f, 1f, pulse));
+                float frameScale = Mathf.Lerp(0.99f, 1.035f, pulse);
+                resultTutorialHomeHighlight.rectTransform.localScale = new Vector3(frameScale, frameScale, 1f);
             }
         }
 
@@ -1383,6 +1833,19 @@ namespace WitchTower.Home
                     return RareEffectSpritePath;
                 default:
                     return NormalEffectSpritePath;
+            }
+        }
+
+        private static AudioCue ResolveGachaRevealCue(ContractEffectTier tier)
+        {
+            switch (tier)
+            {
+                case ContractEffectTier.Legendary:
+                    return AudioCue.GachaLegendaryReveal;
+                case ContractEffectTier.Rare:
+                    return AudioCue.GachaRareReveal;
+                default:
+                    return AudioCue.GachaReveal;
             }
         }
 

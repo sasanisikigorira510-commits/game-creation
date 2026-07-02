@@ -310,7 +310,8 @@ namespace WitchTower.Battle
 
         private static string BuildRewardDetailText(BattleResultViewData viewData)
         {
-            if (!viewData.IsWin)
+            bool hasRewardVisuals = viewData.RewardVisuals != null && viewData.RewardVisuals.Length > 0;
+            if (viewData.Gold <= 0 && viewData.Exp <= 0 && viewData.PartyMonsterExp <= 0 && !hasRewardVisuals)
             {
                 return "今回の獲得報酬はありません。\n強化・編成・装備を整えて再挑戦しましょう。";
             }
@@ -502,7 +503,7 @@ namespace WitchTower.Battle
             ClearRewardVisuals();
 
             BattleResultRewardVisual[] visuals = viewData.RewardVisuals;
-            if (!viewData.IsWin || visuals == null || visuals.Length == 0)
+            if (visuals == null || visuals.Length == 0)
             {
                 rewardVisualRoot.SetActive(false);
                 return;

@@ -1,0 +1,87 @@
+{
+    "PlayerLevel": 1,
+    "PlayerExp": 0,
+    "Gold": 100,
+    "FreeGachaStones": 0,
+    "PaidGachaStones": 0,
+    "HighestFloor": 0,
+    "CurrentFloor": 1,
+    "AttackUpgradeLevel": 0,
+    "DefenseUpgradeLevel": 0,
+    "HpUpgradeLevel": 0,
+    "HasAutoRepeatFloorUpgrade": false,
+    "AutoRepeatFloorUpgradeEnabledState": 0,
+    "LastDailyRewardDate": "",
+    "DailyQuestProgressDate": "2026-06-24",
+    "DailyBattleWinCount": 0,
+    "DailyClaimedQuestIds": [],
+    "LastActiveAt": "",
+    "MissionProgressList": [
+        {
+            "MissionId": "mission_clear_1",
+            "Progress": 0,
+            "IsClaimed": false
+        },
+        {
+            "MissionId": "mission_reach_floor_3",
+            "Progress": 0,
+            "IsClaimed": false
+        }
+    ],
+    "EquippedWeaponId": "",
+    "EquippedArmorId": "",
+    "EquippedAccessoryId": "",
+    "OwnedMaterials": [],
+    "OwnedEquipments": [],
+    "OwnedEnhancementRelics": [],
+    "EquipmentStorageLimit": 100,
+    "MonsterStorageLimit": 100,
+    "OwnedMonsters": [
+        {
+            "InstanceId": "monster_rock_golem_1f6e5c9232014e428b8d4c10ea66bc84",
+            "MonsterId": "monster_rock_golem",
+            "Level": 1,
+            "Exp": 0,
+            "PlusValue": 0,
+            "PlusHp": 0,
+            "PlusAttack": 0,
+            "PlusWisdom": 0,
+            "PlusDefense": 0,
+            "PlusMagicDefense": 0,
+            "FusionBonusHp": 0,
+            "FusionBonusAttack": 0,
+            "FusionBonusWisdom": 0,
+            "FusionBonusDefense": 0,
+            "FusionBonusMagicDefense": 0,
+            "FusionBonusAttackSpeed": 0.0,
+            "HasIndividualValues": true,
+            "IndividualHp": 64,
+            "IndividualAttack": 51,
+            "IndividualWisdom": 52,
+            "IndividualDefense": 47,
+            "IndividualMagicDefense": 42,
+            "IndividualAttackSpeed": 73,
+            "IsFavorite": false,
+            "IsLocked": false,
+            "AcquiredOrder": 1,
+            "EquippedWeaponInstanceId": "",
+            "EquippedArmorInstanceId": "",
+            "EquippedAccessoryInstanceId": ""
+        }
+    ],
+    "MonsterDexEntries": [
+        {
+            "MonsterId": "monster_rock_golem",
+            "IsUnlocked": true,
+            "OwnedCount": 1
+        }
+    ],
+    "PartyMonsterInstanceIds": [],
+    "SkillLevels": [],
+    "HasCompletedTutorial": false,
+    "TutorialStepId": "T02A",
+    "SeenStoryEventIds": [
+        "story_prologue_wakeup"
+    ],
+    "SeenTutorialHintIds": []
+}

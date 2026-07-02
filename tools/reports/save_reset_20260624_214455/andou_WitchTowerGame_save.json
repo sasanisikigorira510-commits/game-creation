@@ -1,0 +1,137 @@
+{
+    "PlayerLevel": 1,
+    "PlayerExp": 0,
+    "Gold": 100,
+    "FreeGachaStones": 0,
+    "PaidGachaStones": 0,
+    "HighestFloor": 0,
+    "CurrentFloor": 1,
+    "AttackUpgradeLevel": 0,
+    "DefenseUpgradeLevel": 0,
+    "HpUpgradeLevel": 0,
+    "HasAutoRepeatFloorUpgrade": false,
+    "AutoRepeatFloorUpgradeEnabledState": 0,
+    "LastDailyRewardDate": "",
+    "DailyQuestProgressDate": "2026-06-24",
+    "DailyBattleWinCount": 0,
+    "DailyClaimedQuestIds": [],
+    "LastActiveAt": "2026-06-23T17:26:52.1025410+09:00",
+    "MissionProgressList": [
+        {
+            "MissionId": "mission_clear_1",
+            "Progress": 0,
+            "IsClaimed": false
+        },
+        {
+            "MissionId": "mission_reach_floor_3",
+            "Progress": 0,
+            "IsClaimed": false
+        }
+    ],
+    "EquippedWeaponId": "",
+    "EquippedArmorId": "",
+    "EquippedAccessoryId": "equip_apprentice_charm",
+    "OwnedMaterials": [],
+    "OwnedEquipments": [
+        {
+            "InstanceId": "tutorial_gift_equipment_84a03d83cc3c428b974cfb03456719e2",
+            "EquipmentId": "equip_apprentice_charm",
+            "UpgradeLevel": 1,
+            "EnhancementBonusRate": 0.05000000074505806,
+            "QualityRank": 1,
+            "RemainingEnhanceAttempts": 4,
+            "MaxEnhanceAttempts": 5,
+            "IsEquipped": true,
+            "IsLocked": false,
+            "EquippedMonsterInstanceId": "monster_apprentice_swordsman_040b3e69ca8d44ddaf0ec4b3416b8ee9",
+            "HasRolledStats": true,
+            "RolledAttack": 0,
+            "RolledWisdom": 2,
+            "RolledDefense": 0,
+            "RolledMagicDefense": 2,
+            "RolledHp": 4,
+            "RolledCritRate": 0.009999999776482582,
+            "RolledAttackSpeed": 0.019999999552965165,
+            "EnhancementAttackFlat": 0,
+            "EnhancementWisdomFlat": 0,
+            "EnhancementDefenseFlat": 0,
+            "EnhancementMagicDefenseFlat": 0,
+            "EnhancementHpFlat": 0,
+            "EnhancementCritRateFlat": 0.0020000000949949028,
+            "EnhancementAttackSpeedFlat": 0.0020000000949949028
+        }
+    ],
+    "OwnedEnhancementRelics": [
+        {
+            "RelicId": "relic_safe_ember",
+            "Amount": 0
+        }
+    ],
+    "EquipmentStorageLimit": 100,
+    "MonsterStorageLimit": 100,
+    "OwnedMonsters": [
+        {
+            "InstanceId": "monster_apprentice_swordsman_040b3e69ca8d44ddaf0ec4b3416b8ee9",
+            "MonsterId": "monster_apprentice_swordsman",
+            "Level": 1,
+            "Exp": 0,
+            "PlusValue": 0,
+            "PlusHp": 0,
+            "PlusAttack": 0,
+            "PlusWisdom": 0,
+            "PlusDefense": 0,
+            "PlusMagicDefense": 0,
+            "FusionBonusHp": 0,
+            "FusionBonusAttack": 0,
+            "FusionBonusWisdom": 0,
+            "FusionBonusDefense": 0,
+            "FusionBonusMagicDefense": 0,
+            "FusionBonusAttackSpeed": 0.0,
+            "HasIndividualValues": true,
+            "IndividualHp": 69,
+            "IndividualAttack": 13,
+            "IndividualWisdom": 64,
+            "IndividualDefense": 82,
+            "IndividualMagicDefense": 28,
+            "IndividualAttackSpeed": 27,
+            "IsFavorite": false,
+            "IsLocked": false,
+            "AcquiredOrder": 1,
+            "EquippedWeaponInstanceId": "",
+            "EquippedArmorInstanceId": "",
+            "EquippedAccessoryInstanceId": "tutorial_gift_equipment_84a03d83cc3c428b974cfb03456719e2"
+        }
+    ],
+    "MonsterDexEntries": [
+        {
+            "MonsterId": "monster_apprentice_swordsman",
+            "IsUnlocked": true,
+            "OwnedCount": 1
+        }
+    ],
+    "PartyMonsterInstanceIds": [
+        "monster_apprentice_swordsman_040b3e69ca8d44ddaf0ec4b3416b8ee9",
+        "",
+        "",
+        "",
+        ""
+    ],
+    "SkillLevels": [],
+    "HasCompletedTutorial": false,
+    "TutorialStepId": "T06",
+    "SeenStoryEventIds": [
+        "story_prologue_wakeup",
+        "story_first_exploration_intro",
+        "story_first_summon_done",
+        "story_first_battle_win",
+        "story_first_equipment_enhance"
+    ],
+    "SeenTutorialHintIds": [
+        "tutorial_equipment_gift_received",
+        "tutorial_equipment",
+        "tutorial_equipment_enhance_relic_received",
+        "tutorial_equipment_enhance",
+        "tutorial_dex",
+        "tutorial_shop"
+    ]
+}

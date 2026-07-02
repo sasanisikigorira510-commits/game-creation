@@ -101,6 +101,16 @@ namespace WitchTower.Data
             return CreateOwnedEquipmentInstance(equipmentId, ((int)quality) + 1) != null;
         }
 
+        public OwnedEquipmentData AddOwnedEquipmentWithInstancePrefix(string equipmentId, EquipmentRarity quality, string instanceIdPrefix)
+        {
+            if (!HasEquipmentStorageSpace())
+            {
+                return null;
+            }
+
+            return CreateOwnedEquipmentInstance(equipmentId, ((int)quality) + 1, instanceIdPrefix);
+        }
+
         public bool EquipEquipmentToMonster(string monsterInstanceId, string equipmentInstanceId)
         {
             OwnedMonsterData monster = GetOwnedMonster(monsterInstanceId);
@@ -216,7 +226,7 @@ namespace WitchTower.Data
         {
             OwnedEquipmentData equipment = GetOwnedEquipmentByInstanceId(equipmentInstanceId);
             EquipmentDataSO equipmentData = equipment != null ? MasterDataManager.Instance?.GetEquipmentData(equipment.EquipmentId) : null;
-            EquipmentEnhancementCatalog.SyncRolledStatsFromMaster(equipmentData, equipment);
+            EquipmentEnhancementCatalog.EnsureRolledStats(equipmentData, equipment, EnhancementRandom);
             EnhancementRelicDefinition relic = EquipmentEnhancementCatalog.GetRelic(relicId);
             var result = new EquipmentEnhancementResult
             {
@@ -262,9 +272,9 @@ namespace WitchTower.Data
 
         partial void InitializeEquipmentState(PlayerSaveData saveData)
         {
-            legacyEquippedWeaponId = string.IsNullOrEmpty(saveData.EquippedWeaponId) ? "equip_bronze_blade" : saveData.EquippedWeaponId;
-            legacyEquippedArmorId = string.IsNullOrEmpty(saveData.EquippedArmorId) ? "equip_guard_cloth" : saveData.EquippedArmorId;
-            legacyEquippedAccessoryId = string.IsNullOrEmpty(saveData.EquippedAccessoryId) ? "equip_ashen_ring" : saveData.EquippedAccessoryId;
+            legacyEquippedWeaponId = saveData.EquippedWeaponId ?? string.Empty;
+            legacyEquippedArmorId = saveData.EquippedArmorId ?? string.Empty;
+            legacyEquippedAccessoryId = saveData.EquippedAccessoryId ?? string.Empty;
 
             foreach (OwnedEquipmentData equipment in OwnedEquipments)
             {
@@ -320,10 +330,10 @@ namespace WitchTower.Data
                 equipment.EnhancementHpFlat = Math.Max(0, equipment.EnhancementHpFlat);
                 equipment.EnhancementCritRateFlat = Math.Max(0f, equipment.EnhancementCritRateFlat);
                 equipment.EnhancementAttackSpeedFlat = Math.Max(0f, equipment.EnhancementAttackSpeedFlat);
-                EquipmentEnhancementCatalog.SyncRolledStatsFromMaster(equipmentData, equipment);
+                EquipmentEnhancementCatalog.EnsureRolledStats(equipmentData, equipment, EnhancementRandom);
+                EquipmentStatRollService.EnsureRolledStatFloors(equipmentData, equipment);
             }
 
-            EnsureAllEquipmentOwnedForPreview();
             if (EquipmentStorageLimit < OwnedEquipments.Count)
             {
                 EquipmentStorageLimit = OwnedEquipments.Count;
@@ -340,13 +350,6 @@ namespace WitchTower.Data
                 SyncEquipmentOwnershipFromMonsterSlot(monster, EquipmentSlotType.Accessory);
             }
 
-            if (OwnedEnhancementRelics.Count == 0)
-            {
-                OwnedEnhancementRelics.Add(new OwnedEnhancementRelicData { RelicId = "relic_safe_ember", Amount = 24 });
-                OwnedEnhancementRelics.Add(new OwnedEnhancementRelicData { RelicId = "relic_risky_ember", Amount = 12 });
-                OwnedEnhancementRelics.Add(new OwnedEnhancementRelicData { RelicId = "relic_volatile_ember", Amount = 6 });
-            }
-
             if (!OwnedMonsters.Any(x => x != null && (!string.IsNullOrEmpty(x.EquippedWeaponInstanceId) || !string.IsNullOrEmpty(x.EquippedArmorInstanceId) || !string.IsNullOrEmpty(x.EquippedAccessoryInstanceId))))
             {
                 TryEquipLegacyRepresentative(EquipmentSlotType.Weapon, legacyEquippedWeaponId);
@@ -356,25 +359,6 @@ namespace WitchTower.Data
 
             SyncLegacyRepresentativeEquipmentIds();
             SyncEquippedFlags();
-        }
-
-        private void EnsureAllEquipmentOwnedForPreview()
-        {
-            EquipmentDataSO[] allEquipmentData = MasterDataManager.Instance?.GetAllEquipmentData();
-            if (allEquipmentData == null)
-            {
-                return;
-            }
-
-            foreach (EquipmentDataSO equipmentData in allEquipmentData)
-            {
-                if (equipmentData == null || string.IsNullOrEmpty(equipmentData.equipmentId) || HasEquipment(equipmentData.equipmentId))
-                {
-                    continue;
-                }
-
-                CreateOwnedEquipmentInstance(equipmentData.equipmentId, EquipmentEnhancementCatalog.ResolveQualityRank(equipmentData));
-            }
         }
 
         partial void SyncLegacyRepresentativeEquipmentIds()
@@ -401,7 +385,7 @@ namespace WitchTower.Data
             if (equipment != null) EquipEquipmentToMonster(representative.InstanceId, equipment.InstanceId);
         }
 
-        private OwnedEquipmentData CreateOwnedEquipmentInstance(string equipmentId, int qualityRank = 0)
+        private OwnedEquipmentData CreateOwnedEquipmentInstance(string equipmentId, int qualityRank = 0, string instanceIdPrefix = "")
         {
             if (string.IsNullOrEmpty(equipmentId)) return null;
             EquipmentDataSO equipmentData = MasterDataManager.Instance?.GetEquipmentData(equipmentId);
@@ -409,9 +393,10 @@ namespace WitchTower.Data
                 ? Math.Min(5, Math.Max(1, qualityRank))
                 : EquipmentEnhancementCatalog.ResolveQualityRank(equipmentData);
             int maxEnhanceAttempts = EquipmentEnhancementCatalog.ResolveMaxEnhanceAttempts(equipmentData, new OwnedEquipmentData { QualityRank = resolvedQualityRank });
+            string resolvedInstanceIdPrefix = string.IsNullOrEmpty(instanceIdPrefix) ? equipmentId + "_" : instanceIdPrefix;
             var equipment = new OwnedEquipmentData
             {
-                InstanceId = equipmentId + "_" + Guid.NewGuid().ToString("N"),
+                InstanceId = resolvedInstanceIdPrefix + Guid.NewGuid().ToString("N"),
                 EquipmentId = equipmentId,
                 UpgradeLevel = 0,
                 EnhancementBonusRate = 0f,
@@ -429,7 +414,8 @@ namespace WitchTower.Data
                 IsLocked = false,
                 EquippedMonsterInstanceId = string.Empty
             };
-            EquipmentEnhancementCatalog.SyncRolledStatsFromMaster(equipmentData, equipment);
+            EquipmentEnhancementCatalog.EnsureRolledStats(equipmentData, equipment, EnhancementRandom);
+            EquipmentStatRollService.EnsureRolledStatFloors(equipmentData, equipment);
             OwnedEquipments.Add(equipment);
             return equipment;
         }

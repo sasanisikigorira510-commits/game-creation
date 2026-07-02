@@ -107,7 +107,7 @@ namespace WitchTower.Formation
         private const int MaxPartySize = 5;
         private const int DefaultStorageLimit = 100;
         private const int PlusPreviewTotalValue = 15;
-        private const string PlusPreviewMonsterInstanceId = "formation_plus_preview_15";
+        private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
         private const int GridColumnCount = 4;
         private const float RosterPanelWidth = 1000f;
         private const float RosterPanelTopInset = 870f;
@@ -221,6 +221,12 @@ namespace WitchTower.Formation
         private Text bulkReleaseExecuteLabel;
         private Text bulkReleaseStatusLabel;
         private Text emptyStateLabel;
+        private GameObject formationTutorialGuidePanel;
+        private Image formationTutorialGuideCharacter;
+        private Text formationTutorialGuideTitle;
+        private Text formationTutorialGuideBody;
+        private GameObject formationTutorialReturnFocusRoot;
+        private Text formationTutorialReturnPromptText;
         private GameObject bulkReleasePanel;
         private Font runtimeFont;
         private bool scaffoldCreated;
@@ -231,6 +237,7 @@ namespace WitchTower.Formation
         private bool bulkReleaseModeActive;
         private bool bulkReleaseConfirmArmed;
         private int activeSlotIndex;
+        private readonly List<Image> formationTutorialPulseImages = new List<Image>();
 
         private void OnEnable()
         {
@@ -263,6 +270,9 @@ namespace WitchTower.Formation
             {
                 return;
             }
+
+            AnimateFormationTutorialGuide();
+            EnsureFormationTutorialSelectionButtonFocusVisible();
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
@@ -343,6 +353,13 @@ namespace WitchTower.Formation
                 return;
             }
 
+            if (Application.isPlaying && IsFirstFormationTutorial(GameManager.Instance?.PlayerProfile))
+            {
+                EnsureSelectedSlotCapacity();
+                activeSlotIndex = 0;
+                return;
+            }
+
             SeedFallbackRoster();
         }
 
@@ -355,16 +372,25 @@ namespace WitchTower.Formation
                 return false;
             }
 
-            BootstrapPrototypeOwnedMonsters(profile, masterDataManager);
             if (profile.OwnedMonsters == null || profile.OwnedMonsters.Count == 0)
             {
                 return false;
             }
 
+            bool isFirstFormationTutorial = IsFirstFormationTutorial(profile);
+            OwnedMonsterData tutorialMonster = isFirstFormationTutorial
+                ? ResolveFirstFormationTutorialMonster(profile)
+                : null;
             var entryLookup = new Dictionary<string, MonsterEntry>();
             foreach (var ownedMonster in profile.OwnedMonsters)
             {
                 if (ownedMonster == null || string.IsNullOrEmpty(ownedMonster.MonsterId))
+                {
+                    continue;
+                }
+
+                if (tutorialMonster != null &&
+                    !string.Equals(ownedMonster.InstanceId, tutorialMonster.InstanceId, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -396,102 +422,75 @@ namespace WitchTower.Formation
             roster.Sort(CompareByAcquired);
 
             EnsureSelectedSlotCapacity();
-            for (int i = 0; i < MaxPartySize; i += 1)
+            if (!isFirstFormationTutorial)
             {
-                string instanceId = profile.PartyMonsterInstanceIds != null && i < profile.PartyMonsterInstanceIds.Count
-                    ? profile.PartyMonsterInstanceIds[i]
-                    : string.Empty;
-                if (!string.IsNullOrEmpty(instanceId) && entryLookup.TryGetValue(instanceId, out MonsterEntry entry))
+                for (int i = 0; i < MaxPartySize; i += 1)
                 {
-                    selectedMonsters[i] = entry;
+                    string instanceId = profile.PartyMonsterInstanceIds != null && i < profile.PartyMonsterInstanceIds.Count
+                        ? profile.PartyMonsterInstanceIds[i]
+                        : string.Empty;
+                    if (!string.IsNullOrEmpty(instanceId) && entryLookup.TryGetValue(instanceId, out MonsterEntry entry))
+                    {
+                        selectedMonsters[i] = entry;
+                    }
+                }
+
+                if (CountSelectedSlots() == 0)
+                {
+                    for (int i = 0; i < roster.Count && i < MaxPartySize; i++)
+                    {
+                        selectedMonsters[i] = roster[i];
+                    }
                 }
             }
 
-            if (CountSelectedSlots() == 0)
-            {
-                for (int i = 0; i < roster.Count && i < MaxPartySize; i++)
-                {
-                    selectedMonsters[i] = roster[i];
-                }
-            }
-
-            activeSlotIndex = ResolveDefaultActiveSlotIndex();
+            activeSlotIndex = isFirstFormationTutorial ? 0 : ResolveDefaultActiveSlotIndex();
             return roster.Count > 0;
         }
 
-        private void BootstrapPrototypeOwnedMonsters(PlayerProfile profile, MasterDataManager masterDataManager)
+        private static bool IsFirstFormationTutorial(PlayerProfile profile)
         {
-            if (profile == null || masterDataManager == null)
-            {
-                return;
-            }
-
-            if (PrototypePartyBootstrapService.EnsureParty(profile, MaxPartySize))
-            {
-                SaveManager.Instance?.SaveCurrentGame();
-            }
-
-            if (EnsurePlusPreviewMonster(profile, masterDataManager))
-            {
-                SaveManager.Instance?.SaveCurrentGame();
-            }
+            return profile != null &&
+                !profile.HasCompletedTutorial &&
+                profile.TutorialStepId == StoryTutorialService.StepFirstFormation;
         }
 
-        private static bool EnsurePlusPreviewMonster(PlayerProfile profile, MasterDataManager masterDataManager)
+        private static bool IsFormationReturnHomeTutorial(PlayerProfile profile, StoryTutorialEvent tutorialEvent)
         {
-            if (profile?.OwnedMonsters == null || masterDataManager == null)
-            {
-                return false;
-            }
-
-            OwnedMonsterData existingPreview = profile.GetOwnedMonster(PlusPreviewMonsterInstanceId);
-            if (existingPreview != null)
-            {
-                return NormalizePlusPreviewMonster(existingPreview);
-            }
-
-            MonsterDataSO monsterData = masterDataManager.GetMonsterData(MonsterFusionCatalog.SeraphMichaelId);
-            if (monsterData == null)
-            {
-                return false;
-            }
-
-            OwnedMonsterData previewMonster = profile.AddOwnedMonster(
-                monsterData.monsterId,
-                MonsterLevelService.GetMaxLevel(monsterData));
-            if (previewMonster == null)
-            {
-                return false;
-            }
-
-            previewMonster.InstanceId = PlusPreviewMonsterInstanceId;
-            previewMonster.IsFavorite = true;
-            NormalizePlusPreviewMonster(previewMonster);
-            return true;
+            return profile != null &&
+                !profile.HasCompletedTutorial &&
+                profile.TutorialStepId == StoryTutorialService.StepOpenBattle &&
+                tutorialEvent != null &&
+                tutorialEvent.IsValid &&
+                string.Equals(tutorialEvent.TargetKey, "formation.return_home", StringComparison.Ordinal);
         }
 
-        private static bool NormalizePlusPreviewMonster(OwnedMonsterData monster)
+        private static OwnedMonsterData ResolveFirstFormationTutorialMonster(PlayerProfile profile)
         {
-            if (monster == null)
+            if (profile?.OwnedMonsters == null)
             {
-                return false;
+                return null;
             }
 
-            bool changed =
-                monster.PlusValue != PlusPreviewTotalValue ||
-                monster.PlusHp != PlusPreviewTotalValue ||
-                monster.PlusAttack != PlusPreviewTotalValue ||
-                monster.PlusWisdom != PlusPreviewTotalValue ||
-                monster.PlusDefense != PlusPreviewTotalValue ||
-                monster.PlusMagicDefense != PlusPreviewTotalValue;
+            OwnedMonsterData firstAcquired = null;
+            for (int i = 0; i < profile.OwnedMonsters.Count; i += 1)
+            {
+                OwnedMonsterData candidate = profile.OwnedMonsters[i];
+                if (candidate == null || string.IsNullOrEmpty(candidate.InstanceId))
+                {
+                    continue;
+                }
 
-            monster.PlusValue = PlusPreviewTotalValue;
-            monster.PlusHp = PlusPreviewTotalValue;
-            monster.PlusAttack = PlusPreviewTotalValue;
-            monster.PlusWisdom = PlusPreviewTotalValue;
-            monster.PlusDefense = PlusPreviewTotalValue;
-            monster.PlusMagicDefense = PlusPreviewTotalValue;
-            return changed;
+                if (firstAcquired == null ||
+                    candidate.AcquiredOrder < firstAcquired.AcquiredOrder ||
+                    candidate.AcquiredOrder == firstAcquired.AcquiredOrder &&
+                    string.CompareOrdinal(candidate.InstanceId, firstAcquired.InstanceId) < 0)
+                {
+                    firstAcquired = candidate;
+                }
+            }
+
+            return firstAcquired;
         }
 
         private static string GetPortraitResourcePath(MonsterDataSO monsterData)
@@ -717,6 +716,7 @@ namespace WitchTower.Formation
                 new Vector2(0f, 0f), new Vector2(480f, 40f), TextAnchor.MiddleCenter,
                 new Color(0.86f, 0.91f, 0.96f, 0.88f));
 
+            EnsureFormationTutorialGuide(root.transform);
             ApplyScaffoldLayout(root.transform);
             scaffoldCreated = true;
         }
@@ -734,6 +734,7 @@ namespace WitchTower.Formation
             Transform root = rootObject.transform;
             Transform selectedPanel = root.Find("SelectedPanel");
             EnsureSelectedPanelRoleGuides(selectedPanel);
+            EnsureFormationTutorialGuide(root);
 
             summaryText = FindText(root, "FormationHeader/SummaryText");
             sortModeLabel = FindText(root, "ControlPanel/SortButton/Label");
@@ -1711,6 +1712,293 @@ namespace WitchTower.Formation
             return entry != null && selectedMonsters.Contains(entry);
         }
 
+        private void EnsureFormationTutorialGuide(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Transform existing = root.Find("FormationTutorialGuidePanel");
+            formationTutorialGuidePanel = existing != null
+                ? existing.gameObject
+                : CreatePanel(
+                    "FormationTutorialGuidePanel",
+                    root,
+                    new Vector2(0.5f, 0f),
+                    new Vector2(0.5f, 0f),
+                    new Vector2(0.5f, 0f),
+                    new Vector2(0f, 190f),
+                    new Vector2(980f, 250f),
+                    new Color(0.018f, 0.032f, 0.052f, 0.97f));
+
+            Image panelImage = formationTutorialGuidePanel.GetComponent<Image>();
+            if (panelImage == null)
+            {
+                panelImage = formationTutorialGuidePanel.AddComponent<Image>();
+            }
+            panelImage.color = new Color(0.018f, 0.032f, 0.052f, 0.97f);
+            panelImage.raycastTarget = false;
+            AddUiOutline(formationTutorialGuidePanel, new Color(1f, 0.72f, 0.20f, 0.90f), new Vector2(3f, -3f));
+
+            formationTutorialGuideCharacter = FindImage(formationTutorialGuidePanel.transform, "GuideCharacter");
+            if (formationTutorialGuideCharacter == null)
+            {
+                GameObject characterObject = CreateUiObject("GuideCharacter", formationTutorialGuidePanel.transform);
+                RectTransform characterRect = characterObject.GetComponent<RectTransform>();
+                characterRect.anchorMin = new Vector2(0f, 0.5f);
+                characterRect.anchorMax = new Vector2(0f, 0.5f);
+                characterRect.pivot = new Vector2(0.5f, 0.5f);
+                characterRect.anchoredPosition = new Vector2(122f, -2f);
+                characterRect.sizeDelta = new Vector2(220f, 220f);
+                formationTutorialGuideCharacter = characterObject.AddComponent<Image>();
+            }
+            formationTutorialGuideCharacter.sprite = LoadPortrait(TutorialGuideSpritePath);
+            formationTutorialGuideCharacter.preserveAspect = true;
+            formationTutorialGuideCharacter.raycastTarget = false;
+
+            formationTutorialGuideTitle = FindText(formationTutorialGuidePanel.transform, "GuideTitle");
+            if (formationTutorialGuideTitle == null)
+            {
+                formationTutorialGuideTitle = CreateText(
+                    "GuideTitle",
+                    formationTutorialGuidePanel.transform,
+                    runtimeFont,
+                    string.Empty,
+                    28,
+                    FontStyle.Bold,
+                    new Vector2(0f, 0.5f),
+                    new Vector2(0f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(590f, 70f),
+                    new Vector2(690f, 46f),
+                    TextAnchor.MiddleCenter,
+                    new Color(1f, 0.90f, 0.56f, 1f));
+            }
+
+            formationTutorialGuideBody = FindText(formationTutorialGuidePanel.transform, "GuideBody");
+            if (formationTutorialGuideBody == null)
+            {
+                formationTutorialGuideBody = CreateText(
+                    "GuideBody",
+                    formationTutorialGuidePanel.transform,
+                    runtimeFont,
+                    string.Empty,
+                    21,
+                    FontStyle.Bold,
+                    new Vector2(0f, 0.5f),
+                    new Vector2(0f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(590f, -30f),
+                    new Vector2(690f, 136f),
+                    TextAnchor.MiddleCenter,
+                    new Color(0.94f, 0.97f, 1f, 1f));
+                formationTutorialGuideBody.resizeTextForBestFit = true;
+                formationTutorialGuideBody.resizeTextMinSize = 16;
+                formationTutorialGuideBody.resizeTextMaxSize = 21;
+                formationTutorialGuideBody.verticalOverflow = VerticalWrapMode.Truncate;
+            }
+
+            formationTutorialGuidePanel.SetActive(false);
+        }
+
+        private void RefreshFormationTutorialGuide(StoryTutorialEvent tutorialEvent, bool visible)
+        {
+            GameObject rootObject = GameObject.Find("FormationUiRoot");
+            if (formationTutorialGuidePanel == null && rootObject != null)
+            {
+                EnsureFormationTutorialGuide(rootObject.transform);
+            }
+
+            if (formationTutorialGuidePanel == null)
+            {
+                return;
+            }
+
+            formationTutorialGuidePanel.SetActive(visible);
+            if (!visible)
+            {
+                return;
+            }
+
+            if (formationTutorialGuideTitle != null)
+            {
+                formationTutorialGuideTitle.text = tutorialEvent?.Title ?? "探索隊編成";
+            }
+            if (formationTutorialGuideBody != null)
+            {
+                formationTutorialGuideBody.text = tutorialEvent?.Body ?? string.Empty;
+            }
+
+            formationTutorialGuidePanel.transform.SetAsLastSibling();
+        }
+
+        private void SetFormationTutorialReturnFocusVisible(bool visible)
+        {
+            if (!visible)
+            {
+                if (formationTutorialReturnFocusRoot != null)
+                {
+                    formationTutorialReturnFocusRoot.SetActive(false);
+                }
+
+                return;
+            }
+
+            EnsureFormationTutorialReturnFocus();
+            if (formationTutorialReturnFocusRoot == null)
+            {
+                return;
+            }
+
+            formationTutorialReturnFocusRoot.SetActive(true);
+            formationTutorialReturnFocusRoot.transform.SetAsLastSibling();
+            Transform returnButton = formationTutorialReturnFocusRoot.transform.parent;
+            if (returnButton != null)
+            {
+                returnButton.SetAsLastSibling();
+            }
+
+            RegisterFormationTutorialPulseImages(formationTutorialReturnFocusRoot);
+        }
+
+        private void EnsureFormationTutorialReturnFocus()
+        {
+            if (formationTutorialReturnFocusRoot != null)
+            {
+                return;
+            }
+
+            GameObject rootObject = GameObject.Find("FormationUiRoot");
+            Transform returnButton = rootObject != null ? rootObject.transform.Find("ReturnButton") : null;
+            if (returnButton == null)
+            {
+                return;
+            }
+
+            Font font = runtimeFont != null ? runtimeFont : GetRuntimeFont();
+            formationTutorialReturnFocusRoot = CreateUiObject("FormationTutorialReturnFocus", returnButton);
+            RectTransform rootRect = formationTutorialReturnFocusRoot.GetComponent<RectTransform>();
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
+
+            AddFormationTutorialFocusBar(formationTutorialReturnFocusRoot.transform, "ReturnTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -3f), new Vector2(-8f, 6f));
+            AddFormationTutorialFocusBar(formationTutorialReturnFocusRoot.transform, "ReturnBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 3f), new Vector2(-8f, 6f));
+            AddFormationTutorialFocusBar(formationTutorialReturnFocusRoot.transform, "ReturnLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(3f, 0f), new Vector2(6f, -8f));
+            AddFormationTutorialFocusBar(formationTutorialReturnFocusRoot.transform, "ReturnRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-3f, 0f), new Vector2(6f, -8f));
+
+            formationTutorialReturnPromptText = CreateText(
+                "FormationTutorialReturnPrompt",
+                formationTutorialReturnFocusRoot.transform,
+                font,
+                "ここを押す",
+                18,
+                FontStyle.Bold,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -10f),
+                new Vector2(230f, 28f),
+                TextAnchor.MiddleCenter,
+                new Color(1f, 0.92f, 0.55f, 1f));
+            formationTutorialReturnPromptText.resizeTextForBestFit = true;
+            formationTutorialReturnPromptText.resizeTextMinSize = 13;
+            formationTutorialReturnPromptText.resizeTextMaxSize = 18;
+            formationTutorialReturnPromptText.raycastTarget = false;
+        }
+
+        private void AddFormationTutorialFocusBar(
+            Transform parent,
+            string suffix,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 pivot,
+            Vector2 anchoredPosition,
+            Vector2 sizeDelta)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            GameObject barObject = CreateUiObject("FormationTutorialFocus" + suffix, parent);
+            RectTransform rect = barObject.GetComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = pivot;
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = sizeDelta;
+
+            Image image = barObject.AddComponent<Image>();
+            image.color = new Color(1f, 0.82f, 0.18f, 0.96f);
+            image.raycastTarget = false;
+            formationTutorialPulseImages.Add(image);
+        }
+
+        private void RegisterFormationTutorialPulseImages(GameObject root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Image[] images = root.GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < images.Length; i += 1)
+            {
+                Image image = images[i];
+                if (image != null && !formationTutorialPulseImages.Contains(image))
+                {
+                    formationTutorialPulseImages.Add(image);
+                }
+            }
+        }
+
+        private void AnimateFormationTutorialGuide()
+        {
+            bool guideVisible = formationTutorialGuidePanel != null && formationTutorialGuidePanel.activeInHierarchy;
+            if (!guideVisible && formationTutorialPulseImages.Count <= 0)
+            {
+                return;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.4f);
+            Color pulseColor = new Color(1f, Mathf.Lerp(0.48f, 0.96f, pulse), Mathf.Lerp(0.04f, 0.16f, pulse), Mathf.Lerp(0.78f, 1f, pulse));
+            for (int i = 0; i < formationTutorialPulseImages.Count; i += 1)
+            {
+                Image image = formationTutorialPulseImages[i];
+                if (image != null)
+                {
+                    image.color = pulseColor;
+                }
+            }
+
+            if (formationTutorialGuideCharacter != null && formationTutorialGuideCharacter.gameObject.activeInHierarchy)
+            {
+                float scale = Mathf.Lerp(0.985f, 1.035f, pulse);
+                formationTutorialGuideCharacter.rectTransform.localScale = new Vector3(scale, scale, 1f);
+            }
+        }
+
+        private static void SetFormationTutorialControlsVisible(bool visible)
+        {
+            GameObject rootObject = GameObject.Find("FormationUiRoot");
+            Transform root = rootObject != null ? rootObject.transform : null;
+            SetNamedObjectVisible(root, "ControlPanel/BulkReleaseToggleButton", visible);
+            SetNamedObjectVisible(root, "ControlPanel/FilterButton", visible);
+            SetNamedObjectVisible(root, "ControlPanel/SortButton", visible);
+        }
+
+        private static void SetNamedObjectVisible(Transform root, string path, bool visible)
+        {
+            Transform target = root != null ? root.Find(path) : null;
+            if (target != null)
+            {
+                target.gameObject.SetActive(visible);
+            }
+        }
+
         private void RefreshView()
         {
             if (!scaffoldCreated)
@@ -1718,14 +2006,26 @@ namespace WitchTower.Formation
                 return;
             }
 
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "FormationScene");
+            bool isFirstFormationTutorial = IsFirstFormationTutorial(profile) &&
+                tutorialEvent != null &&
+                tutorialEvent.IsValid;
+            bool isReturnHomeTutorial = IsFormationReturnHomeTutorial(profile, tutorialEvent);
+            bool showTutorialGuide = isFirstFormationTutorial || isReturnHomeTutorial;
+
             if (summaryText != null)
             {
-                PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-                StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "FormationScene");
-                summaryText.text = tutorialEvent != null && tutorialEvent.IsValid
-                    ? tutorialEvent.Body
+                summaryText.text = isReturnHomeTutorial
+                    ? "編成完了。ホームへ戻って最初の探索へ向かいましょう"
+                    : isFirstFormationTutorial
+                    ? "案内役の説明に沿って、最初の探索隊を編成しましょう"
                     : $"保有 {roster.Count}/{GetStorageLimit()}   出撃 {CountSelectedSlots()}/{MaxPartySize}";
             }
+
+            RefreshFormationTutorialGuide(tutorialEvent, showTutorialGuide);
+            SetFormationTutorialControlsVisible(!showTutorialGuide);
+            SetFormationTutorialReturnFocusVisible(isReturnHomeTutorial);
 
             if (sortModeLabel != null)
             {
@@ -1745,9 +2045,22 @@ namespace WitchTower.Formation
         private void RefreshSelectedSlots()
         {
             EnsureSelectedSlotCapacity();
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "FormationScene");
+            bool isReturnHomeTutorial = IsFormationReturnHomeTutorial(profile, tutorialEvent);
             for (int i = 0; i < slotViews.Count; i++)
             {
                 FormationSlotView view = slotViews[i];
+                if (view.Button != null)
+                {
+                    view.Button.interactable = !isReturnHomeTutorial;
+                }
+
+                if (view.StatusActionButton != null)
+                {
+                    view.StatusActionButton.interactable = !isReturnHomeTutorial;
+                }
+
                 MonsterEntry entry = i < selectedMonsters.Count ? selectedMonsters[i] : null;
                 bool isActiveSlot = i == activeSlotIndex;
                 ApplySlotRoleStyle(view, i, entry != null || isActiveSlot);
@@ -2057,6 +2370,10 @@ namespace WitchTower.Formation
             bool isSelected = IsRosterEntrySelected(entry);
             bool isBulkSelected = IsBulkReleaseEntrySelected(entry);
             bool canBulkSelect = CanBulkReleaseSelect(entry);
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "FormationScene");
+            bool isFirstFormationTutorial = IsFirstFormationTutorial(profile);
+            bool isReturnHomeTutorial = IsFormationReturnHomeTutorial(profile, tutorialEvent);
 
             GameObject card = CreatePanel("Card_" + entry.InstanceId, rosterContent,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
@@ -2076,8 +2393,20 @@ namespace WitchTower.Formation
                     return;
                 }
 
+                if (isFirstFormationTutorial)
+                {
+                    ToggleSelection(entry);
+                    return;
+                }
+
                 ShowMonsterDetail(entry);
             });
+            cardButton.interactable = !isReturnHomeTutorial;
+
+            if (isFirstFormationTutorial)
+            {
+                AddUiOutline(card, new Color(1f, 0.76f, 0.20f, 0.96f), new Vector2(4f, -4f));
+            }
 
             GameObject frameObject = CreateUiObject("FrameArt", card.transform);
             RectTransform frameRect = frameObject.GetComponent<RectTransform>();
@@ -2187,6 +2516,11 @@ namespace WitchTower.Formation
                 selectionButton,
                 ResolveMonsterCardActionOutlineColor(isSelected, isBulkSelected, canBulkSelect),
                 new Vector2(1f, -1f));
+            if (isFirstFormationTutorial && !isSelected && !isReturnHomeTutorial)
+            {
+                AddFormationTutorialSelectionButtonFocus(selectionButton.transform);
+            }
+
             Text selectionText = FindChildText(selectionButton);
             if (selectionText != null)
             {
@@ -2200,6 +2534,87 @@ namespace WitchTower.Formation
             {
                 Root = card
             };
+        }
+
+        private void EnsureFormationTutorialSelectionButtonFocusVisible()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            if (!IsFirstFormationTutorial(profile))
+            {
+                return;
+            }
+
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "FormationScene");
+            if (tutorialEvent == null || !tutorialEvent.IsValid)
+            {
+                return;
+            }
+
+            GameObject selectionButton = GameObject.Find("SelectionButton");
+            if (selectionButton == null || !selectionButton.activeInHierarchy)
+            {
+                return;
+            }
+
+            AddFormationTutorialSelectionButtonFocus(selectionButton.transform);
+        }
+
+        private void AddFormationTutorialSelectionButtonFocus(Transform selectionButton)
+        {
+            if (selectionButton == null)
+            {
+                return;
+            }
+
+            Image buttonImage = selectionButton.GetComponent<Image>();
+            if (buttonImage != null && !formationTutorialPulseImages.Contains(buttonImage))
+            {
+                formationTutorialPulseImages.Add(buttonImage);
+            }
+
+            if (selectionButton.Find("FormationTutorialFocusSelectionGlow") != null)
+            {
+                RegisterFormationTutorialPulseImages(selectionButton.gameObject);
+                return;
+            }
+
+            RemoveFormationTutorialSelectionButtonFocus(selectionButton);
+
+            GameObject glowObject = CreateUiObject("FormationTutorialFocusSelectionGlow", selectionButton);
+            RectTransform glowRect = glowObject.GetComponent<RectTransform>();
+            glowRect.anchorMin = Vector2.zero;
+            glowRect.anchorMax = Vector2.one;
+            glowRect.offsetMin = new Vector2(-14f, -11f);
+            glowRect.offsetMax = new Vector2(14f, 11f);
+            Image glowImage = glowObject.AddComponent<Image>();
+            glowImage.color = new Color(1f, 0.82f, 0.12f, 0.42f);
+            glowImage.raycastTarget = false;
+            glowObject.transform.SetAsFirstSibling();
+            formationTutorialPulseImages.Add(glowImage);
+
+            AddFormationTutorialFocusBar(selectionButton, "SelectionTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, 8f), new Vector2(32f, 10f));
+            AddFormationTutorialFocusBar(selectionButton, "SelectionBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, -8f), new Vector2(32f, 10f));
+            AddFormationTutorialFocusBar(selectionButton, "SelectionLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-8f, 0f), new Vector2(10f, 24f));
+            AddFormationTutorialFocusBar(selectionButton, "SelectionRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(8f, 0f), new Vector2(10f, 24f));
+        }
+
+        private void RemoveFormationTutorialSelectionButtonFocus(Transform selectionButton)
+        {
+            for (int i = selectionButton.childCount - 1; i >= 0; i -= 1)
+            {
+                Transform child = selectionButton.GetChild(i);
+                if (child != null && child.name.StartsWith("FormationTutorialFocusSelection", StringComparison.Ordinal))
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(child.gameObject);
+                    }
+                    else
+                    {
+                        DestroyImmediate(child.gameObject);
+                    }
+                }
+            }
         }
 
         private List<MonsterEntry> BuildDisplayEntries()
@@ -2374,7 +2789,8 @@ namespace WitchTower.Formation
                 monsterData,
                 () => ReleaseMonster(entry.InstanceId),
                 canRelease,
-                releaseMessage);
+                releaseMessage,
+                45f);
         }
 
         private Transform ResolvePopupParent()

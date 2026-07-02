@@ -63,11 +63,16 @@ namespace WitchTower.Home
         private const string HomeTopHudFreeStoneFramePath = "UI/HomeRedesign/HomeTopHudFreeStone";
         private const string HomeTopHudPaidStoneFramePath = "UI/HomeRedesign/HomeTopHudPaidStone";
         private const string HomeFallbackHeroSpritePath = "FamilyMonsterCards/Dragon/dragon_whelp";
+        private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
+        private const string TutorialPrologueBackgroundPath = "UI/Tutorial/TutorialPrologueContractFurnace";
+        private const string TutorialPrologueSparklePath = "UI/Tutorial/TutorialPrologueSpark";
+        private const string TutorialSummonHighlightFramePath = "UI/Tutorial/TutorialSummonHighlightFrameImage2";
+        private const int TutorialProloguePageCount = 4;
         private const string RockGolemMonsterId = "monster_rock_golem";
         private const string RockGolemHomeHeroSpritePath = "MonsterBattle/mon_rock_golem_attack_0";
         private const float HomeAdReservedHeight = 170f;
-        private static readonly Vector2 HomeGuidePanelPosition = new Vector2(0f, HomeAdReservedHeight + 1340f);
-        private static readonly Vector2 HomeGuidePanelSize = new Vector2(940f, 164f);
+        private static readonly Vector2 HomeGuidePanelPosition = new Vector2(0f, HomeAdReservedHeight + 1050f);
+        private static readonly Vector2 HomeGuidePanelSize = new Vector2(920f, 318f);
         private static readonly Vector2 HomeMenuButtonSize = new Vector2(480f, 250f);
         private static readonly Vector2 HomeMainActionButtonSize = new Vector2(470f, 220f);
         private static readonly Vector2 HomeBottomNavButtonSize = new Vector2(196f, 152f);
@@ -76,6 +81,11 @@ namespace WitchTower.Home
         private const float HomeBottomNavHeight = 190f;
         private const float HomeBottomNavCenterOffsetX = 4f;
         private const float HomeBottomNavCenterY = HomeAdReservedHeight + 94f;
+        private const float FirstSummonHighlightOffsetX = 11f;
+        private const float ShopHighlightOffsetX = 21f;
+        private const float DexHighlightOffsetX = 0f;
+        private const float EquipmentHighlightOffsetX = -10f;
+        private const float FusionHighlightOffsetX = -23f;
         private static readonly Vector2 HomeBottomNavButtonHitSize = new Vector2(HomeBottomNavSlotWidth, HomeBottomNavHeight);
         private static readonly Vector2 HomeBottomNavSegmentSize = new Vector2(HomeBottomNavSlotWidth, HomeBottomNavHeight);
         private static readonly Vector2 HomeBottomNavLabelPosition = new Vector2(9f, 42f);
@@ -109,6 +119,20 @@ namespace WitchTower.Home
             "PermanentUpgradeButton",
             "QuestButton"
         };
+        private static readonly string[] TutorialPrologueSpeakers =
+        {
+            "古い契約記録",
+            "契約網崩壊の日",
+            "？？？",
+            "契約炉の案内役・ルシェ"
+        };
+        private static readonly string[] TutorialPrologueBodies =
+        {
+            "かつて、六つの大迷宮は\nひとつの「契約網」で結ばれていた。",
+            "だがある夜、契約網は何者かに断ち切られ、\n眷属たちの記憶は契約片となって\n各地のダンジョンへ散った。",
+            "……聞こえますか、契約師様。\n私は契約炉の案内役ルシェ。\nこの灯が消える前にあなたを待っていました。",
+            "最後の契約炉があなたを選びました。\n失われた仲間を呼び戻し六つのダンジョンを巡って\n契約網を壊した者の正体を突き止めましょう。"
+        };
         private static readonly string[] HomeBottomNavPartPaths =
         {
             "UI/HomeRedesign/HomeBottomNavShop",
@@ -134,6 +158,8 @@ namespace WitchTower.Home
         private static readonly Vector2 HomeTopHudFreeStoneSize = new Vector2(224f, 132f);
         private static readonly Vector2 HomeTopHudPaidStonePosition = new Vector2(301f, -68f);
         private static readonly Vector2 HomeTopHudPaidStoneSize = new Vector2(226f, 132f);
+        private static readonly Vector2 HomeAudioSettingsButtonPosition = new Vector2(474f, -68f);
+        private static readonly Vector2 HomeAudioSettingsButtonSize = new Vector2(88f, 88f);
         private const float HomeResourceAmountLeftReserve = 64f;
         private const float HomeResourceAmountRightPadding = 46f;
         private const float HomeResourceAmountNarrowRightPadding = 56f;
@@ -174,9 +200,34 @@ namespace WitchTower.Home
         private bool homePlayerExpDetailsVisible;
         private Text homeGuideText;
         private Text homeNextFloorText;
+        private Text homeGuideBadgeText;
+        private Text homeGuideTitleText;
+        private Image homeGuideCharacterImage;
         private Button homeGuideButton;
         private GameObject homeTutorialFocusRoot;
         private Text homeTutorialFocusText;
+        private readonly List<Image> homeTutorialFocusFrameImages = new List<Image>();
+        private Graphic homeTutorialTargetGraphic;
+        private Outline homeTutorialTargetOutline;
+        private GameObject homeFirstSummonPulseRoot;
+        private Image homeFirstSummonPulseFrame;
+        private GameObject homePrologueRoot;
+        private CanvasGroup homePrologueCanvasGroup;
+        private RectTransform homePrologueBackgroundRect;
+        private Image homePrologueGuideImage;
+        private Image homePrologueDialoguePanel;
+        private Text homePrologueTitleText;
+        private Text homePrologueSpeakerText;
+        private Text homePrologueBodyText;
+        private Text homePrologueProgressText;
+        private Text homeProloguePromptText;
+        private readonly List<RectTransform> homePrologueSparkRects = new List<RectTransform>();
+        private readonly List<Image> homePrologueSparkImages = new List<Image>();
+        private int homeProloguePageIndex = -1;
+        private float homeProloguePageStartedAt;
+        private float homePrologueLastAdvanceAt = -10f;
+        private float homePrologueCloseStartedAt;
+        private bool homePrologueClosing;
         private Text homeHeroNameText;
         private Text homeHeroLevelText;
         private Image homeHeroImage;
@@ -187,6 +238,13 @@ namespace WitchTower.Home
         private Text permanentUpgradeButtonText;
         private Text permanentUpgradeStatusText;
         private Button permanentUpgradeButton;
+        private GameObject audioSettingsRoot;
+        private Slider audioSettingsBgmSlider;
+        private Slider audioSettingsSeSlider;
+        private Toggle audioSettingsHapticsToggle;
+        private Text audioSettingsBgmValueText;
+        private Text audioSettingsSeValueText;
+        private Text audioSettingsHapticsValueText;
         private GameObject dailyQuestListRoot;
         private Text dailyQuestStatusText;
         private readonly List<DailyQuestCardView> dailyQuestCards = new List<DailyQuestCardView>();
@@ -239,6 +297,19 @@ namespace WitchTower.Home
 
                 RefreshHomeStoneBalanceBar();
                 RefreshDailyQuestList();
+                AnimateHomeTutorialFocus();
+                AnimateFirstSummonTutorialPulse();
+            }
+
+            if (IsHomePrologueVisible())
+            {
+                AnimateHomePrologue();
+                if (Input.GetMouseButtonDown(0))
+                {
+                    InvokeButtonUnderPointer(homePrologueRoot.transform, Input.mousePosition);
+                }
+
+                return;
             }
 
             if (!Input.GetMouseButtonDown(0))
@@ -446,6 +517,7 @@ namespace WitchTower.Home
                     EnsureHomeGuidePanel(unifiedMenuRoot.transform);
                     EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
                     RefreshHomeStoneBalanceBar();
+                    RefreshHomePrologue(GetRuntimeProfile());
                     unifiedMenuRoot.transform.SetAsLastSibling();
                     return;
                 }
@@ -492,6 +564,7 @@ namespace WitchTower.Home
             CreateHomeBottomNavigation(unifiedMenuRoot.transform, panelSprite, gachaSprite, dexSprite, equipmentSprite, fusionSprite);
             EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
             RefreshHomeStoneBalanceBar();
+            RefreshHomePrologue(GetRuntimeProfile());
         }
 
         public void OpenFormationMenu()
@@ -698,6 +771,8 @@ namespace WitchTower.Home
             {
                 dailyQuestListRoot.SetActive(true);
                 dailyQuestListRoot.transform.SetAsLastSibling();
+                SetHomeGuidePanelVisible(false);
+                HideHomeTutorialFocus();
                 RefreshDailyQuestList();
             }
         }
@@ -708,6 +783,10 @@ namespace WitchTower.Home
             {
                 dailyQuestListRoot.SetActive(false);
             }
+
+            PlayerProfile profile = GetRuntimeProfile();
+            ApplyHomeGuideDisplay(profile);
+            ApplyHomeTutorialFocus(profile);
         }
 
         private void ClaimDailyQuestReward(string questId)
@@ -976,19 +1055,29 @@ namespace WitchTower.Home
                 existingPanel = panel.transform;
 
                 Image panelImage = panel.GetComponent<Image>();
-                panelImage.color = new Color(0.018f, 0.032f, 0.048f, 0.74f);
+                panelImage.color = new Color(0.018f, 0.026f, 0.038f, 0.94f);
                 panelImage.raycastTarget = true;
                 Outline outline = panel.AddComponent<Outline>();
-                outline.effectColor = new Color(1f, 0.78f, 0.40f, 0.34f);
-                outline.effectDistance = new Vector2(2f, -2f);
+                outline.effectColor = new Color(1f, 0.78f, 0.34f, 0.82f);
+                outline.effectDistance = new Vector2(3f, -3f);
             }
             else
             {
                 Image panelImage = existingPanel.GetComponent<Image>();
                 if (panelImage != null)
                 {
+                    panelImage.color = new Color(0.018f, 0.026f, 0.038f, 0.94f);
                     panelImage.raycastTarget = true;
                 }
+
+                Outline outline = existingPanel.GetComponent<Outline>();
+                if (outline == null)
+                {
+                    outline = existingPanel.gameObject.AddComponent<Outline>();
+                }
+
+                outline.effectColor = new Color(1f, 0.78f, 0.34f, 0.82f);
+                outline.effectDistance = new Vector2(3f, -3f);
             }
 
             homeGuideButton = existingPanel.GetComponent<Button>();
@@ -1012,6 +1101,94 @@ namespace WitchTower.Home
                 panelRect.sizeDelta = HomeGuidePanelSize;
             }
 
+            homeGuideCharacterImage = existingPanel.Find("HomeGuideCharacterImage")?.GetComponent<Image>();
+            if (homeGuideCharacterImage == null)
+            {
+                homeGuideCharacterImage = CreateMenuImage(
+                    "HomeGuideCharacterImage",
+                    existingPanel,
+                    LoadSpriteResource(TutorialGuideSpritePath, "TutorialGuideAssistant"),
+                    new Vector2(0f, 0.5f),
+                    new Vector2(0f, 0.5f),
+                    new Vector2(126f, -8f),
+                    new Vector2(230f, 230f),
+                    true);
+            }
+
+            ConfigureGuideRect(
+                homeGuideCharacterImage.transform as RectTransform,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(126f, -8f),
+                new Vector2(230f, 230f));
+            homeGuideCharacterImage.sprite = LoadSpriteResource(TutorialGuideSpritePath, "TutorialGuideAssistant");
+            homeGuideCharacterImage.preserveAspect = true;
+            homeGuideCharacterImage.raycastTarget = false;
+
+            homeGuideBadgeText = existingPanel.Find("HomeGuideBadgeText")?.GetComponent<Text>();
+            if (homeGuideBadgeText == null)
+            {
+                homeGuideBadgeText = CreateUiText(
+                    "HomeGuideBadgeText",
+                    existingPanel,
+                    "TUTORIAL",
+                    18,
+                    FontStyle.Bold,
+                    new Vector2(0f, 1f),
+                    new Vector2(0f, 1f),
+                    new Vector2(252f, -24f),
+                    new Vector2(122f, 34f),
+                    new Color(1f, 0.82f, 0.32f, 1f),
+                    TextAnchor.MiddleCenter);
+                AddTextShadow(homeGuideBadgeText, new Color(0f, 0f, 0f, 0.9f), new Vector2(1.5f, -1.5f));
+            }
+
+            ConfigureGuideRect(
+                homeGuideBadgeText.transform as RectTransform,
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(252f, -22f),
+                new Vector2(122f, 34f));
+            homeGuideBadgeText.gameObject.SetActive(false);
+            homeGuideBadgeText.resizeTextForBestFit = true;
+            homeGuideBadgeText.resizeTextMinSize = 12;
+            homeGuideBadgeText.resizeTextMaxSize = 18;
+            homeGuideBadgeText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            homeGuideBadgeText.verticalOverflow = VerticalWrapMode.Truncate;
+
+            homeGuideTitleText = existingPanel.Find("HomeGuideTitleText")?.GetComponent<Text>();
+            if (homeGuideTitleText == null)
+            {
+                homeGuideTitleText = CreateUiText(
+                    "HomeGuideTitleText",
+                    existingPanel,
+                    string.Empty,
+                    26,
+                    FontStyle.Bold,
+                    new Vector2(0f, 1f),
+                    new Vector2(0f, 1f),
+                    new Vector2(615f, -48f),
+                    new Vector2(560f, 54f),
+                    new Color(1f, 0.96f, 0.78f, 1f),
+                    TextAnchor.MiddleCenter);
+                AddTextShadow(homeGuideTitleText, new Color(0f, 0f, 0f, 0.9f), new Vector2(1.6f, -1.6f));
+            }
+
+            ConfigureGuideRect(
+                homeGuideTitleText.transform as RectTransform,
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(615f, -48f),
+                new Vector2(560f, 54f));
+            homeGuideTitleText.resizeTextForBestFit = true;
+            homeGuideTitleText.resizeTextMinSize = 25;
+            homeGuideTitleText.resizeTextMaxSize = 32;
+            homeGuideTitleText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            homeGuideTitleText.verticalOverflow = VerticalWrapMode.Truncate;
+
             homeGuideText = existingPanel.Find("HomeGuideText")?.GetComponent<Text>();
             if (homeGuideText == null)
             {
@@ -1019,19 +1196,27 @@ namespace WitchTower.Home
                     "HomeGuideText",
                     existingPanel,
                     string.Empty,
-                    24,
+                    22,
                     FontStyle.Bold,
-                    new Vector2(0.5f, 0.58f),
-                    new Vector2(0.5f, 0.58f),
-                    Vector2.zero,
-                    new Vector2(850f, 92f),
+                    new Vector2(0f, 0.5f),
+                    new Vector2(0f, 0.5f),
+                    new Vector2(615f, 18f),
+                    new Vector2(560f, 128f),
                     new Color(0.96f, 0.95f, 0.88f, 1f),
                     TextAnchor.MiddleCenter);
+                AddTextShadow(homeGuideText, new Color(0f, 0f, 0f, 0.82f), new Vector2(1.4f, -1.4f));
             }
 
+            ConfigureGuideRect(
+                homeGuideText.transform as RectTransform,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(615f, 18f),
+                new Vector2(560f, 128f));
             homeGuideText.resizeTextForBestFit = true;
-            homeGuideText.resizeTextMinSize = 16;
-            homeGuideText.resizeTextMaxSize = 24;
+            homeGuideText.resizeTextMinSize = 18;
+            homeGuideText.resizeTextMaxSize = 26;
             homeGuideText.horizontalOverflow = HorizontalWrapMode.Wrap;
             homeGuideText.verticalOverflow = VerticalWrapMode.Truncate;
 
@@ -1044,19 +1229,531 @@ namespace WitchTower.Home
                     string.Empty,
                     18,
                     FontStyle.Bold,
-                    new Vector2(0.5f, 0.16f),
-                    new Vector2(0.5f, 0.16f),
-                    Vector2.zero,
-                    new Vector2(820f, 34f),
-                    new Color(0.72f, 0.88f, 1f, 0.94f),
+                    new Vector2(0f, 0f),
+                    new Vector2(0f, 0f),
+                    new Vector2(615f, 42f),
+                    new Vector2(560f, 42f),
+                    new Color(0.70f, 0.90f, 1f, 0.98f),
                     TextAnchor.MiddleCenter);
+                AddTextShadow(homeNextFloorText, new Color(0f, 0f, 0f, 0.9f), new Vector2(1.4f, -1.4f));
             }
 
+            ConfigureGuideRect(
+                homeNextFloorText.transform as RectTransform,
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(615f, 42f),
+                new Vector2(560f, 42f));
             homeNextFloorText.resizeTextForBestFit = true;
-            homeNextFloorText.resizeTextMinSize = 13;
-            homeNextFloorText.resizeTextMaxSize = 18;
+            homeNextFloorText.resizeTextMinSize = 17;
+            homeNextFloorText.resizeTextMaxSize = 21;
             homeNextFloorText.horizontalOverflow = HorizontalWrapMode.Wrap;
             homeNextFloorText.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
+        private static void ConfigureGuideRect(
+            RectTransform rectTransform,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 pivot,
+            Vector2 anchoredPosition,
+            Vector2 sizeDelta)
+        {
+            if (rectTransform == null)
+            {
+                return;
+            }
+
+            rectTransform.anchorMin = anchorMin;
+            rectTransform.anchorMax = anchorMax;
+            rectTransform.pivot = pivot;
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = sizeDelta;
+        }
+
+        private void RefreshHomePrologue(PlayerProfile profile)
+        {
+            bool shouldShow = Application.isPlaying &&
+                profile != null &&
+                !profile.HasCompletedTutorial &&
+                profile.TutorialStepId == StoryTutorialService.StepWakeup;
+            if (!shouldShow)
+            {
+                if (homePrologueRoot != null)
+                {
+                    homePrologueRoot.SetActive(false);
+                }
+
+                return;
+            }
+
+            Transform menuRoot = ResolveUnifiedMenuRootTransform();
+            EnsureHomePrologue(menuRoot);
+            if (homePrologueRoot == null)
+            {
+                return;
+            }
+
+            homePrologueRoot.SetActive(true);
+            homePrologueRoot.transform.SetAsLastSibling();
+            if (homeProloguePageIndex < 0)
+            {
+                ShowHomeProloguePage(0);
+            }
+        }
+
+        private void EnsureHomePrologue(Transform menuRoot)
+        {
+            if (menuRoot == null)
+            {
+                return;
+            }
+
+            if (homePrologueRoot != null && homePrologueRoot.transform.parent == menuRoot)
+            {
+                return;
+            }
+
+            homePrologueSparkRects.Clear();
+            homePrologueSparkImages.Clear();
+
+            Transform existingRoot = menuRoot.Find("HomePrologue");
+            if (existingRoot != null)
+            {
+                DestroySceneObject(existingRoot.gameObject);
+            }
+
+            homePrologueRoot = new GameObject(
+                "HomePrologue",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Button),
+                typeof(CanvasGroup));
+            homePrologueRoot.transform.SetParent(menuRoot, false);
+            RectTransform rootRect = homePrologueRoot.GetComponent<RectTransform>();
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
+
+            Image rootImage = homePrologueRoot.GetComponent<Image>();
+            rootImage.color = Color.black;
+            rootImage.raycastTarget = true;
+
+            Button rootButton = homePrologueRoot.GetComponent<Button>();
+            rootButton.transition = Selectable.Transition.None;
+            rootButton.targetGraphic = rootImage;
+            rootButton.onClick.RemoveAllListeners();
+            rootButton.onClick.AddListener(AdvanceHomePrologue);
+
+            homePrologueCanvasGroup = homePrologueRoot.GetComponent<CanvasGroup>();
+            homePrologueCanvasGroup.alpha = 1f;
+            homePrologueCanvasGroup.blocksRaycasts = true;
+            homePrologueCanvasGroup.interactable = true;
+
+            Image background = CreateMenuImage(
+                "HomePrologueBackground",
+                homePrologueRoot.transform,
+                LoadSpriteResource(TutorialPrologueBackgroundPath, "TutorialPrologueContractFurnace"),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(1080f, 1920f),
+                false);
+            background.color = Color.white;
+            homePrologueBackgroundRect = background.transform as RectTransform;
+
+            Image upperShade = CreateMenuImage(
+                "HomePrologueUpperShade",
+                homePrologueRoot.transform,
+                null,
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -145f),
+                new Vector2(1080f, 290f),
+                false);
+            upperShade.color = new Color(0f, 0f, 0f, 0.28f);
+
+            Image lowerShade = CreateMenuImage(
+                "HomePrologueLowerShade",
+                homePrologueRoot.transform,
+                null,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 260f),
+                new Vector2(1080f, 520f),
+                false);
+            lowerShade.color = new Color(0f, 0f, 0f, 0.42f);
+
+            CreateHomePrologueSparks(homePrologueRoot.transform);
+
+            homePrologueTitleText = CreateUiText(
+                "HomePrologueTitle",
+                homePrologueRoot.transform,
+                "序章　最後の契約炉",
+                42,
+                FontStyle.Bold,
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -92f),
+                new Vector2(920f, 80f),
+                new Color(1f, 0.93f, 0.72f, 1f),
+                TextAnchor.MiddleCenter);
+            AddTextShadow(homePrologueTitleText, new Color(0f, 0f, 0f, 0.95f), new Vector2(3f, -3f));
+
+            homePrologueGuideImage = CreateMenuImage(
+                "HomePrologueGuide",
+                homePrologueRoot.transform,
+                LoadSpriteResource(TutorialGuideSpritePath, "TutorialGuideAssistant"),
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(250f, 700f),
+                new Vector2(650f, 650f),
+                true);
+            homePrologueGuideImage.color = new Color(1f, 1f, 1f, 0f);
+            homePrologueGuideImage.gameObject.SetActive(false);
+
+            homePrologueDialoguePanel = CreateMenuImage(
+                "HomePrologueDialoguePanel",
+                homePrologueRoot.transform,
+                null,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 300f),
+                new Vector2(980f, 390f),
+                false);
+            homePrologueDialoguePanel.color = new Color(0.015f, 0.022f, 0.032f, 0.88f);
+            AddUiOutline(
+                homePrologueDialoguePanel.gameObject,
+                new Color(0.90f, 0.69f, 0.29f, 0.82f),
+                new Vector2(3f, -3f));
+
+            homePrologueSpeakerText = CreateUiText(
+                "HomePrologueSpeaker",
+                homePrologueRoot.transform,
+                string.Empty,
+                29,
+                FontStyle.Bold,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(-320f, 438f),
+                new Vector2(300f, 52f),
+                new Color(0.50f, 0.88f, 1f, 1f),
+                TextAnchor.MiddleLeft);
+            AddTextShadow(homePrologueSpeakerText, new Color(0f, 0f, 0f, 0.95f), new Vector2(2f, -2f));
+
+            homePrologueBodyText = CreateUiText(
+                "HomePrologueBody",
+                homePrologueRoot.transform,
+                string.Empty,
+                36,
+                FontStyle.Bold,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 302f),
+                new Vector2(900f, 245f),
+                new Color(0.98f, 0.97f, 0.91f, 1f),
+                TextAnchor.MiddleCenter);
+            homePrologueBodyText.resizeTextForBestFit = true;
+            homePrologueBodyText.resizeTextMinSize = 29;
+            homePrologueBodyText.resizeTextMaxSize = 38;
+            homePrologueBodyText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            homePrologueBodyText.verticalOverflow = VerticalWrapMode.Truncate;
+            AddTextShadow(homePrologueBodyText, new Color(0f, 0f, 0f, 0.94f), new Vector2(2f, -2f));
+
+            homePrologueProgressText = CreateUiText(
+                "HomePrologueProgress",
+                homePrologueRoot.transform,
+                string.Empty,
+                22,
+                FontStyle.Bold,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 118f),
+                new Vector2(320f, 44f),
+                new Color(0.68f, 0.87f, 1f, 1f),
+                TextAnchor.MiddleCenter);
+
+            homeProloguePromptText = CreateUiText(
+                "HomeProloguePrompt",
+                homePrologueRoot.transform,
+                string.Empty,
+                25,
+                FontStyle.Bold,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 68f),
+                new Vector2(720f, 54f),
+                new Color(1f, 0.90f, 0.58f, 1f),
+                TextAnchor.MiddleCenter);
+            AddTextShadow(homeProloguePromptText, new Color(0f, 0f, 0f, 0.95f), new Vector2(2f, -2f));
+        }
+
+        private void CreateHomePrologueSparks(Transform parent)
+        {
+            Sprite sparkleSprite = LoadSpriteResource(TutorialPrologueSparklePath, "TutorialPrologueSparkle");
+            for (int i = 0; i < 10; i += 1)
+            {
+                float size = 24f + i % 4 * 10f;
+                Image sparkle = CreateMenuImage(
+                    $"HomePrologueSpark_{i}",
+                    parent,
+                    sparkleSprite,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    Vector2.zero,
+                    new Vector2(size, size),
+                    true);
+                sparkle.color = new Color(0.45f, 0.88f, 1f, 0f);
+                homePrologueSparkImages.Add(sparkle);
+                homePrologueSparkRects.Add(sparkle.transform as RectTransform);
+            }
+        }
+
+        private bool IsHomePrologueVisible()
+        {
+            return homePrologueRoot != null &&
+                homePrologueRoot.activeInHierarchy &&
+                homeProloguePageIndex >= 0;
+        }
+
+        private void ShowHomeProloguePage(int pageIndex)
+        {
+            homeProloguePageIndex = Mathf.Clamp(pageIndex, 0, TutorialProloguePageCount - 1);
+            homeProloguePageStartedAt = Time.unscaledTime;
+            homePrologueClosing = false;
+            if (homePrologueCanvasGroup != null)
+            {
+                homePrologueCanvasGroup.alpha = 1f;
+                homePrologueCanvasGroup.blocksRaycasts = true;
+                homePrologueCanvasGroup.interactable = true;
+            }
+
+            if (homePrologueSpeakerText != null)
+            {
+                homePrologueSpeakerText.text = TutorialPrologueSpeakers[homeProloguePageIndex];
+            }
+
+            if (homePrologueBodyText != null)
+            {
+                homePrologueBodyText.text = TutorialPrologueBodies[homeProloguePageIndex];
+                RectTransform bodyRect = homePrologueBodyText.transform as RectTransform;
+                if (bodyRect != null)
+                {
+                    bool guideVisible = homeProloguePageIndex >= 2;
+                    bodyRect.anchoredPosition = new Vector2(guideVisible ? 20f : 0f, 302f);
+                    bodyRect.sizeDelta = new Vector2(guideVisible ? 720f : 850f, 245f);
+                }
+
+                homePrologueBodyText.alignment = homeProloguePageIndex >= 2
+                    ? TextAnchor.MiddleLeft
+                    : TextAnchor.MiddleCenter;
+            }
+
+            if (homePrologueSpeakerText != null)
+            {
+                RectTransform speakerRect = homePrologueSpeakerText.transform as RectTransform;
+                if (speakerRect != null)
+                {
+                    bool guideVisible = homeProloguePageIndex >= 2;
+                    speakerRect.anchoredPosition = new Vector2(guideVisible ? -40f : -320f, 438f);
+                    speakerRect.sizeDelta = new Vector2(guideVisible ? 600f : 300f, 52f);
+                }
+            }
+
+            if (homePrologueGuideImage != null)
+            {
+                homePrologueGuideImage.gameObject.SetActive(homeProloguePageIndex >= 2);
+            }
+
+            if (homePrologueProgressText != null)
+            {
+                homePrologueProgressText.text = BuildHomePrologueProgress(homeProloguePageIndex);
+            }
+
+            if (homeProloguePromptText != null)
+            {
+                homeProloguePromptText.text = homeProloguePageIndex >= TutorialProloguePageCount - 1
+                    ? "タップして契約を始める"
+                    : "タップして次へ";
+            }
+        }
+
+        private static string BuildHomePrologueProgress(int activePageIndex)
+        {
+            string progress = string.Empty;
+            for (int i = 0; i < TutorialProloguePageCount; i += 1)
+            {
+                if (i > 0)
+                {
+                    progress += "  ";
+                }
+
+                progress += i == activePageIndex ? "◆" : "◇";
+            }
+
+            return progress;
+        }
+
+        private void AnimateHomePrologue()
+        {
+            if (!IsHomePrologueVisible())
+            {
+                return;
+            }
+
+            homePrologueRoot.transform.SetAsLastSibling();
+            float now = Time.unscaledTime;
+            if (homePrologueClosing)
+            {
+                float closeProgress = Mathf.Clamp01((now - homePrologueCloseStartedAt) / 0.55f);
+                if (homePrologueCanvasGroup != null)
+                {
+                    homePrologueCanvasGroup.alpha = 1f - Mathf.SmoothStep(0f, 1f, closeProgress);
+                }
+
+                if (closeProgress >= 1f)
+                {
+                    CompleteHomePrologue();
+                }
+
+                return;
+            }
+
+            float pageAge = Mathf.Max(0f, now - homeProloguePageStartedAt);
+            float textAlpha = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((pageAge - 0.08f) / 0.55f));
+            if (homePrologueCanvasGroup != null)
+            {
+                homePrologueCanvasGroup.alpha = 1f;
+            }
+
+            if (homePrologueBackgroundRect != null)
+            {
+                float drift = Mathf.Clamp01(pageAge / 8f);
+                float baseScale = 1.105f + homeProloguePageIndex * 0.006f;
+                float scale = baseScale - drift * 0.025f;
+                homePrologueBackgroundRect.localScale = new Vector3(scale, scale, 1f);
+                homePrologueBackgroundRect.anchoredPosition =
+                    new Vector2(Mathf.Sin(now * 0.13f) * 5f, 118f + Mathf.Sin(now * 0.20f) * 6f);
+            }
+
+            SetTextAlpha(homePrologueSpeakerText, textAlpha);
+            SetTextAlpha(homePrologueBodyText, textAlpha);
+            SetTextAlpha(homePrologueProgressText, Mathf.Min(1f, textAlpha + 0.15f));
+            float promptPulse = 0.72f + Mathf.Sin(now * 3.2f) * 0.18f;
+            SetTextAlpha(homeProloguePromptText, textAlpha * promptPulse);
+            SetTextAlpha(homePrologueTitleText, Mathf.Min(1f, textAlpha + 0.25f));
+
+            if (homePrologueGuideImage != null && homePrologueGuideImage.gameObject.activeSelf)
+            {
+                homePrologueGuideImage.color = new Color(1f, 1f, 1f, textAlpha);
+                RectTransform guideRect = homePrologueGuideImage.transform as RectTransform;
+                if (guideRect != null)
+                {
+                    float slide = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(pageAge / 0.65f));
+                    guideRect.anchoredPosition =
+                        new Vector2(Mathf.Lerp(195f, 250f, slide), 700f + Mathf.Sin(now * 1.4f) * 7f);
+                }
+            }
+
+            AnimateHomePrologueSparks(now);
+        }
+
+        private void AnimateHomePrologueSparks(float now)
+        {
+            for (int i = 0; i < homePrologueSparkRects.Count; i += 1)
+            {
+                RectTransform sparkleRect = homePrologueSparkRects[i];
+                Image sparkleImage = i < homePrologueSparkImages.Count ? homePrologueSparkImages[i] : null;
+                if (sparkleRect == null || sparkleImage == null)
+                {
+                    continue;
+                }
+
+                float speed = 0.035f + i % 3 * 0.012f;
+                float cycle = Mathf.Repeat(now * speed + i * 0.137f, 1f);
+                float xBase = -430f + (i * 109) % 860;
+                float x = xBase + Mathf.Sin(now * (0.55f + i * 0.03f) + i) * 28f;
+                float y = -760f + cycle * 1580f;
+                sparkleRect.anchoredPosition = new Vector2(x, y);
+                float scale = 0.65f + Mathf.Sin(cycle * Mathf.PI) * 0.6f;
+                sparkleRect.localScale = new Vector3(scale, scale, 1f);
+                float alpha = Mathf.Sin(cycle * Mathf.PI) * (0.20f + homeProloguePageIndex * 0.07f);
+                sparkleImage.color = new Color(0.48f, 0.88f, 1f, Mathf.Clamp01(alpha));
+            }
+        }
+
+        private static void SetTextAlpha(Text text, float alpha)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            Color color = text.color;
+            color.a = Mathf.Clamp01(alpha);
+            text.color = color;
+        }
+
+        public void AdvanceHomePrologue()
+        {
+            if (!Application.isPlaying || !IsHomePrologueVisible() || homePrologueClosing)
+            {
+                return;
+            }
+
+            float now = Time.unscaledTime;
+            if (now - homePrologueLastAdvanceAt < 0.28f ||
+                now - homeProloguePageStartedAt < 0.18f)
+            {
+                return;
+            }
+
+            homePrologueLastAdvanceAt = now;
+            if (homeProloguePageIndex < TutorialProloguePageCount - 1)
+            {
+                ShowHomeProloguePage(homeProloguePageIndex + 1);
+                return;
+            }
+
+            homePrologueClosing = true;
+            homePrologueCloseStartedAt = now;
+            if (homePrologueCanvasGroup != null)
+            {
+                homePrologueCanvasGroup.blocksRaycasts = false;
+                homePrologueCanvasGroup.interactable = false;
+            }
+        }
+
+        private void CompleteHomePrologue()
+        {
+            PlayerProfile profile = GetRuntimeProfile();
+            bool changed = false;
+            if (profile != null &&
+                !profile.HasCompletedTutorial &&
+                profile.TutorialStepId == StoryTutorialService.StepWakeup)
+            {
+                changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryPrologueWakeup);
+                changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepWakeup);
+            }
+
+            if (homePrologueRoot != null)
+            {
+                homePrologueRoot.SetActive(false);
+            }
+
+            homeProloguePageIndex = -1;
+            homePrologueClosing = false;
+            if (homePrologueCanvasGroup != null)
+            {
+                homePrologueCanvasGroup.alpha = 1f;
+                homePrologueCanvasGroup.blocksRaycasts = true;
+                homePrologueCanvasGroup.interactable = true;
+            }
+
+            SaveHomeTutorialProgressIfNeeded(changed);
         }
 
         private void CreateHomeBottomNavigation(
@@ -1643,6 +2340,525 @@ namespace WitchTower.Home
             RefreshPlayerBadgeDisplay(GetRuntimeProfile());
         }
 
+        private void EnsureAudioSettingsButton(Transform barTransform)
+        {
+            if (barTransform == null)
+            {
+                return;
+            }
+
+            Transform existing = barTransform.Find("AudioSettingsButton");
+            Button button = existing != null ? existing.GetComponent<Button>() : null;
+            if (button == null)
+            {
+                button = CreatePlainButton(
+                    "AudioSettingsButton",
+                    barTransform,
+                    new Vector2(0.5f, 1f),
+                    new Vector2(0.5f, 1f),
+                    HomeAudioSettingsButtonPosition,
+                    HomeAudioSettingsButtonSize,
+                    new Color(0.018f, 0.025f, 0.038f, 0.88f),
+                    OpenAudioSettingsPanel);
+                AddUiOutline(button.gameObject, new Color(0.68f, 0.88f, 1f, 0.58f), new Vector2(2f, -2f));
+                Text label = CreateUiText(
+                    "AudioSettingsButtonLabel",
+                    button.transform,
+                    "設定",
+                    22,
+                    FontStyle.Bold,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    Vector2.zero,
+                    new Vector2(76f, 38f),
+                    new Color(0.92f, 0.98f, 1f, 1f),
+                    TextAnchor.MiddleCenter);
+                label.resizeTextForBestFit = true;
+                label.resizeTextMinSize = 16;
+                label.resizeTextMaxSize = 22;
+            }
+            else
+            {
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(OpenAudioSettingsPanel);
+            }
+        }
+
+        public void OpenAudioSettingsPanel()
+        {
+            Transform parent = ResolveUnifiedMenuRootTransform();
+            if (parent == null)
+            {
+                return;
+            }
+
+            if (audioSettingsRoot == null)
+            {
+                BuildAudioSettingsPanel(parent);
+            }
+
+            if (audioSettingsRoot == null)
+            {
+                return;
+            }
+
+            audioSettingsRoot.SetActive(true);
+            audioSettingsRoot.transform.SetAsLastSibling();
+            RefreshAudioSettingsPanel();
+        }
+
+        private void CloseAudioSettingsPanel()
+        {
+            if (audioSettingsRoot != null)
+            {
+                audioSettingsRoot.SetActive(false);
+            }
+        }
+
+        private void BuildAudioSettingsPanel(Transform parent)
+        {
+            audioSettingsRoot = new GameObject("AudioSettingsPanelRoot", typeof(RectTransform));
+            audioSettingsRoot.transform.SetParent(parent, false);
+            RectTransform rootRect = audioSettingsRoot.GetComponent<RectTransform>();
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
+
+            CreatePlainButton(
+                "AudioSettingsShade",
+                audioSettingsRoot.transform,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero,
+                new Color(0f, 0f, 0f, 0.52f),
+                CloseAudioSettingsPanel);
+
+            Image panelImage = CreateTintPanel(
+                "AudioSettingsPanel",
+                audioSettingsRoot.transform,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0f, 92f),
+                new Vector2(760f, 540f),
+                new Color(0.018f, 0.020f, 0.030f, 0.98f));
+            panelImage.raycastTarget = true;
+            AddUiOutline(panelImage.gameObject, new Color(0.42f, 0.72f, 0.92f, 0.80f), new Vector2(3f, -3f));
+
+            Transform panel = panelImage.transform;
+            CreateUiText(
+                "AudioSettingsTitle",
+                panel,
+                "設定",
+                36,
+                FontStyle.Bold,
+                new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f),
+                new Vector2(0f, -58f),
+                new Vector2(360f, 54f),
+                new Color(1f, 0.84f, 0.48f, 1f),
+                TextAnchor.MiddleCenter);
+            CreateUiText(
+                "AudioSettingsBgmLabel",
+                panel,
+                "BGM",
+                26,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(124f, -160f),
+                new Vector2(130f, 42f),
+                Color.white,
+                TextAnchor.MiddleLeft);
+            CreateUiText(
+                "AudioSettingsSeLabel",
+                panel,
+                "SE",
+                26,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(124f, -256f),
+                new Vector2(130f, 42f),
+                Color.white,
+                TextAnchor.MiddleLeft);
+            CreateUiText(
+                "AudioSettingsHapticsLabel",
+                panel,
+                "振動",
+                26,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(124f, -352f),
+                new Vector2(130f, 42f),
+                Color.white,
+                TextAnchor.MiddleLeft);
+            audioSettingsBgmValueText = CreateAudioSettingsValueText(panel, "AudioSettingsBgmValue", new Vector2(610f, -160f));
+            audioSettingsSeValueText = CreateAudioSettingsValueText(panel, "AudioSettingsSeValue", new Vector2(610f, -256f));
+            audioSettingsHapticsValueText = CreateAudioSettingsValueText(panel, "AudioSettingsHapticsValue", new Vector2(610f, -352f));
+            audioSettingsBgmSlider = CreateAudioVolumeSlider(
+                "AudioSettingsBgmSlider",
+                panel,
+                new Vector2(365f, -160f),
+                delegate(float value)
+                {
+                    AudioManager.Instance?.SetBgmVolume(value);
+                    RefreshAudioSettingsValueTexts();
+                });
+            audioSettingsSeSlider = CreateAudioVolumeSlider(
+                "AudioSettingsSeSlider",
+                panel,
+                new Vector2(365f, -256f),
+                delegate(float value)
+                {
+                    AudioManager.Instance?.SetSeVolume(value);
+                    RefreshAudioSettingsValueTexts();
+                });
+            audioSettingsHapticsToggle = CreateAudioSettingsToggle(
+                "AudioSettingsHapticsToggle",
+                panel,
+                new Vector2(365f, -352f),
+                delegate(bool enabled)
+                {
+                    AudioManager audioManager = AudioManager.Instance;
+                    audioManager?.SetHapticsEnabled(enabled);
+                    RefreshAudioSettingsValueTexts();
+                    if (enabled)
+                    {
+                        audioManager?.PlayHaptic(AudioCue.UiConfirm);
+                    }
+                });
+
+            CreateAudioSettingsActionButton(
+                panel,
+                "AudioSettingsUnmuteButton",
+                "音を出す",
+                new Vector2(-232f, 92f),
+                delegate
+                {
+                    SetAudioSettingsVolumes(0.58f, 0.76f, true);
+                });
+            CreateAudioSettingsActionButton(
+                panel,
+                "AudioSettingsMuteButton",
+                "ミュート",
+                new Vector2(0f, 92f),
+                delegate
+                {
+                    SetAudioSettingsVolumes(0f, 0f, false);
+                });
+            CreateAudioSettingsActionButton(
+                panel,
+                "AudioSettingsCloseButton",
+                "閉じる",
+                new Vector2(232f, 92f),
+                CloseAudioSettingsPanel);
+
+            audioSettingsRoot.SetActive(false);
+        }
+
+        private static Text CreateAudioSettingsValueText(Transform parent, string name, Vector2 anchoredPosition)
+        {
+            Text text = CreateUiText(
+                name,
+                parent,
+                "100%",
+                24,
+                FontStyle.Bold,
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                anchoredPosition,
+                new Vector2(110f, 42f),
+                new Color(0.72f, 0.92f, 1f, 1f),
+                TextAnchor.MiddleRight);
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 16;
+            text.resizeTextMaxSize = 24;
+            return text;
+        }
+
+        private static Slider CreateAudioVolumeSlider(
+            string name,
+            Transform parent,
+            Vector2 anchoredPosition,
+            UnityEngine.Events.UnityAction<float> onValueChanged)
+        {
+            GameObject root = new GameObject(name, typeof(RectTransform), typeof(Slider));
+            root.transform.SetParent(parent, false);
+            RectTransform rootRect = root.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0f, 1f);
+            rootRect.anchorMax = new Vector2(0f, 1f);
+            rootRect.pivot = new Vector2(0.5f, 0.5f);
+            rootRect.anchoredPosition = anchoredPosition;
+            rootRect.sizeDelta = new Vector2(370f, 54f);
+
+            Image background = CreateSliderImage(
+                "Background",
+                root.transform,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                new Vector2(0f, 0f),
+                new Color(0.09f, 0.11f, 0.15f, 1f));
+            RectTransform backgroundRect = background.transform as RectTransform;
+            backgroundRect.offsetMin = new Vector2(0f, 18f);
+            backgroundRect.offsetMax = new Vector2(0f, -18f);
+
+            GameObject fillArea = new GameObject("Fill Area", typeof(RectTransform));
+            fillArea.transform.SetParent(root.transform, false);
+            RectTransform fillAreaRect = fillArea.GetComponent<RectTransform>();
+            fillAreaRect.anchorMin = Vector2.zero;
+            fillAreaRect.anchorMax = Vector2.one;
+            fillAreaRect.offsetMin = new Vector2(0f, 18f);
+            fillAreaRect.offsetMax = new Vector2(0f, -18f);
+
+            Image fill = CreateSliderImage(
+                "Fill",
+                fillArea.transform,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero,
+                new Color(0.38f, 0.78f, 1f, 1f));
+
+            GameObject handleArea = new GameObject("Handle Slide Area", typeof(RectTransform));
+            handleArea.transform.SetParent(root.transform, false);
+            RectTransform handleAreaRect = handleArea.GetComponent<RectTransform>();
+            handleAreaRect.anchorMin = Vector2.zero;
+            handleAreaRect.anchorMax = Vector2.one;
+            handleAreaRect.offsetMin = new Vector2(8f, 0f);
+            handleAreaRect.offsetMax = new Vector2(-8f, 0f);
+
+            Image handle = CreateSliderImage(
+                "Handle",
+                handleArea.transform,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(34f, 34f),
+                new Color(1f, 0.88f, 0.52f, 1f));
+            AddUiOutline(handle.gameObject, new Color(0f, 0f, 0f, 0.44f), new Vector2(1f, -1f));
+
+            Slider slider = root.GetComponent<Slider>();
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.wholeNumbers = false;
+            slider.targetGraphic = handle;
+            slider.fillRect = fill.transform as RectTransform;
+            slider.handleRect = handle.transform as RectTransform;
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.onValueChanged.AddListener(onValueChanged);
+            return slider;
+        }
+
+        private static Toggle CreateAudioSettingsToggle(
+            string name,
+            Transform parent,
+            Vector2 anchoredPosition,
+            UnityEngine.Events.UnityAction<bool> onValueChanged)
+        {
+            GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Toggle));
+            root.transform.SetParent(parent, false);
+            RectTransform rootRect = root.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0f, 1f);
+            rootRect.anchorMax = new Vector2(0f, 1f);
+            rootRect.pivot = new Vector2(0.5f, 0.5f);
+            rootRect.anchoredPosition = anchoredPosition;
+            rootRect.sizeDelta = new Vector2(152f, 54f);
+
+            Image background = root.GetComponent<Image>();
+            background.color = new Color(0.09f, 0.11f, 0.15f, 1f);
+            background.raycastTarget = true;
+            AddUiOutline(root, new Color(0.64f, 0.86f, 1f, 0.36f), new Vector2(1f, -1f));
+
+            Image checkmark = CreateSliderImage(
+                "Checkmark",
+                root.transform,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(38f, 0f),
+                new Vector2(58f, 34f),
+                new Color(0.38f, 0.78f, 1f, 1f));
+            checkmark.raycastTarget = false;
+
+            Text label = CreateUiText(
+                "ToggleLabel",
+                root.transform,
+                "ON",
+                20,
+                FontStyle.Bold,
+                new Vector2(0f, 0.5f),
+                new Vector2(1f, 0.5f),
+                new Vector2(36f, 0f),
+                new Vector2(92f, 34f),
+                Color.white,
+                TextAnchor.MiddleCenter);
+            label.raycastTarget = false;
+
+            Toggle toggle = root.GetComponent<Toggle>();
+            toggle.targetGraphic = background;
+            toggle.graphic = checkmark;
+            toggle.isOn = true;
+            toggle.onValueChanged.AddListener(delegate(bool isOn)
+            {
+                label.text = isOn ? "ON" : "OFF";
+                label.color = isOn ? Color.white : new Color(0.66f, 0.70f, 0.76f, 1f);
+                background.color = isOn
+                    ? new Color(0.09f, 0.11f, 0.15f, 1f)
+                    : new Color(0.08f, 0.08f, 0.09f, 1f);
+            });
+            toggle.onValueChanged.AddListener(onValueChanged);
+            return toggle;
+        }
+
+        private static Image CreateSliderImage(
+            string name,
+            Transform parent,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 anchoredPosition,
+            Vector2 size,
+            Color color)
+        {
+            GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            root.transform.SetParent(parent, false);
+            RectTransform rectTransform = root.GetComponent<RectTransform>();
+            rectTransform.anchorMin = anchorMin;
+            rectTransform.anchorMax = anchorMax;
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+
+            Image image = root.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = true;
+            return image;
+        }
+
+        private void CreateAudioSettingsActionButton(
+            Transform parent,
+            string name,
+            string label,
+            Vector2 anchoredPosition,
+            UnityEngine.Events.UnityAction action)
+        {
+            Button button = CreatePlainButton(
+                name,
+                parent,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                anchoredPosition,
+                new Vector2(188f, 64f),
+                new Color(0.12f, 0.19f, 0.24f, 0.96f),
+                action);
+            AddUiOutline(button.gameObject, new Color(0.64f, 0.86f, 1f, 0.42f), new Vector2(2f, -2f));
+            Text text = CreateUiText(
+                name + "Label",
+                button.transform,
+                label,
+                22,
+                FontStyle.Bold,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(166f, 38f),
+                Color.white,
+                TextAnchor.MiddleCenter);
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 15;
+            text.resizeTextMaxSize = 22;
+        }
+
+        private void SetAudioSettingsVolumes(float bgm, float se, bool playPreview)
+        {
+            AudioManager audioManager = AudioManager.Instance;
+            if (audioManager == null)
+            {
+                return;
+            }
+
+            audioManager.SetBgmVolume(bgm);
+            audioManager.SetSeVolume(se);
+            RefreshAudioSettingsPanel();
+            if (playPreview)
+            {
+                audioManager.PlaySe(AudioCue.UiConfirm);
+            }
+        }
+
+        private void RefreshAudioSettingsPanel()
+        {
+            AudioManager audioManager = AudioManager.Instance;
+            float bgm = audioManager != null ? audioManager.BgmVolume : 0.58f;
+            float se = audioManager != null ? audioManager.SeVolume : 0.76f;
+            bool haptics = audioManager == null || audioManager.HapticsEnabled;
+            if (audioSettingsBgmSlider != null)
+            {
+                audioSettingsBgmSlider.SetValueWithoutNotify(bgm);
+            }
+
+            if (audioSettingsSeSlider != null)
+            {
+                audioSettingsSeSlider.SetValueWithoutNotify(se);
+            }
+
+            if (audioSettingsHapticsToggle != null)
+            {
+                audioSettingsHapticsToggle.SetIsOnWithoutNotify(haptics);
+                RefreshAudioSettingsToggleVisual(audioSettingsHapticsToggle, haptics);
+            }
+
+            RefreshAudioSettingsValueTexts();
+        }
+
+        private void RefreshAudioSettingsValueTexts()
+        {
+            AudioManager audioManager = AudioManager.Instance;
+            float bgm = audioManager != null ? audioManager.BgmVolume : 0.58f;
+            float se = audioManager != null ? audioManager.SeVolume : 0.76f;
+            bool haptics = audioManager == null || audioManager.HapticsEnabled;
+            if (audioSettingsBgmValueText != null)
+            {
+                audioSettingsBgmValueText.text = Mathf.RoundToInt(bgm * 100f) + "%";
+            }
+
+            if (audioSettingsSeValueText != null)
+            {
+                audioSettingsSeValueText.text = Mathf.RoundToInt(se * 100f) + "%";
+            }
+
+            if (audioSettingsHapticsValueText != null)
+            {
+                audioSettingsHapticsValueText.text = haptics ? "ON" : "OFF";
+            }
+        }
+
+        private static void RefreshAudioSettingsToggleVisual(Toggle toggle, bool isOn)
+        {
+            if (toggle == null)
+            {
+                return;
+            }
+
+            Image background = toggle.GetComponent<Image>();
+            if (background != null)
+            {
+                background.color = isOn
+                    ? new Color(0.09f, 0.11f, 0.15f, 1f)
+                    : new Color(0.08f, 0.08f, 0.09f, 1f);
+            }
+
+            Transform labelTransform = toggle.transform.Find("ToggleLabel");
+            Text label = labelTransform != null ? labelTransform.GetComponent<Text>() : null;
+            if (label != null)
+            {
+                label.text = isOn ? "ON" : "OFF";
+                label.color = isOn ? Color.white : new Color(0.66f, 0.70f, 0.76f, 1f);
+            }
+        }
+
         private static Text CreateHomeResourcePill(
             Transform parent,
             string rootName,
@@ -1846,6 +3062,9 @@ namespace WitchTower.Home
                 ConfigurePlayerBadgeLevelAndExp(playerBadge, homePlayerLevelText, homeExpText);
                 EnsurePlayerBadgeInteraction(playerBadge);
                 RemoveDirectChild(existingBar, "ExpCounter");
+                homeGuideBadgeText = menuRoot.Find("HomeGuidePanel/HomeGuideBadgeText")?.GetComponent<Text>();
+                homeGuideTitleText = menuRoot.Find("HomeGuidePanel/HomeGuideTitleText")?.GetComponent<Text>();
+                homeGuideCharacterImage = menuRoot.Find("HomeGuidePanel/HomeGuideCharacterImage")?.GetComponent<Image>();
                 homeGuideText = menuRoot.Find("HomeGuidePanel/HomeGuideText")?.GetComponent<Text>();
                 homeNextFloorText = menuRoot.Find("HomeGuidePanel/HomeNextFloorText")?.GetComponent<Text>();
                 homeHeroImage = menuRoot.Find("HomeHeroShowcase/HomeHeroImage")?.GetComponent<Image>();
@@ -1863,6 +3082,7 @@ namespace WitchTower.Home
                 }
                 ConfigureGoldShopButtonVisual(homeShopButton != null ? homeShopButton.transform : null, homeShopButtonText);
                 EnsurePermanentUpgradeShortcutButton(existingBar);
+                EnsureAudioSettingsButton(existingBar);
                 ConfigureHomeResourceAmountText(homeFreeStoneText);
                 ConfigureHomeResourceAmountText(homePaidStoneText);
                 ConfigureHomeResourceAmountText(homeGoldText);
@@ -1981,6 +3201,7 @@ namespace WitchTower.Home
             homeShopButton = CreateGoldShopButton(bar.transform, HomeShopButtonPosition, HomeShopButtonSize);
             permanentUpgradeButton = CreatePermanentUpgradeShortcutButton(bar.transform, PermanentUpgradeButtonPosition, PermanentUpgradeButtonSize);
             homeQuestButton = CreateQuestButton(bar.transform, HomeQuestButtonPosition, HomeQuestButtonSize);
+            EnsureAudioSettingsButton(bar.transform);
             EnsureDailyQuestList(menuRoot);
         }
 
@@ -2062,15 +3283,7 @@ namespace WitchTower.Home
 
                 RefreshPlayerBadgeDisplay(null);
 
-                if (homeGuideText != null)
-                {
-                    homeGuideText.text = "ようこそ！\n冒険の準備をしましょう。";
-                }
-
-                if (homeNextFloorText != null)
-                {
-                    homeNextFloorText.text = "次の挑戦: -";
-                }
+                ApplyHomeGuideDisplay(null);
 
                 if (homeQuestButtonText != null)
                 {
@@ -2096,6 +3309,7 @@ namespace WitchTower.Home
 
                 RefreshHomeHeroShowcase(profile);
                 ApplyHomeTutorialFocus(null);
+                RefreshFirstSummonTutorialPulse(null, existingMenuRoot);
                 return;
             }
 
@@ -2116,15 +3330,7 @@ namespace WitchTower.Home
 
             RefreshPlayerBadgeDisplay(profile);
 
-            if (homeGuideText != null)
-            {
-                homeGuideText.text = BuildHomeGuideText(profile);
-            }
-
-            if (homeNextFloorText != null)
-            {
-                homeNextFloorText.text = "次の探索: " + BuildNextDungeonLabel(Mathf.Max(1, profile.HighestFloor + 1));
-            }
+            ApplyHomeGuideDisplay(profile);
 
             if (homeQuestButtonText != null)
             {
@@ -2150,6 +3356,7 @@ namespace WitchTower.Home
 
             RefreshHomeHeroShowcase(profile);
             ApplyHomeTutorialFocus(profile);
+            RefreshFirstSummonTutorialPulse(profile, existingMenuRoot);
         }
 
         private Transform ResolveUnifiedMenuRootTransform()
@@ -2199,13 +3406,198 @@ namespace WitchTower.Home
             }
         }
 
+        private void ApplyHomeGuideDisplay(PlayerProfile profile)
+        {
+            StoryTutorialEvent tutorialEvent = profile != null
+                ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
+                : null;
+            bool isTutorialEvent = profile != null &&
+                !profile.HasCompletedTutorial &&
+                tutorialEvent != null &&
+                tutorialEvent.IsValid;
+            bool hasClaimableQuestReward = profile != null &&
+                DailyRewardService.GetClaimableQuestCount(profile, DateTime.Now) > 0;
+            bool shouldShowGuidePanel = !IsDailyQuestListOpen() && (isTutorialEvent || hasClaimableQuestReward);
+            SetHomeGuidePanelVisible(shouldShowGuidePanel);
+            if (!shouldShowGuidePanel)
+            {
+                return;
+            }
+
+            string title;
+            string body;
+            string footer;
+            if (profile == null)
+            {
+                title = "読込中";
+                body = "ようこそ。冒険の準備をしています。";
+                footer = "次の挑戦: -";
+            }
+            else if (isTutorialEvent)
+            {
+                title = string.IsNullOrEmpty(tutorialEvent.Title) ? "チュートリアル" : tutorialEvent.Title;
+                body = tutorialEvent.Body;
+                footer = ResolveHomeTutorialFooter(profile, tutorialEvent);
+            }
+            else
+            {
+                SplitGuideText(BuildHomeGuideText(profile), out title, out body);
+                footer = hasClaimableQuestReward
+                    ? "クエストから報酬を受け取りましょう"
+                    : "次の探索: " + BuildNextDungeonLabel(Mathf.Max(1, profile.HighestFloor + 1));
+            }
+
+            if (homeGuideBadgeText != null)
+            {
+                homeGuideBadgeText.text = string.Empty;
+                homeGuideBadgeText.gameObject.SetActive(false);
+            }
+
+            ApplyHomeGuideLayout(true);
+
+            if (homeGuideCharacterImage != null)
+            {
+                homeGuideCharacterImage.gameObject.SetActive(true);
+            }
+
+            if (homeGuideTitleText != null)
+            {
+                homeGuideTitleText.text = title;
+            }
+
+            if (homeGuideText != null)
+            {
+                homeGuideText.text = body;
+            }
+
+            if (homeNextFloorText != null)
+            {
+                homeNextFloorText.text = footer;
+            }
+        }
+
+        private void SetHomeGuidePanelVisible(bool visible)
+        {
+            GameObject panelObject = ResolveHomeGuidePanelObject();
+            if (panelObject != null)
+            {
+                panelObject.SetActive(visible);
+            }
+
+            if (!visible && homeGuideButton != null)
+            {
+                homeGuideButton.interactable = false;
+            }
+        }
+
+        private GameObject ResolveHomeGuidePanelObject()
+        {
+            if (homeGuideButton != null)
+            {
+                return homeGuideButton.gameObject;
+            }
+
+            if (homeGuideTitleText != null && homeGuideTitleText.transform.parent != null)
+            {
+                return homeGuideTitleText.transform.parent.gameObject;
+            }
+
+            if (homeGuideText != null && homeGuideText.transform.parent != null)
+            {
+                return homeGuideText.transform.parent.gameObject;
+            }
+
+            if (homeNextFloorText != null && homeNextFloorText.transform.parent != null)
+            {
+                return homeNextFloorText.transform.parent.gameObject;
+            }
+
+            return null;
+        }
+
+        private bool IsDailyQuestListOpen()
+        {
+            return dailyQuestListRoot != null && dailyQuestListRoot.activeInHierarchy;
+        }
+
+        private void ApplyHomeGuideLayout(bool showCharacter)
+        {
+            ConfigureGuideRect(
+                homeGuideTitleText != null ? homeGuideTitleText.transform as RectTransform : null,
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(0.5f, 0.5f),
+                showCharacter ? new Vector2(615f, -48f) : new Vector2(585f, -48f),
+                showCharacter ? new Vector2(560f, 54f) : new Vector2(620f, 54f));
+            ConfigureGuideRect(
+                homeGuideText != null ? homeGuideText.transform as RectTransform : null,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                showCharacter ? new Vector2(615f, 18f) : new Vector2(585f, 18f),
+                showCharacter ? new Vector2(560f, 128f) : new Vector2(670f, 128f));
+            ConfigureGuideRect(
+                homeNextFloorText != null ? homeNextFloorText.transform as RectTransform : null,
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(0.5f, 0.5f),
+                showCharacter ? new Vector2(615f, 42f) : new Vector2(585f, 42f),
+                showCharacter ? new Vector2(560f, 42f) : new Vector2(620f, 42f));
+        }
+
+        private static void SplitGuideText(string guideText, out string title, out string body)
+        {
+            string safeText = string.IsNullOrEmpty(guideText)
+                ? "探索準備\n今日の冒険を始めましょう。"
+                : guideText;
+            int lineBreakIndex = safeText.IndexOf('\n');
+            if (lineBreakIndex < 0)
+            {
+                title = "探索準備";
+                body = safeText;
+                return;
+            }
+
+            title = safeText.Substring(0, lineBreakIndex).Trim();
+            body = safeText.Substring(lineBreakIndex + 1).Trim();
+            if (string.IsNullOrEmpty(title))
+            {
+                title = "探索準備";
+            }
+
+            if (string.IsNullOrEmpty(body))
+            {
+                body = "今日の冒険を始めましょう。";
+            }
+        }
+
+        private static string ResolveHomeTutorialFooter(PlayerProfile profile, StoryTutorialEvent tutorialEvent)
+        {
+            if (tutorialEvent != null &&
+                string.Equals(tutorialEvent.EventId, StoryTutorialService.HintHomeGuideComplete, StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            if (CanAdvanceHomeGuidePanel(profile, tutorialEvent))
+            {
+                return "パネルをタップして続ける";
+            }
+
+            string actionLabel = ResolveHomeTutorialActionLabel(tutorialEvent?.TargetKey ?? string.Empty);
+            return string.IsNullOrEmpty(actionLabel)
+                ? "案内に沿って操作してください"
+                : "次の操作: " + actionLabel;
+        }
+
         private void RefreshHomeHeroShowcase(PlayerProfile profile)
         {
             Sprite sprite = ResolveHomeHeroSprite(profile);
             if (homeHeroImage != null)
             {
+                homeHeroImage.gameObject.SetActive(sprite != null);
                 homeHeroImage.sprite = sprite;
-                homeHeroImage.color = sprite != null ? Color.white : new Color(0.18f, 0.18f, 0.24f, 0.70f);
+                homeHeroImage.color = sprite != null ? Color.white : new Color(1f, 1f, 1f, 0f);
                 homeHeroImage.preserveAspect = true;
             }
 
@@ -2230,6 +3622,11 @@ namespace WitchTower.Home
         private static Sprite ResolveHomeHeroSprite(PlayerProfile profile)
         {
             OwnedMonsterData leadMonster = ResolveLeadMonster(profile);
+            if (leadMonster == null)
+            {
+                return null;
+            }
+
             MonsterDataSO monsterData = null;
             if (leadMonster != null && MasterDataManager.Instance != null)
             {
@@ -2295,6 +3692,14 @@ namespace WitchTower.Home
                 {
                     changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryPrologueWakeup);
                     changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepWakeup);
+                    SaveHomeTutorialProgressIfNeeded(changed);
+                    return false;
+                }
+
+                if (profile.TutorialStepId == StoryTutorialService.StepFirstExplorationIntro)
+                {
+                    changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstExplorationIntro);
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstExplorationIntro);
                     SaveHomeTutorialProgressIfNeeded(changed);
                     return false;
                 }
@@ -2372,9 +3777,22 @@ namespace WitchTower.Home
                     changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryPrologueWakeup);
                     changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepWakeup);
                 }
+                else if (profile.TutorialStepId == StoryTutorialService.StepFirstExplorationIntro)
+                {
+                    changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstExplorationIntro);
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstExplorationIntro);
+                }
                 else if (profile.TutorialStepId == StoryTutorialService.StepWrapUp)
                 {
                     changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepWrapUp);
+                }
+                else if (string.IsNullOrEmpty(activeEvent.TargetKey))
+                {
+                    changed |= StoryTutorialService.MarkHintSeen(profile, activeEvent.EventId);
+                    if (activeEvent.EventId == StoryTutorialService.HintHomeGuideComplete)
+                    {
+                        changed |= StoryTutorialService.CompleteTutorial(profile);
+                    }
                 }
             }
             else if (StoryTutorialService.IsChapterStoryEvent(activeEvent.EventId))
@@ -2408,6 +3826,37 @@ namespace WitchTower.Home
                 ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
                 : null;
             bool guideCanAdvance = CanAdvanceHomeGuidePanel(profile, activeEvent);
+            bool shouldFocusQuestReward = profile != null &&
+                profile.HasCompletedTutorial &&
+                DailyRewardService.GetClaimableQuestCount(profile, DateTime.Now) > 0;
+            if (IsDailyQuestListOpen())
+            {
+                if (homeGuideButton != null)
+                {
+                    homeGuideButton.interactable = false;
+                }
+
+                HideHomeTutorialFocus();
+                return;
+            }
+
+            if (profile != null && profile.HasCompletedTutorial && !shouldFocusQuestReward)
+            {
+                if (homeGuideButton != null)
+                {
+                    homeGuideButton.interactable = false;
+                }
+
+                if (menuRoot != null)
+                {
+                    SetTutorialShortcutButtonsVisible(menuRoot, true);
+                    SetHomeTutorialActionButtonsInteractable(menuRoot, true, string.Empty);
+                }
+
+                HideHomeTutorialFocus();
+                return;
+            }
+
             if (homeGuideButton != null)
             {
                 homeGuideButton.interactable = guideCanAdvance;
@@ -2423,13 +3872,21 @@ namespace WitchTower.Home
                 !profile.HasCompletedTutorial &&
                 activeEvent != null &&
                 activeEvent.BlocksInput;
-            string targetButtonName = ResolveHomeTutorialButtonName(activeEvent?.TargetKey ?? string.Empty);
+            string targetButtonName = shouldFocusQuestReward
+                ? "QuestButton"
+                : ResolveHomeTutorialButtonName(activeEvent?.TargetKey ?? string.Empty);
+            SetTutorialShortcutButtonsVisible(menuRoot, !blocksInput);
             SetHomeTutorialActionButtonsInteractable(menuRoot, !blocksInput, targetButtonName);
 
-            if (activeEvent == null || !activeEvent.IsValid)
+            if ((activeEvent == null || !activeEvent.IsValid) && !shouldFocusQuestReward)
             {
                 HideHomeTutorialFocus();
                 return;
+            }
+
+            if (homeGuideButton != null)
+            {
+                homeGuideButton.transform.SetAsLastSibling();
             }
 
             Transform focusTarget = null;
@@ -2437,12 +3894,14 @@ namespace WitchTower.Home
             if (!string.IsNullOrEmpty(targetButtonName))
             {
                 focusTarget = FindDescendant(menuRoot, targetButtonName);
-                focusLabel = "ここをタップ";
+                focusLabel = string.Equals(targetButtonName, "GachaButton", StringComparison.Ordinal)
+                    ? string.Empty
+                    : "ここをタップ";
             }
             else if (guideCanAdvance)
             {
-                focusTarget = homeGuideButton != null ? homeGuideButton.transform : menuRoot.Find("HomeGuidePanel");
-                focusLabel = "タップして続ける";
+                HideHomeTutorialFocus();
+                return;
             }
 
             if (focusTarget == null)
@@ -2451,7 +3910,62 @@ namespace WitchTower.Home
                 return;
             }
 
+            if (string.Equals(targetButtonName, "GachaButton", StringComparison.Ordinal))
+            {
+                HideHomeTutorialFocus();
+                BindHomeTutorialTargetVisual(focusTarget);
+                return;
+            }
+
+            if (string.Equals(targetButtonName, "EquipmentButton", StringComparison.Ordinal) &&
+                IsHomeEquipmentHintTarget(activeEvent.TargetKey))
+            {
+                HideHomeTutorialFocus();
+                ResetHomeTutorialTargetVisual();
+                return;
+            }
+
+            if (string.Equals(targetButtonName, "MonsterDexButton", StringComparison.Ordinal) &&
+                string.Equals(activeEvent.TargetKey, "home.dex", StringComparison.Ordinal))
+            {
+                HideHomeTutorialFocus();
+                ResetHomeTutorialTargetVisual();
+                return;
+            }
+
+            if (string.Equals(targetButtonName, "FusionButton", StringComparison.Ordinal) &&
+                string.Equals(activeEvent.TargetKey, "home.fusion", StringComparison.Ordinal))
+            {
+                HideHomeTutorialFocus();
+                ResetHomeTutorialTargetVisual();
+                return;
+            }
+
+            if (string.Equals(targetButtonName, "GoldShopNavButton", StringComparison.Ordinal) &&
+                string.Equals(activeEvent.TargetKey, "home.shop", StringComparison.Ordinal))
+            {
+                HideHomeTutorialFocus();
+                ResetHomeTutorialTargetVisual();
+                return;
+            }
+
             ShowHomeTutorialFocus(menuRoot, focusTarget, focusLabel);
+        }
+
+        private static void SetTutorialShortcutButtonsVisible(Transform menuRoot, bool visible)
+        {
+            SetNamedChildVisible(menuRoot, "GoldShopButton", visible);
+            SetNamedChildVisible(menuRoot, "PermanentUpgradeButton", visible);
+            SetNamedChildVisible(menuRoot, "QuestButton", visible);
+        }
+
+        private static void SetNamedChildVisible(Transform root, string objectName, bool visible)
+        {
+            Transform target = FindDescendant(root, objectName);
+            if (target != null)
+            {
+                target.gameObject.SetActive(visible);
+            }
         }
 
         private static bool CanAdvanceHomeGuidePanel(PlayerProfile profile, StoryTutorialEvent activeEvent)
@@ -2464,7 +3978,9 @@ namespace WitchTower.Home
             if (!profile.HasCompletedTutorial)
             {
                 return profile.TutorialStepId == StoryTutorialService.StepWakeup ||
-                    profile.TutorialStepId == StoryTutorialService.StepWrapUp;
+                    profile.TutorialStepId == StoryTutorialService.StepFirstExplorationIntro ||
+                    profile.TutorialStepId == StoryTutorialService.StepWrapUp ||
+                    string.IsNullOrEmpty(activeEvent.TargetKey);
             }
 
             return StoryTutorialService.IsChapterStoryEvent(activeEvent.EventId) ||
@@ -2499,6 +4015,9 @@ namespace WitchTower.Home
                 case "home.gacha":
                     return "GachaButton";
                 case "home.equipment":
+                case "equipment.first_item":
+                case "equipment.quality_label":
+                case "equipment.enhance_button":
                     return "EquipmentButton";
                 case "home.fusion":
                     return "FusionButton";
@@ -2506,6 +4025,32 @@ namespace WitchTower.Home
                     return "MonsterDexButton";
                 case "home.shop":
                     return "GoldShopNavButton";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static string ResolveHomeTutorialActionLabel(string targetKey)
+        {
+            switch (targetKey)
+            {
+                case "home.battle":
+                    return "バトルを開く";
+                case "home.formation":
+                    return "編成を開く";
+                case "home.gacha":
+                    return "召喚を開く";
+                case "home.equipment":
+                case "equipment.first_item":
+                case "equipment.quality_label":
+                case "equipment.enhance_button":
+                    return "装備を開く";
+                case "home.fusion":
+                    return "配合を開く";
+                case "home.dex":
+                    return "図鑑を開く";
+                case "home.shop":
+                    return "商店を開く";
                 default:
                     return string.Empty;
             }
@@ -2525,29 +4070,38 @@ namespace WitchTower.Home
                 return;
             }
 
-            Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(menuRoot, targetTransform);
-            focusRect.anchorMin = new Vector2(0.5f, 0f);
-            focusRect.anchorMax = new Vector2(0.5f, 0f);
+            if (homeTutorialFocusRoot.transform.parent != targetTransform)
+            {
+                homeTutorialFocusRoot.transform.SetParent(targetTransform, false);
+            }
+
+            focusRect.anchorMin = Vector2.zero;
+            focusRect.anchorMax = Vector2.one;
             focusRect.pivot = new Vector2(0.5f, 0.5f);
-            focusRect.anchoredPosition = new Vector2(bounds.center.x, bounds.center.y);
-            focusRect.sizeDelta = new Vector2(
-                Mathf.Max(130f, bounds.size.x + 30f),
-                Mathf.Max(84f, bounds.size.y + 30f));
+            focusRect.anchoredPosition = Vector2.zero;
+            focusRect.offsetMin = new Vector2(-14f, -14f);
+            focusRect.offsetMax = new Vector2(14f, 14f);
 
             if (homeTutorialFocusText != null)
             {
                 RectTransform textRect = homeTutorialFocusText.transform as RectTransform;
                 if (textRect != null)
                 {
-                    textRect.anchoredPosition = new Vector2(0f, focusRect.sizeDelta.y * 0.5f + 30f);
-                    textRect.sizeDelta = new Vector2(Mathf.Max(220f, focusRect.sizeDelta.x + 40f), 44f);
+                    RectTransform targetRect = targetTransform as RectTransform;
+                    float targetHeight = targetRect != null ? targetRect.rect.height : 120f;
+                    float targetWidth = targetRect != null ? targetRect.rect.width : 180f;
+                    textRect.anchoredPosition = new Vector2(0f, targetHeight * 0.5f + 44f);
+                    textRect.sizeDelta = new Vector2(Mathf.Max(220f, targetWidth + 40f), 44f);
                 }
 
                 homeTutorialFocusText.text = label;
             }
 
+            BindHomeTutorialTargetVisual(targetTransform);
+
             homeTutorialFocusRoot.SetActive(true);
             homeTutorialFocusRoot.transform.SetAsLastSibling();
+            focusRect.localScale = Vector3.one;
         }
 
         private void EnsureHomeTutorialFocus(Transform menuRoot)
@@ -2557,15 +4111,15 @@ namespace WitchTower.Home
                 return;
             }
 
-            Transform existing = menuRoot.Find("HomeTutorialFocus");
-            if (homeTutorialFocusRoot == null || homeTutorialFocusRoot.transform.parent != menuRoot)
+            Transform existing = FindDescendant(menuRoot, "HomeTutorialFocus");
+            if (homeTutorialFocusRoot == null)
             {
                 homeTutorialFocusRoot = existing != null
                     ? existing.gameObject
                     : new GameObject("HomeTutorialFocus", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             }
 
-            if (homeTutorialFocusRoot.transform.parent != menuRoot)
+            if (homeTutorialFocusRoot.transform.parent == null)
             {
                 homeTutorialFocusRoot.transform.SetParent(menuRoot, false);
             }
@@ -2576,7 +4130,7 @@ namespace WitchTower.Home
                 image = homeTutorialFocusRoot.AddComponent<Image>();
             }
 
-            image.color = new Color(1f, 0.86f, 0.30f, 0.001f);
+            image.color = new Color(1f, 0.86f, 0.30f, 0f);
             image.raycastTarget = false;
 
             Outline outline = homeTutorialFocusRoot.GetComponent<Outline>();
@@ -2585,8 +4139,9 @@ namespace WitchTower.Home
                 outline = homeTutorialFocusRoot.AddComponent<Outline>();
             }
 
-            outline.effectColor = new Color(1f, 0.82f, 0.32f, 0.95f);
-            outline.effectDistance = new Vector2(5f, -5f);
+            outline.enabled = false;
+
+            EnsureHomeTutorialFocusFrame(homeTutorialFocusRoot.transform);
 
             homeTutorialFocusText = homeTutorialFocusRoot.transform.Find("HomeTutorialFocusLabel")?.GetComponent<Text>();
             if (homeTutorialFocusText == null)
@@ -2609,12 +4164,308 @@ namespace WitchTower.Home
             homeTutorialFocusText.raycastTarget = false;
         }
 
+        private void EnsureHomeTutorialFocusFrame(Transform focusRoot)
+        {
+            if (focusRoot == null)
+            {
+                return;
+            }
+
+            homeTutorialFocusFrameImages.Clear();
+            CreateHomeTutorialFocusBar(focusRoot, "Top", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 0f), new Vector2(-2f, 9f));
+            CreateHomeTutorialFocusBar(focusRoot, "Bottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 0f), new Vector2(-2f, 9f));
+            CreateHomeTutorialFocusBar(focusRoot, "Left", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(9f, -2f));
+            CreateHomeTutorialFocusBar(focusRoot, "Right", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 0f), new Vector2(9f, -2f));
+        }
+
+        private void CreateHomeTutorialFocusBar(
+            Transform focusRoot,
+            string suffix,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 anchoredPosition,
+            Vector2 sizeDelta)
+        {
+            Transform existing = focusRoot.Find($"HomeTutorialFocus{suffix}");
+            Image bar = existing != null ? existing.GetComponent<Image>() : null;
+            if (bar == null)
+            {
+                GameObject barObject = new GameObject(
+                    $"HomeTutorialFocus{suffix}",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+                barObject.transform.SetParent(focusRoot, false);
+                bar = barObject.GetComponent<Image>();
+            }
+
+            RectTransform rect = bar.transform as RectTransform;
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = sizeDelta;
+            bar.color = new Color(1f, 0.76f, 0.20f, 1f);
+            bar.raycastTarget = false;
+            bar.transform.SetAsFirstSibling();
+            homeTutorialFocusFrameImages.Add(bar);
+        }
+
+        private void AnimateHomeTutorialFocus()
+        {
+            if (homeTutorialFocusRoot == null || !homeTutorialFocusRoot.activeInHierarchy)
+            {
+                return;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.2f);
+            float alpha = Mathf.Lerp(0.38f, 1f, pulse);
+            Color frameColor = new Color(1f, Mathf.Lerp(0.58f, 0.88f, pulse), 0.16f, alpha);
+            for (int i = 0; i < homeTutorialFocusFrameImages.Count; i += 1)
+            {
+                if (homeTutorialFocusFrameImages[i] != null)
+                {
+                    homeTutorialFocusFrameImages[i].color = frameColor;
+                }
+            }
+
+            RectTransform focusRect = homeTutorialFocusRoot.transform as RectTransform;
+            if (focusRect != null)
+            {
+                float scale = Mathf.Lerp(1f, 1.055f, pulse);
+                focusRect.localScale = new Vector3(scale, scale, 1f);
+            }
+
+            if (homeTutorialFocusText != null)
+            {
+                Color labelColor = homeTutorialFocusText.color;
+                labelColor.a = Mathf.Lerp(0.72f, 1f, pulse);
+                homeTutorialFocusText.color = labelColor;
+            }
+
+            if (homeTutorialTargetOutline != null)
+            {
+                homeTutorialTargetOutline.enabled = true;
+                homeTutorialTargetOutline.effectColor = new Color(1f, 0.68f, 0.12f, Mathf.Lerp(0.58f, 1f, pulse));
+                homeTutorialTargetOutline.effectDistance = new Vector2(
+                    Mathf.Lerp(6f, 11f, pulse),
+                    Mathf.Lerp(-6f, -11f, pulse));
+            }
+
+            if (homeTutorialTargetGraphic != null)
+            {
+                homeTutorialTargetGraphic.color = Color.Lerp(
+                    Color.white,
+                    new Color(1f, 0.86f, 0.46f, 1f),
+                    pulse * 0.48f);
+                float targetScale = Mathf.Lerp(1f, 1.075f, pulse);
+                homeTutorialTargetGraphic.rectTransform.localScale = new Vector3(targetScale, targetScale, 1f);
+            }
+        }
+
+        private void BindHomeTutorialTargetVisual(Transform targetTransform)
+        {
+            Transform visualTransform = targetTransform != null
+                ? targetTransform.Find("BottomNavSegmentVisual")
+                : null;
+            if (visualTransform == null && targetTransform != null)
+            {
+                visualTransform = targetTransform.Find(targetTransform.name + "Visual");
+            }
+
+            Graphic targetGraphic = visualTransform != null
+                ? visualTransform.GetComponent<Graphic>()
+                : targetTransform?.GetComponent<Graphic>();
+            if (homeTutorialTargetGraphic == targetGraphic && homeTutorialTargetOutline != null)
+            {
+                return;
+            }
+
+            ResetHomeTutorialTargetVisual();
+            homeTutorialTargetGraphic = targetGraphic;
+            if (homeTutorialTargetGraphic == null)
+            {
+                return;
+            }
+
+            homeTutorialTargetOutline = homeTutorialTargetGraphic.GetComponent<Outline>();
+            if (homeTutorialTargetOutline == null)
+            {
+                homeTutorialTargetOutline = homeTutorialTargetGraphic.gameObject.AddComponent<Outline>();
+            }
+
+            homeTutorialTargetOutline.useGraphicAlpha = false;
+            homeTutorialTargetOutline.enabled = true;
+        }
+
+        private void RefreshFirstSummonTutorialPulse(PlayerProfile profile, Transform menuRoot)
+        {
+            StoryTutorialEvent activeEvent = profile != null
+                ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
+                : null;
+            bool shouldPulseFirstSummon = profile != null &&
+                !profile.HasCompletedTutorial &&
+                profile.TutorialStepId == StoryTutorialService.StepOpenGacha;
+            bool canPulseOptionalTutorialHint = profile != null && !profile.HasCompletedTutorial;
+            bool shouldPulseDex = canPulseOptionalTutorialHint &&
+                activeEvent != null &&
+                activeEvent.EventId == StoryTutorialService.HintDex &&
+                string.Equals(activeEvent.TargetKey, "home.dex", StringComparison.Ordinal);
+            bool shouldPulseEquipment = canPulseOptionalTutorialHint &&
+                activeEvent != null &&
+                IsHomeEquipmentHintTarget(activeEvent.TargetKey);
+            bool shouldPulseFusion = canPulseOptionalTutorialHint &&
+                activeEvent != null &&
+                activeEvent.EventId == StoryTutorialService.HintFusion &&
+                string.Equals(activeEvent.TargetKey, "home.fusion", StringComparison.Ordinal);
+            bool shouldPulseShop = canPulseOptionalTutorialHint &&
+                activeEvent != null &&
+                activeEvent.EventId == StoryTutorialService.HintShop &&
+                string.Equals(activeEvent.TargetKey, "home.shop", StringComparison.Ordinal);
+            if ((!shouldPulseFirstSummon && !shouldPulseDex && !shouldPulseEquipment && !shouldPulseFusion && !shouldPulseShop) || menuRoot == null)
+            {
+                if (homeFirstSummonPulseRoot != null)
+                {
+                    homeFirstSummonPulseRoot.SetActive(false);
+                }
+
+                ResetHomeTutorialTargetVisual();
+                return;
+            }
+
+            int targetIndex = shouldPulseShop ? 0 : shouldPulseEquipment ? 3 : shouldPulseFusion ? 4 : shouldPulseDex ? 2 : 1;
+            float offsetX = shouldPulseEquipment
+                ? EquipmentHighlightOffsetX
+                : shouldPulseFusion
+                    ? FusionHighlightOffsetX
+                    : shouldPulseDex
+                        ? DexHighlightOffsetX
+                        : shouldPulseShop
+                            ? ShopHighlightOffsetX
+                            : FirstSummonHighlightOffsetX;
+            EnsureFirstSummonTutorialPulse(menuRoot, targetIndex, offsetX);
+            if (homeFirstSummonPulseRoot != null)
+            {
+                homeFirstSummonPulseRoot.SetActive(true);
+                homeFirstSummonPulseRoot.transform.SetAsLastSibling();
+            }
+
+            Transform targetButton = FindDescendant(menuRoot, shouldPulseShop ? "GoldShopNavButton" : shouldPulseEquipment ? "EquipmentButton" : shouldPulseFusion ? "FusionButton" : shouldPulseDex ? "MonsterDexButton" : "GachaButton");
+            if (targetButton != null && shouldPulseFirstSummon)
+            {
+                BindHomeTutorialTargetVisual(targetButton);
+            }
+            else if (shouldPulseDex || shouldPulseEquipment || shouldPulseFusion || shouldPulseShop)
+            {
+                ResetHomeTutorialTargetVisual();
+            }
+        }
+
+        private void EnsureFirstSummonTutorialPulse(Transform menuRoot, int navIndex, float offsetX)
+        {
+            if (menuRoot == null)
+            {
+                return;
+            }
+
+            Transform existing = menuRoot.Find("HomeFirstSummonPulse");
+            if (homeFirstSummonPulseRoot == null || homeFirstSummonPulseRoot.transform.parent != menuRoot)
+            {
+                homeFirstSummonPulseRoot = existing != null
+                    ? existing.gameObject
+                    : new GameObject(
+                        "HomeFirstSummonPulse",
+                        typeof(RectTransform),
+                        typeof(CanvasRenderer),
+                        typeof(Image));
+                homeFirstSummonPulseRoot.transform.SetParent(menuRoot, false);
+            }
+
+            RectTransform pulseRect = homeFirstSummonPulseRoot.transform as RectTransform;
+            ConfigureBottomAnchoredRect(
+                pulseRect,
+                new Vector2(GetBottomNavButtonX(navIndex) + offsetX, HomeBottomNavCenterY),
+                HomeBottomNavButtonHitSize + new Vector2(52f, 46f));
+
+            homeFirstSummonPulseFrame = homeFirstSummonPulseRoot.GetComponent<Image>();
+            if (homeFirstSummonPulseFrame == null)
+            {
+                homeFirstSummonPulseFrame = homeFirstSummonPulseRoot.AddComponent<Image>();
+            }
+
+            Sprite frameSprite = LoadSpriteResource(TutorialSummonHighlightFramePath, "TutorialSummonHighlightFrameImage2");
+            homeFirstSummonPulseFrame.sprite = frameSprite;
+            homeFirstSummonPulseFrame.type = Image.Type.Simple;
+            homeFirstSummonPulseFrame.preserveAspect = false;
+            homeFirstSummonPulseFrame.color = frameSprite != null
+                ? Color.white
+                : new Color(1f, 0.78f, 0.10f, 0.90f);
+            homeFirstSummonPulseFrame.raycastTarget = false;
+
+            RemoveFirstSummonPulseBar("Top");
+            RemoveFirstSummonPulseBar("Bottom");
+            RemoveFirstSummonPulseBar("Left");
+            RemoveFirstSummonPulseBar("Right");
+        }
+
+        private void RemoveFirstSummonPulseBar(string suffix)
+        {
+            if (homeFirstSummonPulseRoot == null)
+            {
+                return;
+            }
+
+            Transform existing = homeFirstSummonPulseRoot.transform.Find($"HomeFirstSummonPulse{suffix}");
+            if (existing != null)
+            {
+                DestroySceneObject(existing.gameObject);
+            }
+        }
+
+        private void AnimateFirstSummonTutorialPulse()
+        {
+            if (homeFirstSummonPulseRoot == null || !homeFirstSummonPulseRoot.activeInHierarchy)
+            {
+                return;
+            }
+
+            homeFirstSummonPulseRoot.transform.SetAsLastSibling();
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.6f);
+            if (homeFirstSummonPulseFrame != null)
+            {
+                homeFirstSummonPulseFrame.color = new Color(1f, 1f, 1f, Mathf.Lerp(0.72f, 1f, pulse));
+            }
+
+            float scale = Mathf.Lerp(0.985f, 1.045f, pulse);
+            homeFirstSummonPulseRoot.transform.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        private void ResetHomeTutorialTargetVisual()
+        {
+            if (homeTutorialTargetOutline != null)
+            {
+                homeTutorialTargetOutline.enabled = false;
+            }
+
+            if (homeTutorialTargetGraphic != null)
+            {
+                homeTutorialTargetGraphic.color = Color.white;
+                homeTutorialTargetGraphic.rectTransform.localScale = Vector3.one;
+            }
+
+            homeTutorialTargetOutline = null;
+            homeTutorialTargetGraphic = null;
+        }
+
         private void HideHomeTutorialFocus()
         {
             if (homeTutorialFocusRoot != null)
             {
                 homeTutorialFocusRoot.SetActive(false);
+                homeTutorialFocusRoot.transform.localScale = Vector3.one;
             }
+
+            ResetHomeTutorialTargetVisual();
         }
 
         private static Transform FindDescendant(Transform root, string objectName)
@@ -2656,20 +4507,30 @@ namespace WitchTower.Home
 
             if (targetKey == "home.fusion")
             {
-                return hint.EventId == StoryTutorialService.HintFusion;
+                // Fusion hints stay active until Luse explains them in the fusion scene.
+                return false;
             }
 
             if (targetKey == "home.dex")
             {
-                return hint.EventId == StoryTutorialService.HintDex;
+                // Keep the hint active until the player follows Luse's guide inside the dex.
+                return false;
             }
 
             if (targetKey == "home.shop")
             {
-                return hint.EventId == StoryTutorialService.HintShop;
+                // Keep the hint active until the player returns from Luse's shop guide.
+                return false;
             }
 
             return false;
+        }
+
+        private static bool IsHomeEquipmentHintTarget(string targetKey)
+        {
+            return targetKey == "equipment.first_item" ||
+                targetKey == "equipment.quality_label" ||
+                targetKey == "equipment.enhance_button";
         }
 
         private static string BuildHomeGuideText(PlayerProfile profile)
@@ -2679,7 +4540,9 @@ namespace WitchTower.Home
                 return "よぉし！\n今日の冒険を始めましょう。";
             }
 
-            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
+            StoryTutorialEvent tutorialEvent = !profile.HasCompletedTutorial
+                ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
+                : null;
             if (tutorialEvent != null && tutorialEvent.IsValid)
             {
                 return BuildTutorialGuideText(tutorialEvent);
@@ -2690,11 +4553,6 @@ namespace WitchTower.Home
             if (claimableQuestCount > 0)
             {
                 return $"よぉし！\n受け取れるクエスト報酬が{claimableQuestCount}件あります！";
-            }
-
-            if (profile.PendingIdleRewardGold > 0)
-            {
-                return $"よぉし！\n放置報酬 {profile.PendingIdleRewardGold:N0}G を回収できます！";
             }
 
             int nextFloor = Mathf.Max(1, profile.HighestFloor + 1);

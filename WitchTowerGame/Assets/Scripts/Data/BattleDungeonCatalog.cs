@@ -127,6 +127,9 @@ namespace WitchTower.Data
         private const float RewardExpBossHpMultiplier = 5.0f;
         private const float RewardExpBossAttackMultiplier = 2.0f;
         private const int RewardExpBossDefenseBonus = 8;
+        private const float Class1RecruitChance = 0.05f;
+        private const float Class2RecruitChance = 0.005f;
+        private const float Class3RecruitChance = 0.001f;
         private static readonly string[] Class1MonsterIds =
         {
             "monster_dragon_whelp",
@@ -145,6 +148,15 @@ namespace WitchTower.Data
             MonsterFusionCatalog.DarkRobeCurseMageNoahId
         };
 
+        private static readonly string[] Class3MonsterIds =
+        {
+            MonsterFusionCatalog.AbyssDragonId,
+            MonsterFusionCatalog.OmegaLeonId,
+            MonsterFusionCatalog.CosmicOreFortressGolemId,
+            MonsterFusionCatalog.SwordSaintAlvarezId,
+            MonsterFusionCatalog.AbyssGrandMageSeraphisId
+        };
+
         private static readonly BattleDungeonDefinition[] DungeonDefinitions =
         {
             new BattleDungeonDefinition(
@@ -156,7 +168,7 @@ namespace WitchTower.Data
                 1,
                 BuildDungeonFloors(
                     Class1MonsterIds,
-                    0.48f,
+                    Class1RecruitChance,
                     6,
                     2,
                     false,
@@ -174,7 +186,7 @@ namespace WitchTower.Data
                 6,
                 BuildMixedDungeonFloors(
                     Class1MonsterIds,
-                    0.32f,
+                    Class1RecruitChance,
                     18,
                     5,
                     false,
@@ -192,7 +204,7 @@ namespace WitchTower.Data
                 11,
                 BuildMixedDungeonFloors(
                     Class1MonsterIds,
-                    0.26f,
+                    Class1RecruitChance,
                     34,
                     7,
                     false,
@@ -211,7 +223,7 @@ namespace WitchTower.Data
                 BuildDungeonFloorsWithFinalBosses(
                     Class1MonsterIds,
                     Class2MonsterIds,
-                    0.20f,
+                    Class1RecruitChance,
                     48,
                     8,
                     "火口の入口",
@@ -228,7 +240,7 @@ namespace WitchTower.Data
                 21,
                 BuildMixedDungeonFloors(
                     Class2MonsterIds,
-                    0.16f,
+                    Class2RecruitChance,
                     62,
                     8,
                     false,
@@ -240,16 +252,16 @@ namespace WitchTower.Data
             new BattleDungeonDefinition(
                 "abyssal_grimoire_spire",
                 "深淵魔導回廊",
-                "深淵の術式が空間を歪める魔導回廊。全階層でクラス4天使系の熾天使ミカエルを捕獲できる。",
+                "深淵の術式が空間を歪める魔導回廊。クラス2の混合モンスターが出現し、各階層の最後にクラス3ボスが出現する。",
                 "UI/DungeonSelect/DungeonCard_AbyssalGrimoireSpire",
                 "BattleBackgrounds/dungeon6_1170x2532",
                 26,
-                BuildDungeonFloors(
-                    "monster_seraph_michael",
-                    0.12f,
+                BuildDungeonFloorsWithFinalBosses(
+                    Class2MonsterIds,
+                    Class3MonsterIds,
+                    Class2RecruitChance,
                     74,
                     9,
-                    true,
                     "深淵回廊の入口",
                     "浮遊階段",
                     "紫光の魔導室",
@@ -305,7 +317,7 @@ namespace WitchTower.Data
                     i + 1,
                     floorName,
                     enemyMonsterId,
-                    Mathf.Max(0.01f, firstRecruitChance - i * 0.01f),
+                    ResolveRecruitChanceForTier(firstRecruitChance),
                     enemyCount,
                     isFinalBossFloor);
             }
@@ -333,7 +345,7 @@ namespace WitchTower.Data
                     i + 1,
                     floorName,
                     enemyMonsterIds,
-                    Mathf.Max(0.01f, firstRecruitChance - i * 0.01f),
+                    ResolveRecruitChanceForTier(firstRecruitChance),
                     enemyCount,
                     isFinalBossFloor);
             }
@@ -363,7 +375,7 @@ namespace WitchTower.Data
                     i + 1,
                     floorName,
                     enemyMonsterIds,
-                    Mathf.Max(0.01f, firstRecruitChance - i * 0.01f),
+                    ResolveRecruitChanceForTier(firstRecruitChance),
                     enemyCount,
                     false,
                     bossMonsterId);
@@ -498,24 +510,190 @@ namespace WitchTower.Data
         public static string[] ResolveRecruitableMonsterIds(int globalFloor)
         {
             BattleDungeonFloorDefinition floor = GetFloorForGlobalFloor(globalFloor);
-            if (floor == null || floor.EnemyMonsterIds == null || floor.EnemyMonsterIds.Count == 0)
+            if (floor == null)
             {
                 return new string[0];
             }
 
-            var monsterIds = new string[floor.EnemyMonsterIds.Count];
-            for (int i = 0; i < monsterIds.Length; i += 1)
+            var monsterIds = new List<string>();
+            if (floor.EnemyMonsterIds != null)
             {
-                monsterIds[i] = floor.EnemyMonsterIds[i];
+                for (int i = 0; i < floor.EnemyMonsterIds.Count; i += 1)
+                {
+                    if (!string.IsNullOrEmpty(floor.EnemyMonsterIds[i]) && !monsterIds.Contains(floor.EnemyMonsterIds[i]))
+                    {
+                        monsterIds.Add(floor.EnemyMonsterIds[i]);
+                    }
+                }
             }
 
-            return monsterIds;
+            if (!string.IsNullOrEmpty(floor.BossMonsterId) && !monsterIds.Contains(floor.BossMonsterId))
+            {
+                monsterIds.Add(floor.BossMonsterId);
+            }
+
+            return monsterIds.ToArray();
+        }
+
+        public static bool IsRecruitableMonsterOnFloor(int globalFloor, string monsterId)
+        {
+            if (string.IsNullOrEmpty(monsterId))
+            {
+                return false;
+            }
+
+            BattleDungeonFloorDefinition floor = GetFloorForGlobalFloor(globalFloor);
+            return floor != null &&
+                (ContainsMonsterId(floor.EnemyMonsterIds, monsterId) || floor.BossMonsterId == monsterId);
         }
 
         public static float ResolveRecruitChance(int globalFloor)
         {
             BattleDungeonFloorDefinition floor = GetFloorForGlobalFloor(globalFloor);
-            return floor != null ? floor.RecruitChance : 0.35f;
+            return floor != null ? floor.RecruitChance : Class1RecruitChance;
+        }
+
+        public static float ResolvePerDefeatRecruitChance(int globalFloor)
+        {
+            float battleChance = ResolveRecruitChance(globalFloor);
+            if (battleChance <= 0f)
+            {
+                return 0f;
+            }
+
+            int recruitableEnemyCount = ResolveRecruitableEnemyCount(globalFloor);
+            return 1f - Mathf.Pow(1f - Mathf.Clamp01(battleChance), 1f / Mathf.Max(1, recruitableEnemyCount));
+        }
+
+        public static float ResolvePerDefeatRecruitChance(int globalFloor, MonsterDataSO monsterData)
+        {
+            int recruitTier = ResolveRecruitTier(monsterData);
+            float battleChance = ResolveRecruitChanceForTier(recruitTier);
+            if (battleChance <= 0f)
+            {
+                return 0f;
+            }
+
+            int recruitableEnemyCount = ResolveRecruitableEnemyCount(globalFloor, recruitTier);
+            return 1f - Mathf.Pow(1f - Mathf.Clamp01(battleChance), 1f / Mathf.Max(1, recruitableEnemyCount));
+        }
+
+        public static int ResolveRecruitableEnemyCount(int globalFloor)
+        {
+            BattleDungeonFloorDefinition floor = GetFloorForGlobalFloor(globalFloor);
+            if (floor == null)
+            {
+                return ResolveEnemyCount(globalFloor);
+            }
+
+            return Mathf.Max(1, floor.EnemyCount);
+        }
+
+        public static int ResolveRecruitableEnemyCount(int globalFloor, int recruitTier)
+        {
+            BattleDungeonFloorDefinition floor = GetFloorForGlobalFloor(globalFloor);
+            if (floor == null)
+            {
+                return ResolveRecruitableEnemyCount(globalFloor);
+            }
+
+            int enemyCount = Mathf.Max(1, floor.EnemyCount);
+            bool hasBoss = !string.IsNullOrEmpty(floor.BossMonsterId);
+            int normalEnemyCount = hasBoss ? Mathf.Max(0, enemyCount - 1) : enemyCount;
+            int count = ContainsMonsterWithRecruitTier(floor.EnemyMonsterIds, recruitTier) ? normalEnemyCount : 0;
+            if (hasBoss && ResolveRecruitTierForMonsterId(floor.BossMonsterId) == recruitTier)
+            {
+                count += 1;
+            }
+
+            return Mathf.Max(1, count);
+        }
+
+        private static float ResolveRecruitChanceForTier(float recruitChance)
+        {
+            return Mathf.Clamp01(recruitChance);
+        }
+
+        private static float ResolveRecruitChanceForTier(int recruitTier)
+        {
+            switch (Mathf.Clamp(recruitTier, 1, 3))
+            {
+                case 1:
+                    return Class1RecruitChance;
+                case 2:
+                    return Class2RecruitChance;
+                default:
+                    return Class3RecruitChance;
+            }
+        }
+
+        private static int ResolveRecruitTier(MonsterDataSO monsterData)
+        {
+            if (monsterData == null)
+            {
+                return 1;
+            }
+
+            return Mathf.Clamp((int)monsterData.rarity, 1, 3);
+        }
+
+        private static int ResolveRecruitTierForMonsterId(string monsterId)
+        {
+            if (ContainsMonsterId(Class1MonsterIds, monsterId))
+            {
+                return 1;
+            }
+
+            if (ContainsMonsterId(Class2MonsterIds, monsterId))
+            {
+                return 2;
+            }
+
+            if (ContainsMonsterId(Class3MonsterIds, monsterId))
+            {
+                return 3;
+            }
+
+            MonsterDataSO monsterData = !string.IsNullOrEmpty(monsterId)
+                ? MasterDataManager.Instance?.GetMonsterData(monsterId)
+                : null;
+            return ResolveRecruitTier(monsterData);
+        }
+
+        private static bool ContainsMonsterWithRecruitTier(IReadOnlyList<string> monsterIds, int recruitTier)
+        {
+            if (monsterIds == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < monsterIds.Count; i += 1)
+            {
+                if (ResolveRecruitTierForMonsterId(monsterIds[i]) == recruitTier)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ContainsMonsterId(IReadOnlyList<string> monsterIds, string monsterId)
+        {
+            if (monsterIds == null || string.IsNullOrEmpty(monsterId))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < monsterIds.Count; i += 1)
+            {
+                if (monsterIds[i] == monsterId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static int ResolveEnemyCount(int globalFloor)

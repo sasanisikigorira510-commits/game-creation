@@ -77,8 +77,8 @@ namespace WitchTower.Battle
         private const float AllyAttackForgivenessX = 0.16f;
         private const float AllyAttackForgivenessY = 0.18f;
         private const int RearAllySlotStartIndex = 3;
-        private const float RangedAllySearchReach = 0.86f;
-        private const float RearRangedAllySearchReach = 0.78f;
+        private const float RangedAllySearchReach = 1.02f;
+        private const float RearRangedAllySearchReach = 1.02f;
         private const float ForwardLimitAttackForgivenessBonusX = 0.10f;
         private const float ForwardLimitAttackForgivenessBonusY = 0.04f;
         private const float ForwardLimitPositionEpsilon = 0.006f;
@@ -169,6 +169,9 @@ namespace WitchTower.Battle
         private int defeatedEnemiesInCurrentWave;
         private int spawnedEnemiesInCurrentWave;
         private int activeEnemiesInCurrentWave;
+        private int defeatedEnemyMaxHpInCurrentWave;
+        private int anticipatedUnspawnedEnemyMaxHpInCurrentWave;
+        private readonly List<int> anticipatedEnemyMaxHpBySpawnIndex = new List<int>();
         private int encounterEnemyCountTarget;
         private int encounterSerial;
         private float enemySpawnTimer;
@@ -212,7 +215,7 @@ namespace WitchTower.Battle
 
         public event System.Action<BattleHitInfo> HitResolved;
         public event System.Action EncounterChanged;
-        public event System.Action<int, int> EnemyDefeated;
+        public event System.Action<int, int, EnemyDataSO> EnemyDefeated;
         public event System.Action<int> AllyDefeated;
 
         public BattleUnitStats PlayerStats => playerStats;
@@ -235,6 +238,8 @@ namespace WitchTower.Battle
         public int CurrentSpawnedEnemyCount => Mathf.Max(0, spawnedEnemiesInCurrentWave);
         public int CurrentActiveEnemyCount => Mathf.Max(0, activeEnemiesInCurrentWave);
         public int CurrentEngagedEnemyCount => Mathf.Max(0, engagedEnemyCount);
+        public int CurrentWaveEnemyCurrentHp => CalculateCurrentWaveEnemyCurrentHp();
+        public int CurrentWaveEnemyMaxHp => CalculateCurrentWaveEnemyMaxHp();
         public int CurrentAliveAllyCount => CountAliveAllies();
         public int CurrentAllyRuntimeCount => BattleFormationLayout.AllyHomeAnchors.Length;
         public int CurrentPreferredEnemyTargetIndex
@@ -261,6 +266,8 @@ namespace WitchTower.Battle
             defeatedEnemiesInCurrentWave = 0;
             spawnedEnemiesInCurrentWave = 0;
             activeEnemiesInCurrentWave = 0;
+            defeatedEnemyMaxHpInCurrentWave = 0;
+            BuildAnticipatedEnemyMaxHpPlan();
             encounterSerial = 0;
             enemySpawnTimer = 0f;
             openingBurstSpawned = false;
@@ -667,7 +674,6 @@ namespace WitchTower.Battle
                     : new Vector2(targetEnemy.PositionAnchor.x - desiredSeparation, ally.HomeAnchor.y);
                 targetAnchor.x += ResolveAllyCombatPressureAdvance(ally.SlotIndex, ally.Data);
                 targetAnchor = BattleFormationLayout.ClampAllyCombatAnchor(ally.SlotIndex, ally.Data, targetAnchor, ally.HomeAnchor);
-                targetAnchor.x = Mathf.Max(targetAnchor.x, ally.PositionAnchor.x);
                 if (!IsMonsterMelee(ally.Data))
                 {
                     targetAnchor.y = ally.HomeAnchor.y;
@@ -2151,6 +2157,92 @@ namespace WitchTower.Battle
             return Mathf.Clamp(configuredEnemyCount, MinEncounterEnemyCount, MaxEncounterEnemyCount);
         }
 
+        private void BuildAnticipatedEnemyMaxHpPlan()
+        {
+            anticipatedEnemyMaxHpBySpawnIndex.Clear();
+            anticipatedUnspawnedEnemyMaxHpInCurrentWave = 0;
+
+            int targetCount = Mathf.Max(0, CurrentEnemyCountTarget);
+            int normalEnemyMaxHp = EstimateEnemyMaxHpForSpawnIndex(0);
+            int finalBossEnemyMaxHp = HasFinalBossEnemy()
+                ? EstimateEnemyMaxHpForSpawnIndex(targetCount - 1)
+                : normalEnemyMaxHp;
+            for (int spawnIndex = 0; spawnIndex < targetCount; spawnIndex += 1)
+            {
+                int estimatedMaxHp = IsFinalBossSpawnIndex(spawnIndex)
+                    ? finalBossEnemyMaxHp
+                    : normalEnemyMaxHp;
+                anticipatedEnemyMaxHpBySpawnIndex.Add(estimatedMaxHp);
+                anticipatedUnspawnedEnemyMaxHpInCurrentWave += estimatedMaxHp;
+            }
+        }
+
+        private void ConsumeAnticipatedEnemyMaxHp(int spawnIndex)
+        {
+            int estimatedMaxHp = spawnIndex >= 0 && spawnIndex < anticipatedEnemyMaxHpBySpawnIndex.Count
+                ? anticipatedEnemyMaxHpBySpawnIndex[spawnIndex]
+                : EstimateEnemyMaxHpForSpawnIndex(spawnIndex);
+            anticipatedUnspawnedEnemyMaxHpInCurrentWave = Mathf.Max(
+                0,
+                anticipatedUnspawnedEnemyMaxHpInCurrentWave - Mathf.Max(0, estimatedMaxHp));
+        }
+
+        private int EstimateEnemyMaxHpForSpawnIndex(int spawnIndex)
+        {
+            var masterDataManager = MasterDataManager.Instance;
+            bool applyBossModifiers = isBossEncounter || IsFinalBossSpawnIndex(spawnIndex);
+            if (IsFinalBossSpawnIndex(spawnIndex) && !string.IsNullOrEmpty(finalBossMonsterId))
+            {
+                return EstimateEnemyMaxHpForMonster(currentFloor, masterDataManager, finalBossMonsterId, true);
+            }
+
+            BattleDungeonFloorDefinition floor = BattleDungeonCatalog.GetFloorForGlobalFloor(currentFloor);
+            int highestMaxHp = 0;
+            if (floor?.EnemyMonsterIds != null)
+            {
+                for (int i = 0; i < floor.EnemyMonsterIds.Count; i += 1)
+                {
+                    string monsterId = floor.EnemyMonsterIds[i];
+                    if (string.IsNullOrEmpty(monsterId))
+                    {
+                        continue;
+                    }
+
+                    highestMaxHp = Mathf.Max(
+                        highestMaxHp,
+                        EstimateEnemyMaxHpForMonster(currentFloor, masterDataManager, monsterId, applyBossModifiers));
+                }
+            }
+
+            return highestMaxHp > 0
+                ? highestMaxHp
+                : EstimateEnemyMaxHpFromData(null, applyBossModifiers);
+        }
+
+        private int EstimateEnemyMaxHpForMonster(
+            int floor,
+            MasterDataManager masterDataManager,
+            string monsterId,
+            bool applyBossModifiers)
+        {
+            EnemyDataSO enemyData = BattleDungeonCatalog.CreateEnemyDataForMonsterAtGlobalFloor(
+                floor,
+                masterDataManager,
+                monsterId);
+            return EstimateEnemyMaxHpFromData(enemyData, applyBossModifiers);
+        }
+
+        private int EstimateEnemyMaxHpFromData(EnemyDataSO enemyData, bool applyBossModifiers)
+        {
+            int maxHp = enemyData != null ? enemyData.maxHp : 40;
+            if (applyBossModifiers)
+            {
+                maxHp = Mathf.Max(maxHp + 1, Mathf.RoundToInt(maxHp * bossHpMultiplier));
+            }
+
+            return Mathf.Max(1, maxHp);
+        }
+
         private float ResolveEnemySpawnInterval()
         {
             float minInterval = 0.08f * EnemySpawnIntervalMultiplier;
@@ -2284,6 +2376,7 @@ namespace WitchTower.Battle
             bool isBossEnemy = isBossEncounter || IsFinalBossSpawnIndex(spawnIndex);
             string forcedMonsterId = isBossEnemy && !isBossEncounter ? finalBossMonsterId : string.Empty;
             BattleUnitStats spawnedStats = CreateEnemyStats(currentFloor, isBossEnemy, forcedMonsterId, out EnemyTraitRuntime spawnedTrait, out EnemyDataSO spawnedData);
+            ConsumeAnticipatedEnemyMaxHp(spawnIndex);
             Vector2 homeAnchor = new Vector2(EnemySpawnX, ResolveEnemySpawnLaneY(spawnIndex));
             var runtime = new EnemyRuntime
             {
@@ -2372,13 +2465,15 @@ namespace WitchTower.Battle
                 return activeEnemyRuntimes.Count > 0;
             }
 
+            EnemyDataSO defeatedEnemyData = activeEnemyRuntimes[removalIndex]?.Data;
+            defeatedEnemyMaxHpInCurrentWave += Mathf.Max(0, activeEnemyRuntimes[removalIndex]?.Stats?.MaxHp ?? 0);
             activeEnemyRuntimes.RemoveAt(removalIndex);
 
             defeatedEnemiesInCurrentWave += 1;
             activeEnemiesInCurrentWave = activeEnemyRuntimes.Count;
             RetargetAlliesToNearestSearchableEnemies();
             SetEngagedEnemyCount(Mathf.Min(engagedEnemyCount, activeEnemiesInCurrentWave));
-            EnemyDefeated?.Invoke(CurrentRemainingEnemyCount, removalIndex);
+            EnemyDefeated?.Invoke(CurrentRemainingEnemyCount, removalIndex, defeatedEnemyData);
 
             if (activeEnemyRuntimes.Count > 0)
             {
@@ -2825,6 +2920,41 @@ namespace WitchTower.Battle
             enemyTraitRuntime = leadEnemy.Trait;
             currentEnemyIsBoss = leadEnemy.IsBoss;
             enemyAttackTimer = leadEnemy.AttackTimer;
+        }
+
+        private int CalculateCurrentWaveEnemyCurrentHp()
+        {
+            int total = Mathf.Max(0, anticipatedUnspawnedEnemyMaxHpInCurrentWave);
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                EnemyRuntime enemy = activeEnemyRuntimes[i];
+                if (enemy?.Stats == null)
+                {
+                    continue;
+                }
+
+                total += Mathf.Max(0, enemy.Stats.CurrentHp);
+            }
+
+            return total;
+        }
+
+        private int CalculateCurrentWaveEnemyMaxHp()
+        {
+            int total = Mathf.Max(0, defeatedEnemyMaxHpInCurrentWave) +
+                Mathf.Max(0, anticipatedUnspawnedEnemyMaxHpInCurrentWave);
+            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            {
+                EnemyRuntime enemy = activeEnemyRuntimes[i];
+                if (enemy?.Stats == null)
+                {
+                    continue;
+                }
+
+                total += Mathf.Max(0, enemy.Stats.MaxHp);
+            }
+
+            return total;
         }
 
         private void RaiseHitResolved(BattleHitInfo hitInfo)

@@ -106,12 +106,20 @@ namespace WitchTower.Battle
             {
                 playerHpText.text = $"Player HP {Mathf.Clamp(playerCurrentHp, 0, playerMaxHp)}/{playerMaxHp}";
             }
+            else if (playerHpText != null)
+            {
+                playerHpText.text = "Player HP --/--";
+            }
 
             UpdateHealthBar(playerHpFillImage, playerCurrentHp, playerMaxHp, new Color(0.22f, 0.74f, 0.65f, 1f), new Color(0.95f, 0.67f, 0.23f, 1f), new Color(0.88f, 0.24f, 0.31f, 1f));
 
             if (enemyHpText != null && enemyMaxHp > 0)
             {
                 enemyHpText.text = $"Enemy HP {Mathf.Clamp(enemyCurrentHp, 0, enemyMaxHp)}/{enemyMaxHp}";
+            }
+            else if (enemyHpText != null)
+            {
+                enemyHpText.text = "Enemy HP --/--";
             }
 
             UpdateHealthBar(enemyHpFillImage, enemyCurrentHp, enemyMaxHp, new Color(0.93f, 0.42f, 0.49f, 1f), new Color(0.96f, 0.67f, 0.29f, 1f), new Color(0.80f, 0.21f, 0.27f, 1f));
@@ -167,6 +175,7 @@ namespace WitchTower.Battle
             }
 
             fillImage.enabled = true;
+            ConfigureHealthBarFill(fillImage);
 
             if (stats == null || stats.MaxHp <= 0)
             {
@@ -188,6 +197,7 @@ namespace WitchTower.Battle
             }
 
             fillImage.enabled = true;
+            ConfigureHealthBarFill(fillImage);
 
             if (maxHp <= 0)
             {
@@ -199,6 +209,19 @@ namespace WitchTower.Battle
             float ratio = Mathf.Clamp01((float)Mathf.Clamp(currentHp, 0, maxHp) / maxHp);
             fillImage.fillAmount = ratio;
             fillImage.color = ratio > 0.6f ? highColor : (ratio > 0.3f ? midColor : lowColor);
+        }
+
+        private static void ConfigureHealthBarFill(Image fillImage)
+        {
+            if (fillImage == null)
+            {
+                return;
+            }
+
+            fillImage.type = Image.Type.Filled;
+            fillImage.fillMethod = Image.FillMethod.Horizontal;
+            fillImage.fillOrigin = 0;
+            fillImage.fillClockwise = true;
         }
 
         private static string BuildEncounterText(int floor, BattleUnitStats playerStats, BattleUnitStats enemyStats)

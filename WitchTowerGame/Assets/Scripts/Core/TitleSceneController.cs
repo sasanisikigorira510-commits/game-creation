@@ -67,7 +67,9 @@ namespace WitchTower.Core
             All,
             Weapon,
             Armor,
-            Accessory
+            Accessory,
+            Physical,
+            Magic
         }
 
         private enum EquipmentInventorySortMode
@@ -164,6 +166,7 @@ namespace WitchTower.Core
         private const string EquipmentEnhanceSuccessBasePath = "UI/EquipmentEnhance/EnhanceSuccess_";
         private const string EquipmentEnhanceFailBasePath = "UI/EquipmentEnhance/EnhanceFail_";
         private const string EquipmentEnhanceDestroyBasePath = "UI/EquipmentEnhance/EnhanceDestroy_";
+        private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
         private const int EquipmentEnhanceEffectFrameCount = 8;
         private const float EquipmentEnhanceEffectDuration = 1.35f;
         private const float EquipmentInventoryWidth = 872f;
@@ -184,6 +187,7 @@ namespace WitchTower.Core
         private readonly List<Image> equipmentInventoryFilterButtonImages = new List<Image>();
         private readonly List<Text> equipmentInventoryFilterButtonTexts = new List<Text>();
         private readonly List<EquipmentInventoryFilter> equipmentInventoryFilterValues = new List<EquipmentInventoryFilter>();
+        private readonly List<Image> equipmentTutorialPulseImages = new List<Image>();
 
         private GameObject formationPanelRoot;
         private GameObject equipmentSceneRoot;
@@ -211,11 +215,27 @@ namespace WitchTower.Core
         private Text equipmentInventorySummaryText;
         private Text equipmentInventorySortButtonText;
         private RectTransform equipmentInventoryContentRect;
+        private Button equipmentHomeReturnButton;
+        private GameObject equipmentTutorialReturnFocusRoot;
+        private Text equipmentTutorialReturnPromptText;
+        private GameObject equipmentTutorialGuideRoot;
+        private Text equipmentTutorialGuideTitleText;
+        private Text equipmentTutorialGuideBodyText;
+        private Text equipmentTutorialGuideFooterText;
+        private Image equipmentTutorialGuideCharacterImage;
         private GameObject equipmentEnhanceOverlayRoot;
         private RectTransform equipmentEnhanceOverlayListRect;
         private Text equipmentEnhanceOverlayTitleText;
         private Text equipmentEnhanceOverlayInfoText;
         private Text equipmentEnhanceOverlayResultText;
+        private GameObject equipmentEnhanceTutorialGuideRoot;
+        private Text equipmentEnhanceTutorialGuideTitleText;
+        private Text equipmentEnhanceTutorialGuideBodyText;
+        private Text equipmentEnhanceTutorialGuideFooterText;
+        private Image equipmentEnhanceTutorialGuideCharacterImage;
+        private Button equipmentEnhanceCloseButton;
+        private GameObject equipmentEnhanceTutorialCloseFocusRoot;
+        private Text equipmentEnhanceTutorialClosePromptText;
         private Image equipmentEnhanceDarkOverlayImage;
         private RawImage equipmentEnhanceRuneImage;
         private RawImage equipmentEnhanceItemFrameImage;
@@ -235,6 +255,7 @@ namespace WitchTower.Core
         private string equipmentEnhanceTargetTitle;
         private string equipmentEnhanceTargetInfo;
         private string equipmentMonsterSearchQuery = string.Empty;
+        private bool equipmentEnhanceTutorialSuccessPending;
         private EquipmentEnhancementResultType activeEquipmentEnhanceEffect = EquipmentEnhancementResultType.None;
         private EquipmentMonsterPickerSortMode equipmentMonsterPickerSortMode = EquipmentMonsterPickerSortMode.Default;
         private EquipmentInventoryFilter equipmentInventoryFilter = EquipmentInventoryFilter.All;
@@ -286,12 +307,13 @@ namespace WitchTower.Core
 
         private void Update()
         {
-            if (equipmentEnhanceOverlayRoot == null)
+            if (equipmentEnhanceOverlayRoot != null)
             {
-                return;
+                AnimateEquipmentEnhancementEffect();
             }
 
-            AnimateEquipmentEnhancementEffect();
+            AnimateEquipmentTutorialGuide();
+            EnsureEquipmentTutorialActionButtonFocusVisible();
         }
 
         public void StartNewGame()
@@ -348,6 +370,26 @@ namespace WitchTower.Core
 
         public void ReturnHomeFromEquipment()
         {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            bool tutorialChanged = false;
+            if (tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.return_home", StringComparison.Ordinal))
+            {
+                tutorialChanged = string.Equals(tutorialEvent.EventId, StoryTutorialService.HintEquipmentEnhanceReturnHome, StringComparison.Ordinal)
+                    ? StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipmentEnhanceReturnHome)
+                    : StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
+            }
+            else if (tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.quality_label", StringComparison.Ordinal))
+            {
+                tutorialChanged = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipmentQuality);
+            }
+            if (tutorialChanged && Application.isPlaying && SaveManager.Instance != null)
+            {
+                SaveManager.Instance.SaveCurrentGame();
+            }
+
             SceneManager.LoadScene(homeSceneName);
         }
 
@@ -480,7 +522,7 @@ namespace WitchTower.Core
             Image accentImage = panelAccent.AddComponent<Image>();
             accentImage.color = new Color(0.82f, 0.63f, 0.30f, 1f);
 
-            HomeReturnButtonStyle.Create(equipmentSceneRoot.transform, ReturnHomeFromEquipment);
+            equipmentHomeReturnButton = HomeReturnButtonStyle.Create(equipmentSceneRoot.transform, ReturnHomeFromEquipment);
 
             equipmentTitleText = CreateText("EquipmentTitle", panel.transform, font, "装備", 42, FontStyle.Bold,
                 TextAnchor.MiddleCenter, new Color(0.97f, 0.94f, 0.86f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -627,6 +669,8 @@ namespace WitchTower.Core
             CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Weapon, "武器", new Vector2(122f, -56f), new Vector2(92f, 36f));
             CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Armor, "防具", new Vector2(226f, -56f), new Vector2(92f, 36f));
             CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Accessory, "装飾品", new Vector2(330f, -56f), new Vector2(112f, 36f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Physical, "物理", new Vector2(454f, -56f), new Vector2(92f, 36f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Magic, "魔法", new Vector2(558f, -56f), new Vector2(92f, 36f));
 
             Button inventorySortButton = CreateActionButton(inventoryListPanel.transform, font, "並び: 通常", new Vector2(1f, 1f), new Vector2(1f, 1f),
                 new Vector2(1f, 1f), new Vector2(-18f, -56f), new Vector2(190f, 36f),
@@ -660,6 +704,7 @@ namespace WitchTower.Core
             inventoryScrollRect.scrollSensitivity = 42f;
             inventoryScrollRect.movementType = ScrollRect.MovementType.Clamped;
 
+            BuildEquipmentTutorialGuidePanel(panel.transform, font);
             BuildEquipmentMonsterPickerOverlay(font);
 
             equipmentEnhanceOverlayRoot = CreateUiObject("EquipmentEnhanceOverlay", equipmentSceneRoot.transform);
@@ -754,9 +799,11 @@ namespace WitchTower.Core
             equipmentEnhanceOverlayListRect.anchoredPosition = new Vector2(28f, -490f);
             equipmentEnhanceOverlayListRect.sizeDelta = new Vector2(804f, 436f);
 
-            CreateActionButton(overlayPanel.transform, font, "閉じる", new Vector2(1f, 1f), new Vector2(1f, 1f),
+            equipmentEnhanceCloseButton = CreateActionButton(overlayPanel.transform, font, "閉じる", new Vector2(1f, 1f), new Vector2(1f, 1f),
                 new Vector2(1f, 1f), new Vector2(-28f, -28f), new Vector2(96f, 40f),
                 new Color(0.34f, 0.20f, 0.16f, 0.96f), CloseEquipmentEnhancementOverlay, 16);
+
+            BuildEquipmentEnhanceTutorialGuidePanel(overlayPanel.transform, font);
 
             equipmentEnhanceOverlayRoot.SetActive(false);
         }
@@ -909,6 +956,120 @@ namespace WitchTower.Core
             equipmentMonsterPickerOverlayRoot.SetActive(false);
         }
 
+        private void BuildEquipmentTutorialGuidePanel(Transform panelTransform, Font font)
+        {
+            if (panelTransform == null || equipmentTutorialGuideRoot != null)
+            {
+                return;
+            }
+
+            equipmentTutorialGuideRoot = CreateUiObject("EquipmentTutorialGuideRoot", panelTransform);
+            RectTransform rootRect = equipmentTutorialGuideRoot.AddComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0.5f, 0f);
+            rootRect.anchorMax = new Vector2(0.5f, 0f);
+            rootRect.pivot = new Vector2(0.5f, 0f);
+            rootRect.anchoredPosition = new Vector2(0f, 56f);
+            rootRect.sizeDelta = new Vector2(946f, 228f);
+
+            Image panelImage = equipmentTutorialGuideRoot.AddComponent<Image>();
+            panelImage.color = new Color(0.025f, 0.035f, 0.055f, 0.98f);
+            panelImage.raycastTarget = false;
+
+            Outline panelOutline = equipmentTutorialGuideRoot.AddComponent<Outline>();
+            panelOutline.effectColor = new Color(1f, 0.78f, 0.24f, 0.94f);
+            panelOutline.effectDistance = new Vector2(4f, -4f);
+            panelOutline.useGraphicAlpha = false;
+
+            equipmentTutorialGuideCharacterImage = CreateImage("EquipmentTutorialGuideLuse", equipmentTutorialGuideRoot.transform,
+                LoadMonsterSprite(TutorialGuideSpritePath), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(120f, -8f), new Vector2(218f, 218f));
+            equipmentTutorialGuideCharacterImage.preserveAspect = true;
+            equipmentTutorialGuideCharacterImage.raycastTarget = false;
+
+            Text badgeText = CreateText("EquipmentTutorialGuideBadge", equipmentTutorialGuideRoot.transform, font, "TUTORIAL", 18, FontStyle.Bold,
+                TextAnchor.MiddleCenter, new Color(1f, 0.82f, 0.32f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(242f, -22f), new Vector2(128f, 30f));
+            badgeText.raycastTarget = false;
+
+            equipmentTutorialGuideTitleText = CreateText("EquipmentTutorialGuideTitle", equipmentTutorialGuideRoot.transform, font, string.Empty, 30, FontStyle.Bold,
+                TextAnchor.MiddleLeft, new Color(1f, 0.96f, 0.78f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(242f, -56f), new Vector2(642f, 38f));
+            equipmentTutorialGuideTitleText.raycastTarget = false;
+
+            equipmentTutorialGuideBodyText = CreateText("EquipmentTutorialGuideBody", equipmentTutorialGuideRoot.transform, font, string.Empty, 23, FontStyle.Bold,
+                TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(242f, -100f), new Vector2(660f, 76f));
+            equipmentTutorialGuideBodyText.resizeTextForBestFit = true;
+            equipmentTutorialGuideBodyText.resizeTextMinSize = 18;
+            equipmentTutorialGuideBodyText.resizeTextMaxSize = 23;
+            equipmentTutorialGuideBodyText.verticalOverflow = VerticalWrapMode.Truncate;
+            equipmentTutorialGuideBodyText.raycastTarget = false;
+
+            equipmentTutorialGuideFooterText = CreateText("EquipmentTutorialGuideFooter", equipmentTutorialGuideRoot.transform, font, string.Empty, 20, FontStyle.Bold,
+                TextAnchor.MiddleLeft, new Color(0.78f, 0.92f, 1f, 1f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0f, 0f), new Vector2(242f, 26f), new Vector2(660f, 32f));
+            equipmentTutorialGuideFooterText.raycastTarget = false;
+
+            equipmentTutorialGuideRoot.SetActive(false);
+        }
+
+        private void BuildEquipmentEnhanceTutorialGuidePanel(Transform panelTransform, Font font)
+        {
+            if (panelTransform == null || equipmentEnhanceTutorialGuideRoot != null)
+            {
+                return;
+            }
+
+            equipmentEnhanceTutorialGuideRoot = CreateUiObject("EquipmentEnhanceTutorialGuideRoot", panelTransform);
+            RectTransform rootRect = equipmentEnhanceTutorialGuideRoot.AddComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0.5f, 0f);
+            rootRect.anchorMax = new Vector2(0.5f, 0f);
+            rootRect.pivot = new Vector2(0.5f, 0f);
+            rootRect.anchoredPosition = new Vector2(0f, 22f);
+            rootRect.sizeDelta = new Vector2(804f, 168f);
+
+            Image panelImage = equipmentEnhanceTutorialGuideRoot.AddComponent<Image>();
+            panelImage.color = new Color(0.025f, 0.035f, 0.055f, 0.98f);
+            panelImage.raycastTarget = false;
+
+            Outline panelOutline = equipmentEnhanceTutorialGuideRoot.AddComponent<Outline>();
+            panelOutline.effectColor = new Color(1f, 0.78f, 0.24f, 0.94f);
+            panelOutline.effectDistance = new Vector2(3f, -3f);
+            panelOutline.useGraphicAlpha = false;
+
+            equipmentEnhanceTutorialGuideCharacterImage = CreateImage("EquipmentEnhanceTutorialGuideLuse", equipmentEnhanceTutorialGuideRoot.transform,
+                LoadMonsterSprite(TutorialGuideSpritePath), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(88f, -4f), new Vector2(156f, 156f));
+            equipmentEnhanceTutorialGuideCharacterImage.preserveAspect = true;
+            equipmentEnhanceTutorialGuideCharacterImage.raycastTarget = false;
+
+            Text badgeText = CreateText("EquipmentEnhanceTutorialGuideBadge", equipmentEnhanceTutorialGuideRoot.transform, font, "TUTORIAL", 15, FontStyle.Bold,
+                TextAnchor.MiddleCenter, new Color(1f, 0.82f, 0.32f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(178f, -14f), new Vector2(110f, 24f));
+            badgeText.raycastTarget = false;
+
+            equipmentEnhanceTutorialGuideTitleText = CreateText("EquipmentEnhanceTutorialGuideTitle", equipmentEnhanceTutorialGuideRoot.transform, font, string.Empty, 24, FontStyle.Bold,
+                TextAnchor.MiddleLeft, new Color(1f, 0.96f, 0.78f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(178f, -42f), new Vector2(560f, 32f));
+            equipmentEnhanceTutorialGuideTitleText.raycastTarget = false;
+
+            equipmentEnhanceTutorialGuideBodyText = CreateText("EquipmentEnhanceTutorialGuideBody", equipmentEnhanceTutorialGuideRoot.transform, font, string.Empty, 18, FontStyle.Bold,
+                TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(178f, -76f), new Vector2(590f, 52f));
+            equipmentEnhanceTutorialGuideBodyText.resizeTextForBestFit = true;
+            equipmentEnhanceTutorialGuideBodyText.resizeTextMinSize = 15;
+            equipmentEnhanceTutorialGuideBodyText.resizeTextMaxSize = 18;
+            equipmentEnhanceTutorialGuideBodyText.verticalOverflow = VerticalWrapMode.Truncate;
+            equipmentEnhanceTutorialGuideBodyText.raycastTarget = false;
+
+            equipmentEnhanceTutorialGuideFooterText = CreateText("EquipmentEnhanceTutorialGuideFooter", equipmentEnhanceTutorialGuideRoot.transform, font, string.Empty, 16, FontStyle.Bold,
+                TextAnchor.MiddleLeft, new Color(0.78f, 0.92f, 1f, 1f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0f, 0f), new Vector2(178f, 18f), new Vector2(590f, 24f));
+            equipmentEnhanceTutorialGuideFooterText.raycastTarget = false;
+
+            equipmentEnhanceTutorialGuideRoot.SetActive(false);
+        }
+
         private void RefreshEquipmentScene()
         {
             if (equipmentSceneRoot == null)
@@ -917,6 +1078,7 @@ namespace WitchTower.Core
             }
 
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            ApplyEquipmentTutorialGiftIfNeeded(profile);
             if (equipmentGoldText != null)
             {
                 int gold = profile != null ? profile.Gold : 0;
@@ -976,10 +1138,109 @@ namespace WitchTower.Core
             }
 
             RebuildEquipmentInventory(profile, selectedMonster);
+            RefreshEquipmentTutorialGuide(profile, selectedMonster);
             if (equipmentMonsterPickerOverlayRoot != null && equipmentMonsterPickerOverlayRoot.activeSelf)
             {
                 RefreshEquipmentMonsterPicker(profile);
             }
+        }
+
+        private void ApplyEquipmentTutorialGiftIfNeeded(PlayerProfile profile)
+        {
+            if (profile == null || StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipment))
+            {
+                return;
+            }
+
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "EquipmentScene");
+            if (tutorialEvent == null ||
+                !string.Equals(tutorialEvent.TargetKey, "equipment.first_item", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            bool changed = StoryTutorialService.EnsureEquipmentTutorialGift(profile);
+            if (!changed)
+            {
+                return;
+            }
+
+            equipmentInventoryFilter = EquipmentInventoryFilter.All;
+            equipmentInventorySortMode = EquipmentInventorySortMode.Default;
+            if (string.IsNullOrEmpty(equipmentLastActionMessage))
+            {
+                equipmentLastActionMessage = "ルシェから見習いの護符を受け取りました。カードの「装備」で選択中モンスターに持たせましょう。";
+            }
+
+            if (Application.isPlaying && SaveManager.Instance != null)
+            {
+                SaveManager.Instance.SaveCurrentGame();
+            }
+        }
+
+        private void RefreshEquipmentTutorialGuide(PlayerProfile profile, OwnedMonsterData selectedMonster)
+        {
+            if (equipmentTutorialGuideRoot == null)
+            {
+                return;
+            }
+
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            bool shouldShow = tutorialEvent != null &&
+                (string.Equals(tutorialEvent.TargetKey, "equipment.first_item", StringComparison.Ordinal) ||
+                 string.Equals(tutorialEvent.TargetKey, "equipment.quality_label", StringComparison.Ordinal) ||
+                 string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal) ||
+                 string.Equals(tutorialEvent.TargetKey, "equipment.return_home", StringComparison.Ordinal));
+            equipmentTutorialGuideRoot.SetActive(shouldShow);
+            if (!shouldShow)
+            {
+                SetEquipmentTutorialReturnFocusVisible(false);
+                return;
+            }
+
+            equipmentTutorialGuideRoot.transform.SetAsLastSibling();
+            bool guideReturnHome = string.Equals(tutorialEvent.TargetKey, "equipment.return_home", StringComparison.Ordinal);
+            bool guideQuality = string.Equals(tutorialEvent.TargetKey, "equipment.quality_label", StringComparison.Ordinal);
+            bool guideEnhance = string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+            bool guideEnhanceReturnHome = guideReturnHome &&
+                string.Equals(tutorialEvent.EventId, StoryTutorialService.HintEquipmentEnhanceReturnHome, StringComparison.Ordinal);
+            if (equipmentTutorialGuideTitleText != null)
+            {
+                equipmentTutorialGuideTitleText.text = guideReturnHome
+                    ? (guideEnhanceReturnHome ? "強化完了" : "装備できました")
+                    : guideQuality
+                        ? "遺物の品質"
+                        : guideEnhance
+                            ? "ルシェの強化レッスン"
+                            : "ルシェの装備レッスン";
+            }
+
+            if (equipmentTutorialGuideBodyText != null)
+            {
+                string monsterName = selectedMonster != null ? GetMonsterDisplayName(selectedMonster) : "選択中モンスター";
+                equipmentTutorialGuideBodyText.text = guideReturnHome
+                    ? (guideEnhanceReturnHome
+                        ? "装備強化まで確認できました。\n左上の「ホームへ戻る」から拠点へ戻りましょう。"
+                        : $"{monsterName} に見習いの護符を持たせられました。\n左上の「ホームへ戻る」から拠点へ戻りましょう。")
+                    : guideQuality
+                        ? "金色の枠で囲った「品質:」が遺物の品質です。\n品質が高いほど効果が伸び、鍛えられる回数も多くなります。"
+                        : guideEnhance
+                            ? "次は装備を鍛えてみましょう。\n光っているカードの「強化」を押すと、強化画面で通常遺物を1つ渡します。"
+                            : $"今渡した「見習いの護符」を所持装備の先頭に置きました。\n光っているカードの「装備」を押すと、{monsterName} に持たせられます。";
+            }
+
+            if (equipmentTutorialGuideFooterText != null)
+            {
+                equipmentTutorialGuideFooterText.text = guideReturnHome
+                    ? "次の操作: 左上の「ホームへ戻る」をタップ"
+                    : guideQuality
+                        ? "次の操作: 品質表示を確認したら左上の「ホームへ戻る」をタップ"
+                        : guideEnhance
+                            ? "次の操作: 金色の枠が付いたカードの「強化」をタップ"
+                            : "次の操作: 金色の枠が付いたカードの「装備」をタップ";
+            }
+
+            SetEquipmentTutorialReturnFocusVisible(guideReturnHome || guideQuality);
         }
 
         private void RefreshEquipmentMonsterPortrait(OwnedMonsterData selectedMonster)
@@ -1585,7 +1846,19 @@ namespace WitchTower.Core
                 result.Add(equipment);
             }
 
-            result.Sort(CompareEquipmentInventoryEntries);
+            bool prioritizeTutorialGift = ShouldPrioritizeEquipmentTutorialGift(profile);
+            bool prioritizeEnhanceTutorial = ShouldPrioritizeEquipmentEnhanceTutorial(profile);
+            result.Sort((left, right) =>
+            {
+                int tutorialCompare = prioritizeTutorialGift ? CompareEquipmentTutorialGiftFirst(left, right) : 0;
+                if (tutorialCompare != 0)
+                {
+                    return tutorialCompare;
+                }
+
+                int enhanceCompare = prioritizeEnhanceTutorial ? CompareEnhanceableEquipmentFirst(left, right) : 0;
+                return enhanceCompare != 0 ? enhanceCompare : CompareEquipmentInventoryEntries(left, right);
+            });
             return result;
         }
 
@@ -1609,9 +1882,75 @@ namespace WitchTower.Core
                     return equipmentData.slotType == EquipmentSlotType.Armor;
                 case EquipmentInventoryFilter.Accessory:
                     return equipmentData.slotType == EquipmentSlotType.Accessory;
+                case EquipmentInventoryFilter.Physical:
+                    return EquipmentEnhancementCatalog.IsPhysicalFocusedEquipment(equipmentData);
+                case EquipmentInventoryFilter.Magic:
+                    return EquipmentEnhancementCatalog.IsMagicFocusedEquipment(equipmentData);
                 default:
                     return true;
             }
+        }
+
+        private static bool ShouldPrioritizeEquipmentTutorialGift(PlayerProfile profile)
+        {
+            return profile != null &&
+                !StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipment) &&
+                StoryTutorialService.FindEquipmentTutorialGift(profile) != null;
+        }
+
+        private static int CompareEquipmentTutorialGiftFirst(OwnedEquipmentData left, OwnedEquipmentData right)
+        {
+            bool leftGift = StoryTutorialService.IsEquipmentTutorialGift(left);
+            bool rightGift = StoryTutorialService.IsEquipmentTutorialGift(right);
+            if (leftGift == rightGift)
+            {
+                return 0;
+            }
+
+            return leftGift ? -1 : 1;
+        }
+
+        private static bool ShouldPrioritizeEquipmentEnhanceTutorial(PlayerProfile profile)
+        {
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            return tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+        }
+
+        private static int CompareEnhanceableEquipmentFirst(OwnedEquipmentData left, OwnedEquipmentData right)
+        {
+            bool leftEnhanceable = IsEnhanceableEquipment(left);
+            bool rightEnhanceable = IsEnhanceableEquipment(right);
+            if (leftEnhanceable == rightEnhanceable)
+            {
+                return 0;
+            }
+
+            return leftEnhanceable ? -1 : 1;
+        }
+
+        private static bool IsEnhanceableEquipment(OwnedEquipmentData equipment)
+        {
+            return equipment != null && equipment.RemainingEnhanceAttempts > 0;
+        }
+
+        private static OwnedEquipmentData FindFirstEnhanceableEquipment(PlayerProfile profile)
+        {
+            if (profile?.OwnedEquipments == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < profile.OwnedEquipments.Count; i += 1)
+            {
+                OwnedEquipmentData equipment = profile.OwnedEquipments[i];
+                if (IsEnhanceableEquipment(equipment))
+                {
+                    return equipment;
+                }
+            }
+
+            return null;
         }
 
         private int CompareEquipmentInventoryEntries(OwnedEquipmentData left, OwnedEquipmentData right)
@@ -1776,6 +2115,10 @@ namespace WitchTower.Core
                     return "防具";
                 case EquipmentInventoryFilter.Accessory:
                     return "装飾品";
+                case EquipmentInventoryFilter.Physical:
+                    return "物理";
+                case EquipmentInventoryFilter.Magic:
+                    return "魔法";
                 default:
                     return "全て";
             }
@@ -1803,6 +2146,7 @@ namespace WitchTower.Core
                 return;
             }
 
+            equipmentTutorialPulseImages.Clear();
             ClearChildren(equipmentInventoryContentRect);
             Font font = ResolveRuntimeFont();
             int totalEquipmentCount = profile != null ? profile.OwnedEquipments.Count : 0;
@@ -1854,9 +2198,13 @@ namespace WitchTower.Core
             Image frame = card.AddComponent<Image>();
             bool equippedToSelectedMonster = selectedMonster != null && equipment.EquippedMonsterInstanceId == selectedMonster.InstanceId;
             bool equippedToOtherMonster = !string.IsNullOrEmpty(equipment.EquippedMonsterInstanceId) && !equippedToSelectedMonster;
+            bool isTutorialGift = StoryTutorialService.IsEquipmentTutorialGift(equipment);
+            bool highlightTutorialGift = isTutorialGift && ShouldHighlightEquipmentTutorialGift(profile);
             frame.color = equippedToSelectedMonster
                 ? new Color(0.17f, 0.34f, 0.24f, 0.96f)
-                : (equippedToOtherMonster ? new Color(0.23f, 0.18f, 0.16f, 0.94f) : new Color(0.15f, 0.19f, 0.25f, 0.96f));
+                : (equippedToOtherMonster
+                    ? new Color(0.23f, 0.18f, 0.16f, 0.94f)
+                    : (isTutorialGift ? new Color(0.30f, 0.25f, 0.12f, 0.98f) : new Color(0.15f, 0.19f, 0.25f, 0.96f)));
 
             RawImage equipmentFrame = CreateRawPortrait($"EquipmentFrame{index}", card.transform,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(12f, -36f), new Vector2(104f, 104f));
@@ -1882,7 +2230,7 @@ namespace WitchTower.Core
             nameText.verticalOverflow = VerticalWrapMode.Truncate;
 
             Text ownerText = CreateText("Owner", card.transform, font, BuildEquipmentOwnerText(profile, equipment), 15, FontStyle.Bold,
-                TextAnchor.MiddleRight, new Color(0.84f, 0.9f, 0.96f), new Vector2(1f, 1f), new Vector2(1f, 1f),
+                TextAnchor.MiddleRight, isTutorialGift ? new Color(1f, 0.88f, 0.50f) : new Color(0.84f, 0.9f, 0.96f), new Vector2(1f, 1f), new Vector2(1f, 1f),
                 new Vector2(1f, 1f), new Vector2(-50f, -18f), new Vector2(136f, 24f));
             ownerText.resizeTextForBestFit = true;
             ownerText.resizeTextMinSize = 11;
@@ -1902,6 +2250,10 @@ namespace WitchTower.Core
             enhanceText.resizeTextMinSize = 11;
             enhanceText.resizeTextMaxSize = 14;
             enhanceText.verticalOverflow = VerticalWrapMode.Truncate;
+            if (ShouldHighlightEquipmentQualityLabel(profile))
+            {
+                AddEquipmentTutorialQualityLabelFocus(enhanceText.transform);
+            }
 
             CreateIconActionButton($"EquipmentLock{index}", card.transform,
                 new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-16f, -16f), new Vector2(34f, 34f),
@@ -1922,8 +2274,9 @@ namespace WitchTower.Core
                 ? new Color(0.18f, 0.26f, 0.50f, 0.98f)
                 : new Color(0.16f, 0.19f, 0.24f, 0.84f);
 
+            float equipButtonX = actionButtonX;
             Button equipButton = CreateActionButton(card.transform, font, equippedToSelectedMonster ? "装備中" : "装備", new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(0f, 0f), new Vector2(actionButtonX, actionButtonY), actionButtonSize, equipButtonColor,
+                new Vector2(0f, 0f), new Vector2(equipButtonX, actionButtonY), actionButtonSize, equipButtonColor,
                 () => EquipEquipmentInstance(equipment.InstanceId), 14);
             ApplyEquipmentActionButtonFrame(equipButton, new Color(0.86f, 0.94f, 1f, 0.96f), equipDisabledColor);
             equipButton.interactable = selectedMonster != null && !equippedToSelectedMonster;
@@ -1943,10 +2296,301 @@ namespace WitchTower.Core
             discardButton.interactable = !equipment.IsLocked;
             actionButtonX += actionButtonWidth + actionButtonGap;
 
+            float enhanceButtonX = actionButtonX;
             Button enhanceButton = CreateActionButton(card.transform, font, "強化", new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(0f, 0f), new Vector2(actionButtonX, actionButtonY), actionButtonSize, new Color(0.30f, 0.27f, 0.52f, 0.96f),
+                new Vector2(0f, 0f), new Vector2(enhanceButtonX, actionButtonY), actionButtonSize, new Color(0.30f, 0.27f, 0.52f, 0.96f),
                 () => OpenEquipmentEnhancementOverlay(equipment.InstanceId), 14);
             ApplyEquipmentActionButtonFrame(enhanceButton, new Color(0.82f, 0.76f, 1f, 0.94f), new Color(0.20f, 0.18f, 0.28f, 0.84f));
+            bool highlightEnhanceButton = ShouldHighlightEquipmentEnhanceButton(profile, equipment, index);
+
+            if (highlightTutorialGift || highlightEnhanceButton)
+            {
+                AddEquipmentTutorialCardFocusFrame(card.transform);
+            }
+
+            if (highlightTutorialGift)
+            {
+                AddEquipmentTutorialEquipButtonFocus(card.transform, equipButton.transform, font, equipButtonX, actionButtonY, actionButtonSize);
+            }
+
+            if (highlightEnhanceButton)
+            {
+                AddEquipmentTutorialEquipButtonFocus(card.transform, enhanceButton.transform, font, enhanceButtonX, actionButtonY, actionButtonSize);
+            }
+        }
+
+        private static bool ShouldHighlightEquipmentTutorialGift(PlayerProfile profile)
+        {
+            if (profile == null || StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipment))
+            {
+                return false;
+            }
+
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            return tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.first_item", StringComparison.Ordinal);
+        }
+
+        private void AddEquipmentTutorialEquipButtonFocus(Transform cardTransform, Transform equipButtonTransform, Font font, float buttonX, float buttonY, Vector2 buttonSize)
+        {
+            if (cardTransform == null || equipButtonTransform == null)
+            {
+                return;
+            }
+
+            Image buttonImage = equipButtonTransform.GetComponent<Image>();
+            if (buttonImage != null && !equipmentTutorialPulseImages.Contains(buttonImage))
+            {
+                equipmentTutorialPulseImages.Add(buttonImage);
+            }
+
+            if (equipButtonTransform.Find("EquipmentTutorialFocusActionGlow") != null)
+            {
+                RegisterEquipmentTutorialPulseImages(equipButtonTransform.gameObject);
+                BringEquipmentTutorialActionButtonFocusToFront(cardTransform, equipButtonTransform);
+                return;
+            }
+
+            RemoveEquipmentTutorialActionButtonFocus(equipButtonTransform);
+
+            GameObject glowObject = CreateUiObject("EquipmentTutorialFocusActionGlow", equipButtonTransform);
+            RectTransform glowRect = glowObject.AddComponent<RectTransform>();
+            glowRect.anchorMin = Vector2.zero;
+            glowRect.anchorMax = Vector2.one;
+            glowRect.offsetMin = new Vector2(-14f, -11f);
+            glowRect.offsetMax = new Vector2(14f, 11f);
+            Image glowImage = glowObject.AddComponent<Image>();
+            glowImage.color = new Color(1f, 0.82f, 0.12f, 0.42f);
+            glowImage.raycastTarget = false;
+            glowObject.transform.SetAsFirstSibling();
+            equipmentTutorialPulseImages.Add(glowImage);
+
+            AddEquipmentTutorialFocusBar(equipButtonTransform, "ActionTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, 8f), new Vector2(32f, 10f));
+            AddEquipmentTutorialFocusBar(equipButtonTransform, "ActionBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, -8f), new Vector2(32f, 10f));
+            AddEquipmentTutorialFocusBar(equipButtonTransform, "ActionLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-8f, 0f), new Vector2(10f, 24f));
+            AddEquipmentTutorialFocusBar(equipButtonTransform, "ActionRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(8f, 0f), new Vector2(10f, 24f));
+
+            Text promptText = CreateText("EquipmentTutorialEquipPrompt", cardTransform, font, "ここを押す", 16, FontStyle.Bold,
+                TextAnchor.MiddleCenter, new Color(1f, 0.92f, 0.55f, 1f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0f, 0f), new Vector2(buttonX, buttonY + buttonSize.y + 9f), new Vector2(buttonSize.x, 24f));
+            promptText.resizeTextForBestFit = true;
+            promptText.resizeTextMinSize = 12;
+            promptText.resizeTextMaxSize = 16;
+            promptText.raycastTarget = false;
+            BringEquipmentTutorialActionButtonFocusToFront(cardTransform, equipButtonTransform);
+        }
+
+        private void EnsureEquipmentTutorialActionButtonFocusVisible()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            if (tutorialEvent == null || !string.Equals(tutorialEvent.TargetKey, "equipment.first_item", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            GameObject equipButtonObject = GameObject.Find("装備Button");
+            if (equipButtonObject == null || !equipButtonObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            if (equipButtonObject.transform.Find("EquipmentTutorialFocusActionGlow") != null)
+            {
+                RegisterEquipmentTutorialPulseImages(equipButtonObject);
+                BringEquipmentTutorialActionButtonFocusToFront(equipButtonObject.transform.parent, equipButtonObject.transform);
+                return;
+            }
+
+            RectTransform buttonRect = equipButtonObject.GetComponent<RectTransform>();
+            if (buttonRect == null)
+            {
+                return;
+            }
+
+            Transform cardTransform = equipButtonObject.transform.parent;
+            AddEquipmentTutorialEquipButtonFocus(
+                cardTransform,
+                equipButtonObject.transform,
+                ResolveRuntimeFont(),
+                buttonRect.anchoredPosition.x,
+                buttonRect.anchoredPosition.y,
+                buttonRect.sizeDelta);
+        }
+
+        private void BringEquipmentTutorialActionButtonFocusToFront(Transform cardTransform, Transform buttonTransform)
+        {
+            if (buttonTransform != null)
+            {
+                buttonTransform.SetAsLastSibling();
+            }
+
+            Transform promptTransform = cardTransform != null
+                ? cardTransform.Find("EquipmentTutorialEquipPrompt")
+                : null;
+            if (promptTransform != null)
+            {
+                promptTransform.SetAsLastSibling();
+            }
+        }
+
+        private void RemoveEquipmentTutorialActionButtonFocus(Transform buttonTransform)
+        {
+            if (buttonTransform == null)
+            {
+                return;
+            }
+
+            for (int i = buttonTransform.childCount - 1; i >= 0; i -= 1)
+            {
+                Transform child = buttonTransform.GetChild(i);
+                if (child != null && child.name.StartsWith("EquipmentTutorialFocus", StringComparison.Ordinal))
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(child.gameObject);
+                    }
+                    else
+                    {
+                        DestroyImmediate(child.gameObject);
+                    }
+                }
+            }
+        }
+
+        private void AddEquipmentTutorialCardFocusFrame(Transform cardTransform)
+        {
+            AddEquipmentTutorialFocusBar(cardTransform, "CardTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(-8f, 6f));
+            AddEquipmentTutorialFocusBar(cardTransform, "CardBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 4f), new Vector2(-8f, 6f));
+            AddEquipmentTutorialFocusBar(cardTransform, "CardLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(4f, 0f), new Vector2(6f, -8f));
+            AddEquipmentTutorialFocusBar(cardTransform, "CardRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-4f, 0f), new Vector2(6f, -8f));
+        }
+
+        private static bool ShouldHighlightEquipmentQualityLabel(PlayerProfile profile)
+        {
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            return tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.quality_label", StringComparison.Ordinal);
+        }
+
+        private static bool ShouldHighlightEquipmentEnhanceButton(PlayerProfile profile, OwnedEquipmentData equipment, int index)
+        {
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            return tutorialEvent != null &&
+                index == 0 &&
+                IsEnhanceableEquipment(equipment) &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+        }
+
+        private void AddEquipmentTutorialQualityLabelFocus(Transform qualityLabelTransform)
+        {
+            AddEquipmentTutorialFocusBar(qualityLabelTransform, "QualityTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -1f), new Vector2(-2f, 3f));
+            AddEquipmentTutorialFocusBar(qualityLabelTransform, "QualityBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 1f), new Vector2(-2f, 3f));
+            AddEquipmentTutorialFocusBar(qualityLabelTransform, "QualityLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(1f, 0f), new Vector2(3f, -2f));
+            AddEquipmentTutorialFocusBar(qualityLabelTransform, "QualityRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-1f, 0f), new Vector2(3f, -2f));
+        }
+
+        private void SetEquipmentTutorialReturnFocusVisible(bool visible)
+        {
+            if (!visible)
+            {
+                if (equipmentTutorialReturnFocusRoot != null)
+                {
+                    equipmentTutorialReturnFocusRoot.SetActive(false);
+                }
+
+                return;
+            }
+
+            EnsureEquipmentTutorialReturnFocus();
+            if (equipmentTutorialReturnFocusRoot == null)
+            {
+                return;
+            }
+
+            equipmentTutorialReturnFocusRoot.SetActive(true);
+            equipmentTutorialReturnFocusRoot.transform.SetAsLastSibling();
+            if (equipmentHomeReturnButton != null)
+            {
+                equipmentHomeReturnButton.transform.SetAsLastSibling();
+            }
+
+            RegisterEquipmentTutorialPulseImages(equipmentTutorialReturnFocusRoot);
+        }
+
+        private void EnsureEquipmentTutorialReturnFocus()
+        {
+            if (equipmentHomeReturnButton == null || equipmentTutorialReturnFocusRoot != null)
+            {
+                return;
+            }
+
+            Font font = ResolveRuntimeFont();
+            equipmentTutorialReturnFocusRoot = CreateUiObject("EquipmentTutorialReturnFocus", equipmentHomeReturnButton.transform);
+            RectTransform rootRect = equipmentTutorialReturnFocusRoot.AddComponent<RectTransform>();
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
+
+            AddEquipmentTutorialFocusBar(equipmentTutorialReturnFocusRoot.transform, "ReturnTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -3f), new Vector2(-8f, 6f));
+            AddEquipmentTutorialFocusBar(equipmentTutorialReturnFocusRoot.transform, "ReturnBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 3f), new Vector2(-8f, 6f));
+            AddEquipmentTutorialFocusBar(equipmentTutorialReturnFocusRoot.transform, "ReturnLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(3f, 0f), new Vector2(6f, -8f));
+            AddEquipmentTutorialFocusBar(equipmentTutorialReturnFocusRoot.transform, "ReturnRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-3f, 0f), new Vector2(6f, -8f));
+
+            equipmentTutorialReturnPromptText = CreateText("EquipmentTutorialReturnPrompt", equipmentTutorialReturnFocusRoot.transform, font, "ここを押す", 18, FontStyle.Bold,
+                TextAnchor.MiddleCenter, new Color(1f, 0.92f, 0.55f, 1f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(230f, 28f));
+            equipmentTutorialReturnPromptText.resizeTextForBestFit = true;
+            equipmentTutorialReturnPromptText.resizeTextMinSize = 13;
+            equipmentTutorialReturnPromptText.resizeTextMaxSize = 18;
+            equipmentTutorialReturnPromptText.raycastTarget = false;
+        }
+
+        private void RegisterEquipmentTutorialPulseImages(GameObject root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Image[] images = root.GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < images.Length; i += 1)
+            {
+                Image image = images[i];
+                if (image != null && !equipmentTutorialPulseImages.Contains(image))
+                {
+                    equipmentTutorialPulseImages.Add(image);
+                }
+            }
+        }
+
+        private void AddEquipmentTutorialFocusBar(
+            Transform parent,
+            string suffix,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 pivot,
+            Vector2 anchoredPosition,
+            Vector2 sizeDelta)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            GameObject barObject = CreateUiObject("EquipmentTutorialFocus" + suffix, parent);
+            RectTransform rect = barObject.AddComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = pivot;
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = sizeDelta;
+
+            Image image = barObject.AddComponent<Image>();
+            image.color = new Color(1f, 0.82f, 0.18f, 0.96f);
+            image.raycastTarget = false;
+            equipmentTutorialPulseImages.Add(image);
         }
 
         private static void ApplyEquipmentActionButtonFrame(Button button, Color borderColor, Color disabledColor)
@@ -1983,10 +2627,23 @@ namespace WitchTower.Core
                 return;
             }
 
+            bool tutorialWasActive = !StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipment);
+            bool isTutorialGift = StoryTutorialService.IsEquipmentTutorialGift(profile.GetOwnedEquipmentByInstanceId(equipmentInstanceId));
             if (profile.EquipEquipmentToMonster(selectedMonster.InstanceId, equipmentInstanceId))
             {
-                equipmentLastActionMessage = $"{GetMonsterDisplayName(selectedMonster)} に装備しました。";
-                StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
+                if (tutorialWasActive && isTutorialGift)
+                {
+                    equipmentLastActionMessage = $"{GetMonsterDisplayName(selectedMonster)} に装備できました。次は同じ装備カードの「強化」で鍛えてみましょう。";
+                    StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
+                }
+                else
+                {
+                    equipmentLastActionMessage = tutorialWasActive
+                        ? $"{GetMonsterDisplayName(selectedMonster)} に装備できました。装備カードからいつでも付け替えられます。"
+                        : $"{GetMonsterDisplayName(selectedMonster)} に装備しました。";
+                    StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
+                }
+
                 if (Application.isPlaying && SaveManager.Instance != null)
                 {
                     SaveManager.Instance.SaveCurrentGame();
@@ -2070,9 +2727,14 @@ namespace WitchTower.Core
             CacheEquipmentEnhancementTargetText(targetEquipment, targetEquipmentData);
             BindEquipmentEnhancementTargetVisual(targetEquipment, targetEquipmentData, true);
 
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            bool enhanceTutorialActive = tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
             EquipmentEnhancementResult result = profile.TryEnhanceEquipment(equipmentInstanceId, relicId);
             equipmentLastActionMessage = result.Message;
             equipmentEnhanceLastActionMessage = result.Message;
+            equipmentEnhanceTutorialSuccessPending = enhanceTutorialActive &&
+                result.ResultType == EquipmentEnhancementResultType.Success;
             StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
             if (EquipmentEnhancementCatalog.ResolveQualityRank(targetEquipmentData, targetEquipment) >= 3)
             {
@@ -2102,8 +2764,30 @@ namespace WitchTower.Core
             ResetEquipmentEnhancementFeedback();
 
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            bool enhanceTutorialActive = tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+            if (enhanceTutorialActive)
+            {
+                OwnedEquipmentData selectedEquipment = profile != null ? profile.GetOwnedEquipmentByInstanceId(selectedEquipmentEnhanceInstanceId) : null;
+                if (!IsEnhanceableEquipment(selectedEquipment))
+                {
+                    OwnedEquipmentData fallbackEquipment = FindFirstEnhanceableEquipment(profile);
+                    if (fallbackEquipment != null)
+                    {
+                        selectedEquipmentEnhanceInstanceId = fallbackEquipment.InstanceId;
+                    }
+                }
+            }
+
             bool tutorialChanged = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
-            OwnedEquipmentData equipment = profile != null ? profile.GetOwnedEquipmentByInstanceId(equipmentInstanceId) : null;
+            if (enhanceTutorialActive)
+            {
+                tutorialChanged |= StoryTutorialService.EnsureEquipmentEnhanceTutorialGift(profile);
+                equipmentEnhanceLastActionMessage = "ルシェが通常遺物を1つ用意しました。下の通常遺物の「使用」を押しましょう。";
+            }
+
+            OwnedEquipmentData equipment = profile != null ? profile.GetOwnedEquipmentByInstanceId(selectedEquipmentEnhanceInstanceId) : null;
             EquipmentDataSO equipmentData = equipment != null ? MasterDataManager.Instance?.GetEquipmentData(equipment.EquipmentId) : null;
             if (EquipmentEnhancementCatalog.ResolveQualityRank(equipmentData, equipment) >= 3)
             {
@@ -2130,6 +2814,14 @@ namespace WitchTower.Core
             {
                 equipmentEnhanceOverlayRoot.SetActive(false);
             }
+
+            if (equipmentEnhanceTutorialGuideRoot != null)
+            {
+                equipmentEnhanceTutorialGuideRoot.SetActive(false);
+            }
+
+            SetEquipmentEnhanceTutorialCloseFocusVisible(false);
+            RefreshEquipmentScene();
         }
 
         private void ResetEquipmentEnhancementFeedback()
@@ -2137,6 +2829,7 @@ namespace WitchTower.Core
             equipmentEnhanceLastActionMessage = string.Empty;
             equipmentEnhanceTargetTitle = string.Empty;
             equipmentEnhanceTargetInfo = string.Empty;
+            equipmentEnhanceTutorialSuccessPending = false;
             activeEquipmentEnhanceEffect = EquipmentEnhancementResultType.None;
             equipmentEnhanceEffectTimer = 0f;
             if (equipmentEnhanceEffectImage != null)
@@ -2210,7 +2903,9 @@ namespace WitchTower.Core
             if (equipmentEnhanceOverlayInfoText != null)
             {
                 StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
-                equipmentEnhanceOverlayInfoText.text = tutorialEvent != null
+                bool enhanceTutorialActive = tutorialEvent != null &&
+                    string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+                equipmentEnhanceOverlayInfoText.text = enhanceTutorialActive
                     ? $"【{tutorialEvent.Title}】{tutorialEvent.Body}"
                     : equipment != null
                     ? $"現在 {EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / {EquipmentEnhancementCatalog.BuildEnhanceAttemptsLabel(equipmentData, equipment)} / {(equipment.IsLocked ? "ロック中" : "未ロック")}\n現在所持している強化遺物だけを表示しています。"
@@ -2225,6 +2920,7 @@ namespace WitchTower.Core
             ClearChildren(equipmentEnhanceOverlayListRect);
             if (profile == null)
             {
+                RefreshEquipmentEnhanceTutorialGuide(null, null);
                 return;
             }
 
@@ -2246,6 +2942,8 @@ namespace WitchTower.Core
                     TextAnchor.MiddleCenter, new Color(0.84f, 0.88f, 0.92f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(360f, 36f));
             }
+
+            RefreshEquipmentEnhanceTutorialGuide(profile, equipment);
         }
 
         private void CreateEquipmentEnhancementRelicCard(Transform parent, Font font, PlayerProfile profile, OwnedEquipmentData equipment, EnhancementRelicDefinition relic, int index)
@@ -2274,7 +2972,7 @@ namespace WitchTower.Core
                 TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(0f, 1f),
                 new Vector2(0f, 1f), new Vector2(120f, -18f), new Vector2(220f, 28f));
             CreateText($"EnhancementRelicCardMeta{index + 1}", card.transform, font,
-                $"成功率 {(relic.SuccessRate * 100f):0.#}% / {EquipmentEnhancementCatalog.BuildRelicEffectSummary(equipmentData, relic)} / 所持 x{profile.GetEnhancementRelicAmount(relic.RelicId)}",
+                $"成功率 {(relic.SuccessRate * 100f):0.#}% / {EquipmentEnhancementCatalog.BuildRelicEffectSummary(equipmentData, equipment, relic)} / 所持 x{profile.GetEnhancementRelicAmount(relic.RelicId)}",
                 15, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.92f, 0.78f, 0.54f),
                 new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(120f, -50f), new Vector2(480f, 22f));
             CreateText($"EnhancementRelicCardDesc{index + 1}", card.transform, font, relic.Description, 15, FontStyle.Normal,
@@ -2290,6 +2988,148 @@ namespace WitchTower.Core
                 && profile.GetEnhancementRelicAmount(relic.RelicId) > 0
                 && (!equipment.IsLocked || !relic.DestroysOnFailure);
             useButton.interactable = canUse;
+            if (canUse && ShouldHighlightEquipmentEnhanceRelicUseButton(profile, relic))
+            {
+                AddEquipmentTutorialUseButtonFocus(card.transform, useButton.transform, font);
+                AddEquipmentTutorialCardFocusFrame(card.transform);
+            }
+        }
+
+        private void RefreshEquipmentEnhanceTutorialGuide(PlayerProfile profile, OwnedEquipmentData equipment)
+        {
+            if (equipmentEnhanceTutorialGuideRoot == null)
+            {
+                return;
+            }
+
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            bool successGuide = equipmentEnhanceTutorialSuccessPending &&
+                equipmentEnhanceOverlayRoot != null &&
+                equipmentEnhanceOverlayRoot.activeSelf &&
+                equipment != null;
+            bool useGuide = equipmentEnhanceOverlayRoot != null &&
+                equipmentEnhanceOverlayRoot.activeSelf &&
+                equipment != null &&
+                tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+            bool shouldShow = successGuide || useGuide;
+            equipmentEnhanceTutorialGuideRoot.SetActive(shouldShow);
+            if (!shouldShow)
+            {
+                SetEquipmentEnhanceTutorialCloseFocusVisible(false);
+                return;
+            }
+
+            equipmentEnhanceTutorialGuideRoot.transform.SetAsLastSibling();
+            if (equipmentEnhanceTutorialGuideTitleText != null)
+            {
+                equipmentEnhanceTutorialGuideTitleText.text = successGuide
+                    ? "強化成功です"
+                    : "強化遺物を使う";
+            }
+
+            if (equipmentEnhanceTutorialGuideBodyText != null)
+            {
+                equipmentEnhanceTutorialGuideBodyText.text = successGuide
+                    ? "装備の刻印が深まり、効果が伸びました。\n強化回数は1回減るので、育てたい装備から慎重に使いましょう。"
+                    : "ルシェが通常遺物を1つ用意しました。\n金色の枠が付いた「使用」を押すと、この装備を安全に強化できます。";
+            }
+
+            if (equipmentEnhanceTutorialGuideFooterText != null)
+            {
+                equipmentEnhanceTutorialGuideFooterText.text = successGuide
+                    ? "次の操作: 右上の「閉じる」をタップ"
+                    : "次の操作: 通常遺物の「使用」をタップ";
+            }
+
+            SetEquipmentEnhanceTutorialCloseFocusVisible(successGuide);
+        }
+
+        private static bool ShouldHighlightEquipmentEnhanceRelicUseButton(PlayerProfile profile, EnhancementRelicDefinition relic)
+        {
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            return tutorialEvent != null &&
+                relic != null &&
+                string.Equals(relic.RelicId, StoryTutorialService.EquipmentEnhanceTutorialGiftRelicId, StringComparison.Ordinal) &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+        }
+
+        private void AddEquipmentTutorialUseButtonFocus(Transform cardTransform, Transform useButtonTransform, Font font)
+        {
+            if (cardTransform == null || useButtonTransform == null)
+            {
+                return;
+            }
+
+            AddEquipmentTutorialFocusBar(useButtonTransform, "UseTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -2f), new Vector2(-4f, 4f));
+            AddEquipmentTutorialFocusBar(useButtonTransform, "UseBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 2f), new Vector2(-4f, 4f));
+            AddEquipmentTutorialFocusBar(useButtonTransform, "UseLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(2f, 0f), new Vector2(4f, -4f));
+            AddEquipmentTutorialFocusBar(useButtonTransform, "UseRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-2f, 0f), new Vector2(4f, -4f));
+
+            Text promptText = CreateText("EquipmentEnhanceTutorialUsePrompt", cardTransform, font, "ここを押す", 16, FontStyle.Bold,
+                TextAnchor.MiddleCenter, new Color(1f, 0.92f, 0.55f, 1f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
+                new Vector2(1f, 0.5f), new Vector2(-20f, 36f), new Vector2(118f, 24f));
+            promptText.resizeTextForBestFit = true;
+            promptText.resizeTextMinSize = 12;
+            promptText.resizeTextMaxSize = 16;
+            promptText.raycastTarget = false;
+        }
+
+        private void SetEquipmentEnhanceTutorialCloseFocusVisible(bool visible)
+        {
+            if (!visible)
+            {
+                if (equipmentEnhanceTutorialCloseFocusRoot != null)
+                {
+                    equipmentEnhanceTutorialCloseFocusRoot.SetActive(false);
+                }
+
+                return;
+            }
+
+            EnsureEquipmentEnhanceTutorialCloseFocus();
+            if (equipmentEnhanceTutorialCloseFocusRoot == null)
+            {
+                return;
+            }
+
+            equipmentEnhanceTutorialCloseFocusRoot.SetActive(true);
+            equipmentEnhanceTutorialCloseFocusRoot.transform.SetAsLastSibling();
+            if (equipmentEnhanceCloseButton != null)
+            {
+                equipmentEnhanceCloseButton.transform.SetAsLastSibling();
+            }
+
+            RegisterEquipmentTutorialPulseImages(equipmentEnhanceTutorialCloseFocusRoot);
+        }
+
+        private void EnsureEquipmentEnhanceTutorialCloseFocus()
+        {
+            if (equipmentEnhanceCloseButton == null || equipmentEnhanceTutorialCloseFocusRoot != null)
+            {
+                return;
+            }
+
+            Font font = ResolveRuntimeFont();
+            equipmentEnhanceTutorialCloseFocusRoot = CreateUiObject("EquipmentEnhanceTutorialCloseFocus", equipmentEnhanceCloseButton.transform);
+            RectTransform rootRect = equipmentEnhanceTutorialCloseFocusRoot.AddComponent<RectTransform>();
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
+
+            AddEquipmentTutorialFocusBar(equipmentEnhanceTutorialCloseFocusRoot.transform, "EnhanceCloseTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -2f), new Vector2(-6f, 5f));
+            AddEquipmentTutorialFocusBar(equipmentEnhanceTutorialCloseFocusRoot.transform, "EnhanceCloseBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 2f), new Vector2(-6f, 5f));
+            AddEquipmentTutorialFocusBar(equipmentEnhanceTutorialCloseFocusRoot.transform, "EnhanceCloseLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(2f, 0f), new Vector2(5f, -6f));
+            AddEquipmentTutorialFocusBar(equipmentEnhanceTutorialCloseFocusRoot.transform, "EnhanceCloseRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-2f, 0f), new Vector2(5f, -6f));
+
+            equipmentEnhanceTutorialClosePromptText = CreateText("EquipmentEnhanceTutorialClosePrompt", equipmentEnhanceTutorialCloseFocusRoot.transform, font, "ここを押す", 15, FontStyle.Bold,
+                TextAnchor.MiddleCenter, new Color(1f, 0.92f, 0.55f, 1f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(124f, 24f));
+            equipmentEnhanceTutorialClosePromptText.resizeTextForBestFit = true;
+            equipmentEnhanceTutorialClosePromptText.resizeTextMinSize = 11;
+            equipmentEnhanceTutorialClosePromptText.resizeTextMaxSize = 15;
+            equipmentEnhanceTutorialClosePromptText.raycastTarget = false;
         }
 
         private static string GetMonsterDisplayName(OwnedMonsterData ownedMonster)
@@ -2516,6 +3356,42 @@ namespace WitchTower.Core
             string equipmentName = equipmentData != null ? equipmentData.equipmentName : equipment.EquipmentId;
             equipmentEnhanceTargetTitle = $"{equipmentName}  {EquipmentEnhancementCatalog.BuildQualityLabel(equipmentData, equipment)} の強化";
             equipmentEnhanceTargetInfo = $"現在 {EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / {EquipmentEnhancementCatalog.BuildEnhanceAttemptsLabel(equipmentData, equipment)} / {(equipment.IsLocked ? "ロック中" : "未ロック")}\n現在所持している強化遺物だけを表示しています。";
+        }
+
+        private void AnimateEquipmentTutorialGuide()
+        {
+            bool guideVisible = (equipmentTutorialGuideRoot != null && equipmentTutorialGuideRoot.activeInHierarchy) ||
+                (equipmentEnhanceTutorialGuideRoot != null && equipmentEnhanceTutorialGuideRoot.activeInHierarchy);
+            if (!guideVisible && equipmentTutorialPulseImages.Count <= 0)
+            {
+                return;
+            }
+
+            float time = Application.isPlaying ? Time.unscaledTime : 0f;
+            float pulse = 0.5f + 0.5f * Mathf.Sin(time * 5.4f);
+            Color pulseColor = new Color(1f, Mathf.Lerp(0.48f, 0.96f, pulse), Mathf.Lerp(0.04f, 0.16f, pulse), Mathf.Lerp(0.78f, 1f, pulse));
+            for (int i = 0; i < equipmentTutorialPulseImages.Count; i += 1)
+            {
+                Image image = equipmentTutorialPulseImages[i];
+                if (image == null)
+                {
+                    continue;
+                }
+
+                image.color = pulseColor;
+            }
+
+            if (equipmentTutorialGuideCharacterImage != null && equipmentTutorialGuideCharacterImage.gameObject.activeInHierarchy)
+            {
+                float scale = Mathf.Lerp(0.985f, 1.035f, pulse);
+                equipmentTutorialGuideCharacterImage.rectTransform.localScale = new Vector3(scale, scale, 1f);
+            }
+
+            if (equipmentEnhanceTutorialGuideCharacterImage != null && equipmentEnhanceTutorialGuideCharacterImage.gameObject.activeInHierarchy)
+            {
+                float scale = Mathf.Lerp(0.985f, 1.035f, pulse);
+                equipmentEnhanceTutorialGuideCharacterImage.rectTransform.localScale = new Vector3(scale, scale, 1f);
+            }
         }
 
         private void AnimateEquipmentEnhancementEffect()
@@ -2947,7 +3823,7 @@ namespace WitchTower.Core
 
             if (string.IsNullOrEmpty(equipment.EquippedMonsterInstanceId))
             {
-                return "未装備";
+                return StoryTutorialService.IsEquipmentTutorialGift(equipment) ? "ルシェの贈り物" : "未装備";
             }
 
             OwnedMonsterData owner = profile.GetOwnedMonster(equipment.EquippedMonsterInstanceId);
@@ -3532,6 +4408,29 @@ namespace WitchTower.Core
             RawImage portrait = portraitObject.AddComponent<RawImage>();
             portrait.color = Color.white;
             return portrait;
+        }
+
+        private static Image CreateImage(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 anchoredPosition,
+            Vector2 sizeDelta)
+        {
+            GameObject imageObject = CreateUiObject(name, parent);
+            RectTransform rect = imageObject.AddComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = sizeDelta;
+
+            Image image = imageObject.AddComponent<Image>();
+            image.sprite = sprite;
+            image.color = sprite != null ? Color.white : new Color(1f, 1f, 1f, 0f);
+            return image;
         }
 
         private static Button CreateActionButton(

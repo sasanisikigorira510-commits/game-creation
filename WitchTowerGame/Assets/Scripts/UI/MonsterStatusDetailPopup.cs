@@ -98,7 +98,8 @@ namespace WitchTower.UI
             MonsterDataSO monsterData,
             Func<bool> onReleaseConfirmed = null,
             bool canRelease = false,
-            string releaseMessage = "")
+            string releaseMessage = "",
+            float portraitOffsetX = 0f)
         {
             if (parent == null || monster == null || monsterData == null)
             {
@@ -162,7 +163,7 @@ namespace WitchTower.UI
             close.onClick.AddListener(() => UnityEngine.Object.Destroy(overlay));
             CreateCloseButtonMark(closeButton.transform);
 
-            CreatePortrait(panel.transform, monsterData, new Vector2(-250f, -360f), 270f);
+            CreatePortrait(panel.transform, monsterData, new Vector2(-250f + portraitOffsetX, -360f), 270f);
             CreateIdentityBlock(panel.transform, font, monster, monsterData, profile);
 
             BattleUnitStats stats = MonsterBattleStatsFactory.Create(profile, monster, monsterData);
@@ -495,9 +496,10 @@ namespace WitchTower.UI
             float valueAreaWidth = Mathf.Max(80f, effectiveColumnEndX - valueX);
             if (individualValues || (!value.HasPlus && !value.HasEquipment))
             {
+                float simpleValueWidth = individualValues ? valueAreaWidth : baseWidth;
                 Text simpleValueText = CreateText(leftColumn ? "LeftValue" : "RightValue", parent, font, value.MainText, 24, FontStyle.Bold,
                     new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, 0.5f),
-                    new Vector2(valueX, y), new Vector2(valueAreaWidth, 34f), TextAnchor.MiddleRight, individualValues ? ResolveIndividualColor(value.MainText) : TextMain);
+                    new Vector2(valueX, y), new Vector2(simpleValueWidth, 34f), TextAnchor.MiddleRight, individualValues ? ResolveIndividualColor(value.MainText) : TextMain);
                 ApplySingleLineValueText(simpleValueText, 24);
                 return;
             }

@@ -57,7 +57,7 @@ public static class UnityMcpMasterDataBuilder
         {
             CreateEquipment("equip_bronze_blade", "青銅の刃", EquipmentSlotType.Weapon, 3, 0, 0, 0, 0, 0.01f, 0.02f, EquipmentRarity.Common),
             CreateEquipment("equip_guard_cloth", "守護の布鎧", EquipmentSlotType.Armor, 0, 0, 2, 0, 8, 0f, 0f, EquipmentRarity.Common),
-            CreateEquipment("equip_ashen_ring", "灰燼の指輪", EquipmentSlotType.Accessory, 1, 0, 0, 0, 0, 0.02f, 0.03f, EquipmentRarity.Uncommon),
+            CreateEquipment("equip_ashen_ring", "灰燼の指輪", EquipmentSlotType.Accessory, 5, 0, 0, 0, 0, 0.02f, 0.03f, EquipmentRarity.Uncommon),
             CreateEquipment("equip_apprentice_charm", "見習いの護符", EquipmentSlotType.Accessory, 0, 2, 0, 2, 4, 0.01f, 0.02f, EquipmentRarity.Common),
             CreateEquipment("equip_iron_sword", "鉄の剣", EquipmentSlotType.Weapon, 6, 0, 0, 0, 0, 0.02f, 0.03f, EquipmentRarity.Uncommon),
             CreateEquipment("equip_bone_mail", "骨の鎧", EquipmentSlotType.Armor, 0, 0, 4, 0, 13, 0f, 0f, EquipmentRarity.Uncommon),

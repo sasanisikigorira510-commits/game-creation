@@ -430,32 +430,7 @@ using WitchTower.Save;
 
         if (path == "simulate-idle-reward" && method == "POST")
         {
-            string requestBody = ReadRequestBody(context.Request);
-            SimulateIdleRewardRequest payload = ParseJson<SimulateIdleRewardRequest>(requestBody);
-            int minutes = payload != null ? payload.minutes : 0;
-            if (minutes <= 0)
-            {
-                WriteError(context.Response, 400, "Missing or invalid field: minutes");
-                return;
-            }
-
-            string json = RunOnMainThreadAndWait(delegate
-            {
-                var profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-                if (profile == null)
-                {
-                    return BuildFailureResponse("PlayerProfile is not initialized.");
-                }
-
-                var now = DateTime.Now;
-                profile.LastActiveAt = now.AddMinutes(-minutes).ToString("O");
-                IdleRewardService.EvaluatePendingReward(profile, now);
-                SaveManager.Instance?.SaveCurrentGame();
-                return "{\"ok\":true,\"message\":\"Idle reward simulated.\",\"minutes\":" + minutes +
-                    ",\"pendingIdleRewardGold\":" + profile.PendingIdleRewardGold + "}";
-            });
-
-            WriteJson(context.Response, json);
+            WriteError(context.Response, 410, "Idle reward feature has been removed.");
             return;
         }
 
@@ -726,6 +701,10 @@ using WitchTower.Save;
         builder.Append(hud != null ? "true" : "false");
         builder.Append(",\"editorPaused\":");
         builder.Append(EditorApplication.isPaused ? "true" : "false");
+        if (AudioManager.Instance != null)
+        {
+            AppendString(builder, ",\"currentBgmKey\":", AudioManager.Instance.CurrentBgmKey);
+        }
 
         if (stateMachine != null)
         {
@@ -734,10 +713,31 @@ using WitchTower.Save;
             builder.Append("\"");
         }
 
+        if (sceneController != null)
+        {
+            AppendFloat(builder, ",\"bossEntranceFlashRemaining\":", sceneController.DebugBossEntranceFlashRemaining);
+            builder.Append(",\"lastBossEntranceEncounterSerial\":");
+            builder.Append(sceneController.DebugLastBossEntranceEncounterSerial);
+            builder.Append(",\"floatingDamageTextCount\":");
+            builder.Append(sceneController.DebugFloatingDamageTextCount);
+            builder.Append(",\"activeHitFlashCount\":");
+            builder.Append(sceneController.DebugActiveHitFlashCount);
+            builder.Append(",\"activeHpTrailCount\":");
+            builder.Append(sceneController.DebugActiveHpTrailCount);
+        }
+
         if (simulator != null)
         {
             builder.Append(",\"simulatorRunning\":");
             builder.Append(simulator.IsRunning ? "true" : "false");
+            builder.Append(",\"currentFloor\":");
+            builder.Append(simulator.CurrentFloor);
+            builder.Append(",\"currentWave\":");
+            builder.Append(simulator.CurrentWave);
+            builder.Append(",\"encounterSerial\":");
+            builder.Append(simulator.EncounterSerial);
+            builder.Append(",\"isBossWave\":");
+            builder.Append(simulator.IsBossWave ? "true" : "false");
             builder.Append(",\"simulatorTickCount\":");
             builder.Append(simulator.DebugTickCount);
             builder.Append(",\"simulatorLastDeltaTime\":");
@@ -752,6 +752,10 @@ using WitchTower.Save;
             AppendStats(builder, simulator.PlayerStats);
             builder.Append(",\"enemyStats\":");
             AppendStats(builder, simulator.EnemyStats);
+            builder.Append(",\"waveEnemyCurrentHp\":");
+            builder.Append(simulator.CurrentWaveEnemyCurrentHp);
+            builder.Append(",\"waveEnemyMaxHp\":");
+            builder.Append(simulator.CurrentWaveEnemyMaxHp);
             builder.Append(",\"aliveAllyCount\":");
             builder.Append(simulator.CurrentAliveAllyCount);
             builder.Append(",\"allyRuntimeCount\":");
@@ -1071,8 +1075,6 @@ using WitchTower.Save;
         builder.Append(profile.DefenseUpgradeLevel);
         builder.Append(",\"hpUpgradeLevel\":");
         builder.Append(profile.HpUpgradeLevel);
-        builder.Append(",\"pendingIdleRewardGold\":");
-        builder.Append(profile.PendingIdleRewardGold);
         int baseUpgradeCost = 10;
         builder.Append(",\"homeBadgeCount\":");
         builder.Append(HomeActionAdvisor.GetHomeBadgeCount(profile));
@@ -1444,12 +1446,6 @@ using WitchTower.Save;
     {
         public string componentType;
         public string methodName;
-    }
-
-    [Serializable]
-    private class SimulateIdleRewardRequest
-    {
-        public int minutes;
     }
 
     private class MainThreadWorkItem

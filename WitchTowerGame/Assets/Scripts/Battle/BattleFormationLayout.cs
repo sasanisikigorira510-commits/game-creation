@@ -83,19 +83,14 @@ namespace WitchTower.Battle
         public static float ResolveAllyMaxCombatAdvance(int allyIndex, MonsterDataSO monsterData)
         {
             bool isRanged = monsterData != null && monsterData.rangeType == MonsterRangeType.Ranged;
-            if (!isRanged && allyIndex >= 2)
-            {
-                return float.PositiveInfinity;
-            }
-
             bool isDragon = IsDragonLineage(monsterData);
             bool isFrontline = allyIndex == 0 || allyIndex == 1;
             bool isMidline = allyIndex == 2;
             float maxAdvance = isFrontline
                 ? (isRanged ? 0.26f : 0.24f)
                 : isMidline
-                    ? (isRanged ? 0.36f : 0.34f)
-                    : (isRanged ? 0.40f : 0.42f);
+                    ? (isRanged ? 0.36f : 0.42f)
+                    : (isRanged ? 0.40f : 0.48f);
             if (isDragon)
             {
                 maxAdvance += isFrontline ? 0.04f : isMidline ? 0.12f : 0.08f;

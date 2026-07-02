@@ -56,12 +56,7 @@ namespace WitchTower.Home
 
         public static int GetHomeBadgeCount(PlayerProfile profile)
         {
-            if (profile == null)
-            {
-                return 0;
-            }
-
-            return profile.PendingIdleRewardGold > 0 ? 1 : 0;
+            return 0;
         }
 
         public static string BuildHomeHeadline(PlayerProfile profile)
@@ -69,14 +64,6 @@ namespace WitchTower.Home
             if (profile == null)
             {
                 return "Next Step: load a profile to resume the climb.";
-            }
-
-            if (profile.PendingIdleRewardGold > 0)
-            {
-                return string.Format(
-                    "Next Step: claim {0} idle gold, then push floor {1}.",
-                    profile.PendingIdleRewardGold,
-                    profile.HighestFloor + 1);
             }
 
             return string.Format(
@@ -102,11 +89,6 @@ namespace WitchTower.Home
             if (profile == null)
             {
                 return "Action Cue: profile unavailable.";
-            }
-
-            if (profile.PendingIdleRewardGold > 0)
-            {
-                return string.Format("Action Cue: collect {0} idle gold before the next push.", profile.PendingIdleRewardGold);
             }
 
             int missionClaims = GetMissionBadgeCount(profile, now);
@@ -327,11 +309,6 @@ namespace WitchTower.Home
             bool missionClearReady = IsMissionClaimable(profile, "mission_clear_1", 1);
             bool missionFloorReady = IsMissionClaimable(profile, "mission_reach_floor_3", 3);
 
-            if (profile.PendingIdleRewardGold > 0)
-            {
-                return $"Reward Route: claim idle first for {profile.PendingIdleRewardGold} Gold that is already banked.";
-            }
-
             if (dailyReady)
             {
                 return $"Reward Route: claim completed daily quests for {DailyRewardService.GetClaimableRewardFreeGachaStones(profile, now)} free stones before anything else.";
@@ -510,9 +487,7 @@ namespace WitchTower.Home
             string stepOne;
             if (readyGold > 0)
             {
-                stepOne = missionClaims > 0
-                    ? $"1. Claim {missionClaims} reward {(missionClaims == 1 ? "step" : "steps")} for {readyGold} Gold"
-                    : $"1. Collect {readyGold} idle Gold";
+                stepOne = $"1. Claim {missionClaims} reward {(missionClaims == 1 ? "step" : "steps")} for {readyGold} Gold";
             }
             else if (best.Label != null && (threat.Contains("dangerous") || threat.Contains("even")))
             {
@@ -1184,9 +1159,7 @@ namespace WitchTower.Home
                 return 0;
             }
 
-            int total = profile.PendingIdleRewardGold;
-            total += GetClaimableMissionGold(profile);
-            return total;
+            return GetClaimableMissionGold(profile);
         }
 
         public static string BuildHomeRewardSummary(PlayerProfile profile, DateTime now)
@@ -1199,7 +1172,7 @@ namespace WitchTower.Home
             int readyGold = GetClaimableRewardGold(profile, now);
             int missionCount = GetClaimableMissionCount(profile, now);
             return readyGold > 0
-                ? $"Ready Gold: {readyGold} waiting across idle and mission claims ({missionCount} ready)."
+                ? $"Ready Gold: {readyGold} waiting in mission claims ({missionCount} ready)."
                 : "Ready Gold: nothing to claim right now.";
         }
 
@@ -1242,11 +1215,6 @@ namespace WitchTower.Home
 
             string threat = GetNextFloorThreat(profile);
             int claimableGold = GetClaimableRewardGold(profile, now);
-
-            if (profile.PendingIdleRewardGold > 0)
-            {
-                return $"Priority Tab: Home first, collect {profile.PendingIdleRewardGold} idle Gold.";
-            }
 
             int missionClaims = GetClaimableMissionCount(profile, now);
             if (missionClaims > 0)
@@ -1346,11 +1314,6 @@ namespace WitchTower.Home
             if (missionClaims > 0)
             {
                 return $"Battle Plan: claim {missionClaims} reward {(missionClaims == 1 ? "step" : "steps")}, {prepStep}";
-            }
-
-            if (profile.PendingIdleRewardGold > 0)
-            {
-                return $"Battle Plan: collect {profile.PendingIdleRewardGold} idle Gold, {prepStep}";
             }
 
             return $"Battle Plan: build is ready, challenge floor {nextFloor} now.";

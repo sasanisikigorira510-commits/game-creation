@@ -15,7 +15,7 @@ MonoBehaviour:
   equipmentId: equip_ashen_ring
   equipmentName: 灰燼の指輪
   slotType: 2
-  baseAttack: 1
+  baseAttack: 5
   baseDefense: 0
   baseHp: 0
   bonusCritRate: 0.02

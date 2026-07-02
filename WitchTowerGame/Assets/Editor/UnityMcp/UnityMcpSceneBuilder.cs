@@ -303,7 +303,6 @@ public static class UnityMcpSceneBuilder
 
         PlayerStatusView homePlayerStatus = CreatePlayerStatusView(homePanel.transform, "HomePlayerStatus", new Vector2(0.5f, 1f), new Vector2(0f, -146f));
         ResourceView homeResource = CreateResourceView(homePanel.transform, "HomeResource", new Vector2(0.5f, 1f), new Vector2(0f, -254f));
-        IdleRewardView idleReward = CreateIdleRewardView(homePanel.transform, "IdleReward", new Vector2(0.5f, 1f), new Vector2(0f, -318f));
 
         ResourceView enhanceResource = CreateResourceView(enhancePanel.transform, "EnhanceResource", new Vector2(0.5f, 1f), new Vector2(0f, -170f));
         UpgradeStatusView attackUpgrade = CreateUpgradeStatusView(enhancePanel.transform, "AttackUpgrade", new Vector2(0.5f, 1f), new Vector2(0f, -300f));
@@ -321,7 +320,6 @@ public static class UnityMcpSceneBuilder
 
         StyleCard(homePlayerStatus.gameObject, new Color(0.12f, 0.18f, 0.25f, 0.92f));
         StyleCard(homeResource.gameObject, new Color(0.18f, 0.14f, 0.09f, 0.94f));
-        StyleCard(idleReward.gameObject, new Color(0.10f, 0.17f, 0.18f, 0.94f));
         StyleCard(enhanceResource.gameObject, new Color(0.18f, 0.14f, 0.09f, 0.94f));
         StyleCard(attackUpgrade.gameObject, new Color(0.18f, 0.10f, 0.14f, 0.94f));
         StyleCard(defenseUpgrade.gameObject, new Color(0.12f, 0.16f, 0.21f, 0.94f));
@@ -381,7 +379,6 @@ public static class UnityMcpSceneBuilder
 
         SetObjectField(homePanelController, "playerStatusView", homePlayerStatus);
         SetObjectField(homePanelController, "resourceView", homeResource);
-        SetObjectField(homePanelController, "idleRewardView", idleReward);
         SetObjectField(homePanelController, "ctaText", CreateCtaLabel("HomeCtaText", homePanel.transform, "Next Step: enter Battle and challenge the next floor."));
         TMP_Text homeRewardSummaryText = CreateLabel("HomeRewardSummaryText", homePanel.transform, new Vector2(0.5f, 1f), new Vector2(0f, -432f), new Vector2(660f, 34f), "Ready Gold: nothing to claim right now.");
         StyleText(homeRewardSummaryText, 15f, FontStyles.Normal, new Color(0.84f, 0.89f, 0.96f, 0.94f), TextAlignmentOptions.Center);
@@ -419,8 +416,6 @@ public static class UnityMcpSceneBuilder
         StyleButton(challengeFloorButton, new Color(0.77f, 0.39f, 0.16f, 1f));
         CreatePrimaryButtonAura(challengeFloorButton.transform, "ChallengeFloorAura", new Vector2(352f, 78f), new Color(0.98f, 0.84f, 0.56f, 0.12f), "DESCEND");
 
-        Button claimIdleRewardButton = CreateNavButton(homePanel.transform, "ClaimIdleReward", new Vector2(0f, -610f), homePanelController, nameof(HomePanelController.ClaimIdleReward), new Vector2(280f, 52f));
-        StyleButton(claimIdleRewardButton, new Color(0.18f, 0.49f, 0.44f, 1f));
         CreateNavButton(enhancePanel.transform, "UpgradeAttack", new Vector2(0f, -350f), enhancePanelController, nameof(EnhancePanelController.UpgradeAttack), new Vector2(220f, 40f));
         CreateNavButton(enhancePanel.transform, "UpgradeDefense", new Vector2(0f, -480f), enhancePanelController, nameof(EnhancePanelController.UpgradeDefense), new Vector2(220f, 40f));
         CreateNavButton(enhancePanel.transform, "UpgradeHp", new Vector2(0f, -610f), enhancePanelController, nameof(EnhancePanelController.UpgradeHp), new Vector2(220f, 40f));
@@ -1142,14 +1137,6 @@ public static class UnityMcpSceneBuilder
         GameObject root = CreateUiObject(name, parent, anchor, anchor, position, new Vector2(500f, 40f));
         ResourceView view = root.AddComponent<ResourceView>();
         SetObjectField(view, "goldText", CreateLabel("GoldText", root.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(460f, 30f), "0"));
-        return view;
-    }
-
-    private static IdleRewardView CreateIdleRewardView(Transform parent, string name, Vector2 anchor, Vector2 position)
-    {
-        GameObject root = CreateUiObject(name, parent, anchor, anchor, position, new Vector2(600f, 50f));
-        IdleRewardView view = root.AddComponent<IdleRewardView>();
-        SetObjectField(view, "statusText", CreateLabel("StatusText", root.transform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560f, 40f), "Idle Reward: None"));
         return view;
     }
 

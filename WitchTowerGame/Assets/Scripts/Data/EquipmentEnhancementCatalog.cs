@@ -178,6 +178,30 @@ namespace WitchTower.Data
                 : ResolveQualityRank(equipmentData);
         }
 
+        public static bool IsPhysicalFocusedEquipment(EquipmentDataSO equipmentData)
+        {
+            if (equipmentData == null)
+            {
+                return false;
+            }
+
+            int physicalScore = ResolvePhysicalFocusScore(equipmentData);
+            int magicScore = ResolveMagicFocusScore(equipmentData);
+            return physicalScore > 0 && physicalScore >= magicScore;
+        }
+
+        public static bool IsMagicFocusedEquipment(EquipmentDataSO equipmentData)
+        {
+            if (equipmentData == null)
+            {
+                return false;
+            }
+
+            int physicalScore = ResolvePhysicalFocusScore(equipmentData);
+            int magicScore = ResolveMagicFocusScore(equipmentData);
+            return magicScore > 0 && magicScore >= physicalScore;
+        }
+
         public static float ResolveQualityMultiplier(EquipmentDataSO equipmentData)
         {
             return 1f + ((ResolveQualityRank(equipmentData) - 1) * 0.2f);
@@ -267,12 +291,17 @@ namespace WitchTower.Data
 
         public static void EnsureRolledStats(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment, System.Random random)
         {
-            if (equipmentData == null || ownedEquipment == null || ownedEquipment.HasRolledStats)
+            if (equipmentData == null || ownedEquipment == null)
             {
                 return;
             }
 
-            SyncRolledStatsFromMaster(equipmentData, ownedEquipment);
+            if (ownedEquipment.HasRolledStats && (HasAnyRolledStat(ownedEquipment) || !HasAnyMasterStat(equipmentData)))
+            {
+                return;
+            }
+
+            EquipmentStatRollService.RollInitialStats(equipmentData, ownedEquipment, random);
         }
 
         public static void SyncRolledStatsFromMaster(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
@@ -299,6 +328,18 @@ namespace WitchTower.Data
                 return default;
             }
 
+            if (ownedEquipment != null && ownedEquipment.HasRolledStats && HasAnyRolledStat(ownedEquipment))
+            {
+                return new EquipmentRolledBaseBonus(
+                    ownedEquipment.RolledAttack,
+                    ownedEquipment.RolledWisdom,
+                    ownedEquipment.RolledDefense,
+                    ownedEquipment.RolledMagicDefense,
+                    ownedEquipment.RolledHp,
+                    ownedEquipment.RolledCritRate,
+                    ownedEquipment.RolledAttackSpeed);
+            }
+
             return new EquipmentRolledBaseBonus(
                 equipmentData.baseAttack,
                 equipmentData.baseWisdom,
@@ -307,6 +348,44 @@ namespace WitchTower.Data
                 equipmentData.baseHp,
                 equipmentData.bonusCritRate,
                 equipmentData.bonusAttackSpeed);
+        }
+
+        private static bool HasAnyRolledStat(OwnedEquipmentData ownedEquipment)
+        {
+            return ownedEquipment != null &&
+                (ownedEquipment.RolledAttack > 0 ||
+                 ownedEquipment.RolledWisdom > 0 ||
+                 ownedEquipment.RolledDefense > 0 ||
+                 ownedEquipment.RolledMagicDefense > 0 ||
+                 ownedEquipment.RolledHp > 0 ||
+                 ownedEquipment.RolledCritRate > 0.0001f ||
+                 ownedEquipment.RolledAttackSpeed > 0.0001f);
+        }
+
+        private static bool HasAnyMasterStat(EquipmentDataSO equipmentData)
+        {
+            return equipmentData != null &&
+                (equipmentData.baseAttack > 0 ||
+                 equipmentData.baseWisdom > 0 ||
+                 equipmentData.baseDefense > 0 ||
+                 equipmentData.baseMagicDefense > 0 ||
+                 equipmentData.baseHp > 0 ||
+                 equipmentData.bonusCritRate > 0.0001f ||
+                 equipmentData.bonusAttackSpeed > 0.0001f);
+        }
+
+        private static int ResolvePhysicalFocusScore(EquipmentDataSO equipmentData)
+        {
+            return equipmentData == null
+                ? 0
+                : Mathf.Max(0, equipmentData.baseAttack) + Mathf.Max(0, equipmentData.baseDefense);
+        }
+
+        private static int ResolveMagicFocusScore(EquipmentDataSO equipmentData)
+        {
+            return equipmentData == null
+                ? 0
+                : Mathf.Max(0, equipmentData.baseWisdom) + Mathf.Max(0, equipmentData.baseMagicDefense);
         }
 
         public static EquipmentResolvedBonus ResolveEquipmentBonus(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
@@ -337,12 +416,13 @@ namespace WitchTower.Data
             }
 
             ownedEquipment.EnhancementBonusRate += relic.BonusPercent;
-            if (equipmentData.bonusCritRate > 0f)
+            EquipmentRolledBaseBonus rolledBase = ResolveBaseBonus(equipmentData, ownedEquipment);
+            if (rolledBase.CritRate > 0f)
             {
                 ownedEquipment.EnhancementCritRateFlat += ResolveCritRateEnhancement(relic);
             }
 
-            if (equipmentData.bonusAttackSpeed > 0f)
+            if (rolledBase.AttackSpeed > 0f)
             {
                 ownedEquipment.EnhancementAttackSpeedFlat += ResolveAttackSpeedEnhancement(relic);
             }
@@ -369,6 +449,11 @@ namespace WitchTower.Data
 
         public static string BuildRelicEffectSummary(EquipmentDataSO equipmentData, EnhancementRelicDefinition relic)
         {
+            return BuildRelicEffectSummary(equipmentData, null, relic);
+        }
+
+        public static string BuildRelicEffectSummary(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment, EnhancementRelicDefinition relic)
+        {
             if (equipmentData == null || relic == null)
             {
                 return string.Empty;
@@ -378,12 +463,13 @@ namespace WitchTower.Data
             {
                 $"基礎効果 +{relic.BonusPercent * 100f:0.#}%"
             };
-            if (equipmentData.bonusCritRate > 0f)
+            EquipmentRolledBaseBonus rolledBase = ResolveBaseBonus(equipmentData, ownedEquipment);
+            if (rolledBase.CritRate > 0f)
             {
                 parts.Add($"会心+{ResolveCritRateEnhancement(relic) * 100f:0.#}%");
             }
 
-            if (equipmentData.bonusAttackSpeed > 0f)
+            if (rolledBase.AttackSpeed > 0f)
             {
                 parts.Add($"速+{ResolveAttackSpeedEnhancement(relic):0.###}");
             }

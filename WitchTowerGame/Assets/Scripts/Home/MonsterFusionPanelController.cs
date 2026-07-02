@@ -40,6 +40,7 @@ namespace WitchTower.Home
         private const string ResultEffectRareSpritePath = "UI/FusionPage/Effects/FusionResultEffect_Rare";
         private const string ResultEffectLegendarySpritePath = "UI/FusionPage/Effects/FusionResultEffect_Legendary";
         private const string ResultEffectFallbackSpritePath = "UI/FusionPage/FusionSuccessEffect";
+        private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
         private const int CeremonyFrameCount = 8;
         private const float BirthEffectDuration = 1.28f;
 
@@ -84,6 +85,11 @@ namespace WitchTower.Home
         private Image statusPlate;
         private Text rosterTitleLabel;
         private Button fuseButton;
+        private GameObject fusionTutorialGuideRoot;
+        private Text fusionTutorialGuideTitleText;
+        private Text fusionTutorialGuideBodyText;
+        private Text fusionTutorialGuideFooterText;
+        private Image fusionTutorialGuideCharacterImage;
         private string parentAInstanceId;
         private string parentBInstanceId;
         private bool isBuilt;
@@ -177,6 +183,7 @@ namespace WitchTower.Home
             birthEffectTimer = 0f;
             RefreshRoster();
             RefreshPreview();
+            RefreshFusionTutorialGuide();
         }
 
         private void Update()
@@ -194,6 +201,7 @@ namespace WitchTower.Home
             }
 
             AnimateCeremonyEffects();
+            AnimateFusionTutorialGuide();
         }
 
         private void Hide()
@@ -327,9 +335,123 @@ namespace WitchTower.Home
             scrollRect.movementType = ScrollRect.MovementType.Clamped;
 
             CreateResultStage();
+            BuildFusionTutorialGuide(panel.transform);
 
             isBuilt = true;
             AnimateCeremonyEffects();
+        }
+
+        private void BuildFusionTutorialGuide(Transform panelTransform)
+        {
+            if (panelTransform == null || fusionTutorialGuideRoot != null)
+            {
+                return;
+            }
+
+            fusionTutorialGuideRoot = CreatePanel("FusionTutorialGuideRoot", panelTransform, null,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -700f), new Vector2(920f, 340f), new Color(0.025f, 0.035f, 0.055f, 0.98f));
+
+            Outline panelOutline = fusionTutorialGuideRoot.AddComponent<Outline>();
+            panelOutline.effectColor = new Color(1f, 0.78f, 0.24f, 0.94f);
+            panelOutline.effectDistance = new Vector2(4f, -4f);
+            panelOutline.useGraphicAlpha = false;
+
+            fusionTutorialGuideCharacterImage = CreatePortraitImage(
+                fusionTutorialGuideRoot.transform,
+                "FusionTutorialGuideLuse",
+                TutorialGuideSpritePath,
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(28f, -8f),
+                new Vector2(218f, 218f));
+
+            Text badgeText = CreateText("FusionTutorialGuideBadge", fusionTutorialGuideRoot.transform, "TUTORIAL", 17, FontStyle.Bold,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(276f, -22f), new Vector2(136f, 28f), TextAnchor.MiddleCenter, AccentGold);
+            AddTextContrast(badgeText);
+
+            fusionTutorialGuideTitleText = CreateText("FusionTutorialGuideTitle", fusionTutorialGuideRoot.transform, "ルシェの配合レッスン", 29, FontStyle.Bold,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(276f, -56f), new Vector2(560f, 36f), TextAnchor.MiddleLeft, new Color(1f, 0.96f, 0.78f, 1f));
+            AddTextContrast(fusionTutorialGuideTitleText);
+
+            fusionTutorialGuideBodyText = CreateText("FusionTutorialGuideBody", fusionTutorialGuideRoot.transform, string.Empty, 18, FontStyle.Bold,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(276f, -98f), new Vector2(590f, 160f), TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f));
+            fusionTutorialGuideBodyText.resizeTextForBestFit = true;
+            fusionTutorialGuideBodyText.resizeTextMinSize = 14;
+            fusionTutorialGuideBodyText.resizeTextMaxSize = 18;
+            AddTextContrast(fusionTutorialGuideBodyText);
+
+            fusionTutorialGuideFooterText = CreateText("FusionTutorialGuideFooter", fusionTutorialGuideRoot.transform, "次の操作: 説明を確認してホームへ戻る", 18, FontStyle.Bold,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(276f, 28f), new Vector2(430f, 28f), TextAnchor.MiddleLeft, new Color(0.78f, 0.92f, 1f, 1f));
+            AddTextContrast(fusionTutorialGuideFooterText);
+
+            CreateButton("FusionTutorialGuideClose", fusionTutorialGuideRoot.transform, "ホームへ戻る",
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(-26f, 28f), new Vector2(190f, 48f), ConfirmButtonSpritePath, ParentButtonColor, CompleteFusionTutorialGuide);
+
+            fusionTutorialGuideRoot.SetActive(false);
+        }
+
+        private void RefreshFusionTutorialGuide()
+        {
+            if (fusionTutorialGuideRoot == null)
+            {
+                return;
+            }
+
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "FusionScene");
+            bool shouldShow = selectionRoot != null &&
+                selectionRoot.activeSelf &&
+                tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "fusion.guide", StringComparison.Ordinal);
+
+            fusionTutorialGuideRoot.SetActive(shouldShow);
+            if (!shouldShow)
+            {
+                return;
+            }
+
+            fusionTutorialGuideRoot.transform.SetAsLastSibling();
+            if (fusionTutorialGuideBodyText != null)
+            {
+                fusionTutorialGuideBodyText.text =
+                    "配合は親2体とも最大レベルが必要です。\n個体値は能力ごとに親1/親2からランダム継承します。\n高い個体値の親ほど、良い値を引き継ぐ機会が増えます。\n親のプラス値を含む能力は、継承ボーナスに反映されます。\n親は戻らないので、保護を確認してから選びましょう。";
+            }
+
+            if (fusionTutorialGuideFooterText != null)
+            {
+                fusionTutorialGuideFooterText.text = "今回は配合せず、説明を確認したらホームへ戻りましょう";
+            }
+        }
+
+        private void CompleteFusionTutorialGuide()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            bool changed = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintFusion);
+            if (changed && Application.isPlaying && SaveManager.Instance != null)
+            {
+                SaveManager.Instance.SaveCurrentGame();
+            }
+
+            Hide();
+        }
+
+        private void AnimateFusionTutorialGuide()
+        {
+            if (fusionTutorialGuideRoot == null || !fusionTutorialGuideRoot.activeInHierarchy || fusionTutorialGuideCharacterImage == null)
+            {
+                return;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.1f);
+            float scale = Mathf.Lerp(0.985f, 1.035f, pulse);
+            fusionTutorialGuideCharacterImage.rectTransform.localScale = new Vector3(scale, scale, 1f);
         }
 
         private FusionSlotView CreateFusionSlot(string name, Transform parent, string title, string spritePath, Color color, Vector2 anchoredPosition)
@@ -598,6 +720,11 @@ namespace WitchTower.Home
 
         private void SelectParent(string instanceId, bool asParentA)
         {
+            if (IsFusionTutorialGuideActive())
+            {
+                return;
+            }
+
             if (asParentA)
             {
                 parentAInstanceId = instanceId;
@@ -627,6 +754,11 @@ namespace WitchTower.Home
 
         private void SwapParents()
         {
+            if (IsFusionTutorialGuideActive())
+            {
+                return;
+            }
+
             (parentAInstanceId, parentBInstanceId) = (parentBInstanceId, parentAInstanceId);
             RefreshRoster();
             RefreshPreview();
@@ -713,7 +845,7 @@ namespace WitchTower.Home
 
         private void FuseSelectedParents()
         {
-            if (fusionInProgress)
+            if (fusionInProgress || IsFusionTutorialGuideActive())
             {
                 return;
             }
@@ -727,6 +859,7 @@ namespace WitchTower.Home
             MonsterFusionResult result = MonsterFusionService.Fuse(profile, parentAInstanceId, parentBInstanceId, MasterDataManager.Instance);
             if (!result.CanFuse)
             {
+                AudioManager.Instance?.PlaySe(AudioCue.Error);
                 RefreshPreview();
                 SetStatus(result.Message);
                 return;
@@ -736,12 +869,18 @@ namespace WitchTower.Home
             SaveManager.Instance?.SaveCurrentGame();
             parentAInstanceId = string.Empty;
             parentBInstanceId = string.Empty;
+            AudioManager.Instance?.PlaySe(AudioCue.FusionStart);
             StartBirthEffect();
             RefreshRoster();
             RefreshPreview();
             SetStatus(successMessage);
             FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
             StartFusionResultStage(result, parentA, parentB, parentDataA, parentDataB, successMessage);
+        }
+
+        private bool IsFusionTutorialGuideActive()
+        {
+            return fusionTutorialGuideRoot != null && fusionTutorialGuideRoot.activeInHierarchy;
         }
 
         private void StartFusionResultStage(
@@ -937,6 +1076,8 @@ namespace WitchTower.Home
             {
                 resultStageTitleLabel.text = GetFusionRevealTitle(tier);
             }
+
+            AudioManager.Instance?.PlaySe(AudioCue.FusionSuccess);
 
             if (resultStageSummaryLabel != null)
             {

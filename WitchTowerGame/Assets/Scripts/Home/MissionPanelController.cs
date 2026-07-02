@@ -26,6 +26,7 @@ namespace WitchTower.Home
             var claimedStones = DailyRewardService.ClaimAll(profile, DateTime.Now);
             if (claimedStones > 0)
             {
+                AudioManager.Instance?.PlaySe(AudioCue.DailyReward);
                 SaveManager.Instance.SaveCurrentGame();
             }
 
@@ -87,6 +88,7 @@ namespace WitchTower.Home
             var claimedGold = MissionService.ClaimMission(profile, missionId);
             if (claimedGold > 0)
             {
+                AudioManager.Instance?.PlaySe(AudioCue.MissionComplete);
                 SaveManager.Instance.SaveCurrentGame();
             }
 

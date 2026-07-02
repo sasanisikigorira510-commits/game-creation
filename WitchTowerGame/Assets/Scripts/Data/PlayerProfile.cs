@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WitchTower.Managers;
+using WitchTower.MasterData;
 using WitchTower.Save;
 
 namespace WitchTower.Data
@@ -23,12 +25,17 @@ namespace WitchTower.Data
         public int HpUpgradeLevel { get; set; }
         public bool HasAutoRepeatFloorUpgrade { get; set; }
         public bool IsAutoRepeatFloorUpgradeEnabled { get; set; }
+        public bool HasAutoSellEquipmentUpgrade { get; set; }
+        public bool IsAutoSellEquipmentUpgradeEnabled { get; set; }
+        public int AutoSellEquipmentQualityThreshold { get; set; }
+        public bool HasAutoReleaseMonsterUpgrade { get; set; }
+        public bool IsAutoReleaseMonsterUpgradeEnabled { get; set; }
+        public int AutoReleaseMonsterIndividualValueThreshold { get; set; }
         public string LastDailyRewardDate { get; set; }
         public string DailyQuestProgressDate { get; set; }
         public int DailyBattleWinCount { get; set; }
         public List<string> DailyClaimedQuestIds { get; }
         public string LastActiveAt { get; set; }
-        public int PendingIdleRewardGold { get; set; }
         public List<OwnedMaterialData> OwnedMaterials { get; }
         public List<OwnedEquipmentData> OwnedEquipments { get; }
         public List<OwnedEnhancementRelicData> OwnedEnhancementRelics { get; }
@@ -56,12 +63,17 @@ namespace WitchTower.Data
             HpUpgradeLevel = saveData.HpUpgradeLevel;
             HasAutoRepeatFloorUpgrade = saveData.HasAutoRepeatFloorUpgrade;
             IsAutoRepeatFloorUpgradeEnabled = HasAutoRepeatFloorUpgrade && saveData.AutoRepeatFloorUpgradeEnabledState != 2;
+            HasAutoSellEquipmentUpgrade = saveData.HasAutoSellEquipmentUpgrade;
+            IsAutoSellEquipmentUpgradeEnabled = HasAutoSellEquipmentUpgrade && saveData.AutoSellEquipmentUpgradeEnabledState != 2;
+            AutoSellEquipmentQualityThreshold = ResolveSavedEquipmentQualityThreshold(saveData.AutoSellEquipmentQualityThreshold);
+            HasAutoReleaseMonsterUpgrade = saveData.HasAutoReleaseMonsterUpgrade;
+            IsAutoReleaseMonsterUpgradeEnabled = HasAutoReleaseMonsterUpgrade && saveData.AutoReleaseMonsterUpgradeEnabledState != 2;
+            AutoReleaseMonsterIndividualValueThreshold = ResolveSavedIndividualValueThreshold(saveData.AutoReleaseMonsterIndividualValueThreshold);
             LastDailyRewardDate = saveData.LastDailyRewardDate ?? string.Empty;
             DailyQuestProgressDate = saveData.DailyQuestProgressDate ?? string.Empty;
             DailyBattleWinCount = Math.Max(0, saveData.DailyBattleWinCount);
             DailyClaimedQuestIds = saveData.DailyClaimedQuestIds ?? new List<string>();
             LastActiveAt = saveData.LastActiveAt ?? string.Empty;
-            PendingIdleRewardGold = saveData.PendingIdleRewardGold;
             OwnedMaterials = saveData.OwnedMaterials ?? new List<OwnedMaterialData>();
             OwnedEquipments = saveData.OwnedEquipments ?? new List<OwnedEquipmentData>();
             OwnedEnhancementRelics = saveData.OwnedEnhancementRelics ?? new List<OwnedEnhancementRelicData>();
@@ -260,6 +272,38 @@ namespace WitchTower.Data
             return OwnedEquipments.Count < EquipmentStorageLimit;
         }
 
+        public bool CanAutoSellEquipmentDrops()
+        {
+            return HasAutoSellEquipmentUpgrade && IsAutoSellEquipmentUpgradeEnabled;
+        }
+
+        public bool ShouldAutoSellEquipment(int qualityRank)
+        {
+            return CanAutoSellEquipmentDrops() &&
+                ClampEquipmentQualityThreshold(qualityRank) < AutoSellEquipmentQualityThreshold;
+        }
+
+        public bool CanAutoReleaseNewMonsters()
+        {
+            return HasAutoReleaseMonsterUpgrade && IsAutoReleaseMonsterUpgradeEnabled;
+        }
+
+        public bool ShouldAutoReleaseMonster(OwnedMonsterData monster)
+        {
+            return CanAutoReleaseNewMonsters() &&
+                MonsterIndividualValueService.GetAverage(monster) < AutoReleaseMonsterIndividualValueThreshold;
+        }
+
+        public void SetAutoSellEquipmentQualityThreshold(int qualityRank)
+        {
+            AutoSellEquipmentQualityThreshold = ClampEquipmentQualityThreshold(qualityRank);
+        }
+
+        public void SetAutoReleaseMonsterIndividualValueThreshold(int threshold)
+        {
+            AutoReleaseMonsterIndividualValueThreshold = ClampIndividualValueThreshold(threshold);
+        }
+
         public OwnedMonsterData GetOwnedMonster(string instanceId)
         {
             return OwnedMonsters.FirstOrDefault(x => x != null && x.InstanceId == instanceId);
@@ -428,6 +472,49 @@ namespace WitchTower.Data
             dexEntry.OwnedCount = Math.Max(1, ownedCount);
         }
 
+        public bool TryReleaseMonster(string monsterInstanceId, out string message)
+        {
+            return TryReleaseMonster(monsterInstanceId, false, out message);
+        }
+
+        public bool TryReleaseMonster(string monsterInstanceId, bool force, out string message)
+        {
+            OwnedMonsterData monster = GetOwnedMonster(monsterInstanceId);
+            if (monster == null)
+            {
+                message = "対象モンスターが見つかりません。";
+                return false;
+            }
+
+            if (!force && monster.IsFavorite)
+            {
+                message = "お気に入り登録中のモンスターは逃がせません。";
+                return false;
+            }
+
+            if (!force && monster.IsLocked)
+            {
+                message = "ロック中のモンスターは逃がせません。";
+                return false;
+            }
+
+            if (!force && PartyMonsterInstanceIds.Contains(monster.InstanceId))
+            {
+                message = "パーティ編成中のモンスターは逃がせません。";
+                return false;
+            }
+
+            string displayName = ResolveMonsterDisplayName(monster.MonsterId);
+            ClearReleasedMonsterEquipment(monster);
+            OwnedMonsters.Remove(monster);
+            ClearReleasedMonsterFromParty(monster.InstanceId);
+            RefreshMonsterDexOwnedCount(monster.MonsterId);
+            SyncLegacyRepresentativeEquipmentIds();
+            SyncEquippedFlags();
+            message = $"{displayName} を逃がしました。";
+            return true;
+        }
+
         public void SetPartyMonsterIds(IEnumerable<string> monsterInstanceIds)
         {
             PartyMonsterInstanceIds.Clear();
@@ -460,28 +547,6 @@ namespace WitchTower.Data
             return MissionProgressList.FirstOrDefault(x => x.MissionId == missionId);
         }
 
-        public void AddPendingIdleReward(int gold)
-        {
-            if (gold <= 0)
-            {
-                return;
-            }
-
-            PendingIdleRewardGold += gold;
-        }
-
-        public int ClaimPendingIdleReward()
-        {
-            int reward = PendingIdleRewardGold;
-            if (reward > 0)
-            {
-                AddGold(reward);
-                PendingIdleRewardGold = 0;
-            }
-
-            return reward;
-        }
-
         public PlayerSaveData ToSaveData(int currentFloor)
         {
             SyncLegacyRepresentativeEquipmentIds();
@@ -505,12 +570,25 @@ namespace WitchTower.Data
                     : IsAutoRepeatFloorUpgradeEnabled
                         ? 1
                         : 2,
+                HasAutoSellEquipmentUpgrade = HasAutoSellEquipmentUpgrade,
+                AutoSellEquipmentUpgradeEnabledState = !HasAutoSellEquipmentUpgrade
+                    ? 0
+                    : IsAutoSellEquipmentUpgradeEnabled
+                        ? 1
+                        : 2,
+                AutoSellEquipmentQualityThreshold = ClampEquipmentQualityThreshold(AutoSellEquipmentQualityThreshold),
+                HasAutoReleaseMonsterUpgrade = HasAutoReleaseMonsterUpgrade,
+                AutoReleaseMonsterUpgradeEnabledState = !HasAutoReleaseMonsterUpgrade
+                    ? 0
+                    : IsAutoReleaseMonsterUpgradeEnabled
+                        ? 1
+                        : 2,
+                AutoReleaseMonsterIndividualValueThreshold = ClampIndividualValueThreshold(AutoReleaseMonsterIndividualValueThreshold),
                 LastDailyRewardDate = LastDailyRewardDate,
                 DailyQuestProgressDate = DailyQuestProgressDate,
                 DailyBattleWinCount = DailyBattleWinCount,
                 DailyClaimedQuestIds = new List<string>(DailyClaimedQuestIds),
                 LastActiveAt = LastActiveAt,
-                PendingIdleRewardGold = PendingIdleRewardGold,
                 MissionProgressList = new List<MissionProgressData>(MissionProgressList),
                 EquippedWeaponId = legacyEquippedWeaponId,
                 EquippedArmorId = legacyEquippedArmorId,
@@ -540,6 +618,94 @@ namespace WitchTower.Data
                 Level += 1;
                 requiredExp = GetRequiredExpForNextLevel();
             }
+        }
+
+        private static int ClampEquipmentQualityThreshold(int qualityRank)
+        {
+            return Math.Min(5, Math.Max(1, qualityRank));
+        }
+
+        private static int ResolveSavedEquipmentQualityThreshold(int qualityRank)
+        {
+            return ClampEquipmentQualityThreshold(qualityRank > 0 ? qualityRank : 3);
+        }
+
+        private static int ClampIndividualValueThreshold(int threshold)
+        {
+            return Math.Min(MonsterIndividualValueService.MaxValue, Math.Max(1, threshold));
+        }
+
+        private static int ResolveSavedIndividualValueThreshold(int threshold)
+        {
+            return ClampIndividualValueThreshold(threshold > 0 ? threshold : 50);
+        }
+
+        private void ClearReleasedMonsterEquipment(OwnedMonsterData monster)
+        {
+            if (monster == null)
+            {
+                return;
+            }
+
+            ClearEquipmentOwner(monster.EquippedWeaponInstanceId);
+            ClearEquipmentOwner(monster.EquippedArmorInstanceId);
+            ClearEquipmentOwner(monster.EquippedAccessoryInstanceId);
+            monster.EquippedWeaponInstanceId = string.Empty;
+            monster.EquippedArmorInstanceId = string.Empty;
+            monster.EquippedAccessoryInstanceId = string.Empty;
+        }
+
+        private void ClearEquipmentOwner(string equipmentInstanceId)
+        {
+            OwnedEquipmentData equipment = GetOwnedEquipmentByInstanceId(equipmentInstanceId);
+            if (equipment == null)
+            {
+                return;
+            }
+
+            equipment.EquippedMonsterInstanceId = string.Empty;
+            equipment.IsEquipped = false;
+        }
+
+        private void ClearReleasedMonsterFromParty(string monsterInstanceId)
+        {
+            if (string.IsNullOrEmpty(monsterInstanceId))
+            {
+                return;
+            }
+
+            for (int i = 0; i < PartyMonsterInstanceIds.Count; i += 1)
+            {
+                if (string.Equals(PartyMonsterInstanceIds[i], monsterInstanceId, StringComparison.Ordinal))
+                {
+                    PartyMonsterInstanceIds[i] = string.Empty;
+                }
+            }
+        }
+
+        private void RefreshMonsterDexOwnedCount(string monsterId)
+        {
+            if (string.IsNullOrEmpty(monsterId))
+            {
+                return;
+            }
+
+            MonsterDexEntryData dexEntry = MonsterDexEntries.FirstOrDefault(x => x != null && x.MonsterId == monsterId);
+            if (dexEntry == null)
+            {
+                return;
+            }
+
+            dexEntry.IsUnlocked = true;
+            dexEntry.OwnedCount = Math.Max(0, GetOwnedMonsterCount(monsterId));
+        }
+
+        private static string ResolveMonsterDisplayName(string monsterId)
+        {
+            MonsterDataSO monsterData = MasterDataManager.Instance?.GetMonsterData(monsterId);
+            return monsterData != null && !string.IsNullOrEmpty(monsterData.monsterName)
+                ? monsterData.monsterName
+                : monsterId ?? string.Empty;
         }
 
         private void ResetDailyQuestProgressIfNeeded(string currentDate)

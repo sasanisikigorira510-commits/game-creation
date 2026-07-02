@@ -18,7 +18,9 @@ namespace WitchTower.Home
             All,
             Weapon,
             Armor,
-            Accessory
+            Accessory,
+            Physical,
+            Magic
         }
 
         private enum EquipmentListSortMode
@@ -110,11 +112,15 @@ namespace WitchTower.Home
         private Button weaponEquipmentFilterButton;
         private Button armorEquipmentFilterButton;
         private Button accessoryEquipmentFilterButton;
+        private Button physicalEquipmentFilterButton;
+        private Button magicEquipmentFilterButton;
         private Button equipmentSortButton;
         private TMP_Text allEquipmentFilterLabel;
         private TMP_Text weaponEquipmentFilterLabel;
         private TMP_Text armorEquipmentFilterLabel;
         private TMP_Text accessoryEquipmentFilterLabel;
+        private TMP_Text physicalEquipmentFilterLabel;
+        private TMP_Text magicEquipmentFilterLabel;
         private TMP_Text equipmentSortLabel;
         private TMP_Text equipmentListSummaryText;
         private EquipmentListFilter currentEquipmentListFilter = EquipmentListFilter.All;
@@ -280,23 +286,33 @@ namespace WitchTower.Home
 
             allEquipmentFilterButton = CreateButton("AllFilterButton", equipmentListControlsRoot.transform, "全て",
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(20f, 14f), new Vector2(120f, 42f), UnlockedButtonColor,
+                new Vector2(20f, 14f), new Vector2(82f, 42f), UnlockedButtonColor,
                 () => SetEquipmentListFilter(EquipmentListFilter.All), out allEquipmentFilterLabel);
 
             weaponEquipmentFilterButton = CreateButton("WeaponFilterButton", equipmentListControlsRoot.transform, "武器",
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(148f, 14f), new Vector2(120f, 42f), UnlockedButtonColor,
+                new Vector2(110f, 14f), new Vector2(82f, 42f), UnlockedButtonColor,
                 () => SetEquipmentListFilter(EquipmentListFilter.Weapon), out weaponEquipmentFilterLabel);
 
             armorEquipmentFilterButton = CreateButton("ArmorFilterButton", equipmentListControlsRoot.transform, "防具",
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(276f, 14f), new Vector2(120f, 42f), UnlockedButtonColor,
+                new Vector2(200f, 14f), new Vector2(82f, 42f), UnlockedButtonColor,
                 () => SetEquipmentListFilter(EquipmentListFilter.Armor), out armorEquipmentFilterLabel);
 
             accessoryEquipmentFilterButton = CreateButton("AccessoryFilterButton", equipmentListControlsRoot.transform, "装飾品",
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(404f, 14f), new Vector2(138f, 42f), UnlockedButtonColor,
+                new Vector2(290f, 14f), new Vector2(104f, 42f), UnlockedButtonColor,
                 () => SetEquipmentListFilter(EquipmentListFilter.Accessory), out accessoryEquipmentFilterLabel);
+
+            physicalEquipmentFilterButton = CreateButton("PhysicalFilterButton", equipmentListControlsRoot.transform, "物理",
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(402f, 14f), new Vector2(86f, 42f), UnlockedButtonColor,
+                () => SetEquipmentListFilter(EquipmentListFilter.Physical), out physicalEquipmentFilterLabel);
+
+            magicEquipmentFilterButton = CreateButton("MagicFilterButton", equipmentListControlsRoot.transform, "魔法",
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(496f, 14f), new Vector2(86f, 42f), UnlockedButtonColor,
+                () => SetEquipmentListFilter(EquipmentListFilter.Magic), out magicEquipmentFilterLabel);
 
             equipmentSortButton = CreateButton("SortButton", equipmentListControlsRoot.transform, string.Empty,
                 new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
@@ -372,6 +388,8 @@ namespace WitchTower.Home
             SetFilterButtonState(weaponEquipmentFilterButton, weaponEquipmentFilterLabel, currentEquipmentListFilter == EquipmentListFilter.Weapon);
             SetFilterButtonState(armorEquipmentFilterButton, armorEquipmentFilterLabel, currentEquipmentListFilter == EquipmentListFilter.Armor);
             SetFilterButtonState(accessoryEquipmentFilterButton, accessoryEquipmentFilterLabel, currentEquipmentListFilter == EquipmentListFilter.Accessory);
+            SetFilterButtonState(physicalEquipmentFilterButton, physicalEquipmentFilterLabel, currentEquipmentListFilter == EquipmentListFilter.Physical);
+            SetFilterButtonState(magicEquipmentFilterButton, magicEquipmentFilterLabel, currentEquipmentListFilter == EquipmentListFilter.Magic);
 
             if (equipmentSortLabel != null)
             {
@@ -444,6 +462,10 @@ namespace WitchTower.Home
                     return equipmentData.slotType == EquipmentSlotType.Armor;
                 case EquipmentListFilter.Accessory:
                     return equipmentData.slotType == EquipmentSlotType.Accessory;
+                case EquipmentListFilter.Physical:
+                    return EquipmentEnhancementCatalog.IsPhysicalFocusedEquipment(equipmentData);
+                case EquipmentListFilter.Magic:
+                    return EquipmentEnhancementCatalog.IsMagicFocusedEquipment(equipmentData);
                 default:
                     return true;
             }
@@ -565,8 +587,16 @@ namespace WitchTower.Home
             OwnedEquipmentData ownedEquipment = profile != null && binding != null
                 ? profile.GetFirstOwnedEquipmentByEquipmentId(binding.EquipmentId)
                 : null;
-            float qualityMultiplier = EquipmentEnhancementCatalog.ResolveQualityMultiplier(equipmentData, ownedEquipment);
-            float enhancementMultiplier = ownedEquipment != null ? 1f + Mathf.Max(0f, ownedEquipment.EnhancementBonusRate) : 1f;
+            if (ownedEquipment != null)
+            {
+                EquipmentResolvedBonus bonus = EquipmentEnhancementCatalog.ResolveEquipmentBonus(equipmentData, ownedEquipment);
+                return ((bonus.AttackPercent + bonus.WisdomPercent) * 120f)
+                    + ((bonus.DefensePercent + bonus.MagicDefensePercent) * 105f)
+                    + (bonus.HpPercent * 55f)
+                    + (bonus.CritRate * 130f)
+                    + (bonus.AttackSpeed * 45f);
+            }
+
             float flatScore =
                 equipmentData.baseAttack * 1.20f +
                 equipmentData.baseWisdom * 1.20f +
@@ -576,7 +606,7 @@ namespace WitchTower.Home
             float specialScore =
                 equipmentData.bonusCritRate * 120f +
                 equipmentData.bonusAttackSpeed * 45f;
-            return (flatScore * enhancementMultiplier + specialScore) * qualityMultiplier;
+            return flatScore + specialScore;
         }
 
         private static EquipmentDataSO GetEquipmentData(EquipmentOptionBinding binding)
@@ -602,6 +632,10 @@ namespace WitchTower.Home
                     return "防具";
                 case EquipmentListFilter.Accessory:
                     return "装飾品";
+                case EquipmentListFilter.Physical:
+                    return "物理";
+                case EquipmentListFilter.Magic:
+                    return "魔法";
                 default:
                     return "全て";
             }
@@ -916,7 +950,7 @@ namespace WitchTower.Home
             int ownedCount = profile.GetEnhancementRelicAmount(relic.RelicId);
             string danger = relic.DestroysOnFailure ? " / 失敗時消滅" : string.Empty;
             CreateText("RelicMeta", card.transform,
-                $"成功率 {(relic.SuccessRate * 100f):0.#}% / {EquipmentEnhancementCatalog.BuildRelicEffectSummary(equipmentData, relic)} / 所持 x{ownedCount}{danger}",
+                $"成功率 {(relic.SuccessRate * 100f):0.#}% / {EquipmentEnhancementCatalog.BuildRelicEffectSummary(equipmentData, equipment, relic)} / 所持 x{ownedCount}{danger}",
                 15f, FontStyles.Bold,
                 new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f),
                 new Vector2(124f, -52f), new Vector2(-270f, 24f), TextAlignmentOptions.Left, new Color(0.95f, 0.78f, 0.48f, 1f));
@@ -947,6 +981,7 @@ namespace WitchTower.Home
 
             EquipmentEnhancementResult result = profile.TryEnhanceEquipment(selectedEnhancementEquipmentInstanceId, relicId);
             enhancementLastMessage = result.Message;
+            PlayEnhancementResultSe(result.ResultType);
             StartEnhancementEffect(result.ResultType);
 
             if (result.ResultType == EquipmentEnhancementResultType.Destroyed)
@@ -961,6 +996,25 @@ namespace WitchTower.Home
 
             Refresh();
             Object.FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
+        }
+
+        private static void PlayEnhancementResultSe(EquipmentEnhancementResultType resultType)
+        {
+            switch (resultType)
+            {
+                case EquipmentEnhancementResultType.Success:
+                    AudioManager.Instance?.PlaySe(AudioCue.UpgradeSuccess);
+                    break;
+                case EquipmentEnhancementResultType.Failed:
+                    AudioManager.Instance?.PlaySe(AudioCue.UpgradeFail);
+                    break;
+                case EquipmentEnhancementResultType.Destroyed:
+                    AudioManager.Instance?.PlaySe(AudioCue.UpgradeBreak);
+                    break;
+                default:
+                    AudioManager.Instance?.PlaySe(AudioCue.Error);
+                    break;
+            }
         }
 
         private void StartEnhancementEffect(EquipmentEnhancementResultType resultType)

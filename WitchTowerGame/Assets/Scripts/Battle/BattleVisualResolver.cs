@@ -116,11 +116,6 @@ namespace WitchTower.Battle
                 return result;
             }
 
-            if (PrototypePartyBootstrapService.EnsureParty(profile, maxCount))
-            {
-                SaveManager.Instance?.SaveCurrentGame();
-            }
-
             var seenInstanceIds = new HashSet<string>();
 
             if (profile.PartyMonsterInstanceIds != null)

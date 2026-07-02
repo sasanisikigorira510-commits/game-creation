@@ -1,0 +1,122 @@
+{
+    "PlayerLevel": 1,
+    "PlayerExp": 0,
+    "Gold": 100,
+    "HighestFloor": 1,
+    "CurrentFloor": 1,
+    "AttackUpgradeLevel": 0,
+    "DefenseUpgradeLevel": 0,
+    "HpUpgradeLevel": 0,
+    "LastDailyRewardDate": "",
+    "LastActiveAt": "",
+    "PendingIdleRewardGold": 0,
+    "MissionProgressList": [
+        {
+            "MissionId": "mission_clear_1",
+            "Progress": 0,
+            "IsClaimed": false
+        },
+        {
+            "MissionId": "mission_reach_floor_3",
+            "Progress": 0,
+            "IsClaimed": false
+        }
+    ],
+    "EquippedWeaponId": "equip_bronze_blade",
+    "EquippedArmorId": "equip_guard_cloth",
+    "EquippedAccessoryId": "equip_ashen_ring",
+    "OwnedMaterials": [],
+    "OwnedEquipments": [
+        {
+            "InstanceId": "equipinst_bronze_blade_001",
+            "EquipmentId": "equip_bronze_blade",
+            "UpgradeLevel": 0,
+            "EnhancementBonusRate": 0.0,
+            "RemainingEnhanceAttempts": 5,
+            "IsEquipped": false,
+            "IsLocked": false,
+            "EquippedMonsterInstanceId": "",
+            "HasRolledStats": true,
+            "RolledAttack": 3,
+            "RolledWisdom": 0,
+            "RolledDefense": 0,
+            "RolledMagicDefense": 0,
+            "RolledHp": 0,
+            "RolledCritRate": 0.01131466031074524,
+            "RolledAttackSpeed": 0.017987748607993127,
+            "EnhancementAttackFlat": 0,
+            "EnhancementWisdomFlat": 0,
+            "EnhancementDefenseFlat": 0,
+            "EnhancementMagicDefenseFlat": 0,
+            "EnhancementHpFlat": 0,
+            "EnhancementAttackSpeedFlat": 0.0
+        },
+        {
+            "InstanceId": "equipinst_guard_cloth_001",
+            "EquipmentId": "equip_guard_cloth",
+            "UpgradeLevel": 0,
+            "EnhancementBonusRate": 0.0,
+            "RemainingEnhanceAttempts": 5,
+            "IsEquipped": false,
+            "IsLocked": false,
+            "EquippedMonsterInstanceId": "",
+            "HasRolledStats": true,
+            "RolledAttack": 0,
+            "RolledWisdom": 0,
+            "RolledDefense": 2,
+            "RolledMagicDefense": 0,
+            "RolledHp": 10,
+            "RolledCritRate": 0.0,
+            "RolledAttackSpeed": 0.0,
+            "EnhancementAttackFlat": 0,
+            "EnhancementWisdomFlat": 0,
+            "EnhancementDefenseFlat": 0,
+            "EnhancementMagicDefenseFlat": 0,
+            "EnhancementHpFlat": 0,
+            "EnhancementAttackSpeedFlat": 0.0
+        },
+        {
+            "InstanceId": "equipinst_ashen_ring_001",
+            "EquipmentId": "equip_ashen_ring",
+            "UpgradeLevel": 0,
+            "EnhancementBonusRate": 0.0,
+            "RemainingEnhanceAttempts": 5,
+            "IsEquipped": false,
+            "IsLocked": false,
+            "EquippedMonsterInstanceId": "",
+            "HasRolledStats": true,
+            "RolledAttack": 1,
+            "RolledWisdom": 0,
+            "RolledDefense": 0,
+            "RolledMagicDefense": 0,
+            "RolledHp": 0,
+            "RolledCritRate": 0.02086525410413742,
+            "RolledAttackSpeed": 0.03436848148703575,
+            "EnhancementAttackFlat": 0,
+            "EnhancementWisdomFlat": 0,
+            "EnhancementDefenseFlat": 0,
+            "EnhancementMagicDefenseFlat": 0,
+            "EnhancementHpFlat": 0,
+            "EnhancementAttackSpeedFlat": 0.0
+        }
+    ],
+    "OwnedEnhancementRelics": [
+        {
+            "RelicId": "relic_safe_ember",
+            "Amount": 24
+        },
+        {
+            "RelicId": "relic_risky_ember",
+            "Amount": 12
+        },
+        {
+            "RelicId": "relic_volatile_ember",
+            "Amount": 6
+        }
+    ],
+    "MonsterStorageLimit": 100,
+    "OwnedMonsters": [],
+    "MonsterDexEntries": [],
+    "PartyMonsterInstanceIds": [],
+    "SkillLevels": []
+}

@@ -40,7 +40,6 @@ namespace WitchTower.Core
 
             var gameManager = GameManager.Instance;
             gameManager.InitializeFromSave(saveManager.CurrentSaveData);
-            IdleRewardService.EvaluatePendingReward(gameManager.PlayerProfile, System.DateTime.Now);
             SaveManager.Instance.SaveCurrentGame();
         }
 

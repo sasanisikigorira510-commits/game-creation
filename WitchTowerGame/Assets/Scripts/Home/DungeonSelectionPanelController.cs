@@ -17,6 +17,11 @@ namespace WitchTower.Home
         private const string DungeonCardFramePath = "UI/DungeonSelect/DungeonCardFrame_Elite";
         private const string FloorNodeUnlockedPath = "UI/DungeonSelect/FloorNodeUnlocked";
         private const string FloorNodeSelectedPath = "UI/DungeonSelect/FloorNodeSelected";
+        private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
+        private const string TutorialHighlightFramePath = "UI/Tutorial/TutorialSummonHighlightFrameImage2";
+        private const string DungeonTutorialTitle = "ルシェの探索案内";
+        private const string DungeonTutorialBody = "探索先ごとに出現する眷属と報酬の傾向が変わります。最初は見習いの五門洞 第1階層から契約片を回収しましょう。";
+        private const string DungeonTutorialFooter = "次の操作: 枠で囲まれた「この階層へ挑む」をタップ";
 
         private readonly List<Image> dungeonCardFrames = new List<Image>();
         private readonly List<string> dungeonCardIds = new List<string>();
@@ -31,6 +36,13 @@ namespace WitchTower.Home
         private Text dungeonDescriptionText;
         private Text floorDescriptionText;
         private Text enemyPreviewText;
+        private Button startBattleButton;
+        private GameObject dungeonTutorialGuideRoot;
+        private Text dungeonTutorialGuideTitleText;
+        private Text dungeonTutorialGuideBodyText;
+        private Text dungeonTutorialGuideFooterText;
+        private Image dungeonTutorialGuideCharacterImage;
+        private Image dungeonTutorialStartHighlight;
         private Action closeCallback;
         private string battleSceneName = "BattleScene";
         private string selectedDungeonId;
@@ -38,6 +50,7 @@ namespace WitchTower.Home
 
         private void Update()
         {
+            AnimateDungeonTutorialGuide();
             if (!Application.isPlaying || panelRoot == null || !panelRoot.activeInHierarchy || !Input.GetMouseButtonDown(0))
             {
                 return;
@@ -62,6 +75,7 @@ namespace WitchTower.Home
             SelectDungeon(GameManager.Instance != null ? GameManager.Instance.CurrentDungeonId : BattleDungeonCatalog.Dungeons[0].DungeonId);
             panelRoot.SetActive(true);
             panelRoot.transform.SetAsLastSibling();
+            RefreshDungeonTutorialGuide(GetDungeonTutorialEvent());
         }
 
         private void EnsurePanel()
@@ -155,11 +169,122 @@ namespace WitchTower.Home
             ConfigureSelectionInfoText(floorDescriptionText, 20, 13);
             ConfigureSelectionInfoText(enemyPreviewText, 22, 14);
 
-            CreateTextButton("StartBattleButton", panel.transform, "この階層へ挑む",
+            startBattleButton = CreateTextButton("StartBattleButton", panel.transform, "この階層へ挑む",
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 66f), new Vector2(560f, 92f), new Color(0.48f, 0.18f, 0.08f, 0.98f), StartSelectedBattle, 27);
+            BuildDungeonTutorialGuide(panel.transform);
 
             panelRoot.SetActive(false);
+        }
+
+        private void BuildDungeonTutorialGuide(Transform panelTransform)
+        {
+            if (panelTransform == null || startBattleButton == null || dungeonTutorialGuideRoot != null)
+            {
+                return;
+            }
+
+            dungeonTutorialGuideRoot = CreatePanel(
+                "DungeonTutorialGuideRoot",
+                panelTransform,
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 236f),
+                new Vector2(900f, 222f),
+                new Color(0.025f, 0.035f, 0.055f, 0.98f));
+
+            Outline panelOutline = dungeonTutorialGuideRoot.AddComponent<Outline>();
+            panelOutline.effectColor = new Color(1f, 0.78f, 0.24f, 0.94f);
+            panelOutline.effectDistance = new Vector2(4f, -4f);
+            panelOutline.useGraphicAlpha = false;
+
+            dungeonTutorialGuideCharacterImage = CreateImage(
+                "DungeonTutorialGuideLuse",
+                dungeonTutorialGuideRoot.transform,
+                LoadSprite(TutorialGuideSpritePath),
+                new Vector2(0f, 0.5f),
+                new Vector2(0f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(94f, -4f),
+                new Vector2(170f, 170f),
+                true);
+            dungeonTutorialGuideCharacterImage.raycastTarget = false;
+
+            Text badgeText = CreateText(
+                "DungeonTutorialGuideBadge",
+                dungeonTutorialGuideRoot.transform,
+                "TUTORIAL",
+                16,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(1f, 0.78f, 0.38f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(290f, -22f),
+                new Vector2(140f, 28f));
+
+            dungeonTutorialGuideTitleText = CreateText(
+                "DungeonTutorialGuideTitle",
+                dungeonTutorialGuideRoot.transform,
+                "ルシェの探索案内",
+                28,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(1f, 0.96f, 0.78f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(290f, -58f),
+                new Vector2(570f, 42f));
+
+            dungeonTutorialGuideBodyText = CreateText(
+                "DungeonTutorialGuideBody",
+                dungeonTutorialGuideRoot.transform,
+                string.Empty,
+                19,
+                FontStyle.Bold,
+                TextAnchor.UpperLeft,
+                new Color(0.94f, 0.89f, 0.80f, 0.96f),
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(0f, 1f),
+                new Vector2(290f, -108f),
+                new Vector2(570f, 72f));
+            dungeonTutorialGuideBodyText.resizeTextForBestFit = true;
+            dungeonTutorialGuideBodyText.resizeTextMinSize = 14;
+            dungeonTutorialGuideBodyText.resizeTextMaxSize = 19;
+
+            dungeonTutorialGuideFooterText = CreateText(
+                "DungeonTutorialGuideFooter",
+                dungeonTutorialGuideRoot.transform,
+                "次の操作: 枠で囲まれた「この階層へ挑む」をタップ",
+                17,
+                FontStyle.Bold,
+                TextAnchor.MiddleLeft,
+                new Color(0.78f, 0.92f, 1f, 1f),
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(290f, 24f),
+                new Vector2(570f, 32f));
+
+            dungeonTutorialStartHighlight = CreateImage(
+                "DungeonTutorialStartHighlight",
+                startBattleButton.transform,
+                LoadSprite(TutorialHighlightFramePath),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(622f, 134f),
+                false);
+            dungeonTutorialStartHighlight.raycastTarget = false;
+            dungeonTutorialStartHighlight.transform.SetAsLastSibling();
+
+            dungeonTutorialGuideRoot.SetActive(false);
+            dungeonTutorialStartHighlight.gameObject.SetActive(false);
         }
 
         private void BuildDungeonCards()
@@ -317,10 +442,10 @@ namespace WitchTower.Home
 
             if (dungeonDescriptionText != null)
             {
-                StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(GameManager.Instance?.PlayerProfile, "DungeonSelectionPanel");
-                dungeonDescriptionText.text = tutorialEvent != null && tutorialEvent.IsValid
-                    ? $"{tutorialEvent.Title}\n{tutorialEvent.Body}"
-                    : dungeon.Description;
+                StoryTutorialEvent tutorialEvent = GetDungeonTutorialEvent();
+                bool showTutorialGuide = ShouldShowDungeonTutorialGuide(tutorialEvent);
+                dungeonDescriptionText.text = showTutorialGuide ? string.Empty : dungeon.Description;
+                RefreshDungeonTutorialGuide(tutorialEvent);
             }
 
             for (int i = 0; i < floorNodeImages.Count; i += 1)
@@ -333,14 +458,105 @@ namespace WitchTower.Home
             if (floorDescriptionText != null)
             {
                 BattleDungeonFloorDefinition floor = GetSelectedFloorDefinition(dungeon);
-                floorDescriptionText.text = floor != null
-                    ? $"{floor.FloorName}  仲間化率 {Mathf.RoundToInt(floor.RecruitChance * 100f)}%"
-                    : string.Empty;
+                floorDescriptionText.text = floor != null ? floor.FloorName : string.Empty;
             }
 
             if (enemyPreviewText != null)
             {
                 enemyPreviewText.text = BuildEnemyPreviewText(GetSelectedFloorDefinition(dungeon));
+            }
+        }
+
+        private void RefreshDungeonTutorialGuide(StoryTutorialEvent tutorialEvent)
+        {
+            bool shouldShow = ShouldShowDungeonTutorialGuide(tutorialEvent);
+
+            if (dungeonTutorialGuideRoot != null)
+            {
+                dungeonTutorialGuideRoot.SetActive(shouldShow);
+                if (shouldShow)
+                {
+                    dungeonTutorialGuideRoot.transform.SetAsLastSibling();
+                }
+            }
+
+            if (dungeonTutorialGuideTitleText != null && shouldShow)
+            {
+                dungeonTutorialGuideTitleText.text = DungeonTutorialTitle;
+            }
+
+            if (dungeonTutorialGuideBodyText != null && shouldShow)
+            {
+                dungeonTutorialGuideBodyText.text = !string.IsNullOrEmpty(tutorialEvent?.Body)
+                    ? tutorialEvent.Body
+                    : DungeonTutorialBody;
+            }
+
+            if (dungeonTutorialGuideFooterText != null && shouldShow)
+            {
+                dungeonTutorialGuideFooterText.text = DungeonTutorialFooter;
+            }
+
+            if (dungeonTutorialStartHighlight != null)
+            {
+                dungeonTutorialStartHighlight.gameObject.SetActive(shouldShow);
+                if (shouldShow)
+                {
+                    dungeonTutorialStartHighlight.transform.SetAsLastSibling();
+                }
+            }
+
+            if (shouldShow && startBattleButton != null)
+            {
+                startBattleButton.transform.SetAsLastSibling();
+            }
+        }
+
+        private static StoryTutorialEvent GetDungeonTutorialEvent()
+        {
+            return StoryTutorialService.GetNextEvent(GameManager.Instance?.PlayerProfile, "DungeonSelectionPanel");
+        }
+
+        private static bool ShouldShowDungeonTutorialGuide(StoryTutorialEvent tutorialEvent)
+        {
+            PlayerProfile profile = GameManager.Instance?.PlayerProfile;
+            if (StoryTutorialService.HasFinishedHomeGuide(profile))
+            {
+                return false;
+            }
+
+            if (tutorialEvent != null &&
+                tutorialEvent.IsValid &&
+                tutorialEvent.StepId == StoryTutorialService.StepFirstBattle &&
+                string.Equals(tutorialEvent.TargetKey, "dungeon.start", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            return profile != null &&
+                !profile.HasCompletedTutorial &&
+                string.Equals(profile.TutorialStepId, StoryTutorialService.StepFirstBattle, StringComparison.Ordinal);
+        }
+
+        private void AnimateDungeonTutorialGuide()
+        {
+            if (dungeonTutorialGuideRoot == null || !dungeonTutorialGuideRoot.activeInHierarchy)
+            {
+                return;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.1f);
+            if (dungeonTutorialGuideCharacterImage != null)
+            {
+                float characterScale = Mathf.Lerp(0.985f, 1.035f, pulse);
+                dungeonTutorialGuideCharacterImage.rectTransform.localScale = new Vector3(characterScale, characterScale, 1f);
+            }
+
+            if (dungeonTutorialStartHighlight != null && dungeonTutorialStartHighlight.gameObject.activeSelf)
+            {
+                float frameScale = Mathf.Lerp(0.99f, 1.035f, pulse);
+                dungeonTutorialStartHighlight.rectTransform.localScale = new Vector3(frameScale, frameScale, 1f);
+                dungeonTutorialStartHighlight.color = new Color(1f, 1f, 1f, Mathf.Lerp(0.82f, 1f, pulse));
             }
         }
 
@@ -489,6 +705,31 @@ namespace WitchTower.Home
         {
             GameObject obj = new GameObject(objectName, typeof(RectTransform));
             obj.transform.SetParent(parent, false);
+            return obj;
+        }
+
+        private static GameObject CreatePanel(
+            string objectName,
+            Transform parent,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 pivot,
+            Vector2 anchoredPosition,
+            Vector2 sizeDelta,
+            Color color)
+        {
+            GameObject obj = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            obj.transform.SetParent(parent, false);
+            RectTransform rect = obj.GetComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = pivot;
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = sizeDelta;
+
+            Image image = obj.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
             return obj;
         }
 

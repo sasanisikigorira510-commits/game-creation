@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WitchTower.Managers;
+using WitchTower.MasterData;
+using WitchTower.Save;
 
 namespace WitchTower.Data
 {
@@ -37,6 +40,7 @@ namespace WitchTower.Data
         public const string StepWakeup = "T00";
         public const string StepOpenGacha = "T01";
         public const string StepFirstSummon = "T02";
+        public const string StepFirstExplorationIntro = "T02A";
         public const string StepOpenFormation = "T03";
         public const string StepFirstFormation = "T04";
         public const string StepOpenBattle = "T05";
@@ -45,6 +49,7 @@ namespace WitchTower.Data
         public const string StepWrapUp = "T08";
 
         public const string StoryPrologueWakeup = "story_prologue_wakeup";
+        public const string StoryFirstExplorationIntro = "story_first_exploration_intro";
         public const string StoryFirstSummonDone = "story_first_summon_done";
         public const string StoryFirstBattleWin = "story_first_battle_win";
         public const string StoryFirstEquipmentQuality = "story_first_equipment_quality";
@@ -57,19 +62,30 @@ namespace WitchTower.Data
         public const string StoryFirstArcComplete = "story_first_arc_complete";
 
         public const string HintEquipment = "tutorial_equipment";
+        public const string HintEquipmentGiftReceived = "tutorial_equipment_gift_received";
         public const string HintEquipmentQuality = "tutorial_equipment_quality";
         public const string HintEquipmentEnhance = "tutorial_equipment_enhance";
+        public const string HintEquipmentEnhanceRelicReceived = "tutorial_equipment_enhance_relic_received";
+        public const string HintEquipmentEnhanceReturnHome = "tutorial_equipment_enhance_return_home";
         public const string HintFusion = "tutorial_fusion";
         public const string HintDex = "tutorial_dex";
         public const string HintShop = "tutorial_shop";
+        public const string HintHomeGuideComplete = "tutorial_home_guide_complete";
+
+        public const int TutorialCompletionRewardFreeGachaStones = 600;
 
         private const string DefaultStarterMonsterId = "monster_dragon_whelp";
+        private const string HintTutorialCompletionReward = "tutorial_completion_reward_free_stones";
+        public const string EquipmentTutorialGiftEquipmentId = "equip_apprentice_charm";
+        public const string EquipmentEnhanceTutorialGiftRelicId = "relic_safe_ember";
+        private const string EquipmentTutorialGiftInstanceIdPrefix = "tutorial_gift_equipment_";
 
         private static readonly Dictionary<string, string> NextStepByCompletedStep = new Dictionary<string, string>
         {
             { StepWakeup, StepOpenGacha },
             { StepOpenGacha, StepFirstSummon },
-            { StepFirstSummon, StepOpenFormation },
+            { StepFirstSummon, StepFirstExplorationIntro },
+            { StepFirstExplorationIntro, StepOpenFormation },
             { StepOpenFormation, StepFirstFormation },
             { StepFirstFormation, StepOpenBattle },
             { StepOpenBattle, StepFirstBattle },
@@ -114,6 +130,13 @@ namespace WitchTower.Data
             return HasSeen(profile?.SeenTutorialHintIds, hintId);
         }
 
+        public static bool HasFinishedHomeGuide(PlayerProfile profile)
+        {
+            return profile != null &&
+                (HasSeenHint(profile, HintHomeGuideComplete) ||
+                 HasSeenHint(profile, HintShop));
+        }
+
         public static bool MarkStorySeen(PlayerProfile profile, string eventId)
         {
             return MarkSeen(profile?.SeenStoryEventIds, eventId);
@@ -122,6 +145,81 @@ namespace WitchTower.Data
         public static bool MarkHintSeen(PlayerProfile profile, string hintId)
         {
             return MarkSeen(profile?.SeenTutorialHintIds, hintId);
+        }
+
+        public static bool EnsureEquipmentTutorialGift(PlayerProfile profile)
+        {
+            if (profile == null || HasSeenHint(profile, HintEquipment))
+            {
+                return false;
+            }
+
+            OwnedEquipmentData gift = FindEquipmentTutorialGift(profile);
+            if (gift == null)
+            {
+                if (MasterDataManager.Instance?.GetEquipmentData(EquipmentTutorialGiftEquipmentId) == null)
+                {
+                    return false;
+                }
+
+                if (!profile.HasEquipmentStorageSpace())
+                {
+                    profile.EquipmentStorageLimit = Math.Max(profile.EquipmentStorageLimit, profile.OwnedEquipments.Count + 1);
+                }
+
+                gift = profile.AddOwnedEquipmentWithInstancePrefix(
+                    EquipmentTutorialGiftEquipmentId,
+                    EquipmentRarity.Common,
+                    EquipmentTutorialGiftInstanceIdPrefix);
+                if (gift == null)
+                {
+                    return false;
+                }
+
+                bool changed = true;
+                changed |= MarkHintSeen(profile, HintEquipmentGiftReceived);
+                return changed;
+            }
+
+            return MarkHintSeen(profile, HintEquipmentGiftReceived);
+        }
+
+        public static bool EnsureEquipmentEnhanceTutorialGift(PlayerProfile profile)
+        {
+            if (profile == null || HasSeenHint(profile, HintEquipmentEnhance))
+            {
+                return false;
+            }
+
+            bool changed = false;
+            bool firstGrant = !HasSeenHint(profile, HintEquipmentEnhanceRelicReceived);
+            if (firstGrant || profile.GetEnhancementRelicAmount(EquipmentEnhanceTutorialGiftRelicId) <= 0)
+            {
+                profile.AddEnhancementRelics(EquipmentEnhanceTutorialGiftRelicId, 1);
+                changed = true;
+            }
+
+            changed |= MarkHintSeen(profile, HintEquipmentEnhanceRelicReceived);
+            return changed;
+        }
+
+        public static OwnedEquipmentData FindEquipmentTutorialGift(PlayerProfile profile)
+        {
+            return profile?.OwnedEquipments?
+                .FirstOrDefault(equipment => IsEquipmentTutorialGift(equipment));
+        }
+
+        public static bool IsEquipmentTutorialGift(OwnedEquipmentData equipment)
+        {
+            return equipment != null &&
+                !string.IsNullOrEmpty(equipment.InstanceId) &&
+                equipment.InstanceId.StartsWith(EquipmentTutorialGiftInstanceIdPrefix, StringComparison.Ordinal);
+        }
+
+        private static bool HasEquippedEquipmentTutorialGift(PlayerProfile profile)
+        {
+            OwnedEquipmentData tutorialGift = FindEquipmentTutorialGift(profile);
+            return tutorialGift != null && !string.IsNullOrEmpty(tutorialGift.EquippedMonsterInstanceId);
         }
 
         public static bool IsChapterStoryEvent(string eventId)
@@ -188,10 +286,17 @@ namespace WitchTower.Data
                 return false;
             }
 
+            bool wasCompleted = profile.HasCompletedTutorial;
             bool changed = !profile.HasCompletedTutorial ||
                 !string.Equals(profile.TutorialStepId, CompleteStepId, StringComparison.Ordinal);
             profile.HasCompletedTutorial = true;
             profile.TutorialStepId = CompleteStepId;
+            if (!wasCompleted)
+            {
+                changed |= GrantTutorialCompletionReward(profile);
+            }
+
+            changed |= MarkMainTutorialCoveredHintsSeen(profile);
             return changed;
         }
 
@@ -230,8 +335,8 @@ namespace WitchTower.Data
                         ? new StoryTutorialEvent(
                             StoryPrologueWakeup,
                             StepWakeup,
-                            "契約炉の目覚め",
-                            "……契約炉、再起動。あなたはこの契約炉に選ばれた契約師です。まずは、失われた眷属を一体呼び戻しましょう。",
+                            "序章 最後の契約炉",
+                            "契約網は何者かに断ち切られ、仲間たちの記憶は各地のダンジョンへ散りました。\n最後の契約炉を目覚めさせ、失われた契約を取り戻しましょう。",
                             blocksInput: true)
                         : null;
                 case StepOpenGacha:
@@ -240,7 +345,7 @@ namespace WitchTower.Data
                             "tutorial_open_gacha",
                             StepOpenGacha,
                             "最初の召喚",
-                            "契約片が一つ残っています。召喚で、最初の眷属を呼び戻しましょう。",
+                            "魔晶石で最初の仲間を呼び戻せます。\n下の召喚から仲間を迎えましょう。",
                             "home.gacha",
                             true)
                         : null;
@@ -250,9 +355,18 @@ namespace WitchTower.Data
                             "tutorial_first_summon",
                             StepFirstSummon,
                             "契約召喚",
-                            "契約炉に石を捧げると、ダンジョンに残った記録から眷属が応えてくれます。",
+                            "今回の召喚用に、魔晶石を300個用意しました。\n契約炉に石を捧げて、最初の眷属を呼び戻しましょう。",
                             "gacha.single_free",
                             true)
+                        : null;
+                case StepFirstExplorationIntro:
+                    return IsScene(normalizedSceneName, "HomeScene")
+                        ? new StoryTutorialEvent(
+                            StoryFirstExplorationIntro,
+                            StepFirstExplorationIntro,
+                            "初回探索の目的",
+                            "呼び戻した眷属が、見習いの五門洞から契約片の反応を感じています。\n契約網を復旧するには、ダンジョンへ向かい散らばった記憶を回収しなければなりません。",
+                            blocksInput: true)
                         : null;
                 case StepOpenFormation:
                     return IsScene(normalizedSceneName, "HomeScene")
@@ -260,7 +374,7 @@ namespace WitchTower.Data
                             StoryFirstSummonDone,
                             StepOpenFormation,
                             "最初の眷属",
-                            "契約成功です。呼び戻した眷属を編成に入れて、探索隊として送り出しましょう。",
+                            "呼び戻した眷属を編成に入れて、探索隊として送り出しましょう。",
                             "home.formation",
                             true)
                         : null;
@@ -270,21 +384,37 @@ namespace WitchTower.Data
                             "tutorial_first_formation",
                             StepFirstFormation,
                             "探索隊編成",
-                            "探索隊は最大5体まで組めます。まずは一体で大丈夫。契約した眷属を先頭に置きましょう。",
+                            "モンスターカード右下の「編成」ボタンをタップして、先頭の前衛枠に配置しましょう。",
                             "formation.slot_1",
                             true)
                         : null;
                 case StepOpenBattle:
+                    if (IsScene(normalizedSceneName, "FormationScene"))
+                    {
+                        return new StoryTutorialEvent(
+                            "tutorial_return_home_from_formation",
+                            StepOpenBattle,
+                            "編成完了",
+                            "これで最初の探索隊が整いました。\n左上の「ホームへ戻る」から拠点へ戻り、冒険開始へ進みましょう。",
+                            "formation.return_home",
+                            true);
+                    }
+
                     return IsScene(normalizedSceneName, "HomeScene")
                         ? new StoryTutorialEvent(
                             "tutorial_open_battle",
                             StepOpenBattle,
                             "最初の探索",
-                            "よぉし、探索隊の準備完了です。見習いの五門洞へ向かい、契約片を回収しましょう。",
+                            "探索隊の準備完了です。見習いの五門洞へ向かい、契約片を回収しましょう。",
                             "home.battle",
                             true)
                         : null;
                 case StepFirstBattle:
+                    if (HasFinishedHomeGuide(profile))
+                    {
+                        return null;
+                    }
+
                     if (IsScene(normalizedSceneName, "DungeonSelectionPanel"))
                     {
                         return new StoryTutorialEvent(
@@ -305,6 +435,11 @@ namespace WitchTower.Data
                             "battle.skill_1")
                         : null;
                 case StepFirstResult:
+                    if (HasFinishedHomeGuide(profile))
+                    {
+                        return null;
+                    }
+
                     return IsScene(normalizedSceneName, "BattleScene")
                         ? new StoryTutorialEvent(
                             StoryFirstBattleWin,
@@ -319,8 +454,8 @@ namespace WitchTower.Data
                         ? new StoryTutorialEvent(
                             "tutorial_wrap_up",
                             StepWrapUp,
-                            "探索の基本",
-                            "これで基本は大丈夫。ダンジョンは何度でも挑めます。勝てなくなったら、編成、装備、品質、強化を見直しましょう。",
+                            "ルシェからの贈り物",
+                            $"おつかれさまでした！これで基本は大丈夫です。\nチュートリアル完了報酬として、無料石{TutorialCompletionRewardFreeGachaStones}個をプレゼントします。召喚や育成の準備に使ってくださいね。",
                             blocksInput: true)
                         : null;
                 default:
@@ -403,14 +538,51 @@ namespace WitchTower.Data
             string normalizedSceneName = sceneName ?? string.Empty;
             if (IsScene(normalizedSceneName, "EquipmentScene") || IsScene(normalizedSceneName, "HomeScene"))
             {
-                if (!HasSeenHint(profile, HintEquipment) && profile.OwnedEquipments.Count > 0)
+                if (!HasSeenHint(profile, HintEquipment) && profile.OwnedMonsters.Count > 0)
                 {
+                    OwnedEquipmentData tutorialGift = FindEquipmentTutorialGift(profile);
+                    bool tutorialGiftEquipped = tutorialGift != null && !string.IsNullOrEmpty(tutorialGift.EquippedMonsterInstanceId);
+                    string targetKey = tutorialGiftEquipped && IsScene(normalizedSceneName, "EquipmentScene")
+                        ? "equipment.enhance_button"
+                        : "equipment.first_item";
+                    string body = IsScene(normalizedSceneName, "EquipmentScene")
+                        ? tutorialGiftEquipped
+                            ? "見習いの護符を装備できました。\nこのまま同じ装備カードの「強化」から、装備を鍛える流れも確認しましょう。"
+                            : "ルシェから練習用の「見習いの護符」を受け取りました。所持装備の先頭に出しておきます。カードの「装備」を押すと、上のモンスターに持たせられます。"
+                        : "ルシェが「見習いの護符」を用意しました。\n下の装備から受け取り、モンスターに装備しましょう。";
                     return new StoryTutorialEvent(
                         HintEquipment,
                         string.Empty,
-                        "装備",
-                        "ダンジョンで見つかる遺物は、眷属ごとに持たせられます。前に出る子には耐久、攻撃役には火力を伸ばす装備が向いています。",
-                        "equipment.first_item");
+                        "装備の付け方",
+                        body,
+                        targetKey);
+                }
+
+                if (IsScene(normalizedSceneName, "EquipmentScene") &&
+                    !HasSeenHint(profile, HintEquipmentEnhance) &&
+                    HasEquippedEquipmentTutorialGift(profile) &&
+                    HasEnhanceableEquipment(profile))
+                {
+                    return new StoryTutorialEvent(
+                        HintEquipmentEnhance,
+                        string.Empty,
+                        "装備強化",
+                        "装備を鍛える練習をしましょう。強化画面でルシェが通常遺物を1つ渡すので、装備カードの「強化」から使ってみましょう。",
+                        "equipment.enhance_button");
+                }
+
+                if (IsScene(normalizedSceneName, "EquipmentScene") &&
+                    HasSeenHint(profile, HintEquipmentEnhance) &&
+                    HasSeenHint(profile, HintEquipmentEnhanceRelicReceived) &&
+                    HasSeenStory(profile, StoryFirstEquipmentEnhance) &&
+                    !HasSeenHint(profile, HintEquipmentEnhanceReturnHome))
+                {
+                    return new StoryTutorialEvent(
+                        HintEquipmentEnhanceReturnHome,
+                        string.Empty,
+                        "強化完了",
+                        "強化画面を閉じたら、左上の「ホームへ戻る」から拠点へ戻りましょう。",
+                        "equipment.return_home");
                 }
 
                 if (!HasSeenHint(profile, HintEquipmentQuality) && HasHighQualityEquipment(profile))
@@ -419,40 +591,46 @@ namespace WitchTower.Data
                         HintEquipmentQuality,
                         string.Empty,
                         "遺物の品質",
-                        "同じ名前の装備でも、品質が違うと力の伸び方が変わります。高品質な遺物ほど効果が高く、鍛えられる回数も多くなります。",
+                        "同じ名前の装備でも、品質が違うと力の伸び方が変わります。\n高品質な遺物ほど効果が高く、鍛えられる回数も多くなります。",
                         "equipment.quality_label");
                 }
 
-                if (!HasSeenHint(profile, HintEquipmentEnhance) && HasAnyEnhancementRelic(profile))
+                if (!HasSeenHint(profile, HintEquipmentEnhance) && HasEnhanceableEquipment(profile))
                 {
                     return new StoryTutorialEvent(
                         HintEquipmentEnhance,
                         string.Empty,
                         "装備強化",
-                        "強化遺物を使うと、装備の刻印を深くできます。通常遺物は確実、上級遺物は挑戦向け、危険遺物は失敗時に装備を失います。",
+                        "装備を鍛える練習をしましょう。強化画面でルシェが通常遺物を1つ渡すので、装備カードの「強化」から使ってみましょう。",
                         "equipment.enhance_button");
+                }
+            }
+
+            if (IsScene(normalizedSceneName, "HomeScene") || IsScene(normalizedSceneName, "FusionScene"))
+            {
+                if (!HasSeenHint(profile, HintFusion) && profile.OwnedMonsters.Count >= 2)
+                {
+                    bool inFusionScene = IsScene(normalizedSceneName, "FusionScene");
+                    return new StoryTutorialEvent(
+                        HintFusion,
+                        string.Empty,
+                        "契約核の配合",
+                        inFusionScene
+                            ? "配合は親2体とも最大レベルが必要です。個体値は能力ごとに親1/親2からランダム継承し、高い個体値の親ほど良い値を引き継ぐ機会が増えます。親のプラス値を含む能力は継承ボーナスに反映されます。"
+                            : "2体の契約核を統合すると、記憶と力を継いだ新しい眷属が生まれます。親は戻らないので、ロックを確認してから行いましょう。",
+                        inFusionScene ? "fusion.guide" : "home.fusion");
                 }
             }
 
             if (IsScene(normalizedSceneName, "HomeScene"))
             {
-                if (!HasSeenHint(profile, HintFusion) && profile.OwnedMonsters.Count >= 2)
-                {
-                    return new StoryTutorialEvent(
-                        HintFusion,
-                        string.Empty,
-                        "契約核の配合",
-                        "2体の契約核を統合すると、記憶と力を継いだ新しい眷属が生まれます。親は戻らないので、ロックを確認してから行いましょう。",
-                        "home.fusion");
-                }
-
                 if (!HasSeenHint(profile, HintDex) && profile.OwnedMonsters.Count > 0)
                 {
                     return new StoryTutorialEvent(
                         HintDex,
                         string.Empty,
                         "契約図鑑",
-                        "図鑑では、仲間にした眷属と未発見の系譜を確認できます。次に挑むダンジョンの編成を考える手掛かりになります。",
+                        "図鑑では、仲間にした眷属の能力・成長傾向を確認できます。\n次に挑むダンジョンの編成を考える手掛かりになります。",
                         "home.dex");
                 }
 
@@ -465,6 +643,7 @@ namespace WitchTower.Data
                         "ショップでは探索で集めたゴールドを育成素材と交換できます。行き詰まった時にのぞいてみましょう。",
                         "home.shop");
                 }
+
             }
 
             return null;
@@ -485,7 +664,15 @@ namespace WitchTower.Data
             if (profile.TutorialStepId == CompleteStepId)
             {
                 profile.HasCompletedTutorial = true;
+                MarkMainTutorialCoveredHintsSeen(profile);
             }
+        }
+
+        private static bool MarkMainTutorialCoveredHintsSeen(PlayerProfile profile)
+        {
+            bool changed = false;
+            changed |= MarkHintSeen(profile, HintFusion);
+            return changed;
         }
 
         private static bool HasHighQualityEquipment(PlayerProfile profile)
@@ -506,6 +693,27 @@ namespace WitchTower.Data
             }
 
             return profile.OwnedEnhancementRelics.Any(relic => relic != null && relic.Amount > 0);
+        }
+
+        private static bool HasEnhanceableEquipment(PlayerProfile profile)
+        {
+            if (profile?.OwnedEquipments == null)
+            {
+                return false;
+            }
+
+            return profile.OwnedEquipments.Any(equipment => equipment != null && equipment.RemainingEnhanceAttempts > 0);
+        }
+
+        private static bool GrantTutorialCompletionReward(PlayerProfile profile)
+        {
+            if (profile == null || HasSeenHint(profile, HintTutorialCompletionReward))
+            {
+                return false;
+            }
+
+            profile.AddFreeGachaStones(TutorialCompletionRewardFreeGachaStones);
+            return MarkHintSeen(profile, HintTutorialCompletionReward);
         }
 
         private static void MarkClearedChapterStory(PlayerProfile profile, int requiredFloor, string eventId)

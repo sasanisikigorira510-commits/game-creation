@@ -9,6 +9,7 @@ namespace WitchTower.Home
         PlayerExp,
         FreeGachaStones,
         Equipment,
+        EnhancementRelic,
         MonsterStorage
     }
 
@@ -21,7 +22,8 @@ namespace WitchTower.Home
             int cost,
             GoldShopRewardType rewardType,
             int amount,
-            string equipmentId = "")
+            string equipmentId = "",
+            string relicId = "")
         {
             Id = id;
             Title = title;
@@ -30,6 +32,7 @@ namespace WitchTower.Home
             RewardType = rewardType;
             Amount = amount;
             EquipmentId = equipmentId ?? string.Empty;
+            RelicId = relicId ?? string.Empty;
         }
 
         public string Id { get; }
@@ -39,6 +42,7 @@ namespace WitchTower.Home
         public GoldShopRewardType RewardType { get; }
         public int Amount { get; }
         public string EquipmentId { get; }
+        public string RelicId { get; }
     }
 
     public static class GoldShopService
@@ -46,20 +50,6 @@ namespace WitchTower.Home
         private static readonly IReadOnlyList<GoldShopProductDefinition> Products =
             new List<GoldShopProductDefinition>
             {
-                new GoldShopProductDefinition(
-                    "player_training_book",
-                    "冒険者の修練書",
-                    "プレイヤー経験値 +100",
-                    100,
-                    GoldShopRewardType.PlayerExp,
-                    100),
-                new GoldShopProductDefinition(
-                    "free_stone_pouch",
-                    "無料石の小袋",
-                    "無料石 +50",
-                    500,
-                    GoldShopRewardType.FreeGachaStones,
-                    50),
                 new GoldShopProductDefinition(
                     "iron_sword",
                     "鉄の剣",
@@ -85,12 +75,13 @@ namespace WitchTower.Home
                     1,
                     "equip_quick_charm"),
                 new GoldShopProductDefinition(
-                    "monster_storage_10",
-                    "モンスター枠拡張",
-                    "所持上限 +10",
-                    1000,
-                    GoldShopRewardType.MonsterStorage,
-                    10)
+                    "safe_ember",
+                    "通常遺物",
+                    "装備強化用の通常遺物 x1",
+                    500,
+                    GoldShopRewardType.EnhancementRelic,
+                    1,
+                    relicId: "relic_safe_ember")
             };
 
         public static IReadOnlyList<GoldShopProductDefinition> GetProducts()
@@ -163,6 +154,14 @@ namespace WitchTower.Home
                     return true;
                 case GoldShopRewardType.Equipment:
                     return profile.AddOwnedEquipment(product.EquipmentId);
+                case GoldShopRewardType.EnhancementRelic:
+                    if (string.IsNullOrEmpty(product.RelicId) || product.Amount <= 0)
+                    {
+                        return false;
+                    }
+
+                    profile.AddEnhancementRelics(product.RelicId, product.Amount);
+                    return true;
                 case GoldShopRewardType.MonsterStorage:
                     profile.MonsterStorageLimit += product.Amount;
                     return true;

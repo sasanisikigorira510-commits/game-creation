@@ -23,6 +23,8 @@ namespace WitchTower.Home
         private const string RosterFrameSpritePath = "UI/FusionPage/FusionRosterFrame";
         private const string SmallButtonSpritePath = "UI/FusionPage/FusionSmallButton";
         private const string CardFrameBasePath = "MonsterCardFrames/monster_class_";
+        private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
+        private const string TutorialHighlightFramePath = "UI/Tutorial/TutorialSummonHighlightFrameImage2";
 
         private readonly struct DexClassLevelGrowth
         {
@@ -62,20 +64,28 @@ namespace WitchTower.Home
         private Font runtimeFont;
         private RectTransform contentRoot;
         private Image selectedFrame;
+        private Image selectedPortraitBackdrop;
+        private Image selectedPortraitShadow;
         private Image selectedPortrait;
         private Text selectedNameLabel;
         private Text selectedInfoLabel;
         private Text selectedStatsLabel;
         private Text selectedDescriptionLabel;
         private Text counterLabel;
-        private RectTransform recipeContentRoot;
-        private Text recipeEmptyLabel;
+        private GameObject dexTutorialGuideRoot;
+        private Image dexTutorialGuideCharacterImage;
+        private Text dexTutorialGuideBodyText;
+        private Text dexTutorialGuideFooterText;
+        private Image dexTutorialCardHighlight;
+        private Image dexTutorialHomeHighlight;
         private string selectedMonsterId;
         private bool isBuilt;
+        private bool dexTutorialMonsterSelected;
 
         public void Show(Action closeCallback)
         {
             onClosed = closeCallback;
+            dexTutorialMonsterSelected = false;
             if (!isBuilt)
             {
                 Build();
@@ -87,6 +97,17 @@ namespace WitchTower.Home
 
         private void Hide()
         {
+            if (ShouldShowDexTutorialGuide())
+            {
+                if (!dexTutorialMonsterSelected)
+                {
+                    RefreshDexTutorialGuide();
+                    return;
+                }
+
+                CompleteDexTutorialGuide();
+            }
+
             gameObject.SetActive(false);
             onClosed?.Invoke();
         }
@@ -102,8 +123,13 @@ namespace WitchTower.Home
             masterDataManager?.Initialize();
             MonsterDataSO[] allMonsterData = masterDataManager != null ? masterDataManager.GetAllMonsterData() : null;
             List<MonsterDataSO> monsters = SortMonsters(FilterUnlockedMonsters(allMonsterData));
+            bool isWaitingForTutorialSelection = ShouldShowDexTutorialGuide() && !dexTutorialMonsterSelected;
 
-            if (string.IsNullOrEmpty(selectedMonsterId) || monsters.All(monster => monster.monsterId != selectedMonsterId))
+            if (isWaitingForTutorialSelection)
+            {
+                selectedMonsterId = string.Empty;
+            }
+            else if (string.IsNullOrEmpty(selectedMonsterId) || monsters.All(monster => monster.monsterId != selectedMonsterId))
             {
                 selectedMonsterId = monsters.Count > 0 ? monsters[0].monsterId : string.Empty;
             }
@@ -111,9 +137,14 @@ namespace WitchTower.Home
             RebuildCards(monsters);
             MonsterDataSO selectedMonster = monsters.FirstOrDefault(monster => monster.monsterId == selectedMonsterId);
             int selectedIndex = selectedMonster != null ? monsters.IndexOf(selectedMonster) + 1 : 0;
-            BindDetail(selectedMonster, selectedIndex, allMonsterData);
-            BindFusionRecipes(selectedMonster, allMonsterData);
+            BindDetail(selectedMonster, selectedIndex, allMonsterData, monsters.Count > 0);
             UpdateCounter(monsters);
+            RefreshDexTutorialGuide();
+        }
+
+        private void Update()
+        {
+            AnimateDexTutorialGuide();
         }
 
         private void Build()
@@ -147,9 +178,168 @@ namespace WitchTower.Home
             HomeReturnButtonStyle.Create(transform, "CloseButton", Hide);
 
             BuildDetailPanel(panel.transform);
-            BuildRecipePanel(panel.transform);
             BuildCardGrid(panel.transform);
+            BuildDexTutorialGuide(panel.transform);
             isBuilt = true;
+        }
+
+        private void BuildDexTutorialGuide(Transform panelTransform)
+        {
+            if (panelTransform == null || dexTutorialGuideRoot != null)
+            {
+                return;
+            }
+
+            dexTutorialGuideRoot = CreatePanel("DexTutorialGuideRoot", panelTransform, null,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -1350f), new Vector2(920f, 300f), new Color(0.025f, 0.035f, 0.055f, 0.98f));
+
+            Image guideBackground = dexTutorialGuideRoot.GetComponent<Image>();
+            if (guideBackground != null)
+            {
+                guideBackground.raycastTarget = false;
+            }
+
+            Outline panelOutline = dexTutorialGuideRoot.AddComponent<Outline>();
+            panelOutline.effectColor = new Color(1f, 0.78f, 0.24f, 0.94f);
+            panelOutline.effectDistance = new Vector2(4f, -4f);
+            panelOutline.useGraphicAlpha = false;
+
+            dexTutorialGuideCharacterImage = CreateImage("DexTutorialGuideLuse", dexTutorialGuideRoot.transform, TutorialGuideSpritePath,
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(28f, -4f), new Vector2(218f, 218f));
+
+            Text badgeText = CreateText("DexTutorialGuideBadge", dexTutorialGuideRoot.transform, "TUTORIAL", 17, FontStyle.Bold,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(276f, -22f), new Vector2(136f, 28f), TextAnchor.MiddleCenter, AccentGold);
+            AddTextContrast(badgeText);
+
+            Text titleText = CreateText("DexTutorialGuideTitle", dexTutorialGuideRoot.transform, "ルシェの図鑑レッスン", 29, FontStyle.Bold,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(276f, -56f), new Vector2(560f, 36f), TextAnchor.MiddleLeft, new Color(1f, 0.96f, 0.78f, 1f));
+            AddTextContrast(titleText);
+
+            dexTutorialGuideBodyText = CreateText("DexTutorialGuideBody", dexTutorialGuideRoot.transform,
+                "ここには仲間にしたモンスターの情報が記録されています。\n下のカードを選ぶと、能力・成長傾向を確認できます。\nまずは気になるモンスターを1体選んでみましょう。",
+                19, FontStyle.Bold,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(276f, -102f), new Vector2(590f, 116f), TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f));
+            dexTutorialGuideBodyText.resizeTextForBestFit = true;
+            dexTutorialGuideBodyText.resizeTextMinSize = 15;
+            dexTutorialGuideBodyText.resizeTextMaxSize = 19;
+            AddTextContrast(dexTutorialGuideBodyText);
+
+            dexTutorialGuideFooterText = CreateText("DexTutorialGuideFooter", dexTutorialGuideRoot.transform,
+                "次の操作: 金色の枠が付いたモンスターカードをタップ",
+                18, FontStyle.Bold,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(276f, 24f), new Vector2(590f, 30f), TextAnchor.MiddleLeft, new Color(0.78f, 0.92f, 1f, 1f));
+            AddTextContrast(dexTutorialGuideFooterText);
+
+            Transform closeButton = transform.Find("CloseButton");
+            if (closeButton != null)
+            {
+                dexTutorialHomeHighlight = CreateImage("DexTutorialHomeHighlight", closeButton, TutorialHighlightFramePath,
+                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                    Vector2.zero, HomeReturnButtonStyle.Size + new Vector2(34f, 30f));
+                dexTutorialHomeHighlight.preserveAspect = false;
+                dexTutorialHomeHighlight.raycastTarget = false;
+                dexTutorialHomeHighlight.transform.SetAsLastSibling();
+                dexTutorialHomeHighlight.gameObject.SetActive(false);
+            }
+
+            dexTutorialGuideRoot.SetActive(false);
+        }
+
+        private void RefreshDexTutorialGuide()
+        {
+            if (dexTutorialGuideRoot == null)
+            {
+                return;
+            }
+
+            bool shouldShow = ShouldShowDexTutorialGuide();
+            dexTutorialGuideRoot.SetActive(shouldShow);
+            if (shouldShow)
+            {
+                dexTutorialGuideRoot.transform.SetAsLastSibling();
+            }
+
+            if (dexTutorialGuideBodyText != null)
+            {
+                dexTutorialGuideBodyText.text = dexTutorialMonsterSelected
+                    ? "モンスターの詳しい情報を確認できました。\n図鑑の見方はこれで大丈夫です。\n最後に左上の「ホームへ戻る」からホームへ戻りましょう。"
+                    : "ここには仲間にしたモンスターの情報が記録されています。\n下のカードを選ぶと、能力・成長傾向を確認できます。\nまずは気になるモンスターを1体選んでみましょう。";
+            }
+
+            if (dexTutorialGuideFooterText != null)
+            {
+                dexTutorialGuideFooterText.text = dexTutorialMonsterSelected
+                    ? "次の操作: 左上の「ホームへ戻る」をタップ"
+                    : "次の操作: 金色の枠が付いたモンスターカードをタップ";
+            }
+
+            if (dexTutorialCardHighlight != null)
+            {
+                dexTutorialCardHighlight.gameObject.SetActive(shouldShow && !dexTutorialMonsterSelected);
+            }
+
+            if (dexTutorialHomeHighlight != null)
+            {
+                dexTutorialHomeHighlight.gameObject.SetActive(shouldShow && dexTutorialMonsterSelected);
+                if (shouldShow && dexTutorialMonsterSelected)
+                {
+                    dexTutorialHomeHighlight.transform.SetAsLastSibling();
+                }
+            }
+        }
+
+        private static bool ShouldShowDexTutorialGuide()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
+            return tutorialEvent != null &&
+                tutorialEvent.EventId == StoryTutorialService.HintDex &&
+                string.Equals(tutorialEvent.TargetKey, "home.dex", StringComparison.Ordinal);
+        }
+
+        private void CompleteDexTutorialGuide()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            bool changed = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintDex);
+            if (changed && Application.isPlaying && SaveManager.Instance != null)
+            {
+                SaveManager.Instance.SaveCurrentGame();
+            }
+        }
+
+        private void AnimateDexTutorialGuide()
+        {
+            if (dexTutorialGuideRoot == null || !dexTutorialGuideRoot.activeInHierarchy)
+            {
+                return;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.1f);
+            if (dexTutorialGuideCharacterImage != null)
+            {
+                float characterScale = Mathf.Lerp(0.985f, 1.035f, pulse);
+                dexTutorialGuideCharacterImage.rectTransform.localScale = new Vector3(characterScale, characterScale, 1f);
+            }
+
+            if (dexTutorialCardHighlight != null)
+            {
+                dexTutorialCardHighlight.color = new Color(1f, 1f, 1f, Mathf.Lerp(0.74f, 1f, pulse));
+                float frameScale = Mathf.Lerp(0.99f, 1.035f, pulse);
+                dexTutorialCardHighlight.rectTransform.localScale = new Vector3(frameScale, frameScale, 1f);
+            }
+
+            if (dexTutorialHomeHighlight != null && dexTutorialHomeHighlight.gameObject.activeSelf)
+            {
+                dexTutorialHomeHighlight.color = new Color(1f, 1f, 1f, Mathf.Lerp(0.74f, 1f, pulse));
+                float frameScale = Mathf.Lerp(0.99f, 1.035f, pulse);
+                dexTutorialHomeHighlight.rectTransform.localScale = new Vector3(frameScale, frameScale, 1f);
+            }
         }
 
         private void BuildDetailPanel(Transform parent)
@@ -161,6 +351,16 @@ namespace WitchTower.Home
             selectedFrame = CreatePanel("SelectedFrame", detailPanel.transform, null,
                 new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(-145f, 0f), new Vector2(238f, 288f), CardFallbackColor).GetComponent<Image>();
+
+            selectedPortraitBackdrop = CreatePanel("SelectedPortraitBackdrop", selectedFrame.transform, null,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, 0f), new Vector2(196f, 238f), new Color(0.004f, 0.010f, 0.014f, 0.86f)).GetComponent<Image>();
+            selectedPortraitBackdrop.raycastTarget = false;
+
+            selectedPortraitShadow = CreateImage("SelectedPortraitShadow", selectedFrame.transform, string.Empty,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(8f, 6f), new Vector2(210f, 210f));
+            selectedPortraitShadow.color = new Color(0f, 0f, 0f, 0.58f);
 
             selectedPortrait = CreateImage("SelectedPortrait", selectedFrame.transform, string.Empty,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
@@ -183,34 +383,11 @@ namespace WitchTower.Home
                 new Vector2(46f, 34f), new Vector2(560f, 74f), TextAnchor.UpperLeft, TextMain);
         }
 
-        private void BuildRecipePanel(Transform parent)
-        {
-            GameObject recipePanel = CreatePanel("DexFusionRecipePanel", parent, RosterFrameSpritePath,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -508f), new Vector2(920f, 176f), new Color(0.018f, 0.035f, 0.044f, 0.98f));
-
-            CreateText("RecipeTitle", recipePanel.transform, "配合表", 24, FontStyle.Bold,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -30f), new Vector2(420f, 34f), TextAnchor.MiddleCenter, AccentGold);
-
-            GameObject content = CreateUiObject("RecipeContent", recipePanel.transform);
-            recipeContentRoot = content.GetComponent<RectTransform>();
-            recipeContentRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            recipeContentRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            recipeContentRoot.pivot = new Vector2(0.5f, 0.5f);
-            recipeContentRoot.anchoredPosition = new Vector2(0f, -12f);
-            recipeContentRoot.sizeDelta = new Vector2(840f, 110f);
-
-            recipeEmptyLabel = CreateText("RecipeEmpty", recipePanel.transform, "このモンスターを生み出す配合はまだ登録されていません。", 19, FontStyle.Bold,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, -12f), new Vector2(720f, 42f), TextAnchor.MiddleCenter, TextSub);
-        }
-
         private void BuildCardGrid(Transform parent)
         {
             GameObject gridPanel = CreatePanel("DexGridPanel", parent, RosterFrameSpritePath,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -665f), new Vector2(920f, 1035f), new Color(0.016f, 0.033f, 0.04f, 0.98f));
+                new Vector2(0f, -508f), new Vector2(920f, 1192f), new Color(0.016f, 0.033f, 0.04f, 0.98f));
 
             counterLabel = CreateText("Counter", gridPanel.transform, "", 22, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -218,7 +395,7 @@ namespace WitchTower.Home
 
             GameObject viewport = CreatePanel("Viewport", gridPanel.transform, null,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, 22f), new Vector2(860f, 949f), new Color(0f, 0f, 0f, 0.18f));
+                new Vector2(0f, 22f), new Vector2(860f, 1106f), new Color(0f, 0f, 0f, 0.18f));
             viewport.AddComponent<RectMask2D>();
 
             GameObject content = CreateUiObject("Content", viewport.transform);
@@ -339,6 +516,16 @@ namespace WitchTower.Home
                     new Vector2(-26f, -22f), new Vector2(82f, 20f), TextAnchor.MiddleRight, AccentGold);
             }
 
+            if (displayIndex == 1 && ShouldShowDexTutorialGuide() && !dexTutorialMonsterSelected)
+            {
+                dexTutorialCardHighlight = CreateImage("DexTutorialCardHighlight", card.transform, TutorialHighlightFramePath,
+                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                    Vector2.zero, new Vector2(CardWidth + 34f, CardHeight + 34f));
+                dexTutorialCardHighlight.preserveAspect = false;
+                dexTutorialCardHighlight.raycastTarget = false;
+                dexTutorialCardHighlight.transform.SetAsLastSibling();
+            }
+
             return card;
         }
 
@@ -349,24 +536,40 @@ namespace WitchTower.Home
                 return;
             }
 
+            if (ShouldShowDexTutorialGuide())
+            {
+                dexTutorialMonsterSelected = true;
+            }
+
             selectedMonsterId = monsterData.monsterId;
             Refresh();
         }
 
-        private void BindDetail(MonsterDataSO monsterData, int fallbackIndex, MonsterDataSO[] allMonsterData)
+        private void BindDetail(MonsterDataSO monsterData, int fallbackIndex, MonsterDataSO[] allMonsterData, bool hasSelectableMonsters)
         {
             if (monsterData == null)
             {
                 SetPortrait(selectedPortrait, null);
-                if (selectedNameLabel != null) selectedNameLabel.text = "モンスター未登録";
-                if (selectedInfoLabel != null) selectedInfoLabel.text = "-";
-                if (selectedStatsLabel != null) selectedStatsLabel.text = "-";
-                if (selectedDescriptionLabel != null) selectedDescriptionLabel.text = "マスターデータを読み込めませんでした。";
-                ClearRecipeContent();
-                if (recipeEmptyLabel != null)
+                SetPortrait(selectedPortraitShadow, null);
+                if (selectedPortraitShadow != null)
                 {
-                    recipeEmptyLabel.text = "表示できるモンスターがまだ登録されていません。";
-                    recipeEmptyLabel.gameObject.SetActive(true);
+                    selectedPortraitShadow.color = new Color(0f, 0f, 0f, 0f);
+                }
+
+                if (selectedNameLabel != null) selectedNameLabel.text = hasSelectableMonsters ? "モンスターを選択" : "モンスター未登録";
+                if (selectedInfoLabel != null) selectedInfoLabel.text = "-";
+                if (selectedStatsLabel != null)
+                {
+                    selectedStatsLabel.text = hasSelectableMonsters
+                        ? "下のカードをタップすると、能力・成長傾向を確認できます。"
+                        : "-";
+                }
+
+                if (selectedDescriptionLabel != null)
+                {
+                    selectedDescriptionLabel.text = hasSelectableMonsters
+                        ? "気になるモンスターを1体選んでください。"
+                        : "マスターデータを読み込めませんでした。";
                 }
                 return;
             }
@@ -377,7 +580,16 @@ namespace WitchTower.Home
                 selectedFrame.color = selectedFrame.sprite != null ? Color.white : CardFallbackColor;
             }
 
-            SetPortrait(selectedPortrait, GetDetailPortraitResourcePath(monsterData));
+            string detailPortraitPath = GetDetailPortraitResourcePath(monsterData);
+            SetPortrait(selectedPortraitShadow, detailPortraitPath);
+            if (selectedPortraitShadow != null)
+            {
+                selectedPortraitShadow.color = selectedPortraitShadow.sprite != null
+                    ? new Color(0f, 0f, 0f, 0.62f)
+                    : new Color(0f, 0f, 0f, 0f);
+            }
+
+            SetPortrait(selectedPortrait, detailPortraitPath);
             if (selectedNameLabel != null)
             {
                 selectedNameLabel.text = monsterData.monsterName;
@@ -405,91 +617,6 @@ namespace WitchTower.Home
                     : monsterData.description;
                 selectedDescriptionLabel.text = $"{BuildOwnedText(monsterData)}\n{description}";
             }
-        }
-
-        private void BindFusionRecipes(MonsterDataSO selectedMonster, MonsterDataSO[] allMonsterData)
-        {
-            ClearRecipeContent();
-            if (recipeContentRoot == null || recipeEmptyLabel == null)
-            {
-                return;
-            }
-
-            if (selectedMonster == null || allMonsterData == null)
-            {
-                recipeEmptyLabel.gameObject.SetActive(true);
-                return;
-            }
-
-            Dictionary<string, MonsterDataSO> monsterById = allMonsterData
-                .Where(monster => monster != null && !string.IsNullOrEmpty(monster.monsterId))
-                .GroupBy(monster => monster.monsterId)
-                .ToDictionary(group => group.Key, group => group.First());
-
-            List<MonsterFusionRecipeDefinition> recipes = MonsterFusionCatalog.GetRecipes()
-                .Where(recipe => recipe != null && recipe.ResultMonsterId == selectedMonster.monsterId)
-                .Take(3)
-                .ToList();
-
-            recipeEmptyLabel.gameObject.SetActive(recipes.Count == 0);
-            recipeEmptyLabel.text = recipes.Count == 0
-                ? "このモンスターを生み出す配合はまだ登録されていません。"
-                : string.Empty;
-
-            float rowWidth = 260f;
-            float gap = 20f;
-            float totalWidth = recipes.Count * rowWidth + Mathf.Max(0, recipes.Count - 1) * gap;
-            float startX = -totalWidth * 0.5f + rowWidth * 0.5f;
-
-            for (int i = 0; i < recipes.Count; i += 1)
-            {
-                MonsterFusionRecipeDefinition recipe = recipes[i];
-                monsterById.TryGetValue(recipe.ParentMonsterIdA, out MonsterDataSO parentA);
-                monsterById.TryGetValue(recipe.ParentMonsterIdB, out MonsterDataSO parentB);
-                monsterById.TryGetValue(recipe.ResultMonsterId, out MonsterDataSO result);
-                CreateRecipeView(recipeContentRoot, recipe, parentA, parentB, result, new Vector2(startX + i * (rowWidth + gap), 0f), rowWidth);
-            }
-        }
-
-        private void ClearRecipeContent()
-        {
-            if (recipeContentRoot == null)
-            {
-                return;
-            }
-
-            for (int i = recipeContentRoot.childCount - 1; i >= 0; i -= 1)
-            {
-                DestroyObject(recipeContentRoot.GetChild(i).gameObject);
-            }
-        }
-
-        private void CreateRecipeView(RectTransform parent, MonsterFusionRecipeDefinition recipe, MonsterDataSO parentA, MonsterDataSO parentB, MonsterDataSO result, Vector2 anchoredPosition, float width)
-        {
-            GameObject root = CreatePanel("Recipe_" + (result != null ? result.monsterId : "Unknown"), parent, null,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                anchoredPosition, new Vector2(width, 144f), new Color(0.032f, 0.05f, 0.06f, 0.94f));
-
-            CreateRecipeMonsterCell(root.transform, "ParentA", parentA, new Vector2(-86f, 10f));
-            CreateText("Plus", root.transform, "+", 19, FontStyle.Bold,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(-36f, 16f), new Vector2(20f, 28f), TextAnchor.MiddleCenter, AccentGold);
-            CreateRecipeMonsterCell(root.transform, "ParentB", parentB, new Vector2(17f, 10f));
-            CreateText("Arrow", root.transform, ">", 19, FontStyle.Bold,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(69f, 16f), new Vector2(22f, 28f), TextAnchor.MiddleCenter, AccentCyan);
-            CreateRecipeMonsterCell(root.transform, "Result", result, new Vector2(112f, 10f));
-        }
-
-        private void CreateRecipeMonsterCell(Transform parent, string name, MonsterDataSO monsterData, Vector2 anchoredPosition)
-        {
-            GameObject cell = CreatePanel(name + "Cell", parent, ResolveCardFramePath(monsterData),
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                anchoredPosition, new Vector2(84f, 106f), CardFallbackColor);
-
-            CreateImage("Icon", cell.transform, GetPortraitResourcePath(monsterData),
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                Vector2.zero, new Vector2(72f, 72f));
         }
 
         private void UpdateCounter(List<MonsterDataSO> monsters)
@@ -876,6 +1003,20 @@ namespace WitchTower.Home
             }
 
             Sprite sprite = Resources.Load<Sprite>(resourcePath);
+            if (sprite == null)
+            {
+                Texture2D texture = Resources.Load<Texture2D>(resourcePath);
+                if (texture != null)
+                {
+                    sprite = Sprite.Create(
+                        texture,
+                        new Rect(0f, 0f, texture.width, texture.height),
+                        new Vector2(0.5f, 0.5f),
+                        100f);
+                    sprite.name = texture.name;
+                }
+            }
+
             spriteCache[resourcePath] = sprite;
             return sprite;
         }
@@ -926,6 +1067,19 @@ namespace WitchTower.Home
             text.resizeTextMinSize = Mathf.Max(8, minSize);
             text.resizeTextMaxSize = Mathf.Max(text.resizeTextMinSize, maxSize);
             text.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
+        private static void AddTextContrast(Text text)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            Outline outline = text.gameObject.GetComponent<Outline>() ?? text.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0f, 0f, 0f, 0.88f);
+            outline.effectDistance = new Vector2(2f, -2f);
+            outline.useGraphicAlpha = true;
         }
 
         private static GameObject CreateUiObject(string objectName, Transform parent)

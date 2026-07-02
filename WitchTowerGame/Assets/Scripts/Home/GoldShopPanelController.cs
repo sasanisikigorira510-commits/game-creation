@@ -10,6 +10,10 @@ namespace WitchTower.Home
 {
     public sealed class GoldShopPanelController : MonoBehaviour
     {
+        private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
+        private const string TutorialHighlightFramePath = "UI/Tutorial/TutorialSummonHighlightFrameImage2";
+        private const string BuyButtonFrameSpritePath = "UI/FusionPage/FusionConfirmButton";
+
         private sealed class ProductCardView
         {
             public GoldShopProductDefinition Product;
@@ -23,6 +27,10 @@ namespace WitchTower.Home
         private static readonly Color AccentGold = new Color(1f, 0.78f, 0.30f, 1f);
         private static readonly Color TextMain = new Color(1f, 0.98f, 0.90f, 1f);
         private static readonly Color TextSub = new Color(0.86f, 0.78f, 0.62f, 1f);
+        private static readonly Color BuyButtonBackingColor = new Color(0.72f, 0.36f, 0.05f, 0.70f);
+        private static readonly Color BuyButtonGlowColor = new Color(1f, 0.72f, 0.18f, 0.34f);
+        private static readonly Color BuyButtonDisabledColor = new Color(0.23f, 0.21f, 0.18f, 0.72f);
+        private static readonly Color BuyButtonDisabledText = new Color(0.58f, 0.54f, 0.46f, 1f);
 
         private readonly List<ProductCardView> productCards = new List<ProductCardView>();
         private Action onClosed;
@@ -30,6 +38,9 @@ namespace WitchTower.Home
         private Text goldBalanceText;
         private Text playerStatusText;
         private Text messageText;
+        private GameObject shopTutorialGuideRoot;
+        private Image shopTutorialGuideCharacterImage;
+        private Image shopTutorialHomeHighlight;
         private bool isBuilt;
 
         public void Show(Action closeCallback)
@@ -73,14 +84,7 @@ namespace WitchTower.Home
                 bool canBuy = profile != null && profile.Gold >= card.Product.Cost && !equipmentStorageFull;
                 if (card.BuyButton != null)
                 {
-                    card.BuyButton.interactable = canBuy;
-                    Image buttonImage = card.BuyButton.GetComponent<Image>();
-                    if (buttonImage != null)
-                    {
-                        buttonImage.color = canBuy
-                            ? new Color(0.42f, 0.24f, 0.06f, 1f)
-                            : new Color(0.16f, 0.14f, 0.11f, 0.88f);
-                    }
+                    ApplyBuyButtonVisualState(card.BuyButton, canBuy);
                 }
 
                 if (card.PriceText != null)
@@ -88,6 +92,13 @@ namespace WitchTower.Home
                     card.PriceText.color = canBuy ? AccentGold : new Color(0.58f, 0.54f, 0.46f, 1f);
                 }
             }
+
+            RefreshShopTutorialGuide();
+        }
+
+        private void Update()
+        {
+            AnimateShopTutorialGuide();
         }
 
         private void Build()
@@ -131,8 +142,129 @@ namespace WitchTower.Home
             messageText = CreateText("Message", panel.transform, "商品を選んでください。", 22, FontStyle.Bold,
                 new Vector2(0f, -1500f), new Vector2(820f, 60f), TextMain, TextAnchor.MiddleCenter);
 
-            HomeReturnButtonStyle.Create(transform, "ShopCloseButton", Hide);
+            Button closeButton = HomeReturnButtonStyle.Create(transform, "ShopCloseButton", Hide);
+            BuildShopTutorialGuide(panel.transform, closeButton != null ? closeButton.transform : null);
             isBuilt = true;
+        }
+
+        private void BuildShopTutorialGuide(Transform panelTransform, Transform closeButtonTransform)
+        {
+            if (panelTransform == null || shopTutorialGuideRoot != null)
+            {
+                return;
+            }
+
+            shopTutorialGuideRoot = CreatePanel("ShopTutorialGuideRoot", panelTransform, null,
+                new Vector2(0f, -1350f), new Vector2(920f, 300f), new Color(0.025f, 0.035f, 0.055f, 0.98f));
+
+            Outline panelOutline = shopTutorialGuideRoot.AddComponent<Outline>();
+            panelOutline.effectColor = new Color(1f, 0.78f, 0.24f, 0.94f);
+            panelOutline.effectDistance = new Vector2(4f, -4f);
+            panelOutline.useGraphicAlpha = false;
+
+            shopTutorialGuideCharacterImage = CreateImage("ShopTutorialGuideLuse", shopTutorialGuideRoot.transform,
+                TutorialGuideSpritePath, new Vector2(-323f, -38f), new Vector2(218f, 218f));
+
+            Text badgeText = CreateText("ShopTutorialGuideBadge", shopTutorialGuideRoot.transform, "TUTORIAL", 17, FontStyle.Bold,
+                new Vector2(-116f, -22f), new Vector2(136f, 28f), AccentGold, TextAnchor.MiddleCenter);
+            AddTextContrast(badgeText);
+
+            Text titleText = CreateText("ShopTutorialGuideTitle", shopTutorialGuideRoot.transform, "ルシェの商店案内", 29, FontStyle.Bold,
+                new Vector2(116f, -56f), new Vector2(560f, 36f), new Color(1f, 0.96f, 0.78f, 1f), TextAnchor.MiddleLeft);
+            AddTextContrast(titleText);
+
+            Text bodyText = CreateText("ShopTutorialGuideBody", shopTutorialGuideRoot.transform,
+                "商店では、探索で集めたゴールドを装備や通常遺物と交換できます。\n今回は場所を確認できれば大丈夫です。\n左上の「ホームへ戻る」から拠点へ戻りましょう。",
+                19, FontStyle.Bold, new Vector2(116f, -102f), new Vector2(590f, 116f),
+                new Color(0.96f, 0.95f, 0.88f, 1f), TextAnchor.UpperLeft);
+            bodyText.resizeTextForBestFit = true;
+            bodyText.resizeTextMinSize = 15;
+            bodyText.resizeTextMaxSize = 19;
+            AddTextContrast(bodyText);
+
+            Text footerText = CreateText("ShopTutorialGuideFooter", shopTutorialGuideRoot.transform,
+                "次の操作: 左上の「ホームへ戻る」をタップ", 18, FontStyle.Bold,
+                new Vector2(116f, -248f), new Vector2(590f, 30f), new Color(0.78f, 0.92f, 1f, 1f), TextAnchor.MiddleLeft);
+            AddTextContrast(footerText);
+
+            if (closeButtonTransform != null)
+            {
+                shopTutorialHomeHighlight = CreateImage("ShopTutorialHomeHighlight", closeButtonTransform,
+                    TutorialHighlightFramePath, Vector2.zero, HomeReturnButtonStyle.Size + new Vector2(34f, 30f));
+                RectTransform highlightRect = shopTutorialHomeHighlight.rectTransform;
+                highlightRect.anchorMin = new Vector2(0.5f, 0.5f);
+                highlightRect.anchorMax = new Vector2(0.5f, 0.5f);
+                highlightRect.pivot = new Vector2(0.5f, 0.5f);
+                highlightRect.anchoredPosition = Vector2.zero;
+                shopTutorialHomeHighlight.preserveAspect = false;
+                shopTutorialHomeHighlight.transform.SetAsLastSibling();
+                shopTutorialHomeHighlight.gameObject.SetActive(false);
+            }
+
+            shopTutorialGuideRoot.SetActive(false);
+        }
+
+        private void RefreshShopTutorialGuide()
+        {
+            bool shouldShow = ShouldShowShopTutorialGuide();
+            if (shopTutorialGuideRoot != null)
+            {
+                shopTutorialGuideRoot.SetActive(shouldShow);
+                if (shouldShow)
+                {
+                    shopTutorialGuideRoot.transform.SetAsLastSibling();
+                }
+            }
+
+            if (shopTutorialHomeHighlight != null)
+            {
+                shopTutorialHomeHighlight.gameObject.SetActive(shouldShow);
+                if (shouldShow)
+                {
+                    shopTutorialHomeHighlight.transform.SetAsLastSibling();
+                }
+            }
+        }
+
+        private static bool ShouldShowShopTutorialGuide()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
+            return tutorialEvent != null &&
+                tutorialEvent.EventId == StoryTutorialService.HintShop &&
+                string.Equals(tutorialEvent.TargetKey, "home.shop", StringComparison.Ordinal);
+        }
+
+        private static void CompleteShopTutorialGuide()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            bool changed = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintShop);
+            if (changed && Application.isPlaying)
+            {
+                SaveManager.Instance?.SaveCurrentGame();
+            }
+        }
+
+        private void AnimateShopTutorialGuide()
+        {
+            if (shopTutorialGuideRoot == null || !shopTutorialGuideRoot.activeInHierarchy)
+            {
+                return;
+            }
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5.1f);
+            if (shopTutorialGuideCharacterImage != null)
+            {
+                float scale = Mathf.Lerp(0.985f, 1.035f, pulse);
+                shopTutorialGuideCharacterImage.rectTransform.localScale = new Vector3(scale, scale, 1f);
+            }
+
+            if (shopTutorialHomeHighlight != null)
+            {
+                shopTutorialHomeHighlight.color = new Color(1f, 1f, 1f, Mathf.Lerp(0.74f, 1f, pulse));
+                float scale = Mathf.Lerp(0.99f, 1.035f, pulse);
+                shopTutorialHomeHighlight.rectTransform.localScale = new Vector3(scale, scale, 1f);
+            }
         }
 
         private void CreateProductCard(Transform parent, GoldShopProductDefinition product, Vector2 position)
@@ -145,6 +277,7 @@ namespace WitchTower.Home
                 GoldShopRewardType.PlayerExp => "TRAINING",
                 GoldShopRewardType.FreeGachaStones => "STONE",
                 GoldShopRewardType.Equipment => "EQUIPMENT",
+                GoldShopRewardType.EnhancementRelic => "RELIC",
                 GoldShopRewardType.MonsterStorage => "STORAGE",
                 _ => "ITEM"
             };
@@ -159,7 +292,7 @@ namespace WitchTower.Home
             Text priceText = CreateText("Price", card.transform, $"{product.Cost:N0} G", 28, FontStyle.Bold,
                 new Vector2(0f, -184f), new Vector2(300f, 42f), AccentGold, TextAnchor.MiddleCenter);
 
-            Button buyButton = CreateButton("BuyButton", card.transform, "購入", new Vector2(0f, -252f), new Vector2(260f, 70f),
+            Button buyButton = CreateButton("BuyButton", card.transform, "購入", new Vector2(0f, -226f), new Vector2(320f, 84f),
                 () => Purchase(product.Id));
             productCards.Add(new ProductCardView
             {
@@ -189,8 +322,59 @@ namespace WitchTower.Home
 
         private void Hide()
         {
+            if (ShouldShowShopTutorialGuide())
+            {
+                CompleteShopTutorialGuide();
+            }
+
             gameObject.SetActive(false);
             onClosed?.Invoke();
+        }
+
+        private Image CreateImage(string name, Transform parent, string spritePath, Vector2 position, Vector2 size)
+        {
+            GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            root.transform.SetParent(parent, false);
+            RectTransform rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+
+            Image image = root.GetComponent<Image>();
+            image.sprite = LoadSprite(spritePath);
+            image.color = image.sprite != null ? Color.white : new Color(1f, 1f, 1f, 0.12f);
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            return image;
+        }
+
+        private static Sprite LoadSprite(string resourcePath)
+        {
+            Sprite sprite = Resources.Load<Sprite>(resourcePath);
+            if (sprite != null)
+            {
+                return sprite;
+            }
+
+            Texture2D texture = Resources.Load<Texture2D>(resourcePath);
+            return texture != null
+                ? Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f)
+                : null;
+        }
+
+        private static void AddTextContrast(Text text)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            Outline outline = text.gameObject.GetComponent<Outline>() ?? text.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0f, 0f, 0f, 0.88f);
+            outline.effectDistance = new Vector2(2f, -2f);
+            outline.useGraphicAlpha = true;
         }
 
         private GameObject CreatePanel(string name, Transform parent, string spritePath, Vector2 position, Vector2 size, Color fallbackColor)
@@ -264,15 +448,104 @@ namespace WitchTower.Home
             rect.sizeDelta = size;
 
             Image image = root.GetComponent<Image>();
-            image.sprite = Resources.Load<Sprite>("UI/FusionPage/FusionSmallButton");
-            image.color = image.sprite != null ? Color.white : new Color(0.42f, 0.24f, 0.06f, 1f);
+            image.sprite = Resources.Load<Sprite>(BuyButtonFrameSpritePath);
+            image.color = Color.white;
+            image.preserveAspect = false;
             image.raycastTarget = true;
+
+            Shadow shadow = root.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.74f);
+            shadow.effectDistance = new Vector2(0f, -7f);
+            shadow.useGraphicAlpha = true;
+
+            Outline outline = root.AddComponent<Outline>();
+            outline.effectColor = new Color(1f, 0.83f, 0.30f, 0.88f);
+            outline.effectDistance = new Vector2(3f, -3f);
+            outline.useGraphicAlpha = false;
+
+            CreateButtonLayer("Glow", root.transform, new Vector2(0f, -10f),
+                new Vector2(size.x - 26f, size.y - 20f), BuyButtonGlowColor);
+            CreateButtonLayer("VisibilityBacking", root.transform, new Vector2(0f, -21f),
+                new Vector2(size.x - 84f, size.y - 40f), BuyButtonBackingColor);
 
             Button button = root.GetComponent<Button>();
             button.targetGraphic = image;
             button.onClick.AddListener(action);
-            CreateText("Label", root.transform, label, 23, FontStyle.Bold, new Vector2(0f, -15f), new Vector2(220f, 42f), TextMain, TextAnchor.MiddleCenter);
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 0.92f, 0.68f, 1f);
+            colors.pressedColor = new Color(0.86f, 0.56f, 0.18f, 1f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.disabledColor = new Color(0.48f, 0.45f, 0.38f, 0.74f);
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
+
+            Text labelText = CreateText("Label", root.transform, label, 28, FontStyle.Bold,
+                new Vector2(0f, -18f), new Vector2(size.x - 72f, size.y - 32f), TextMain, TextAnchor.MiddleCenter);
+            AddTextContrast(labelText);
+            ApplyBuyButtonVisualState(button, true);
             return button;
+        }
+
+        private Image CreateButtonLayer(string name, Transform parent, Vector2 position, Vector2 size, Color color)
+        {
+            GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            root.transform.SetParent(parent, false);
+            RectTransform rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+
+            Image image = root.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
+            return image;
+        }
+
+        private static void ApplyBuyButtonVisualState(Button button, bool canBuy)
+        {
+            button.interactable = canBuy;
+
+            Image buttonImage = button.GetComponent<Image>();
+            if (buttonImage != null)
+            {
+                buttonImage.color = canBuy ? Color.white : new Color(0.48f, 0.45f, 0.38f, 0.74f);
+            }
+
+            Image glowImage = FindChildImage(button.transform, "Glow");
+            if (glowImage != null)
+            {
+                glowImage.color = canBuy ? BuyButtonGlowColor : new Color(0f, 0f, 0f, 0.18f);
+            }
+
+            Image backingImage = FindChildImage(button.transform, "VisibilityBacking");
+            if (backingImage != null)
+            {
+                backingImage.color = canBuy ? BuyButtonBackingColor : BuyButtonDisabledColor;
+            }
+
+            Outline outline = button.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.effectColor = canBuy
+                    ? new Color(1f, 0.83f, 0.30f, 0.88f)
+                    : new Color(0.22f, 0.20f, 0.17f, 0.70f);
+            }
+
+            Text labelText = button.GetComponentInChildren<Text>(true);
+            if (labelText != null)
+            {
+                labelText.color = canBuy ? TextMain : BuyButtonDisabledText;
+            }
+        }
+
+        private static Image FindChildImage(Transform parent, string childName)
+        {
+            Transform child = parent != null ? parent.Find(childName) : null;
+            return child != null ? child.GetComponent<Image>() : null;
         }
 
         private void ClearChildren()

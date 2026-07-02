@@ -17,6 +17,7 @@ namespace WitchTower.Home
 
         private void OnEnable()
         {
+            DisableRemovedIdleRewardUi();
             Refresh();
         }
 
@@ -33,11 +34,6 @@ namespace WitchTower.Home
             if (resourceView != null)
             {
                 resourceView.Bind(profile);
-            }
-
-            if (idleRewardView != null)
-            {
-                idleRewardView.Bind(profile != null ? profile.PendingIdleRewardGold : 0);
             }
 
             if (ctaText != null)
@@ -63,15 +59,24 @@ namespace WitchTower.Home
 
         public void ClaimIdleReward()
         {
-            var profile = GameManager.Instance.PlayerProfile;
-            var reward = IdleRewardService.Claim(profile, System.DateTime.Now);
-            if (reward > 0)
+            DisableRemovedIdleRewardUi();
+        }
+
+        private void DisableRemovedIdleRewardUi()
+        {
+            if (idleRewardView != null)
             {
-                SaveManager.Instance.SaveCurrentGame();
+                idleRewardView.gameObject.SetActive(false);
             }
 
-            Refresh();
-            Object.FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
+            Transform[] descendants = GetComponentsInChildren<Transform>(true);
+            foreach (Transform descendant in descendants)
+            {
+                if (descendant != null && descendant.name == "ClaimIdleRewardButton")
+                {
+                    descendant.gameObject.SetActive(false);
+                }
+            }
         }
     }
 }

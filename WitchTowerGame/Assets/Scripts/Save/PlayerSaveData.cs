@@ -18,12 +18,17 @@ namespace WitchTower.Save
         public int HpUpgradeLevel;
         public bool HasAutoRepeatFloorUpgrade;
         public int AutoRepeatFloorUpgradeEnabledState;
+        public bool HasAutoSellEquipmentUpgrade;
+        public int AutoSellEquipmentUpgradeEnabledState;
+        public int AutoSellEquipmentQualityThreshold;
+        public bool HasAutoReleaseMonsterUpgrade;
+        public int AutoReleaseMonsterUpgradeEnabledState;
+        public int AutoReleaseMonsterIndividualValueThreshold;
         public string LastDailyRewardDate;
         public string DailyQuestProgressDate;
         public int DailyBattleWinCount;
         public List<string> DailyClaimedQuestIds;
         public string LastActiveAt;
-        public int PendingIdleRewardGold;
         public List<MissionProgressData> MissionProgressList;
         public string EquippedWeaponId;
         public string EquippedArmorId;
@@ -49,7 +54,7 @@ namespace WitchTower.Save
                 PlayerLevel = 1,
                 PlayerExp = 0,
                 Gold = 100,
-                FreeGachaStones = 3000,
+                FreeGachaStones = 300,
                 PaidGachaStones = 0,
                 HighestFloor = 0,
                 CurrentFloor = 1,
@@ -58,12 +63,17 @@ namespace WitchTower.Save
                 HpUpgradeLevel = 0,
                 HasAutoRepeatFloorUpgrade = false,
                 AutoRepeatFloorUpgradeEnabledState = 0,
+                HasAutoSellEquipmentUpgrade = false,
+                AutoSellEquipmentUpgradeEnabledState = 0,
+                AutoSellEquipmentQualityThreshold = 3,
+                HasAutoReleaseMonsterUpgrade = false,
+                AutoReleaseMonsterUpgradeEnabledState = 0,
+                AutoReleaseMonsterIndividualValueThreshold = 50,
                 LastDailyRewardDate = string.Empty,
                 DailyQuestProgressDate = string.Empty,
                 DailyBattleWinCount = 0,
                 DailyClaimedQuestIds = new List<string>(),
                 LastActiveAt = string.Empty,
-                PendingIdleRewardGold = 0,
                 MissionProgressList = new List<MissionProgressData>
                 {
                     new MissionProgressData
@@ -79,70 +89,12 @@ namespace WitchTower.Save
                         IsClaimed = false
                     }
                 },
-                EquippedWeaponId = "equip_bronze_blade",
-                EquippedArmorId = "equip_guard_cloth",
-                EquippedAccessoryId = "equip_ashen_ring",
+                EquippedWeaponId = string.Empty,
+                EquippedArmorId = string.Empty,
+                EquippedAccessoryId = string.Empty,
                 OwnedMaterials = new List<OwnedMaterialData>(),
-                OwnedEquipments = new List<OwnedEquipmentData>
-                {
-                    new OwnedEquipmentData
-                    {
-                        InstanceId = "equipinst_bronze_blade_001",
-                        EquipmentId = "equip_bronze_blade",
-                        UpgradeLevel = 0,
-                        EnhancementBonusRate = 0f,
-                        QualityRank = 1,
-                        RemainingEnhanceAttempts = 5,
-                        MaxEnhanceAttempts = 5,
-                        IsEquipped = false,
-                        IsLocked = false,
-                        EquippedMonsterInstanceId = string.Empty
-                    },
-                    new OwnedEquipmentData
-                    {
-                        InstanceId = "equipinst_guard_cloth_001",
-                        EquipmentId = "equip_guard_cloth",
-                        UpgradeLevel = 0,
-                        EnhancementBonusRate = 0f,
-                        QualityRank = 1,
-                        RemainingEnhanceAttempts = 5,
-                        MaxEnhanceAttempts = 5,
-                        IsEquipped = false,
-                        IsLocked = false,
-                        EquippedMonsterInstanceId = string.Empty
-                    },
-                    new OwnedEquipmentData
-                    {
-                        InstanceId = "equipinst_ashen_ring_001",
-                        EquipmentId = "equip_ashen_ring",
-                        UpgradeLevel = 0,
-                        EnhancementBonusRate = 0f,
-                        QualityRank = 2,
-                        RemainingEnhanceAttempts = 5,
-                        MaxEnhanceAttempts = 5,
-                        IsEquipped = false,
-                        IsLocked = false,
-                        EquippedMonsterInstanceId = string.Empty
-                    }
-                },
-                OwnedEnhancementRelics = new List<OwnedEnhancementRelicData>
-                {
-                    new OwnedEnhancementRelicData
-                    {
-                        RelicId = "relic_safe_ember",
-                        Amount = 24
-                    },
-                    new OwnedEnhancementRelicData
-                    {
-                        RelicId = "relic_risky_ember",
-                        Amount = 12
-                    },
-                    new OwnedEnhancementRelicData
-                    {
-                        RelicId = "relic_volatile_ember",
-                        Amount = 6
-                    }
-                },
+                OwnedEquipments = new List<OwnedEquipmentData>(),
+                OwnedEnhancementRelics = new List<OwnedEnhancementRelicData>(),
                 EquipmentStorageLimit = 100,
                 MonsterStorageLimit = 100,
                 OwnedMonsters = new List<OwnedMonsterData>(),

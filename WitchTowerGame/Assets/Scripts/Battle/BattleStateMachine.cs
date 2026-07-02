@@ -16,6 +16,12 @@ namespace WitchTower.Battle
         private readonly List<int> displayedEnemyHpByIndex = new List<int>();
         private int displayedPlayerHp;
         private int displayedEnemyHp;
+        private int displayedWaveEnemyHp;
+        private int displayedWaveEnemyMaxHp;
+        private int displayedWaveEnemyFloor;
+        private int displayedWaveEnemyWave;
+        private int displayedWaveEnemyEncounterSerial;
+        private bool hasDisplayedWaveEnemyHp;
         private BattleResult pendingResult;
 
         private struct PendingPresentedHit
@@ -49,6 +55,7 @@ namespace WitchTower.Battle
             pendingPresentedHits.Clear();
             pendingResult = BattleResult.None;
             SyncDisplayedHpToActual();
+            ResetDisplayedWaveEnemyHp();
             hudController.ShowFloor(floor);
             hudController.ShowEncounterReadout(floor, simulator.PlayerStats, simulator.EnemyStats);
             UpdateDisplayedHpHud();
@@ -228,9 +235,11 @@ namespace WitchTower.Battle
             }
 
             EnsureDisplayedAllyHpCapacity();
+            int actualHp = simulator.GetAllyCurrentHp(index);
+            int maxHp = simulator.GetAllyMaxHp(index);
             return index >= 0 && index < displayedAllyHpBySlot.Count
-                ? Mathf.Clamp(displayedAllyHpBySlot[index], simulator.GetAllyCurrentHp(index), simulator.GetAllyMaxHp(index))
-                : simulator.GetAllyCurrentHp(index);
+                ? ResolveHpBarCurrentHp(displayedAllyHpBySlot[index], actualHp, maxHp)
+                : actualHp;
         }
 
         public int GetDisplayedEnemyCurrentHp(int index)
@@ -241,9 +250,11 @@ namespace WitchTower.Battle
             }
 
             EnsureDisplayedEnemyHpCapacity();
+            int actualHp = simulator.GetEnemyCurrentHp(index);
+            int maxHp = simulator.GetEnemyMaxHp(index);
             return index >= 0 && index < displayedEnemyHpByIndex.Count
-                ? Mathf.Clamp(displayedEnemyHpByIndex[index], simulator.GetEnemyCurrentHp(index), simulator.GetEnemyMaxHp(index))
-                : simulator.GetEnemyCurrentHp(index);
+                ? ResolveHpBarCurrentHp(displayedEnemyHpByIndex[index], actualHp, maxHp)
+                : actualHp;
         }
 
         private void ApplyDisplayedUnitDamage(BattleHitInfo hitInfo)
@@ -431,14 +442,83 @@ namespace WitchTower.Battle
 
             BattleUnitStats playerStats = simulator.PlayerStats;
             BattleUnitStats enemyStats = simulator.EnemyStats;
-            if (playerStats == null || enemyStats == null)
+            if (playerStats == null)
             {
                 hudController.UpdateHp(playerStats, enemyStats);
                 return;
             }
 
             ClampDisplayedHpToActualBounds();
-            hudController.UpdateHp(displayedPlayerHp, playerStats.MaxHp, displayedEnemyHp, enemyStats.MaxHp);
+            int playerHpForBar = ResolveHpBarCurrentHp(displayedPlayerHp, playerStats.CurrentHp, playerStats.MaxHp);
+            int enemyMaxHpForBar = simulator.CurrentWaveEnemyMaxHp;
+            int enemyActualHpForBar = simulator.CurrentWaveEnemyCurrentHp;
+            if (enemyMaxHpForBar <= 0 && enemyStats != null)
+            {
+                enemyMaxHpForBar = enemyStats.MaxHp;
+                enemyActualHpForBar = enemyStats.CurrentHp;
+            }
+
+            int enemyHpForBar = ResolveDisplayedWaveEnemyHp(enemyActualHpForBar, enemyMaxHpForBar);
+            hudController.UpdateHp(playerHpForBar, playerStats.MaxHp, enemyHpForBar, enemyMaxHpForBar);
+        }
+
+        private static int ResolveHpBarCurrentHp(int displayedHp, int actualHp, int maxHp)
+        {
+            return Mathf.Clamp(Mathf.Min(displayedHp, actualHp), 0, Mathf.Max(0, maxHp));
+        }
+
+        private void ResetDisplayedWaveEnemyHp()
+        {
+            displayedWaveEnemyHp = 0;
+            displayedWaveEnemyMaxHp = 0;
+            displayedWaveEnemyFloor = simulator != null ? simulator.CurrentFloor : 0;
+            displayedWaveEnemyWave = simulator != null ? simulator.CurrentWave : 0;
+            displayedWaveEnemyEncounterSerial = simulator != null ? simulator.EncounterSerial : 0;
+            hasDisplayedWaveEnemyHp = false;
+        }
+
+        private int ResolveDisplayedWaveEnemyHp(int actualHp, int maxHp)
+        {
+            int clampedMaxHp = Mathf.Max(0, maxHp);
+            int clampedActualHp = Mathf.Clamp(actualHp, 0, clampedMaxHp);
+            if (clampedMaxHp <= 0)
+            {
+                ResetDisplayedWaveEnemyHp();
+                return 0;
+            }
+
+            int currentFloor = simulator != null ? simulator.CurrentFloor : 0;
+            int currentWave = simulator != null ? simulator.CurrentWave : 0;
+            int currentEncounterSerial = simulator != null ? simulator.EncounterSerial : 0;
+            bool waveChanged = !hasDisplayedWaveEnemyHp ||
+                displayedWaveEnemyFloor != currentFloor ||
+                displayedWaveEnemyWave != currentWave;
+            if (waveChanged)
+            {
+                displayedWaveEnemyHp = clampedActualHp;
+                displayedWaveEnemyMaxHp = clampedMaxHp;
+                displayedWaveEnemyFloor = currentFloor;
+                displayedWaveEnemyWave = currentWave;
+                displayedWaveEnemyEncounterSerial = currentEncounterSerial;
+                hasDisplayedWaveEnemyHp = true;
+                return displayedWaveEnemyHp;
+            }
+
+            float actualRatio = clampedMaxHp > 0 ? (float)clampedActualHp / clampedMaxHp : 0f;
+            float previousRatio = displayedWaveEnemyMaxHp > 0
+                ? (float)Mathf.Clamp(displayedWaveEnemyHp, 0, displayedWaveEnemyMaxHp) / displayedWaveEnemyMaxHp
+                : actualRatio;
+            bool encounterChanged = displayedWaveEnemyEncounterSerial != currentEncounterSerial;
+            float resolvedRatio = encounterChanged ? Mathf.Min(actualRatio, previousRatio) : actualRatio;
+            displayedWaveEnemyHp = Mathf.Min(
+                clampedActualHp,
+                Mathf.Clamp(Mathf.FloorToInt(resolvedRatio * clampedMaxHp), 0, clampedMaxHp));
+            displayedWaveEnemyMaxHp = clampedMaxHp;
+            displayedWaveEnemyFloor = currentFloor;
+            displayedWaveEnemyWave = currentWave;
+            displayedWaveEnemyEncounterSerial = currentEncounterSerial;
+            hasDisplayedWaveEnemyHp = true;
+            return displayedWaveEnemyHp;
         }
 
         private void SetState(BattleFlowState nextState)
