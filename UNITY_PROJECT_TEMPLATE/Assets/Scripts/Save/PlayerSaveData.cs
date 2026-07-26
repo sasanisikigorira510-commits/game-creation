@@ -8,6 +8,9 @@ namespace WitchTower.Save
     {
         public int PlayerLevel;
         public int PlayerExp;
+        public int RebirthPoints;
+        public int TotalRebirthPoints;
+        public int RebirthCount;
         public int Gold;
         public int HighestFloor;
         public int CurrentFloor;
@@ -24,6 +27,7 @@ namespace WitchTower.Save
         public List<OwnedMaterialData> OwnedMaterials;
         public List<OwnedEquipmentData> OwnedEquipments;
         public List<SkillLevelData> SkillLevels;
+        public List<RebirthSkillLevelData> RebirthSkillLevels;
 
         public static PlayerSaveData CreateDefault()
         {
@@ -31,6 +35,9 @@ namespace WitchTower.Save
             {
                 PlayerLevel = 1,
                 PlayerExp = 0,
+                RebirthPoints = 0,
+                TotalRebirthPoints = 0,
+                RebirthCount = 0,
                 Gold = 100,
                 HighestFloor = 1,
                 CurrentFloor = 1,
@@ -98,7 +105,8 @@ namespace WitchTower.Save
                         IsEquipped = false
                     }
                 },
-                SkillLevels = new List<SkillLevelData>()
+                SkillLevels = new List<SkillLevelData>(),
+                RebirthSkillLevels = new List<RebirthSkillLevelData>()
             };
         }
     }
@@ -120,6 +128,13 @@ namespace WitchTower.Save
 
     [Serializable]
     public sealed class SkillLevelData
+    {
+        public string SkillId;
+        public int Level;
+    }
+
+    [Serializable]
+    public sealed class RebirthSkillLevelData
     {
         public string SkillId;
         public int Level;

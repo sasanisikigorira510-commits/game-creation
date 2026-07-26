@@ -27,20 +27,20 @@ namespace WitchTower.Battle
             }
 
             var equipmentBonus = GetEquipmentBonus(profile, weaponOverrideId, armorOverrideId, accessoryOverrideId);
-            int maxHpBase = playerData.initialHp + GetHpBonus(profile, hpLevelOffset);
-            int attackBase = playerData.initialAttack + GetAttackBonus(profile, attackLevelOffset);
-            int wisdomBase = playerData.initialAttack + GetAttackBonus(profile, attackLevelOffset);
-            int defenseBase = playerData.initialDefense + GetDefenseBonus(profile, defenseLevelOffset);
+            int maxHpBase = playerData.initialHp + GetPlayerLevelHpBonus(profile) + GetHpBonus(profile, hpLevelOffset);
+            int attackBase = playerData.initialAttack + GetPlayerLevelAttackBonus(profile) + GetAttackBonus(profile, attackLevelOffset);
+            int wisdomBase = playerData.initialAttack + GetPlayerLevelAttackBonus(profile) + GetAttackBonus(profile, attackLevelOffset);
+            int defenseBase = playerData.initialDefense + GetPlayerLevelDefenseBonus(profile) + GetDefenseBonus(profile, defenseLevelOffset);
             return new BattleUnitStats
             {
-                MaxHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent))),
-                CurrentHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent))),
-                Attack = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(attackBase * (1f + equipmentBonus.AttackPercent))),
-                Wisdom = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(wisdomBase * (1f + equipmentBonus.WisdomPercent))),
-                Defense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.DefensePercent))),
-                MagicDefense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.MagicDefensePercent))),
-                AttackSpeed = playerData.initialAttackSpeed + equipmentBonus.AttackSpeed,
-                CritRate = playerData.initialCritRate + equipmentBonus.CritRate,
+                MaxHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent) * GetHpMultiplier(profile))),
+                CurrentHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent) * GetHpMultiplier(profile))),
+                Attack = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(attackBase * (1f + equipmentBonus.AttackPercent) * GetAttackMultiplier(profile))),
+                Wisdom = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(wisdomBase * (1f + equipmentBonus.WisdomPercent) * GetAttackMultiplier(profile))),
+                Defense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.DefensePercent) * GetDefenseMultiplier(profile))),
+                MagicDefense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.MagicDefensePercent) * GetDefenseMultiplier(profile))),
+                AttackSpeed = (playerData.initialAttackSpeed + equipmentBonus.AttackSpeed) * GetAttackSpeedMultiplier(profile),
+                CritRate = UnityEngine.Mathf.Clamp01(playerData.initialCritRate + equipmentBonus.CritRate + GetCritRateBonus(profile)),
                 CritDamage = playerData.initialCritDamage
             };
         }
@@ -64,22 +64,62 @@ namespace WitchTower.Battle
         private static BattleUnitStats CreateFallback(PlayerProfile profile, int attackLevelOffset, int defenseLevelOffset, int hpLevelOffset, string weaponOverrideId, string armorOverrideId, string accessoryOverrideId)
         {
             var equipmentBonus = GetEquipmentBonus(profile, weaponOverrideId, armorOverrideId, accessoryOverrideId);
-            int maxHpBase = 100 + GetHpBonus(profile, hpLevelOffset);
-            int attackBase = 15 + GetAttackBonus(profile, attackLevelOffset);
-            int wisdomBase = 15 + GetAttackBonus(profile, attackLevelOffset);
-            int defenseBase = 5 + GetDefenseBonus(profile, defenseLevelOffset);
+            int maxHpBase = 100 + GetPlayerLevelHpBonus(profile) + GetHpBonus(profile, hpLevelOffset);
+            int attackBase = 15 + GetPlayerLevelAttackBonus(profile) + GetAttackBonus(profile, attackLevelOffset);
+            int wisdomBase = 15 + GetPlayerLevelAttackBonus(profile) + GetAttackBonus(profile, attackLevelOffset);
+            int defenseBase = 5 + GetPlayerLevelDefenseBonus(profile) + GetDefenseBonus(profile, defenseLevelOffset);
             return new BattleUnitStats
             {
-                MaxHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent))),
-                CurrentHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent))),
-                Attack = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(attackBase * (1f + equipmentBonus.AttackPercent))),
-                Wisdom = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(wisdomBase * (1f + equipmentBonus.WisdomPercent))),
-                Defense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.DefensePercent))),
-                MagicDefense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.MagicDefensePercent))),
-                AttackSpeed = 1.0f + equipmentBonus.AttackSpeed,
-                CritRate = 0.05f + equipmentBonus.CritRate,
+                MaxHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent) * GetHpMultiplier(profile))),
+                CurrentHp = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(maxHpBase * (1f + equipmentBonus.HpPercent) * GetHpMultiplier(profile))),
+                Attack = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(attackBase * (1f + equipmentBonus.AttackPercent) * GetAttackMultiplier(profile))),
+                Wisdom = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(wisdomBase * (1f + equipmentBonus.WisdomPercent) * GetAttackMultiplier(profile))),
+                Defense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.DefensePercent) * GetDefenseMultiplier(profile))),
+                MagicDefense = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(defenseBase * (1f + equipmentBonus.MagicDefensePercent) * GetDefenseMultiplier(profile))),
+                AttackSpeed = (1.0f + equipmentBonus.AttackSpeed) * GetAttackSpeedMultiplier(profile),
+                CritRate = UnityEngine.Mathf.Clamp01(0.05f + equipmentBonus.CritRate + GetCritRateBonus(profile)),
                 CritDamage = 1.5f
             };
+        }
+
+        private static int GetPlayerLevelAttackBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetLevelAttackBonus() : 0;
+        }
+
+        private static int GetPlayerLevelDefenseBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetLevelDefenseBonus() : 0;
+        }
+
+        private static int GetPlayerLevelHpBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetLevelHpBonus() : 0;
+        }
+
+        private static float GetAttackMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetAttackMultiplier() : 1f;
+        }
+
+        private static float GetDefenseMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetDefenseMultiplier() : 1f;
+        }
+
+        private static float GetHpMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetHpMultiplier() : 1f;
+        }
+
+        private static float GetAttackSpeedMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetAttackSpeedMultiplier() : 1f;
+        }
+
+        private static float GetCritRateBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetCritRateBonus() : 0f;
         }
 
         private static int GetAttackBonus(PlayerProfile profile, int levelOffset)

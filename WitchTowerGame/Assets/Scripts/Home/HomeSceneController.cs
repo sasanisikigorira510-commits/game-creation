@@ -4,10 +4,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using WitchTower.Battle;
 using WitchTower.Core;
 using WitchTower.Data;
 using WitchTower.Managers;
 using WitchTower.MasterData;
+using WitchTower.Monetization;
 using WitchTower.Save;
 
 namespace WitchTower.Home
@@ -40,6 +42,7 @@ namespace WitchTower.Home
         [SerializeField] private MonsterDexPanelController monsterDexPanelController;
         [SerializeField] private GoldShopPanelController goldShopPanelController;
         [SerializeField] private PaidShopPanelController paidShopPanelController;
+        [SerializeField] private RebirthPanelController rebirthPanelController;
         [SerializeField] private DungeonSelectionPanelController dungeonSelectionPanelController;
         [SerializeField] private string battleSceneName = "BattleScene";
         [SerializeField] private string formationSceneName = "FormationScene";
@@ -53,8 +56,10 @@ namespace WitchTower.Home
         private const string PaidShopButtonFrameSpritePath = "UI/HomeMenu/PaidShopButtonFrame";
         private const string PermanentUpgradeIconSpritePath = "UI/HomeMenu/PermanentUpgradeIcon";
         private const string PermanentUpgradeButtonFrameSpritePath = "UI/HomeMenu/PermanentUpgradeButtonFrame";
+        private const string SkillTreeButtonIconSpritePath = "UI/HomeMenu/SkillTreeButtonImage2";
         private const string PaidShopLabel = "宝晶商店";
         private const string PermanentUpgradeLabel = "永続強化";
+        private const string SkillTreeLabel = "魂樹";
         private const string GoldShopLabel = "商店";
         private const string HomeTopHudFramePath = "UI/HomeRedesign/HomeTopHudFrame";
         private const string HomeBottomNavBarPath = "UI/HomeRedesign/HomeBottomNavBar";
@@ -62,16 +67,25 @@ namespace WitchTower.Home
         private const string HomeTopHudGoldFramePath = "UI/HomeRedesign/HomeTopHudGold";
         private const string HomeTopHudFreeStoneFramePath = "UI/HomeRedesign/HomeTopHudFreeStone";
         private const string HomeTopHudPaidStoneFramePath = "UI/HomeRedesign/HomeTopHudPaidStone";
+        private const string HomeTeamCombatPowerFramePath = "UI/HomeRedesign/HomeTeamCombatPowerFrame";
         private const string HomeFallbackHeroSpritePath = "FamilyMonsterCards/Dragon/dragon_whelp";
         private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
         private const string TutorialPrologueBackgroundPath = "UI/Tutorial/TutorialPrologueContractFurnace";
         private const string TutorialPrologueSparklePath = "UI/Tutorial/TutorialPrologueSpark";
         private const string TutorialSummonHighlightFramePath = "UI/Tutorial/TutorialSummonHighlightFrameImage2";
+        private const string AudioSettingsPanelFramePath = "UI/AudioSettings/SettingsPanelFrameImage2";
+        private const string AudioSettingsGearButtonPath = "UI/AudioSettings/SettingsGearButtonImage2";
+        private const string AudioSettingsActionButtonPath = "UI/AudioSettings/SettingsActionButtonImage2";
+        private const string AudioSettingsSliderTrackPath = "UI/AudioSettings/SettingsSliderTrackImage2";
+        private const string AudioSettingsSliderKnobPath = "UI/AudioSettings/SettingsSliderKnobImage2";
+        private const string AudioSettingsToggleFramePath = "UI/AudioSettings/SettingsToggleFrameImage2";
         private const int TutorialProloguePageCount = 4;
         private const string RockGolemMonsterId = "monster_rock_golem";
         private const string RockGolemHomeHeroSpritePath = "MonsterBattle/mon_rock_golem_attack_0";
-        private const float HomeAdReservedHeight = 170f;
-        private static readonly Vector2 HomeGuidePanelPosition = new Vector2(0f, HomeAdReservedHeight + 1050f);
+        // Keeps the home controls clear of the native banner area when a banner is enabled later.
+        // No Unity-side ad placeholder is drawn while no banner is present.
+        private const float HomeFooterContentInset = 170f;
+        private static readonly Vector2 HomeGuidePanelPosition = new Vector2(0f, HomeFooterContentInset + 1050f);
         private static readonly Vector2 HomeGuidePanelSize = new Vector2(920f, 318f);
         private static readonly Vector2 HomeMenuButtonSize = new Vector2(480f, 250f);
         private static readonly Vector2 HomeMainActionButtonSize = new Vector2(470f, 220f);
@@ -80,7 +94,7 @@ namespace WitchTower.Home
         private const float HomeBottomNavSlotWidth = HomeBottomNavVisualWidth / 5f;
         private const float HomeBottomNavHeight = 190f;
         private const float HomeBottomNavCenterOffsetX = 4f;
-        private const float HomeBottomNavCenterY = HomeAdReservedHeight + 94f;
+        private const float HomeBottomNavCenterY = HomeFooterContentInset + 94f;
         private const float FirstSummonHighlightOffsetX = 11f;
         private const float ShopHighlightOffsetX = 21f;
         private const float DexHighlightOffsetX = 0f;
@@ -117,6 +131,7 @@ namespace WitchTower.Home
             "FusionButton",
             "GoldShopButton",
             "PermanentUpgradeButton",
+            "SkillTreeButton",
             "QuestButton"
         };
         private static readonly string[] TutorialPrologueSpeakers =
@@ -160,6 +175,10 @@ namespace WitchTower.Home
         private static readonly Vector2 HomeTopHudPaidStoneSize = new Vector2(226f, 132f);
         private static readonly Vector2 HomeAudioSettingsButtonPosition = new Vector2(474f, -68f);
         private static readonly Vector2 HomeAudioSettingsButtonSize = new Vector2(88f, 88f);
+        private static readonly Vector2 HomeTeamCombatPowerPanelPosition = new Vector2(0f, -198f);
+        private static readonly Vector2 HomeTeamCombatPowerPanelSize = new Vector2(620f, 110f);
+        private static readonly Vector2 HomeTeamCombatPowerTextPosition = Vector2.zero;
+        private static readonly Vector2 HomeTeamCombatPowerTextSize = new Vector2(500f, 44f);
         private const float HomeResourceAmountLeftReserve = 64f;
         private const float HomeResourceAmountRightPadding = 46f;
         private const float HomeResourceAmountNarrowRightPadding = 56f;
@@ -177,6 +196,8 @@ namespace WitchTower.Home
         private static readonly Vector2 PermanentUpgradeButtonSize = new Vector2(204f, 186f);
         private static readonly Vector2 HomeQuestButtonPosition = new Vector2(456f, -210f);
         private static readonly Vector2 HomeQuestButtonSize = new Vector2(168f, 168f);
+        private static readonly Vector2 SkillTreeButtonPosition = new Vector2(456f, -405f);
+        private static readonly Vector2 SkillTreeButtonSize = new Vector2(168f, 168f);
         private static readonly string[] LegacyHomeObjectNames =
         {
             "ContentRoot",
@@ -195,6 +216,7 @@ namespace WitchTower.Home
         private Text homeFreeStoneText;
         private Text homePaidStoneText;
         private Text homeGoldText;
+        private Text homeTeamCombatPowerText;
         private Text homeExpText;
         private Text homePlayerLevelText;
         private bool homePlayerExpDetailsVisible;
@@ -238,6 +260,8 @@ namespace WitchTower.Home
         private Text permanentUpgradeButtonText;
         private Text permanentUpgradeStatusText;
         private Button permanentUpgradeButton;
+        private Text skillTreeButtonText;
+        private Button skillTreeButton;
         private GameObject audioSettingsRoot;
         private Slider audioSettingsBgmSlider;
         private Slider audioSettingsSeSlider;
@@ -247,7 +271,10 @@ namespace WitchTower.Home
         private Text audioSettingsHapticsValueText;
         private GameObject dailyQuestListRoot;
         private Text dailyQuestStatusText;
+        private BannerAdVisibilityController homeBannerAdVisibilityController;
         private readonly List<DailyQuestCardView> dailyQuestCards = new List<DailyQuestCardView>();
+
+        public BannerAdVisibilityController HomeBannerAdController => homeBannerAdVisibilityController;
 
         private void OnEnable()
         {
@@ -295,6 +322,7 @@ namespace WitchTower.Home
                     EnsureDailyQuestList(unifiedMenuRoot.transform);
                 }
 
+                EnsureHomeBannerAdSlot(unifiedMenuRoot.transform);
                 RefreshHomeStoneBalanceBar();
                 RefreshDailyQuestList();
                 AnimateHomeTutorialFocus();
@@ -516,6 +544,7 @@ namespace WitchTower.Home
                     RemoveHomeAtmosphereOverlays(unifiedMenuRoot.transform);
                     EnsureHomeGuidePanel(unifiedMenuRoot.transform);
                     EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
+                    EnsureHomeBannerAdSlot(unifiedMenuRoot.transform);
                     RefreshHomeStoneBalanceBar();
                     RefreshHomePrologue(GetRuntimeProfile());
                     unifiedMenuRoot.transform.SetAsLastSibling();
@@ -536,7 +565,7 @@ namespace WitchTower.Home
                 DestroySceneObject(existingMenu.gameObject);
             }
 
-            Sprite backgroundSprite = Resources.Load<Sprite>("UI/HomeMenu/HomeMenuBackground");
+            Sprite backgroundSprite = Resources.Load<Sprite>("UI/HomeMenu/HomeMenuBackground_NoAdZone");
             Sprite panelSprite = Resources.Load<Sprite>("UI/HomeMenu/HomeMenuPanel");
             if (backgroundSprite == null)
             {
@@ -548,7 +577,6 @@ namespace WitchTower.Home
             unifiedMenuRoot.transform.SetAsLastSibling();
             CreateMenuImage("UnifiedHomeBackground", unifiedMenuRoot.transform, backgroundSprite, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1080f, 1920f), false);
             CreateHomeAtmosphere(unifiedMenuRoot.transform);
-            CreateAdReservedSpace(unifiedMenuRoot.transform);
             CreateHomeHeroShowcase(unifiedMenuRoot.transform);
             EnsureHomeGuidePanel(unifiedMenuRoot.transform);
 
@@ -559,9 +587,10 @@ namespace WitchTower.Home
             Sprite gachaSprite = Resources.Load<Sprite>("UI/HomeMenu/GachaButton");
             Sprite dexSprite = Resources.Load<Sprite>("UI/HomeMenu/DexButton");
 
-            CreateHomeSpriteButton("BattleButton", unifiedMenuRoot.transform, battleSprite, "冒険開始", new Vector2(-250f, HomeAdReservedHeight + 324f), HomeMainActionButtonSize, StartBattle, 36);
-            CreateHomeSpriteButton("FormationButton", unifiedMenuRoot.transform, formationSprite, "編成", new Vector2(250f, HomeAdReservedHeight + 324f), HomeMainActionButtonSize, OpenFormationMenu, 36);
+            CreateHomeSpriteButton("BattleButton", unifiedMenuRoot.transform, battleSprite, "冒険開始", new Vector2(-250f, HomeFooterContentInset + 324f), HomeMainActionButtonSize, StartBattle, 36);
+            CreateHomeSpriteButton("FormationButton", unifiedMenuRoot.transform, formationSprite, "編成", new Vector2(250f, HomeFooterContentInset + 324f), HomeMainActionButtonSize, OpenFormationMenu, 36);
             CreateHomeBottomNavigation(unifiedMenuRoot.transform, panelSprite, gachaSprite, dexSprite, equipmentSprite, fusionSprite);
+            EnsureHomeBannerAdSlot(unifiedMenuRoot.transform);
             EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
             RefreshHomeStoneBalanceBar();
             RefreshHomePrologue(GetRuntimeProfile());
@@ -690,7 +719,7 @@ namespace WitchTower.Home
 
         public void OpenPaidShopMenu()
         {
-            if (!Application.isPlaying)
+            if (!Application.isPlaying || !MonetizationFeatureFlags.StorefrontEnabled)
             {
                 return;
             }
@@ -721,7 +750,9 @@ namespace WitchTower.Home
 
         public void OpenPermanentUpgradeShop()
         {
-            if (!Application.isPlaying)
+            PlayerProfile profile = GetRuntimeProfile();
+            if (!Application.isPlaying ||
+                (!MonetizationFeatureFlags.StorefrontEnabled && !HasManageablePermanentUpgrade(profile)))
             {
                 return;
             }
@@ -739,7 +770,43 @@ namespace WitchTower.Home
                 return;
             }
 
-            shopPanel.Show(() =>
+            Action closeCallback = () =>
+            {
+                if (unifiedMenuRoot != null)
+                {
+                    unifiedMenuRoot.SetActive(true);
+                    unifiedMenuRoot.transform.SetAsLastSibling();
+                    RefreshHomeStoneBalanceBar();
+                }
+            };
+
+            if (MonetizationFeatureFlags.StorefrontEnabled)
+            {
+                shopPanel.Show(closeCallback);
+                shopPanel.OpenPurchasedPermanentUpgradeList();
+            }
+            else
+            {
+                shopPanel.ShowPurchasedPermanentUpgradeList(closeCallback);
+            }
+        }
+
+        public void OpenSkillTreeScene()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            HideUnifiedMenu();
+            RebirthPanelController skillTreePanel = EnsureRebirthSkillTreePanel();
+            if (skillTreePanel == null)
+            {
+                BuildUnifiedMenu();
+                return;
+            }
+
+            skillTreePanel.Show(() =>
             {
                 if (unifiedMenuRoot != null)
                 {
@@ -748,7 +815,6 @@ namespace WitchTower.Home
                     RefreshHomeStoneBalanceBar();
                 }
             });
-            shopPanel.OpenPurchasedPermanentUpgradeList();
         }
 
         private void HideUnifiedMenu()
@@ -894,6 +960,35 @@ namespace WitchTower.Home
             return paidShopPanelController;
         }
 
+        private RebirthPanelController EnsureRebirthSkillTreePanel()
+        {
+            if (rebirthPanelController != null)
+            {
+                return rebirthPanelController;
+            }
+
+            Canvas canvas = FindObjectOfType<Canvas>(true);
+            if (canvas == null)
+            {
+                return null;
+            }
+
+            Transform existingPanel = canvas.transform.Find("RebirthSkillTreePanel");
+            GameObject panelObject = existingPanel != null
+                ? existingPanel.gameObject
+                : CreateUiRoot("RebirthSkillTreePanel", canvas.transform);
+
+            rebirthPanelController = panelObject.GetComponent<RebirthPanelController>();
+            if (rebirthPanelController == null)
+            {
+                rebirthPanelController = panelObject.AddComponent<RebirthPanelController>();
+            }
+
+            panelObject.SetActive(false);
+            panelObject.transform.SetAsLastSibling();
+            return rebirthPanelController;
+        }
+
         private DungeonSelectionPanelController EnsureDungeonSelectionPanel()
         {
             if (dungeonSelectionPanelController != null)
@@ -1001,17 +1096,92 @@ namespace WitchTower.Home
             }
         }
 
-        private void CreateAdReservedSpace(Transform menuRoot)
+        private void EnsureHomeBannerAdSlot(Transform menuRoot)
         {
-            Image adReserve = CreateTintPanel(
-                "HomeAdReservedSpace",
-                menuRoot,
-                new Vector2(0.5f, 0f),
-                new Vector2(0.5f, 0f),
-                new Vector2(0f, HomeAdReservedHeight * 0.5f),
-                new Vector2(1080f, HomeAdReservedHeight),
-                new Color(0.03f, 0.018f, 0.07f, 0.92f));
-            adReserve.raycastTarget = false;
+            if (menuRoot == null)
+            {
+                return;
+            }
+
+            // Remove the former MISSION / PARTY strip even when an already-built menu is reused.
+            RemoveDirectChild(menuRoot, "HomeLowerIntelStrip");
+
+            Transform existingSlot = menuRoot.Find("HomeBannerAdSlot");
+            GameObject slot = existingSlot != null
+                ? existingSlot.gameObject
+                : new GameObject("HomeBannerAdSlot", typeof(RectTransform));
+            if (existingSlot == null)
+            {
+                slot.transform.SetParent(menuRoot, false);
+            }
+
+            RectTransform slotRect = slot.GetComponent<RectTransform>();
+            slotRect.anchorMin = new Vector2(0.5f, 0f);
+            slotRect.anchorMax = new Vector2(0.5f, 0f);
+            slotRect.pivot = new Vector2(0.5f, 0.5f);
+            slotRect.anchoredPosition = new Vector2(0f, HomeFooterContentInset * 0.5f);
+            slotRect.sizeDelta = new Vector2(1080f, HomeFooterContentInset);
+
+            homeBannerAdVisibilityController = slot.GetComponent<BannerAdVisibilityController>();
+            if (homeBannerAdVisibilityController == null)
+            {
+                homeBannerAdVisibilityController = slot.AddComponent<BannerAdVisibilityController>();
+            }
+
+            Transform existingContent = slot.transform.Find("BannerContent");
+            GameObject content = existingContent != null
+                ? existingContent.gameObject
+                : new GameObject("BannerContent", typeof(RectTransform));
+            if (existingContent == null)
+            {
+                content.transform.SetParent(slot.transform, false);
+            }
+
+            RectTransform contentRect = content.GetComponent<RectTransform>();
+            contentRect.anchorMin = Vector2.zero;
+            contentRect.anchorMax = Vector2.one;
+            contentRect.offsetMin = Vector2.zero;
+            contentRect.offsetMax = Vector2.zero;
+            homeBannerAdVisibilityController.SetBannerContent(content);
+            if (existingContent == null)
+            {
+                // The ad SDK turns this on after its banner view is loaded.
+                homeBannerAdVisibilityController.SetBannerLoaded(false);
+            }
+        }
+
+        private static string BuildHomeTeamCombatPowerText(PlayerProfile profile)
+        {
+            int combatPower = ResolveHomeTeamCombatPower(profile);
+            return $"チーム戦闘力 {combatPower:N0}";
+        }
+
+        private static int ResolveHomeTeamCombatPower(PlayerProfile profile)
+        {
+            if (profile == null || profile.PartyMonsterInstanceIds == null)
+            {
+                return 0;
+            }
+
+            MasterDataManager masterDataManager = MasterDataManager.Instance;
+            masterDataManager?.Initialize();
+            int total = 0;
+            for (int i = 0; i < profile.PartyMonsterInstanceIds.Count; i += 1)
+            {
+                OwnedMonsterData monster = profile.GetOwnedMonster(profile.PartyMonsterInstanceIds[i]);
+                if (monster == null || string.IsNullOrEmpty(monster.MonsterId))
+                {
+                    continue;
+                }
+
+                MonsterDataSO monsterData = masterDataManager != null
+                    ? masterDataManager.GetMonsterData(monster.MonsterId)
+                    : null;
+                BattleUnitStats stats = MonsterBattleStatsFactory.Create(profile, monster, monsterData);
+                total += BattleEncounterAdvisor.CalculateCombatPower(stats);
+            }
+
+            return Mathf.Max(0, total);
         }
 
         private void CreateHomeHeroShowcase(Transform menuRoot)
@@ -1022,7 +1192,7 @@ namespace WitchTower.Home
             showcaseRect.anchorMin = new Vector2(0.5f, 0f);
             showcaseRect.anchorMax = new Vector2(0.5f, 0f);
             showcaseRect.pivot = new Vector2(0.5f, 0.5f);
-            showcaseRect.anchoredPosition = new Vector2(0f, HomeAdReservedHeight + 760f);
+            showcaseRect.anchoredPosition = new Vector2(0f, HomeFooterContentInset + 760f);
             showcaseRect.sizeDelta = new Vector2(720f, 620f);
 
             homeHeroImage = CreateMenuImage(
@@ -1793,7 +1963,7 @@ namespace WitchTower.Home
                 menuRoot,
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
-                new Vector2(0f, HomeAdReservedHeight + 86f),
+                new Vector2(0f, HomeFooterContentInset + 86f),
                 new Vector2(1080f, 172f),
                 new Color(0.06f, 0.045f, 0.10f, 0.94f));
             navFrame.raycastTarget = false;
@@ -1806,13 +1976,13 @@ namespace WitchTower.Home
                     panelSprite,
                     new Vector2(0.5f, 0f),
                     new Vector2(0.5f, 0f),
-                    new Vector2(0f, HomeAdReservedHeight + 92f),
+                    new Vector2(0f, HomeFooterContentInset + 92f),
                     new Vector2(1180f, 210f),
                     false);
                 ornament.color = new Color(1f, 1f, 1f, 0.18f);
             }
 
-            float navY = HomeAdReservedHeight + 86f;
+            float navY = HomeFooterContentInset + 86f;
             CreateBottomTextButton("GoldShopNavButton", menuRoot, GoldShopLabel, "G", new Vector2(-432f, navY), OpenGoldShopMenu);
             CreateHomeSpriteButton("GachaButton", menuRoot, gachaSprite, "召喚", new Vector2(-216f, navY), HomeBottomNavButtonSize, OpenGachaMenu, 24);
             CreateHomeSpriteButton("MonsterDexButton", menuRoot, dexSprite, "図鑑", new Vector2(0f, navY), HomeBottomNavButtonSize, OpenMonsterDexMenu, 24);
@@ -2232,7 +2402,7 @@ namespace WitchTower.Home
             return CreateUiText(
                 "PlayerExp",
                 badgeTransform,
-                "EXP -/-",
+                "経験値 -/-",
                 16,
                 FontStyle.Bold,
                 HomePlayerExpTextAnchor,
@@ -2360,28 +2530,64 @@ namespace WitchTower.Home
                     HomeAudioSettingsButtonSize,
                     new Color(0.018f, 0.025f, 0.038f, 0.88f),
                     OpenAudioSettingsPanel);
-                AddUiOutline(button.gameObject, new Color(0.68f, 0.88f, 1f, 0.58f), new Vector2(2f, -2f));
-                Text label = CreateUiText(
-                    "AudioSettingsButtonLabel",
-                    button.transform,
-                    "設定",
-                    22,
-                    FontStyle.Bold,
-                    new Vector2(0.5f, 0.5f),
-                    new Vector2(0.5f, 0.5f),
-                    Vector2.zero,
-                    new Vector2(76f, 38f),
-                    new Color(0.92f, 0.98f, 1f, 1f),
-                    TextAnchor.MiddleCenter);
-                label.resizeTextForBestFit = true;
-                label.resizeTextMinSize = 16;
-                label.resizeTextMaxSize = 22;
+                if (!ConfigureAudioSettingsButtonArt(button))
+                {
+                    AddUiOutline(button.gameObject, new Color(0.68f, 0.88f, 1f, 0.58f), new Vector2(2f, -2f));
+                    Text label = CreateUiText(
+                        "AudioSettingsButtonLabel",
+                        button.transform,
+                        "設定",
+                        22,
+                        FontStyle.Bold,
+                        new Vector2(0.5f, 0.5f),
+                        new Vector2(0.5f, 0.5f),
+                        Vector2.zero,
+                        new Vector2(76f, 38f),
+                        new Color(0.92f, 0.98f, 1f, 1f),
+                        TextAnchor.MiddleCenter);
+                    label.resizeTextForBestFit = true;
+                    label.resizeTextMinSize = 16;
+                    label.resizeTextMaxSize = 22;
+                }
             }
             else
             {
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(OpenAudioSettingsPanel);
+                ConfigureAudioSettingsButtonArt(button);
             }
+        }
+
+        private static bool ConfigureAudioSettingsButtonArt(Button button)
+        {
+            if (button == null)
+            {
+                return false;
+            }
+
+            bool applied = ApplyGeneratedUiSprite(
+                button.GetComponent<Image>(),
+                AudioSettingsGearButtonPath,
+                "SettingsGearButtonImage2",
+                true);
+            if (!applied)
+            {
+                return false;
+            }
+
+            Outline outline = button.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = false;
+            }
+
+            Transform label = button.transform.Find("AudioSettingsButtonLabel");
+            if (label != null)
+            {
+                label.gameObject.SetActive(false);
+            }
+
+            return true;
         }
 
         public void OpenAudioSettingsPanel()
@@ -2425,15 +2631,15 @@ namespace WitchTower.Home
             rootRect.offsetMin = Vector2.zero;
             rootRect.offsetMax = Vector2.zero;
 
-            CreatePlainButton(
+            Image shade = CreateTintPanel(
                 "AudioSettingsShade",
                 audioSettingsRoot.transform,
                 Vector2.zero,
                 Vector2.one,
                 Vector2.zero,
                 Vector2.zero,
-                new Color(0f, 0f, 0f, 0.52f),
-                CloseAudioSettingsPanel);
+                new Color(0f, 0f, 0f, 0.52f));
+            shade.raycastTarget = true;
 
             Image panelImage = CreateTintPanel(
                 "AudioSettingsPanel",
@@ -2444,7 +2650,10 @@ namespace WitchTower.Home
                 new Vector2(760f, 540f),
                 new Color(0.018f, 0.020f, 0.030f, 0.98f));
             panelImage.raycastTarget = true;
-            AddUiOutline(panelImage.gameObject, new Color(0.42f, 0.72f, 0.92f, 0.80f), new Vector2(3f, -3f));
+            if (!ApplyGeneratedUiSprite(panelImage, AudioSettingsPanelFramePath, "SettingsPanelFrameImage2"))
+            {
+                AddUiOutline(panelImage.gameObject, new Color(0.42f, 0.72f, 0.92f, 0.80f), new Vector2(3f, -3f));
+            }
 
             Transform panel = panelImage.transform;
             CreateUiText(
@@ -2467,7 +2676,7 @@ namespace WitchTower.Home
                 FontStyle.Bold,
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
-                new Vector2(124f, -160f),
+                new Vector2(178f, -160f),
                 new Vector2(130f, 42f),
                 Color.white,
                 TextAnchor.MiddleLeft);
@@ -2479,7 +2688,7 @@ namespace WitchTower.Home
                 FontStyle.Bold,
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
-                new Vector2(124f, -256f),
+                new Vector2(178f, -256f),
                 new Vector2(130f, 42f),
                 Color.white,
                 TextAnchor.MiddleLeft);
@@ -2491,17 +2700,17 @@ namespace WitchTower.Home
                 FontStyle.Bold,
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
-                new Vector2(124f, -352f),
+                new Vector2(178f, -352f),
                 new Vector2(130f, 42f),
                 Color.white,
                 TextAnchor.MiddleLeft);
-            audioSettingsBgmValueText = CreateAudioSettingsValueText(panel, "AudioSettingsBgmValue", new Vector2(610f, -160f));
-            audioSettingsSeValueText = CreateAudioSettingsValueText(panel, "AudioSettingsSeValue", new Vector2(610f, -256f));
-            audioSettingsHapticsValueText = CreateAudioSettingsValueText(panel, "AudioSettingsHapticsValue", new Vector2(610f, -352f));
+            audioSettingsBgmValueText = CreateAudioSettingsValueText(panel, "AudioSettingsBgmValue", new Vector2(606f, -160f));
+            audioSettingsSeValueText = CreateAudioSettingsValueText(panel, "AudioSettingsSeValue", new Vector2(606f, -256f));
+            audioSettingsHapticsValueText = CreateAudioSettingsValueText(panel, "AudioSettingsHapticsValue", new Vector2(606f, -352f));
             audioSettingsBgmSlider = CreateAudioVolumeSlider(
                 "AudioSettingsBgmSlider",
                 panel,
-                new Vector2(365f, -160f),
+                new Vector2(405f, -160f),
                 delegate(float value)
                 {
                     AudioManager.Instance?.SetBgmVolume(value);
@@ -2510,7 +2719,7 @@ namespace WitchTower.Home
             audioSettingsSeSlider = CreateAudioVolumeSlider(
                 "AudioSettingsSeSlider",
                 panel,
-                new Vector2(365f, -256f),
+                new Vector2(405f, -256f),
                 delegate(float value)
                 {
                     AudioManager.Instance?.SetSeVolume(value);
@@ -2519,7 +2728,7 @@ namespace WitchTower.Home
             audioSettingsHapticsToggle = CreateAudioSettingsToggle(
                 "AudioSettingsHapticsToggle",
                 panel,
-                new Vector2(365f, -352f),
+                new Vector2(405f, -352f),
                 delegate(bool enabled)
                 {
                     AudioManager audioManager = AudioManager.Instance;
@@ -2534,7 +2743,7 @@ namespace WitchTower.Home
             CreateAudioSettingsActionButton(
                 panel,
                 "AudioSettingsUnmuteButton",
-                "音を出す",
+                "ミュート解除",
                 new Vector2(-232f, 92f),
                 delegate
                 {
@@ -2570,7 +2779,7 @@ namespace WitchTower.Home
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
                 anchoredPosition,
-                new Vector2(110f, 42f),
+                new Vector2(82f, 42f),
                 new Color(0.72f, 0.92f, 1f, 1f),
                 TextAnchor.MiddleRight);
             text.resizeTextForBestFit = true;
@@ -2585,7 +2794,7 @@ namespace WitchTower.Home
             Vector2 anchoredPosition,
             UnityEngine.Events.UnityAction<float> onValueChanged)
         {
-            GameObject root = new GameObject(name, typeof(RectTransform), typeof(Slider));
+            GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Slider));
             root.transform.SetParent(parent, false);
             RectTransform rootRect = root.GetComponent<RectTransform>();
             rootRect.anchorMin = new Vector2(0f, 1f);
@@ -2593,6 +2802,10 @@ namespace WitchTower.Home
             rootRect.pivot = new Vector2(0.5f, 0.5f);
             rootRect.anchoredPosition = anchoredPosition;
             rootRect.sizeDelta = new Vector2(370f, 54f);
+
+            Image hitArea = root.GetComponent<Image>();
+            hitArea.color = new Color(1f, 1f, 1f, 0.001f);
+            hitArea.raycastTarget = true;
 
             Image background = CreateSliderImage(
                 "Background",
@@ -2602,17 +2815,19 @@ namespace WitchTower.Home
                 Vector2.zero,
                 new Vector2(0f, 0f),
                 new Color(0.09f, 0.11f, 0.15f, 1f));
+            background.raycastTarget = false;
             RectTransform backgroundRect = background.transform as RectTransform;
-            backgroundRect.offsetMin = new Vector2(0f, 18f);
-            backgroundRect.offsetMax = new Vector2(0f, -18f);
+            bool hasTrackArt = ApplyGeneratedUiSprite(background, AudioSettingsSliderTrackPath, "SettingsSliderTrackImage2");
+            backgroundRect.offsetMin = hasTrackArt ? new Vector2(-8f, 0f) : new Vector2(0f, 18f);
+            backgroundRect.offsetMax = hasTrackArt ? new Vector2(8f, 0f) : new Vector2(0f, -18f);
 
             GameObject fillArea = new GameObject("Fill Area", typeof(RectTransform));
             fillArea.transform.SetParent(root.transform, false);
             RectTransform fillAreaRect = fillArea.GetComponent<RectTransform>();
             fillAreaRect.anchorMin = Vector2.zero;
             fillAreaRect.anchorMax = Vector2.one;
-            fillAreaRect.offsetMin = new Vector2(0f, 18f);
-            fillAreaRect.offsetMax = new Vector2(0f, -18f);
+            fillAreaRect.offsetMin = hasTrackArt ? new Vector2(58f, 23f) : new Vector2(0f, 18f);
+            fillAreaRect.offsetMax = hasTrackArt ? new Vector2(-58f, -23f) : new Vector2(0f, -18f);
 
             Image fill = CreateSliderImage(
                 "Fill",
@@ -2621,15 +2836,16 @@ namespace WitchTower.Home
                 Vector2.one,
                 Vector2.zero,
                 Vector2.zero,
-                new Color(0.38f, 0.78f, 1f, 1f));
+                new Color(0.14f, 0.78f, 1f, 0.88f));
+            fill.raycastTarget = false;
 
             GameObject handleArea = new GameObject("Handle Slide Area", typeof(RectTransform));
             handleArea.transform.SetParent(root.transform, false);
             RectTransform handleAreaRect = handleArea.GetComponent<RectTransform>();
             handleAreaRect.anchorMin = Vector2.zero;
             handleAreaRect.anchorMax = Vector2.one;
-            handleAreaRect.offsetMin = new Vector2(8f, 0f);
-            handleAreaRect.offsetMax = new Vector2(-8f, 0f);
+            handleAreaRect.offsetMin = hasTrackArt ? new Vector2(58f, 0f) : new Vector2(8f, 0f);
+            handleAreaRect.offsetMax = hasTrackArt ? new Vector2(-58f, 0f) : new Vector2(-8f, 0f);
 
             Image handle = CreateSliderImage(
                 "Handle",
@@ -2639,13 +2855,23 @@ namespace WitchTower.Home
                 Vector2.zero,
                 new Vector2(34f, 34f),
                 new Color(1f, 0.88f, 0.52f, 1f));
-            AddUiOutline(handle.gameObject, new Color(0f, 0f, 0f, 0.44f), new Vector2(1f, -1f));
+            handle.raycastTarget = false;
+            if (ApplyGeneratedUiSprite(handle, AudioSettingsSliderKnobPath, "SettingsSliderKnobImage2"))
+            {
+                RectTransform handleRect = handle.transform as RectTransform;
+                handleRect.sizeDelta = new Vector2(42f, 68f);
+            }
+            else
+            {
+                AddUiOutline(handle.gameObject, new Color(0f, 0f, 0f, 0.44f), new Vector2(1f, -1f));
+            }
 
             Slider slider = root.GetComponent<Slider>();
+            slider.interactable = true;
             slider.minValue = 0f;
             slider.maxValue = 1f;
             slider.wholeNumbers = false;
-            slider.targetGraphic = handle;
+            slider.targetGraphic = hitArea;
             slider.fillRect = fill.transform as RectTransform;
             slider.handleRect = handle.transform as RectTransform;
             slider.direction = Slider.Direction.LeftToRight;
@@ -2671,7 +2897,10 @@ namespace WitchTower.Home
             Image background = root.GetComponent<Image>();
             background.color = new Color(0.09f, 0.11f, 0.15f, 1f);
             background.raycastTarget = true;
-            AddUiOutline(root, new Color(0.64f, 0.86f, 1f, 0.36f), new Vector2(1f, -1f));
+            if (!ApplyGeneratedUiSprite(background, AudioSettingsToggleFramePath, "SettingsToggleFrameImage2"))
+            {
+                AddUiOutline(root, new Color(0.64f, 0.86f, 1f, 0.36f), new Vector2(1f, -1f));
+            }
 
             Image checkmark = CreateSliderImage(
                 "Checkmark",
@@ -2682,6 +2911,12 @@ namespace WitchTower.Home
                 new Vector2(58f, 34f),
                 new Color(0.38f, 0.78f, 1f, 1f));
             checkmark.raycastTarget = false;
+            if (ApplyGeneratedUiSprite(checkmark, AudioSettingsSliderKnobPath, "SettingsSliderKnobImage2"))
+            {
+                RectTransform checkmarkRect = checkmark.transform as RectTransform;
+                checkmarkRect.anchoredPosition = new Vector2(40f, 0f);
+                checkmarkRect.sizeDelta = new Vector2(30f, 46f);
+            }
 
             Text label = CreateUiText(
                 "ToggleLabel",
@@ -2705,9 +2940,11 @@ namespace WitchTower.Home
             {
                 label.text = isOn ? "ON" : "OFF";
                 label.color = isOn ? Color.white : new Color(0.66f, 0.70f, 0.76f, 1f);
-                background.color = isOn
-                    ? new Color(0.09f, 0.11f, 0.15f, 1f)
-                    : new Color(0.08f, 0.08f, 0.09f, 1f);
+                background.color = background.sprite != null
+                    ? (isOn ? Color.white : new Color(0.58f, 0.64f, 0.70f, 1f))
+                    : (isOn
+                        ? new Color(0.09f, 0.11f, 0.15f, 1f)
+                        : new Color(0.08f, 0.08f, 0.09f, 1f));
             });
             toggle.onValueChanged.AddListener(onValueChanged);
             return toggle;
@@ -2753,7 +2990,10 @@ namespace WitchTower.Home
                 new Vector2(188f, 64f),
                 new Color(0.12f, 0.19f, 0.24f, 0.96f),
                 action);
-            AddUiOutline(button.gameObject, new Color(0.64f, 0.86f, 1f, 0.42f), new Vector2(2f, -2f));
+            if (!ApplyGeneratedUiSprite(button.GetComponent<Image>(), AudioSettingsActionButtonPath, "SettingsActionButtonImage2"))
+            {
+                AddUiOutline(button.gameObject, new Color(0.64f, 0.86f, 1f, 0.42f), new Vector2(2f, -2f));
+            }
             Text text = CreateUiText(
                 name + "Label",
                 button.transform,
@@ -2845,9 +3085,11 @@ namespace WitchTower.Home
             Image background = toggle.GetComponent<Image>();
             if (background != null)
             {
-                background.color = isOn
-                    ? new Color(0.09f, 0.11f, 0.15f, 1f)
-                    : new Color(0.08f, 0.08f, 0.09f, 1f);
+                background.color = background.sprite != null
+                    ? (isOn ? Color.white : new Color(0.58f, 0.64f, 0.70f, 1f))
+                    : (isOn
+                        ? new Color(0.09f, 0.11f, 0.15f, 1f)
+                        : new Color(0.08f, 0.08f, 0.09f, 1f));
             }
 
             Transform labelTransform = toggle.transform.Find("ToggleLabel");
@@ -3082,7 +3324,9 @@ namespace WitchTower.Home
                 }
                 ConfigureGoldShopButtonVisual(homeShopButton != null ? homeShopButton.transform : null, homeShopButtonText);
                 EnsurePermanentUpgradeShortcutButton(existingBar);
+                EnsureSkillTreeShortcutButton(existingBar);
                 EnsureAudioSettingsButton(existingBar);
+                homeTeamCombatPowerText = EnsureHomeTeamCombatPowerText(existingBar);
                 ConfigureHomeResourceAmountText(homeFreeStoneText);
                 ConfigureHomeResourceAmountText(homePaidStoneText);
                 ConfigureHomeResourceAmountText(homeGoldText);
@@ -3106,6 +3350,9 @@ namespace WitchTower.Home
                     permanentUpgradeButtonText != null &&
                     permanentUpgradeStatusText != null &&
                     permanentUpgradeButton != null &&
+                    skillTreeButtonText != null &&
+                    skillTreeButton != null &&
+                    homeTeamCombatPowerText != null &&
                     isModernLayout &&
                     hasRoundQuestButton)
                 {
@@ -3201,6 +3448,8 @@ namespace WitchTower.Home
             homeShopButton = CreateGoldShopButton(bar.transform, HomeShopButtonPosition, HomeShopButtonSize);
             permanentUpgradeButton = CreatePermanentUpgradeShortcutButton(bar.transform, PermanentUpgradeButtonPosition, PermanentUpgradeButtonSize);
             homeQuestButton = CreateQuestButton(bar.transform, HomeQuestButtonPosition, HomeQuestButtonSize);
+            skillTreeButton = CreateSkillTreeShortcutButton(bar.transform, SkillTreeButtonPosition, SkillTreeButtonSize);
+            homeTeamCombatPowerText = EnsureHomeTeamCombatPowerText(bar.transform);
             EnsureAudioSettingsButton(bar.transform);
             EnsureDailyQuestList(menuRoot);
         }
@@ -3229,6 +3478,107 @@ namespace WitchTower.Home
             rectTransform.anchoredPosition = new Vector2(rectTransform.anchoredPosition.x, targetY);
         }
 
+        private static Text EnsureHomeTeamCombatPowerText(Transform parent)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            Transform panel = parent.Find("HomeTeamCombatPowerPanel");
+            if (panel == null)
+            {
+                GameObject panelObject = new GameObject("HomeTeamCombatPowerPanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                panelObject.transform.SetParent(parent, false);
+                panel = panelObject.transform;
+            }
+
+            RectTransform panelRect = panel as RectTransform;
+            if (panelRect != null)
+            {
+                panelRect.anchorMin = new Vector2(0.5f, 1f);
+                panelRect.anchorMax = new Vector2(0.5f, 1f);
+                panelRect.pivot = new Vector2(0.5f, 0.5f);
+                panelRect.anchoredPosition = HomeTeamCombatPowerPanelPosition;
+                panelRect.sizeDelta = HomeTeamCombatPowerPanelSize;
+            }
+
+            Image panelImage = panel.GetComponent<Image>();
+            if (panelImage == null)
+            {
+                panelImage = panel.gameObject.AddComponent<Image>();
+            }
+
+            Sprite frameSprite = LoadSpriteResource(HomeTeamCombatPowerFramePath, "HomeTeamCombatPowerFrame");
+            panelImage.sprite = frameSprite;
+            panelImage.type = Image.Type.Simple;
+            panelImage.preserveAspect = false;
+            panelImage.color = frameSprite != null ? Color.white : new Color(0.018f, 0.026f, 0.036f, 0.88f);
+            panelImage.raycastTarget = false;
+
+            Outline panelOutline = panel.GetComponent<Outline>();
+            if (panelOutline == null)
+            {
+                panelOutline = panel.gameObject.AddComponent<Outline>();
+            }
+
+            panelOutline.enabled = frameSprite == null;
+            panelOutline.effectColor = new Color(1f, 0.82f, 0.36f, 0.78f);
+            panelOutline.effectDistance = new Vector2(2f, -2f);
+
+            Text text = panel.Find("HomeTeamCombatPowerText")?.GetComponent<Text>();
+            if (text == null)
+            {
+                Transform legacyText = parent.Find("HomeTeamCombatPowerText");
+                text = legacyText != null ? legacyText.GetComponent<Text>() : null;
+                if (text != null)
+                {
+                    text.transform.SetParent(panel, false);
+                }
+            }
+
+            if (text == null)
+            {
+                text = CreateUiText(
+                    "HomeTeamCombatPowerText",
+                    panel,
+                    "チーム戦闘力 0",
+                    28,
+                    FontStyle.Bold,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    HomeTeamCombatPowerTextPosition,
+                    HomeTeamCombatPowerTextSize,
+                    new Color(0.92f, 1f, 0.82f, 1f),
+                    TextAnchor.MiddleCenter);
+                AddTextShadow(text, new Color(0f, 0f, 0f, 0.92f), new Vector2(2f, -2f));
+            }
+
+            RectTransform rectTransform = text.transform as RectTransform;
+            if (rectTransform != null)
+            {
+                rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                rectTransform.anchoredPosition = HomeTeamCombatPowerTextPosition;
+                rectTransform.sizeDelta = HomeTeamCombatPowerTextSize;
+            }
+
+            text.fontSize = 28;
+            text.fontStyle = FontStyle.Bold;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 18;
+            text.resizeTextMaxSize = 28;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.color = new Color(0.92f, 1f, 0.82f, 1f);
+            text.raycastTarget = false;
+            text.transform.SetAsLastSibling();
+            panel.SetAsLastSibling();
+            return text;
+        }
+
         private void RefreshHomeStoneBalanceBar()
         {
             Transform existingMenuRoot = ResolveUnifiedMenuRootTransform();
@@ -3241,7 +3591,16 @@ namespace WitchTower.Home
                 homeShopButton = homeShopButton != null
                     ? homeShopButton
                     : existingStoneBar.Find("GoldShopButton")?.GetComponent<Button>();
+                homeTeamCombatPowerText = homeTeamCombatPowerText != null
+                    ? homeTeamCombatPowerText
+                    : existingStoneBar.Find("HomeTeamCombatPowerText")?.GetComponent<Text>();
+                if (homeTeamCombatPowerText == null)
+                {
+                    homeTeamCombatPowerText = EnsureHomeTeamCombatPowerText(existingStoneBar);
+                }
+
                 EnsurePermanentUpgradeShortcutButton(existingStoneBar);
+                EnsureSkillTreeShortcutButton(existingStoneBar);
             }
 
             if (homeFreeStoneText == null &&
@@ -3253,7 +3612,10 @@ namespace WitchTower.Home
                 homeQuestButtonText == null &&
                 homeShopButtonText == null &&
                 permanentUpgradeButtonText == null &&
-                permanentUpgradeStatusText == null)
+                permanentUpgradeStatusText == null &&
+                skillTreeButtonText == null &&
+                skillTreeButton == null &&
+                homeTeamCombatPowerText == null)
             {
                 if (existingMenuRoot == null)
                 {
@@ -3281,6 +3643,11 @@ namespace WitchTower.Home
                     homeGoldText.text = "-";
                 }
 
+                if (homeTeamCombatPowerText != null)
+                {
+                    homeTeamCombatPowerText.text = "チーム戦闘力 -";
+                }
+
                 RefreshPlayerBadgeDisplay(null);
 
                 ApplyHomeGuideDisplay(null);
@@ -3295,6 +3662,11 @@ namespace WitchTower.Home
                     homeShopButtonText.text = PaidShopLabel;
                 }
 
+                if (skillTreeButtonText != null)
+                {
+                    skillTreeButtonText.text = SkillTreeLabel;
+                }
+
                 RefreshPermanentUpgradeShortcutDisplay(null);
 
                 if (homeQuestButton != null)
@@ -3305,6 +3677,11 @@ namespace WitchTower.Home
                 if (homeShopButton != null)
                 {
                     homeShopButton.interactable = false;
+                }
+
+                if (skillTreeButton != null)
+                {
+                    skillTreeButton.interactable = false;
                 }
 
                 RefreshHomeHeroShowcase(profile);
@@ -3328,6 +3705,11 @@ namespace WitchTower.Home
                 homeGoldText.text = profile.Gold.ToString("N0");
             }
 
+            if (homeTeamCombatPowerText != null)
+            {
+                homeTeamCombatPowerText.text = BuildHomeTeamCombatPowerText(profile);
+            }
+
             RefreshPlayerBadgeDisplay(profile);
 
             ApplyHomeGuideDisplay(profile);
@@ -3342,6 +3724,11 @@ namespace WitchTower.Home
                 homeShopButtonText.text = PaidShopLabel;
             }
 
+            if (skillTreeButtonText != null)
+            {
+                skillTreeButtonText.text = SkillTreeLabel;
+            }
+
             RefreshPermanentUpgradeShortcutDisplay(profile);
 
             if (homeQuestButton != null)
@@ -3352,6 +3739,11 @@ namespace WitchTower.Home
             if (homeShopButton != null)
             {
                 homeShopButton.interactable = true;
+            }
+
+            if (skillTreeButton != null)
+            {
+                skillTreeButton.interactable = true;
             }
 
             RefreshHomeHeroShowcase(profile);
@@ -3392,16 +3784,26 @@ namespace WitchTower.Home
             if (homePlayerLevelText != null)
             {
                 homePlayerLevelText.text = profile != null
-                    ? $"Lv.{Mathf.Max(1, profile.Level)}"
+                    ? $"Lv.{Mathf.Max(1, profile.Level)} 魂{Mathf.Max(0, profile.RebirthPoints)}"
                     : "Lv.-";
                 homePlayerLevelText.gameObject.SetActive(!homePlayerExpDetailsVisible);
             }
 
             if (homeExpText != null)
             {
-                homeExpText.text = profile != null
-                    ? $"EXP {Mathf.Max(0, profile.Exp):N0}/{Mathf.Max(1, profile.GetRequiredExpForNextLevel()):N0}"
-                    : "EXP -/-";
+                if (profile != null)
+                {
+                    int reward = profile.GetPendingRebirthPointReward();
+                    string rebirthRead = reward > 0
+                        ? $" / 転生 +{reward}魂片"
+                        : string.Empty;
+                    homeExpText.text = $"経験値 {Mathf.Max(0, profile.Exp):N0}/{Mathf.Max(1, profile.GetRequiredExpForNextLevel()):N0}{rebirthRead}";
+                }
+                else
+                {
+                    homeExpText.text = "経験値 -/-";
+                }
+
                 homeExpText.gameObject.SetActive(homePlayerExpDetailsVisible);
             }
         }
@@ -3411,13 +3813,10 @@ namespace WitchTower.Home
             StoryTutorialEvent tutorialEvent = profile != null
                 ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
                 : null;
-            bool isTutorialEvent = profile != null &&
-                !profile.HasCompletedTutorial &&
-                tutorialEvent != null &&
-                tutorialEvent.IsValid;
+            bool shouldShowTutorialEvent = ShouldShowHomeGuideEvent(profile, tutorialEvent);
             bool hasClaimableQuestReward = profile != null &&
                 DailyRewardService.GetClaimableQuestCount(profile, DateTime.Now) > 0;
-            bool shouldShowGuidePanel = !IsDailyQuestListOpen() && (isTutorialEvent || hasClaimableQuestReward);
+            bool shouldShowGuidePanel = !IsDailyQuestListOpen() && (shouldShowTutorialEvent || hasClaimableQuestReward);
             SetHomeGuidePanelVisible(shouldShowGuidePanel);
             if (!shouldShowGuidePanel)
             {
@@ -3433,7 +3832,7 @@ namespace WitchTower.Home
                 body = "ようこそ。冒険の準備をしています。";
                 footer = "次の挑戦: -";
             }
-            else if (isTutorialEvent)
+            else if (shouldShowTutorialEvent)
             {
                 title = string.IsNullOrEmpty(tutorialEvent.Title) ? "チュートリアル" : tutorialEvent.Title;
                 body = tutorialEvent.Body;
@@ -3686,6 +4085,11 @@ namespace WitchTower.Home
 
             bool changed = false;
             StoryTutorialEvent activeEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
+            if (!ShouldShowHomeGuideEvent(profile, activeEvent))
+            {
+                activeEvent = null;
+            }
+
             if (!profile.HasCompletedTutorial)
             {
                 if (profile.TutorialStepId == StoryTutorialService.StepWakeup)
@@ -3764,6 +4168,11 @@ namespace WitchTower.Home
 
             PlayerProfile profile = GetRuntimeProfile();
             StoryTutorialEvent activeEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
+            if (!ShouldShowHomeGuideEvent(profile, activeEvent))
+            {
+                activeEvent = null;
+            }
+
             if (profile == null || activeEvent == null || !activeEvent.IsValid)
             {
                 return;
@@ -3825,6 +4234,11 @@ namespace WitchTower.Home
             StoryTutorialEvent activeEvent = profile != null
                 ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
                 : null;
+            if (!ShouldShowHomeGuideEvent(profile, activeEvent))
+            {
+                activeEvent = null;
+            }
+
             bool guideCanAdvance = CanAdvanceHomeGuidePanel(profile, activeEvent);
             bool shouldFocusQuestReward = profile != null &&
                 profile.HasCompletedTutorial &&
@@ -3840,7 +4254,7 @@ namespace WitchTower.Home
                 return;
             }
 
-            if (profile != null && profile.HasCompletedTutorial && !shouldFocusQuestReward)
+            if (profile != null && profile.HasCompletedTutorial && !shouldFocusQuestReward && activeEvent == null)
             {
                 if (homeGuideButton != null)
                 {
@@ -3954,9 +4368,22 @@ namespace WitchTower.Home
 
         private static void SetTutorialShortcutButtonsVisible(Transform menuRoot, bool visible)
         {
-            SetNamedChildVisible(menuRoot, "GoldShopButton", visible);
-            SetNamedChildVisible(menuRoot, "PermanentUpgradeButton", visible);
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            SetNamedChildVisible(menuRoot, "GoldShopButton", visible && MonetizationFeatureFlags.StorefrontEnabled);
+            SetNamedChildVisible(
+                menuRoot,
+                "PermanentUpgradeButton",
+                visible && (MonetizationFeatureFlags.StorefrontEnabled || HasManageablePermanentUpgrade(profile)));
+            SetNamedChildVisible(menuRoot, "SkillTreeButton", visible);
             SetNamedChildVisible(menuRoot, "QuestButton", visible);
+        }
+
+        private static bool HasManageablePermanentUpgrade(PlayerProfile profile)
+        {
+            return profile != null &&
+                (profile.HasAutoRepeatFloorUpgrade ||
+                 profile.HasAutoSellEquipmentUpgrade ||
+                 profile.HasAutoReleaseMonsterUpgrade);
         }
 
         private static void SetNamedChildVisible(Transform root, string objectName, bool visible)
@@ -3985,6 +4412,22 @@ namespace WitchTower.Home
 
             return StoryTutorialService.IsChapterStoryEvent(activeEvent.EventId) ||
                 string.IsNullOrEmpty(activeEvent.TargetKey);
+        }
+
+        private static bool ShouldShowHomeGuideEvent(PlayerProfile profile, StoryTutorialEvent tutorialEvent)
+        {
+            if (profile == null || tutorialEvent == null || !tutorialEvent.IsValid)
+            {
+                return false;
+            }
+
+            if (!profile.HasCompletedTutorial)
+            {
+                return true;
+            }
+
+            return StoryTutorialService.IsChapterStoryEvent(tutorialEvent.EventId) ||
+                string.Equals(tutorialEvent.EventId, StoryTutorialService.HintFusionInheritance, StringComparison.Ordinal);
         }
 
         private static void SetHomeTutorialActionButtonsInteractable(Transform menuRoot, bool allInteractable, string targetButtonName)
@@ -4016,6 +4459,7 @@ namespace WitchTower.Home
                     return "GachaButton";
                 case "home.equipment":
                 case "equipment.first_item":
+                case "equipment.auto_equip":
                 case "equipment.quality_label":
                 case "equipment.enhance_button":
                     return "EquipmentButton";
@@ -4042,6 +4486,7 @@ namespace WitchTower.Home
                     return "召喚を開く";
                 case "home.equipment":
                 case "equipment.first_item":
+                case "equipment.auto_equip":
                 case "equipment.quality_label":
                 case "equipment.enhance_button":
                     return "装備を開く";
@@ -4070,26 +4515,58 @@ namespace WitchTower.Home
                 return;
             }
 
-            if (homeTutorialFocusRoot.transform.parent != targetTransform)
+            if (homeTutorialFocusRoot.transform.parent != menuRoot)
             {
-                homeTutorialFocusRoot.transform.SetParent(targetTransform, false);
+                homeTutorialFocusRoot.transform.SetParent(menuRoot, false);
             }
 
-            focusRect.anchorMin = Vector2.zero;
-            focusRect.anchorMax = Vector2.one;
+            RectTransform menuRect = menuRoot as RectTransform;
+            RectTransform targetRect = targetTransform as RectTransform;
+            Vector2 targetCenter = Vector2.zero;
+            Vector2 targetSize = new Vector2(180f, 120f);
+            if (menuRect != null && targetRect != null)
+            {
+                Vector3[] corners = new Vector3[4];
+                targetRect.GetWorldCorners(corners);
+                Vector2 min = menuRect.InverseTransformPoint(corners[0]);
+                Vector2 max = min;
+                for (int i = 1; i < corners.Length; i += 1)
+                {
+                    Vector2 localCorner = menuRect.InverseTransformPoint(corners[i]);
+                    min = Vector2.Min(min, localCorner);
+                    max = Vector2.Max(max, localCorner);
+                }
+
+                targetCenter = (min + max) * 0.5f;
+                targetSize = max - min;
+            }
+
+            bool shouldCenterOnQuestButton = string.Equals(targetTransform.name, "QuestButton", StringComparison.Ordinal);
+            Vector2 focusPadding = shouldCenterOnQuestButton
+                ? Vector2.zero
+                : new Vector2(32f, 32f);
+            Vector2 focusSize = new Vector2(
+                Mathf.Max(64f, targetSize.x + focusPadding.x),
+                Mathf.Max(64f, targetSize.y + focusPadding.y));
+            Vector2 focusCenter = ClampHomeTutorialFocusCenter(
+                menuRect,
+                targetCenter,
+                focusSize,
+                shouldCenterOnQuestButton ? 1f : 1.06f);
+
+            focusRect.anchorMin = new Vector2(0.5f, 0.5f);
+            focusRect.anchorMax = new Vector2(0.5f, 0.5f);
             focusRect.pivot = new Vector2(0.5f, 0.5f);
-            focusRect.anchoredPosition = Vector2.zero;
-            focusRect.offsetMin = new Vector2(-14f, -14f);
-            focusRect.offsetMax = new Vector2(14f, 14f);
+            focusRect.anchoredPosition = focusCenter;
+            focusRect.sizeDelta = focusSize;
 
             if (homeTutorialFocusText != null)
             {
                 RectTransform textRect = homeTutorialFocusText.transform as RectTransform;
                 if (textRect != null)
                 {
-                    RectTransform targetRect = targetTransform as RectTransform;
-                    float targetHeight = targetRect != null ? targetRect.rect.height : 120f;
-                    float targetWidth = targetRect != null ? targetRect.rect.width : 180f;
+                    float targetHeight = targetSize.y;
+                    float targetWidth = targetSize.x;
                     textRect.anchoredPosition = new Vector2(0f, targetHeight * 0.5f + 44f);
                     textRect.sizeDelta = new Vector2(Mathf.Max(220f, targetWidth + 40f), 44f);
                 }
@@ -4102,6 +4579,28 @@ namespace WitchTower.Home
             homeTutorialFocusRoot.SetActive(true);
             homeTutorialFocusRoot.transform.SetAsLastSibling();
             focusRect.localScale = Vector3.one;
+        }
+
+        private static Vector2 ClampHomeTutorialFocusCenter(RectTransform parentRect, Vector2 center, Vector2 size, float clampScale = 1.06f)
+        {
+            if (parentRect == null)
+            {
+                return center;
+            }
+
+            Rect rect = parentRect.rect;
+            Vector2 scaledHalfSize = size * (0.5f * Mathf.Max(1f, clampScale));
+            if (scaledHalfSize.x * 2f <= rect.width)
+            {
+                center.x = Mathf.Clamp(center.x, rect.xMin + scaledHalfSize.x, rect.xMax - scaledHalfSize.x);
+            }
+
+            if (scaledHalfSize.y * 2f <= rect.height)
+            {
+                center.y = Mathf.Clamp(center.y, rect.yMin + scaledHalfSize.y, rect.yMax - scaledHalfSize.y);
+            }
+
+            return center;
         }
 
         private void EnsureHomeTutorialFocus(Transform menuRoot)
@@ -4172,43 +4671,51 @@ namespace WitchTower.Home
             }
 
             homeTutorialFocusFrameImages.Clear();
-            CreateHomeTutorialFocusBar(focusRoot, "Top", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 0f), new Vector2(-2f, 9f));
-            CreateHomeTutorialFocusBar(focusRoot, "Bottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 0f), new Vector2(-2f, 9f));
-            CreateHomeTutorialFocusBar(focusRoot, "Left", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(9f, -2f));
-            CreateHomeTutorialFocusBar(focusRoot, "Right", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 0f), new Vector2(9f, -2f));
-        }
+            RemoveHomeTutorialFocusBar(focusRoot, "Top");
+            RemoveHomeTutorialFocusBar(focusRoot, "Bottom");
+            RemoveHomeTutorialFocusBar(focusRoot, "Left");
+            RemoveHomeTutorialFocusBar(focusRoot, "Right");
 
-        private void CreateHomeTutorialFocusBar(
-            Transform focusRoot,
-            string suffix,
-            Vector2 anchorMin,
-            Vector2 anchorMax,
-            Vector2 anchoredPosition,
-            Vector2 sizeDelta)
-        {
-            Transform existing = focusRoot.Find($"HomeTutorialFocus{suffix}");
-            Image bar = existing != null ? existing.GetComponent<Image>() : null;
-            if (bar == null)
+            Transform existing = focusRoot.Find("HomeTutorialFocusFrame");
+            Image frame = existing != null ? existing.GetComponent<Image>() : null;
+            if (frame == null)
             {
-                GameObject barObject = new GameObject(
-                    $"HomeTutorialFocus{suffix}",
+                GameObject frameObject = new GameObject(
+                    "HomeTutorialFocusFrame",
                     typeof(RectTransform),
                     typeof(CanvasRenderer),
                     typeof(Image));
-                barObject.transform.SetParent(focusRoot, false);
-                bar = barObject.GetComponent<Image>();
+                frameObject.transform.SetParent(focusRoot, false);
+                frame = frameObject.GetComponent<Image>();
             }
 
-            RectTransform rect = bar.transform as RectTransform;
-            rect.anchorMin = anchorMin;
-            rect.anchorMax = anchorMax;
+            RectTransform rect = frame.transform as RectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = anchoredPosition;
-            rect.sizeDelta = sizeDelta;
-            bar.color = new Color(1f, 0.76f, 0.20f, 1f);
-            bar.raycastTarget = false;
-            bar.transform.SetAsFirstSibling();
-            homeTutorialFocusFrameImages.Add(bar);
+            rect.anchoredPosition = Vector2.zero;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            Sprite frameSprite = LoadSpriteResource(TutorialSummonHighlightFramePath, "TutorialSummonHighlightFrameImage2");
+            frame.sprite = frameSprite;
+            frame.type = Image.Type.Simple;
+            frame.preserveAspect = false;
+            frame.color = frameSprite != null
+                ? Color.white
+                : new Color(1f, 0.78f, 0.10f, 0.90f);
+            frame.raycastTarget = false;
+            frame.transform.SetAsFirstSibling();
+            homeTutorialFocusFrameImages.Add(frame);
+        }
+
+        private static void RemoveHomeTutorialFocusBar(Transform focusRoot, string suffix)
+        {
+            Transform existing = focusRoot.Find($"HomeTutorialFocus{suffix}");
+            if (existing != null)
+            {
+                DestroySceneObject(existing.gameObject);
+            }
         }
 
         private void AnimateHomeTutorialFocus()
@@ -4223,9 +4730,12 @@ namespace WitchTower.Home
             Color frameColor = new Color(1f, Mathf.Lerp(0.58f, 0.88f, pulse), 0.16f, alpha);
             for (int i = 0; i < homeTutorialFocusFrameImages.Count; i += 1)
             {
-                if (homeTutorialFocusFrameImages[i] != null)
+                Image frameImage = homeTutorialFocusFrameImages[i];
+                if (frameImage != null)
                 {
-                    homeTutorialFocusFrameImages[i].color = frameColor;
+                    frameImage.color = frameImage.sprite != null
+                        ? new Color(1f, 1f, 1f, alpha)
+                        : frameColor;
                 }
             }
 
@@ -4303,22 +4813,27 @@ namespace WitchTower.Home
             StoryTutorialEvent activeEvent = profile != null
                 ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
                 : null;
+            if (!ShouldShowHomeGuideEvent(profile, activeEvent))
+            {
+                activeEvent = null;
+            }
+
             bool shouldPulseFirstSummon = profile != null &&
                 !profile.HasCompletedTutorial &&
                 profile.TutorialStepId == StoryTutorialService.StepOpenGacha;
-            bool canPulseOptionalTutorialHint = profile != null && !profile.HasCompletedTutorial;
-            bool shouldPulseDex = canPulseOptionalTutorialHint &&
+            bool canPulseEarlyOptionalTutorialHint = profile != null && !profile.HasCompletedTutorial;
+            bool shouldPulseDex = canPulseEarlyOptionalTutorialHint &&
                 activeEvent != null &&
                 activeEvent.EventId == StoryTutorialService.HintDex &&
                 string.Equals(activeEvent.TargetKey, "home.dex", StringComparison.Ordinal);
-            bool shouldPulseEquipment = canPulseOptionalTutorialHint &&
+            bool shouldPulseEquipment = canPulseEarlyOptionalTutorialHint &&
                 activeEvent != null &&
                 IsHomeEquipmentHintTarget(activeEvent.TargetKey);
-            bool shouldPulseFusion = canPulseOptionalTutorialHint &&
-                activeEvent != null &&
-                activeEvent.EventId == StoryTutorialService.HintFusion &&
-                string.Equals(activeEvent.TargetKey, "home.fusion", StringComparison.Ordinal);
-            bool shouldPulseShop = canPulseOptionalTutorialHint &&
+            bool shouldPulseFusion = activeEvent != null &&
+                string.Equals(activeEvent.TargetKey, "home.fusion", StringComparison.Ordinal) &&
+                ((canPulseEarlyOptionalTutorialHint && activeEvent.EventId == StoryTutorialService.HintFusion) ||
+                 activeEvent.EventId == StoryTutorialService.HintFusionInheritance);
+            bool shouldPulseShop = canPulseEarlyOptionalTutorialHint &&
                 activeEvent != null &&
                 activeEvent.EventId == StoryTutorialService.HintShop &&
                 string.Equals(activeEvent.TargetKey, "home.shop", StringComparison.Ordinal);
@@ -4529,6 +5044,7 @@ namespace WitchTower.Home
         private static bool IsHomeEquipmentHintTarget(string targetKey)
         {
             return targetKey == "equipment.first_item" ||
+                targetKey == "equipment.auto_equip" ||
                 targetKey == "equipment.quality_label" ||
                 targetKey == "equipment.enhance_button";
         }
@@ -4555,14 +5071,7 @@ namespace WitchTower.Home
                 return $"よぉし！\n受け取れるクエスト報酬が{claimableQuestCount}件あります！";
             }
 
-            int nextFloor = Mathf.Max(1, profile.HighestFloor + 1);
-            string nextDungeonLabel = BuildNextDungeonLabel(nextFloor);
-            if (profile.Gold >= 100)
-            {
-                return $"準備はいい感じ！\n{nextDungeonLabel}へ挑戦して、装備を集めましょう。";
-            }
-
-            return $"よぉし！\n{nextDungeonLabel}へ挑戦して、ゴールドを稼ぎましょう！";
+            return "次の探索へ進みましょう。";
         }
 
         private static string BuildTutorialGuideText(StoryTutorialEvent tutorialEvent)
@@ -5190,6 +5699,125 @@ namespace WitchTower.Home
             return button;
         }
 
+        private void EnsureSkillTreeShortcutButton(Transform parent)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            Transform existing = parent.Find("SkillTreeButton");
+            if (existing == null)
+            {
+                skillTreeButton = CreateSkillTreeShortcutButton(parent, SkillTreeButtonPosition, SkillTreeButtonSize);
+                return;
+            }
+
+            skillTreeButton = existing.GetComponent<Button>();
+            skillTreeButtonText = existing.Find("SkillTreeButtonLabel")?.GetComponent<Text>();
+            if (skillTreeButton == null || skillTreeButtonText == null)
+            {
+                DestroySceneObject(existing.gameObject);
+                skillTreeButton = CreateSkillTreeShortcutButton(parent, SkillTreeButtonPosition, SkillTreeButtonSize);
+                return;
+            }
+
+            RectTransform rectTransform = existing as RectTransform;
+            if (rectTransform != null)
+            {
+                rectTransform.anchorMin = new Vector2(0.5f, 1f);
+                rectTransform.anchorMax = new Vector2(0.5f, 1f);
+                rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                rectTransform.anchoredPosition = SkillTreeButtonPosition;
+                rectTransform.sizeDelta = SkillTreeButtonSize;
+            }
+
+            skillTreeButton.onClick.RemoveAllListeners();
+            skillTreeButton.onClick.AddListener(OpenSkillTreeScene);
+            ConfigureSkillTreeShortcutVisual(existing, skillTreeButtonText);
+        }
+
+        private Button CreateSkillTreeShortcutButton(Transform parent, Vector2 anchoredPosition, Vector2 size)
+        {
+            GameObject root = new GameObject("SkillTreeButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            root.transform.SetParent(parent, false);
+            RectTransform rectTransform = root.GetComponent<RectTransform>();
+            rectTransform.anchorMin = new Vector2(0.5f, 1f);
+            rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+
+            Button button = root.GetComponent<Button>();
+            button.onClick.AddListener(OpenSkillTreeScene);
+
+            skillTreeButtonText = CreateUiText(
+                "SkillTreeButtonLabel",
+                root.transform,
+                SkillTreeLabel,
+                17,
+                FontStyle.Bold,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -62f),
+                new Vector2(116f, 34f),
+                Color.white,
+                TextAnchor.MiddleCenter);
+            AddTextShadow(skillTreeButtonText, new Color(0f, 0f, 0f, 0.85f), new Vector2(1.4f, -1.4f));
+
+            ConfigureSkillTreeShortcutVisual(root.transform, skillTreeButtonText);
+            return button;
+        }
+
+        private static void ConfigureSkillTreeShortcutVisual(Transform buttonTransform, Text labelText)
+        {
+            if (buttonTransform == null)
+            {
+                return;
+            }
+
+            Image image = buttonTransform.GetComponent<Image>();
+            if (image != null)
+            {
+                Sprite sprite = LoadSpriteResource(SkillTreeButtonIconSpritePath, "SkillTreeButtonImage2");
+                image.sprite = sprite;
+                image.color = sprite != null ? Color.white : new Color(0.08f, 0.14f, 0.20f, 0.96f);
+                image.preserveAspect = true;
+                image.raycastTarget = true;
+            }
+
+            Button button = buttonTransform.GetComponent<Button>();
+            if (button != null)
+            {
+                button.targetGraphic = image;
+                button.transition = Selectable.Transition.ColorTint;
+            }
+
+            if (labelText != null)
+            {
+                RectTransform labelRect = labelText.transform as RectTransform;
+                if (labelRect != null)
+                {
+                    labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    labelRect.pivot = new Vector2(0.5f, 0.5f);
+                    labelRect.anchoredPosition = new Vector2(0f, -62f);
+                    labelRect.sizeDelta = new Vector2(116f, 34f);
+                }
+
+                labelText.text = SkillTreeLabel;
+                labelText.fontSize = 17;
+                labelText.fontStyle = FontStyle.Bold;
+                labelText.alignment = TextAnchor.MiddleCenter;
+                labelText.resizeTextForBestFit = true;
+                labelText.resizeTextMinSize = 11;
+                labelText.resizeTextMaxSize = 17;
+                labelText.horizontalOverflow = HorizontalWrapMode.Wrap;
+                labelText.verticalOverflow = VerticalWrapMode.Truncate;
+                labelText.color = Color.white;
+            }
+        }
+
         private Button CreateGoldShopButton(Transform parent, Vector2 anchoredPosition, Vector2 size)
         {
             GameObject root = new GameObject("GoldShopButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
@@ -5539,7 +6167,9 @@ namespace WitchTower.Home
         {
             if (permanentUpgradeButton != null)
             {
-                permanentUpgradeButton.interactable = profile != null;
+                bool shouldShow = MonetizationFeatureFlags.StorefrontEnabled || HasManageablePermanentUpgrade(profile);
+                permanentUpgradeButton.gameObject.SetActive(shouldShow);
+                permanentUpgradeButton.interactable = shouldShow && profile != null;
             }
 
             if (permanentUpgradeStatusText == null)
@@ -5554,7 +6184,18 @@ namespace WitchTower.Home
                 return;
             }
 
-            if (profile.HasAutoRepeatFloorUpgrade && profile.IsAutoRepeatFloorUpgradeEnabled)
+            int rebirthReward = profile.GetPendingRebirthPointReward();
+            if (rebirthReward > 0)
+            {
+                permanentUpgradeStatusText.text = $"転生 +{rebirthReward}魂片";
+                permanentUpgradeStatusText.color = new Color(0.45f, 1f, 0.78f, 1f);
+            }
+            else if (profile.RebirthPoints > 0)
+            {
+                permanentUpgradeStatusText.text = $"魂片 {profile.RebirthPoints}";
+                permanentUpgradeStatusText.color = new Color(1f, 0.82f, 0.38f, 1f);
+            }
+            else if (profile.HasAutoRepeatFloorUpgrade && profile.IsAutoRepeatFloorUpgradeEnabled)
             {
                 permanentUpgradeStatusText.text = "同階層再挑戦 有効";
                 permanentUpgradeStatusText.color = new Color(0.45f, 1f, 0.78f, 1f);
@@ -5596,6 +6237,26 @@ namespace WitchTower.Home
             }
 
             return size;
+        }
+
+        private static bool ApplyGeneratedUiSprite(Image image, string resourcePath, string fallbackName, bool preserveAspect = false)
+        {
+            if (image == null)
+            {
+                return false;
+            }
+
+            Sprite sprite = LoadSpriteResource(resourcePath, fallbackName);
+            if (sprite == null)
+            {
+                return false;
+            }
+
+            image.sprite = sprite;
+            image.color = Color.white;
+            image.preserveAspect = preserveAspect;
+            image.type = Image.Type.Simple;
+            return true;
         }
 
         private static Sprite LoadSpriteResource(string path, string fallbackName)

@@ -11,6 +11,7 @@ namespace WitchTower.Home
         [SerializeField] private EnhancePanelController enhancePanelController;
         [SerializeField] private EquipmentPanelController equipmentPanelController;
         [SerializeField] private MissionPanelController missionPanelController;
+        [SerializeField] private RebirthPanelController rebirthPanelController;
         [SerializeField] private string battleSceneName = "BattleScene";
 
         private void Start()
@@ -40,6 +41,12 @@ namespace WitchTower.Home
         {
             panelSwitcher.ShowMission();
             missionPanelController.Refresh();
+        }
+
+        public void OpenRebirth()
+        {
+            panelSwitcher.ShowRebirth();
+            rebirthPanelController.Refresh();
         }
 
         public void StartBattle()

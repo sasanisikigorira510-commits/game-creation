@@ -18,12 +18,12 @@ namespace WitchTower.UI
 
             if (progressText != null)
             {
-                progressText.text = isClaimed ? "Claimed" : $"Progress {progress}/{target}";
+                progressText.text = isClaimed ? "受取済み" : $"進行 {progress}/{target}";
             }
 
             if (rewardText != null)
             {
-                rewardText.text = isClaimed ? $"Reward {rewardGold} Gold collected" : $"Claim for {rewardGold} Gold";
+                rewardText.text = isClaimed ? $"{rewardGold}ゴールド受取済み" : $"{rewardGold}ゴールドを受け取る";
             }
         }
     }

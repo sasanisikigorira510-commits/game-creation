@@ -16,9 +16,13 @@ namespace WitchTower.Data
 
         public int Level { get; set; }
         public int Exp { get; set; }
+        public int RebirthPoints { get; set; }
+        public int TotalRebirthPoints { get; set; }
+        public int RebirthCount { get; set; }
         public int Gold { get; set; }
         public int FreeGachaStones { get; set; }
         public int PaidGachaStones { get; set; }
+        public bool HasRemovedAds { get; set; }
         public int HighestFloor { get; set; }
         public int AttackUpgradeLevel { get; set; }
         public int DefenseUpgradeLevel { get; set; }
@@ -39,6 +43,7 @@ namespace WitchTower.Data
         public List<OwnedMaterialData> OwnedMaterials { get; }
         public List<OwnedEquipmentData> OwnedEquipments { get; }
         public List<OwnedEnhancementRelicData> OwnedEnhancementRelics { get; }
+        public List<RebirthSkillLevelData> RebirthSkillLevels { get; }
         public int EquipmentStorageLimit { get; set; }
         public int MonsterStorageLimit { get; set; }
         public List<OwnedMonsterData> OwnedMonsters { get; }
@@ -47,16 +52,21 @@ namespace WitchTower.Data
         public List<MissionProgressData> MissionProgressList { get; }
         public bool HasCompletedTutorial { get; set; }
         public string TutorialStepId { get; set; }
+        public int InitialTutorialSummonCount { get; set; }
         public List<string> SeenStoryEventIds { get; }
         public List<string> SeenTutorialHintIds { get; }
 
         public PlayerProfile(PlayerSaveData saveData)
         {
-            Level = saveData.PlayerLevel;
-            Exp = saveData.PlayerExp;
+            Level = Math.Max(1, saveData.PlayerLevel);
+            Exp = Math.Max(0, saveData.PlayerExp);
+            RebirthPoints = Math.Max(0, saveData.RebirthPoints);
+            TotalRebirthPoints = Math.Max(0, saveData.TotalRebirthPoints);
+            RebirthCount = Math.Max(0, saveData.RebirthCount);
             Gold = saveData.Gold;
             FreeGachaStones = Math.Max(0, saveData.FreeGachaStones);
             PaidGachaStones = Math.Max(0, saveData.PaidGachaStones);
+            HasRemovedAds = saveData.HasRemovedAds;
             HighestFloor = saveData.HighestFloor;
             AttackUpgradeLevel = saveData.AttackUpgradeLevel;
             DefenseUpgradeLevel = saveData.DefenseUpgradeLevel;
@@ -77,6 +87,7 @@ namespace WitchTower.Data
             OwnedMaterials = saveData.OwnedMaterials ?? new List<OwnedMaterialData>();
             OwnedEquipments = saveData.OwnedEquipments ?? new List<OwnedEquipmentData>();
             OwnedEnhancementRelics = saveData.OwnedEnhancementRelics ?? new List<OwnedEnhancementRelicData>();
+            RebirthSkillLevels = saveData.RebirthSkillLevels ?? new List<RebirthSkillLevelData>();
             EquipmentStorageLimit = Math.Max(
                 saveData.EquipmentStorageLimit > 0 ? saveData.EquipmentStorageLimit : DefaultEquipmentStorageLimit,
                 OwnedEquipments.Count);
@@ -90,6 +101,7 @@ namespace WitchTower.Data
             TutorialStepId = hasSavedTutorialState
                 ? saveData.TutorialStepId
                 : "Complete";
+            InitialTutorialSummonCount = Math.Max(0, saveData.InitialTutorialSummonCount);
             SeenStoryEventIds = saveData.SeenStoryEventIds ?? new List<string>();
             SeenTutorialHintIds = saveData.SeenTutorialHintIds ?? new List<string>();
             if (!hasSavedTutorialState)
@@ -189,6 +201,21 @@ namespace WitchTower.Data
             return 120 + levelOffset * 60 + levelOffset * levelOffset * 16;
         }
 
+        public int GetLevelAttackBonus()
+        {
+            return Math.Max(0, Level - 1);
+        }
+
+        public int GetLevelDefenseBonus()
+        {
+            return Math.Max(0, (Level - 1) / 2);
+        }
+
+        public int GetLevelHpBonus()
+        {
+            return Math.Max(0, Level - 1) * 5;
+        }
+
         public int GetAttackBonus()
         {
             return AttackUpgradeLevel * 3;
@@ -202,6 +229,118 @@ namespace WitchTower.Data
         public int GetHpBonus()
         {
             return HpUpgradeLevel * 10;
+        }
+
+        public float GetAttackMultiplier()
+        {
+            return 1f + GetRebirthSkillValue(RebirthSkillEffectType.AttackMultiplier);
+        }
+
+        public float GetHpMultiplier()
+        {
+            return 1f + GetRebirthSkillValue(RebirthSkillEffectType.HpMultiplier);
+        }
+
+        public float GetDefenseMultiplier()
+        {
+            return 1f + GetRebirthSkillValue(RebirthSkillEffectType.DefenseMultiplier);
+        }
+
+        public float GetCritRateBonus()
+        {
+            return GetRebirthSkillValue(RebirthSkillEffectType.CritRateBonus);
+        }
+
+        public float GetAttackSpeedMultiplier()
+        {
+            return 1f + GetRebirthSkillValue(RebirthSkillEffectType.AttackSpeedMultiplier);
+        }
+
+        public float GetStrikePowerMultiplier()
+        {
+            return 1f + GetRebirthSkillValue(RebirthSkillEffectType.StrikePowerMultiplier);
+        }
+
+        public float GetDrainHealMultiplier()
+        {
+            return 1f + GetRebirthSkillValue(RebirthSkillEffectType.DrainHealMultiplier);
+        }
+
+        public float GetExpRewardMultiplier()
+        {
+            return 1f + GetRebirthSkillValue(RebirthSkillEffectType.ExpRewardMultiplier);
+        }
+
+        public float GetGoldRewardMultiplier()
+        {
+            return 1f + GetRebirthSkillValue(RebirthSkillEffectType.GoldRewardMultiplier);
+        }
+
+        public int GetPendingRebirthPointReward()
+        {
+            return RebirthService.CalculateRebirthPointReward(this);
+        }
+
+        public int ApplyRebirth()
+        {
+            int gainedPoints = RebirthService.CalculateRebirthPointReward(this);
+            if (gainedPoints <= 0)
+            {
+                return 0;
+            }
+
+            RebirthPoints += gainedPoints;
+            TotalRebirthPoints += gainedPoints;
+            RebirthCount += 1;
+            Level = 1;
+            Exp = 0;
+            return gainedPoints;
+        }
+
+        public bool TrySpendRebirthPoints(int amount)
+        {
+            int cost = Math.Max(0, amount);
+            if (RebirthPoints < cost)
+            {
+                return false;
+            }
+
+            RebirthPoints -= cost;
+            return true;
+        }
+
+        public int GetRebirthSkillLevel(string skillId)
+        {
+            if (string.IsNullOrEmpty(skillId))
+            {
+                return 0;
+            }
+
+            RebirthSkillLevelData skillLevel = RebirthSkillLevels.FirstOrDefault(x => x != null && x.SkillId == skillId);
+            return skillLevel != null ? Math.Max(0, skillLevel.Level) : 0;
+        }
+
+        public void SetRebirthSkillLevel(string skillId, int level)
+        {
+            if (string.IsNullOrEmpty(skillId))
+            {
+                return;
+            }
+
+            RebirthSkillLevelData skillLevel = RebirthSkillLevels.FirstOrDefault(x => x != null && x.SkillId == skillId);
+            if (skillLevel == null)
+            {
+                skillLevel = new RebirthSkillLevelData
+                {
+                    SkillId = skillId,
+                    Level = 0
+                };
+                RebirthSkillLevels.Add(skillLevel);
+            }
+
+            RebirthSkillDefinition definition = RebirthSkillCatalog.GetDefinition(skillId);
+            int maxLevel = definition != null ? definition.MaxLevel : level;
+            skillLevel.Level = Math.Max(0, Math.Min(level, maxLevel));
         }
 
         public bool CanClaimDailyReward(string currentDate)
@@ -554,11 +693,16 @@ namespace WitchTower.Data
 
             return new PlayerSaveData
             {
+                SchemaVersion = PlayerSaveData.CurrentSchemaVersion,
                 PlayerLevel = Level,
                 PlayerExp = Exp,
+                RebirthPoints = RebirthPoints,
+                TotalRebirthPoints = TotalRebirthPoints,
+                RebirthCount = RebirthCount,
                 Gold = Gold,
                 FreeGachaStones = FreeGachaStones,
                 PaidGachaStones = PaidGachaStones,
+                HasRemovedAds = HasRemovedAds,
                 HighestFloor = HighestFloor,
                 CurrentFloor = currentFloor,
                 AttackUpgradeLevel = AttackUpgradeLevel,
@@ -596,6 +740,7 @@ namespace WitchTower.Data
                 OwnedMaterials = new List<OwnedMaterialData>(OwnedMaterials),
                 OwnedEquipments = new List<OwnedEquipmentData>(OwnedEquipments),
                 OwnedEnhancementRelics = new List<OwnedEnhancementRelicData>(OwnedEnhancementRelics),
+                RebirthSkillLevels = new List<RebirthSkillLevelData>(RebirthSkillLevels),
                 EquipmentStorageLimit = EquipmentStorageLimit,
                 MonsterStorageLimit = MonsterStorageLimit,
                 OwnedMonsters = new List<OwnedMonsterData>(OwnedMonsters),
@@ -604,6 +749,7 @@ namespace WitchTower.Data
                 SkillLevels = new List<SkillLevelData>(),
                 HasCompletedTutorial = HasCompletedTutorial,
                 TutorialStepId = TutorialStepId ?? string.Empty,
+                InitialTutorialSummonCount = InitialTutorialSummonCount,
                 SeenStoryEventIds = new List<string>(SeenStoryEventIds),
                 SeenTutorialHintIds = new List<string>(SeenTutorialHintIds)
             };
@@ -618,6 +764,17 @@ namespace WitchTower.Data
                 Level += 1;
                 requiredExp = GetRequiredExpForNextLevel();
             }
+        }
+
+        private float GetRebirthSkillValue(RebirthSkillEffectType effectType)
+        {
+            float value = 0f;
+            foreach (RebirthSkillDefinition definition in RebirthSkillCatalog.GetDefinitionsForEffect(effectType))
+            {
+                value += definition.GetTotalValue(GetRebirthSkillLevel(definition.SkillId));
+            }
+
+            return value;
         }
 
         private static int ClampEquipmentQualityThreshold(int qualityRank)

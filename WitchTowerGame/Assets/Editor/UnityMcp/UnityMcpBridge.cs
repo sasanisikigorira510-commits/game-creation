@@ -309,6 +309,18 @@ using WitchTower.Save;
             return;
         }
 
+        if (path == "simulate-battle" && method == "POST")
+        {
+            string requestBody = ReadRequestBody(context.Request);
+            BattleSimulationRequest payload = ParseJson<BattleSimulationRequest>(requestBody);
+            string json = RunOnMainThreadAndWait(delegate
+            {
+                return RunBattleSimulation(payload);
+            });
+            WriteJson(context.Response, json);
+            return;
+        }
+
         if (path == "refresh-assets" && method == "POST")
         {
             string json = RunOnMainThreadAndWait(delegate
@@ -422,6 +434,26 @@ using WitchTower.Save;
             string json = RunOnMainThreadAndWait(delegate
             {
                 return InvokeComponentMethod(payload.componentType, payload.methodName);
+            });
+
+            WriteJson(context.Response, json);
+            return;
+        }
+
+        if (path == "click-button" && method == "POST")
+        {
+            string requestBody = ReadRequestBody(context.Request);
+            ClickButtonRequest payload = ParseJson<ClickButtonRequest>(requestBody);
+
+            if (payload == null || string.IsNullOrEmpty(payload.gameObjectName))
+            {
+                WriteError(context.Response, 400, "Missing required field: gameObjectName");
+                return;
+            }
+
+            string json = RunOnMainThreadAndWait(delegate
+            {
+                return ClickButtonByName(payload.gameObjectName);
             });
 
             WriteJson(context.Response, json);
@@ -556,37 +588,79 @@ using WitchTower.Save;
 
     private static string BuildTextListResponse()
     {
-        TMP_Text[] texts = UnityEngine.Object.FindObjectsOfType<TMP_Text>(true);
+        TMP_Text[] tmpTexts = UnityEngine.Object.FindObjectsOfType<TMP_Text>(true);
+        Text[] uiTexts = UnityEngine.Object.FindObjectsOfType<Text>(true);
         StringBuilder builder = new StringBuilder();
         builder.Append("{\"ok\":true,\"texts\":[");
+        int written = 0;
 
-        for (int i = 0; i < texts.Length; i++)
+        for (int i = 0; i < tmpTexts.Length; i++)
         {
-            TMP_Text text = texts[i];
+            TMP_Text text = tmpTexts[i];
             if (text == null)
             {
                 continue;
             }
 
-            if (i > 0)
+            AppendTextEntry(
+                builder,
+                ref written,
+                "TMP",
+                text.gameObject.name,
+                text.gameObject.scene.path,
+                text.gameObject.activeInHierarchy,
+                text.text);
+        }
+
+        for (int i = 0; i < uiTexts.Length; i++)
+        {
+            Text text = uiTexts[i];
+            if (text == null)
             {
-                builder.Append(",");
+                continue;
             }
 
-            builder.Append("{");
-            builder.Append("\"gameObjectName\":\"");
-            builder.Append(EscapeJson(text.gameObject.name));
-            builder.Append("\",\"scenePath\":\"");
-            builder.Append(EscapeJson(text.gameObject.scene.path));
-            builder.Append("\",\"active\":");
-            builder.Append(text.gameObject.activeInHierarchy ? "true" : "false");
-            builder.Append(",\"text\":\"");
-            builder.Append(EscapeJson(text.text));
-            builder.Append("\"}");
+            AppendTextEntry(
+                builder,
+                ref written,
+                "UI",
+                text.gameObject.name,
+                text.gameObject.scene.path,
+                text.gameObject.activeInHierarchy,
+                text.text);
         }
 
         builder.Append("]}");
         return builder.ToString();
+    }
+
+    private static void AppendTextEntry(
+        StringBuilder builder,
+        ref int written,
+        string textType,
+        string objectName,
+        string scenePath,
+        bool active,
+        string value)
+    {
+        if (written > 0)
+        {
+            builder.Append(",");
+        }
+
+        written += 1;
+        builder.Append("{");
+        builder.Append("\"gameObjectName\":\"");
+        builder.Append(EscapeJson(objectName));
+        builder.Append("\",\"textType\":\"");
+        builder.Append(EscapeJson(textType));
+        builder.Append("\",\"scenePath\":\"");
+        builder.Append(EscapeJson(scenePath));
+        builder.Append("\",\"active\":");
+        builder.Append(active ? "true" : "false");
+        builder.Append(",\"text\":\"");
+        builder.Append(EscapeJson(value));
+        builder.Append("\"}");
     }
 
     private static string BuildButtonListResponse()
@@ -608,7 +682,7 @@ using WitchTower.Save;
                 builder.Append(",");
             }
 
-            TMP_Text label = GetPrimaryButtonLabel(button);
+            string label = ResolvePrimaryButtonLabelText(button);
             Image image = button.GetComponent<Image>();
 
             builder.Append("{");
@@ -621,7 +695,7 @@ using WitchTower.Save;
             builder.Append(",\"interactable\":");
             builder.Append(button.interactable ? "true" : "false");
             builder.Append(",\"label\":\"");
-            builder.Append(EscapeJson(label != null ? label.text : string.Empty));
+            builder.Append(EscapeJson(label));
             builder.Append("\",\"backgroundColor\":\"");
             builder.Append(EscapeJson(ColorUtility.ToHtmlStringRGBA(image != null ? image.color : Color.clear)));
             builder.Append("\"}");
@@ -631,7 +705,7 @@ using WitchTower.Save;
         return builder.ToString();
     }
 
-    private static TMP_Text GetPrimaryButtonLabel(Button button)
+    private static string ResolvePrimaryButtonLabelText(Button button)
     {
         TMP_Text[] labels = button.GetComponentsInChildren<TMP_Text>(true);
         for (int i = 0; i < labels.Length; i++)
@@ -642,13 +716,51 @@ using WitchTower.Save;
                 continue;
             }
 
-            if (!label.gameObject.name.EndsWith("Badge"))
+            if (label.gameObject.activeInHierarchy && !label.gameObject.name.EndsWith("Badge"))
             {
-                return label;
+                return label.text;
             }
         }
 
-        return labels.Length > 0 ? labels[0] : null;
+        for (int i = 0; i < labels.Length; i++)
+        {
+            TMP_Text label = labels[i];
+            if (label != null && !label.gameObject.name.EndsWith("Badge"))
+            {
+                return label.text;
+            }
+        }
+
+        if (labels.Length > 0)
+        {
+            return labels[0].text;
+        }
+
+        Text[] uiLabels = button.GetComponentsInChildren<Text>(true);
+        for (int i = 0; i < uiLabels.Length; i++)
+        {
+            Text label = uiLabels[i];
+            if (label == null)
+            {
+                continue;
+            }
+
+            if (label.gameObject.activeInHierarchy && !label.gameObject.name.EndsWith("Badge"))
+            {
+                return label.text;
+            }
+        }
+
+        for (int i = 0; i < uiLabels.Length; i++)
+        {
+            Text label = uiLabels[i];
+            if (label != null && !label.gameObject.name.EndsWith("Badge"))
+            {
+                return label.text;
+            }
+        }
+
+        return uiLabels.Length > 0 ? uiLabels[0].text : string.Empty;
     }
 
     private static string BuildConsoleResponse()
@@ -711,6 +823,17 @@ using WitchTower.Save;
             builder.Append(",\"flowState\":\"");
             builder.Append(EscapeJson(stateMachine.CurrentState.ToString()));
             builder.Append("\"");
+            builder.Append(",\"displayedWaveEnemyHp\":");
+            builder.Append(stateMachine.DebugDisplayedWaveEnemyHp);
+            builder.Append(",\"displayedWaveEnemyMaxHp\":");
+            builder.Append(stateMachine.DebugDisplayedWaveEnemyMaxHp);
+            AppendFloat(builder, ",\"displayedWaveEnemyRatio\":", stateMachine.DebugDisplayedWaveEnemyRatio);
+        }
+
+        if (hud != null)
+        {
+            AppendFloat(builder, ",\"playerHpFillAmount\":", hud.DebugPlayerHpFillAmount);
+            AppendFloat(builder, ",\"enemyHpFillAmount\":", hud.DebugEnemyHpFillAmount);
         }
 
         if (sceneController != null)
@@ -724,6 +847,8 @@ using WitchTower.Save;
             builder.Append(sceneController.DebugActiveHitFlashCount);
             builder.Append(",\"activeHpTrailCount\":");
             builder.Append(sceneController.DebugActiveHpTrailCount);
+            AppendFloat(builder, ",\"waveHudFillAmount\":", sceneController.DebugWaveHudFillAmount);
+            AppendString(builder, ",\"waveHudEnemyCountText\":", sceneController.DebugWaveHudEnemyCountText);
         }
 
         if (simulator != null)
@@ -760,6 +885,8 @@ using WitchTower.Save;
             builder.Append(simulator.CurrentAliveAllyCount);
             builder.Append(",\"allyRuntimeCount\":");
             builder.Append(simulator.CurrentAllyRuntimeCount);
+            builder.Append(",\"enemyCountTarget\":");
+            builder.Append(simulator.CurrentEnemyCountTarget);
             builder.Append(",\"spawnedEnemyCount\":");
             builder.Append(simulator.CurrentSpawnedEnemyCount);
             builder.Append(",\"activeEnemyCount\":");
@@ -1005,6 +1132,7 @@ using WitchTower.Save;
         }
 
         profile.SetPartyMonsterIds(partyInstanceIds);
+
         if (payload.floor > 0 && GameManager.Instance != null)
         {
             GameManager.Instance.SetCurrentFloor(payload.floor);
@@ -1044,6 +1172,191 @@ using WitchTower.Save;
         builder.Append(restarted ? "true" : "false");
         builder.Append("}");
         return builder.ToString();
+    }
+
+    private static string RunBattleSimulation(BattleSimulationRequest payload)
+    {
+        if (payload == null)
+        {
+            return BuildFailureResponse("Missing simulation payload.");
+        }
+
+        if (!EditorApplication.isPlaying)
+        {
+            return BuildFailureResponse("simulate-battle requires Play Mode.");
+        }
+
+        int floor = Mathf.Max(1, payload.floor);
+        int level = Mathf.Max(1, payload.level > 0 ? payload.level : 1);
+        int trials = Mathf.Clamp(payload.trials > 0 ? payload.trials : 1, 1, 200);
+        float deltaTime = Mathf.Clamp(payload.deltaTime > 0f ? payload.deltaTime : 0.05f, 0.01f, 0.5f);
+        float maxSeconds = Mathf.Clamp(payload.maxSeconds > 0f ? payload.maxSeconds : 180f, 5f, 600f);
+        int baseSeed = payload.seed != 0 ? payload.seed : 17001;
+        string[] monsterIds = payload.monsterIds != null && payload.monsterIds.Length > 0
+            ? payload.monsterIds
+            : new[]
+            {
+                "monster_flare_drake",
+                "monster_dragon_whelp",
+                "monster_abyss_dragon"
+            };
+
+        string partyResult = ApplyDebugParty(new DebugPartyRequest
+        {
+            monsterIds = monsterIds,
+            floor = floor,
+            level = level,
+            restartBattle = false
+        });
+        if (!partyResult.Contains("\"ok\":true"))
+        {
+            return partyResult;
+        }
+
+        int wins = 0;
+        int losses = 0;
+        int timeouts = 0;
+        float totalSeconds = 0f;
+        float winSeconds = 0f;
+        float minSeconds = float.MaxValue;
+        float maxObservedSeconds = 0f;
+
+        StringBuilder builder = new StringBuilder();
+        builder.Append("{\"ok\":true");
+        builder.Append(",\"floor\":");
+        builder.Append(floor);
+        builder.Append(",\"level\":");
+        builder.Append(level);
+        builder.Append(",\"trials\":");
+        builder.Append(trials);
+        builder.Append(",\"deltaTime\":");
+        builder.Append(deltaTime.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
+        builder.Append(",\"maxSeconds\":");
+        builder.Append(maxSeconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
+        builder.Append(",\"partySetup\":");
+        builder.Append(partyResult);
+        builder.Append(",\"firstClearReward\":");
+        AppendReward(builder, BattleRewardCalculator.Calculate(floor, floor - 1));
+        builder.Append(",\"repeatReward\":");
+        AppendReward(builder, BattleRewardCalculator.Calculate(floor, floor));
+        builder.Append(",\"results\":[");
+
+        GameObject simulationObject = new GameObject("BattleSimulationProbe");
+        simulationObject.hideFlags = HideFlags.HideAndDontSave;
+        BattleSimulator simulator = simulationObject.AddComponent<BattleSimulator>();
+        try
+        {
+            for (int trial = 0; trial < trials; trial += 1)
+            {
+                if (trial > 0)
+                {
+                    builder.Append(",");
+                }
+
+                UnityEngine.Random.InitState(baseSeed + trial);
+                BattleResult result = BattleResult.None;
+                float elapsed = 0f;
+                int steps = 0;
+                simulator.Setup(floor);
+                int maxSteps = Mathf.CeilToInt(maxSeconds / deltaTime) + 2;
+                while (result == BattleResult.None && elapsed < maxSeconds && steps < maxSteps)
+                {
+                    result = simulator.Tick(deltaTime);
+                    elapsed += deltaTime;
+                    steps += 1;
+                }
+
+                if (result == BattleResult.Win)
+                {
+                    wins += 1;
+                    winSeconds += elapsed;
+                }
+                else if (result == BattleResult.Lose)
+                {
+                    losses += 1;
+                }
+                else
+                {
+                    timeouts += 1;
+                }
+
+                totalSeconds += elapsed;
+                minSeconds = Mathf.Min(minSeconds, elapsed);
+                maxObservedSeconds = Mathf.Max(maxObservedSeconds, elapsed);
+
+                builder.Append("{\"index\":");
+                builder.Append(trial);
+                builder.Append(",\"result\":\"");
+                builder.Append(EscapeJson(result.ToString()));
+                builder.Append("\",\"seconds\":");
+                builder.Append(elapsed.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
+                builder.Append(",\"steps\":");
+                builder.Append(steps);
+                builder.Append(",\"remainingEnemyCount\":");
+                builder.Append(simulator.CurrentRemainingEnemyCount);
+                builder.Append(",\"spawnedEnemyCount\":");
+                builder.Append(simulator.CurrentSpawnedEnemyCount);
+                builder.Append(",\"activeEnemyCount\":");
+                builder.Append(simulator.CurrentActiveEnemyCount);
+                builder.Append(",\"aliveAllyCount\":");
+                builder.Append(simulator.CurrentAliveAllyCount);
+                builder.Append(",\"playerStats\":");
+                AppendStats(builder, simulator.PlayerStats);
+                builder.Append(",\"enemyStats\":");
+                AppendStats(builder, simulator.EnemyStats);
+                builder.Append("}");
+            }
+        }
+        finally
+        {
+            DestroySimulationObject(simulationObject);
+        }
+
+        if (minSeconds == float.MaxValue)
+        {
+            minSeconds = 0f;
+        }
+
+        builder.Append("],\"summary\":{");
+        builder.Append("\"wins\":");
+        builder.Append(wins);
+        builder.Append(",\"losses\":");
+        builder.Append(losses);
+        builder.Append(",\"timeouts\":");
+        builder.Append(timeouts);
+        AppendFloat(builder, ",\"winRate\":", trials > 0 ? (float)wins / trials : 0f);
+        AppendFloat(builder, ",\"averageSeconds\":", trials > 0 ? totalSeconds / trials : 0f);
+        AppendFloat(builder, ",\"averageWinSeconds\":", wins > 0 ? winSeconds / wins : 0f);
+        AppendFloat(builder, ",\"minSeconds\":", minSeconds);
+        AppendFloat(builder, ",\"maxSecondsObserved\":", maxObservedSeconds);
+        builder.Append("}}");
+        return builder.ToString();
+    }
+
+    private static void DestroySimulationObject(GameObject simulationObject)
+    {
+        if (simulationObject == null)
+        {
+            return;
+        }
+
+        if (Application.isPlaying)
+        {
+            UnityEngine.Object.Destroy(simulationObject);
+        }
+        else
+        {
+            UnityEngine.Object.DestroyImmediate(simulationObject);
+        }
+    }
+
+    private static void AppendReward(StringBuilder builder, BattleRewardResult reward)
+    {
+        builder.Append("{\"gold\":");
+        builder.Append(reward.Gold);
+        builder.Append(",\"exp\":");
+        builder.Append(reward.Exp);
+        builder.Append("}");
     }
 
     private static string BuildHomeDebugResponse()
@@ -1346,6 +1659,36 @@ using WitchTower.Save;
         return BuildFailureResponse("Component not found in open scenes: " + componentTypeName);
     }
 
+    private static string ClickButtonByName(string gameObjectName)
+    {
+        Button[] buttons = UnityEngine.Object.FindObjectsOfType<Button>(true);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            Button button = buttons[i];
+            if (button == null || !string.Equals(button.gameObject.name, gameObjectName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!button.gameObject.activeInHierarchy)
+            {
+                return BuildFailureResponse("Button is not active: " + gameObjectName);
+            }
+
+            if (!button.interactable)
+            {
+                return BuildFailureResponse("Button is not interactable: " + gameObjectName);
+            }
+
+            string label = ResolvePrimaryButtonLabelText(button);
+            button.onClick.Invoke();
+            return "{\"ok\":true,\"message\":\"Button clicked.\",\"gameObjectName\":\"" + EscapeJson(gameObjectName) +
+                "\",\"label\":\"" + EscapeJson(label) + "\"}";
+        }
+
+        return BuildFailureResponse("Button not found in open scenes: " + gameObjectName);
+    }
+
     private static string NormalizeAssetPath(string path)
     {
         if (string.IsNullOrEmpty(path))
@@ -1442,10 +1785,28 @@ using WitchTower.Save;
     }
 
     [Serializable]
+    private class BattleSimulationRequest
+    {
+        public string[] monsterIds;
+        public int floor;
+        public int level;
+        public int trials;
+        public float deltaTime;
+        public float maxSeconds;
+        public int seed;
+    }
+
+    [Serializable]
     private class InvokeMethodRequest
     {
         public string componentType;
         public string methodName;
+    }
+
+    [Serializable]
+    private class ClickButtonRequest
+    {
+        public string gameObjectName;
     }
 
     private class MainThreadWorkItem

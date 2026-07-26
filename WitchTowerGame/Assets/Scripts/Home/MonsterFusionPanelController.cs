@@ -89,7 +89,9 @@ namespace WitchTower.Home
         private Text fusionTutorialGuideTitleText;
         private Text fusionTutorialGuideBodyText;
         private Text fusionTutorialGuideFooterText;
+        private Text fusionTutorialGuideCloseButtonText;
         private Image fusionTutorialGuideCharacterImage;
+        private string activeFusionTutorialEventId;
         private string parentAInstanceId;
         private string parentBInstanceId;
         private bool isBuilt;
@@ -181,6 +183,7 @@ namespace WitchTower.Home
             parentBInstanceId = string.Empty;
             previewCanFuse = false;
             birthEffectTimer = 0f;
+            PrepareFusionInheritanceTutorialGift();
             RefreshRoster();
             RefreshPreview();
             RefreshFusionTutorialGuide();
@@ -377,12 +380,12 @@ namespace WitchTower.Home
                 new Vector2(276f, -56f), new Vector2(560f, 36f), TextAnchor.MiddleLeft, new Color(1f, 0.96f, 0.78f, 1f));
             AddTextContrast(fusionTutorialGuideTitleText);
 
-            fusionTutorialGuideBodyText = CreateText("FusionTutorialGuideBody", fusionTutorialGuideRoot.transform, string.Empty, 18, FontStyle.Bold,
+            fusionTutorialGuideBodyText = CreateText("FusionTutorialGuideBody", fusionTutorialGuideRoot.transform, string.Empty, 24, FontStyle.Bold,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(276f, -98f), new Vector2(590f, 160f), TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f));
+                new Vector2(276f, -98f), new Vector2(590f, 200f), TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f));
             fusionTutorialGuideBodyText.resizeTextForBestFit = true;
-            fusionTutorialGuideBodyText.resizeTextMinSize = 14;
-            fusionTutorialGuideBodyText.resizeTextMaxSize = 18;
+            fusionTutorialGuideBodyText.resizeTextMinSize = 19;
+            fusionTutorialGuideBodyText.resizeTextMaxSize = 24;
             AddTextContrast(fusionTutorialGuideBodyText);
 
             fusionTutorialGuideFooterText = CreateText("FusionTutorialGuideFooter", fusionTutorialGuideRoot.transform, "次の操作: 説明を確認してホームへ戻る", 18, FontStyle.Bold,
@@ -390,11 +393,36 @@ namespace WitchTower.Home
                 new Vector2(276f, 28f), new Vector2(430f, 28f), TextAnchor.MiddleLeft, new Color(0.78f, 0.92f, 1f, 1f));
             AddTextContrast(fusionTutorialGuideFooterText);
 
-            CreateButton("FusionTutorialGuideClose", fusionTutorialGuideRoot.transform, "ホームへ戻る",
+            GameObject guideCloseButton = CreateButton("FusionTutorialGuideClose", fusionTutorialGuideRoot.transform, "ホームへ戻る",
                 new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
                 new Vector2(-26f, 28f), new Vector2(190f, 48f), ConfirmButtonSpritePath, ParentButtonColor, CompleteFusionTutorialGuide);
+            fusionTutorialGuideCloseButtonText = guideCloseButton.transform.Find("Label")?.GetComponent<Text>();
 
             fusionTutorialGuideRoot.SetActive(false);
+        }
+
+        private void PrepareFusionInheritanceTutorialGift()
+        {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            if (profile == null ||
+                !profile.HasCompletedTutorial ||
+                profile.HighestFloor < StoryTutorialService.FusionInheritanceTutorialUnlockFloor ||
+                StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintFusionInheritance))
+            {
+                return;
+            }
+
+            bool changed = StoryTutorialService.EnsureFusionInheritanceTutorialGift(profile);
+            if (StoryTutorialService.TryGetFusionInheritanceTutorialGiftParents(profile, out string firstParentId, out string secondParentId))
+            {
+                parentAInstanceId = firstParentId;
+                parentBInstanceId = secondParentId;
+            }
+
+            if (changed && Application.isPlaying)
+            {
+                SaveManager.Instance?.SaveCurrentGame();
+            }
         }
 
         private void RefreshFusionTutorialGuide()
@@ -414,29 +442,68 @@ namespace WitchTower.Home
             fusionTutorialGuideRoot.SetActive(shouldShow);
             if (!shouldShow)
             {
+                activeFusionTutorialEventId = string.Empty;
                 return;
             }
 
             fusionTutorialGuideRoot.transform.SetAsLastSibling();
+            activeFusionTutorialEventId = tutorialEvent.EventId;
+            bool isInheritanceLesson = string.Equals(
+                tutorialEvent.EventId,
+                StoryTutorialService.HintFusionInheritance,
+                StringComparison.Ordinal);
+            if (fusionTutorialGuideTitleText != null)
+            {
+                fusionTutorialGuideTitleText.text = isInheritanceLesson ? "ルシェの配合レッスン" : tutorialEvent.Title;
+            }
+
             if (fusionTutorialGuideBodyText != null)
             {
-                fusionTutorialGuideBodyText.text =
-                    "配合は親2体とも最大レベルが必要です。\n個体値は能力ごとに親1/親2からランダム継承します。\n高い個体値の親ほど、良い値を引き継ぐ機会が増えます。\n親のプラス値を含む能力は、継承ボーナスに反映されます。\n親は戻らないので、保護を確認してから選びましょう。";
+                fusionTutorialGuideBodyText.text = isInheritanceLesson
+                    ? "教材のロックゴーレム2体を親に選んであります。\n親1: Lv.20 +1 / IV 10・30・50・10・30・50\n親2: Lv.20 +2 / IV 50・10・10・50・10・10\n個体値・親ステータスの一部・親のプラス値合計を継承します。"
+                    : "配合は親2体とも最大レベルが必要です。\n個体値は能力ごとに親1/親2からランダム継承します。\n高い個体値の親ほど、良い値を引き継ぐ機会が増えます。\n親のプラス値を含む能力は、継承ボーナスに反映されます。\n親は戻らないので、保護を確認してから選びましょう。";
             }
 
             if (fusionTutorialGuideFooterText != null)
             {
-                fusionTutorialGuideFooterText.text = "今回は配合せず、説明を確認したらホームへ戻りましょう";
+                fusionTutorialGuideFooterText.text = isInheritanceLesson
+                    ? "説明を閉じると、この2体で配合プレビューを確認できます"
+                    : "今回は配合せず、説明を確認したらホームへ戻りましょう";
+            }
+
+            if (fusionTutorialGuideCloseButtonText != null)
+            {
+                fusionTutorialGuideCloseButtonText.text = isInheritanceLesson ? "やってみる" : "ホームへ戻る";
             }
         }
 
         private void CompleteFusionTutorialGuide()
         {
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-            bool changed = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintFusion);
+            bool isInheritanceLesson = string.Equals(
+                activeFusionTutorialEventId,
+                StoryTutorialService.HintFusionInheritance,
+                StringComparison.Ordinal);
+            bool changed = StoryTutorialService.MarkHintSeen(
+                profile,
+                isInheritanceLesson ? StoryTutorialService.HintFusionInheritance : StoryTutorialService.HintFusion);
             if (changed && Application.isPlaying && SaveManager.Instance != null)
             {
                 SaveManager.Instance.SaveCurrentGame();
+            }
+
+            if (isInheritanceLesson)
+            {
+                fusionTutorialGuideRoot.SetActive(false);
+                if (StoryTutorialService.TryGetFusionInheritanceTutorialGiftParents(profile, out string firstParentId, out string secondParentId))
+                {
+                    parentAInstanceId = firstParentId;
+                    parentBInstanceId = secondParentId;
+                }
+
+                RefreshRoster();
+                RefreshPreview();
+                return;
             }
 
             Hide();
@@ -1432,7 +1499,7 @@ namespace WitchTower.Home
         {
             int classRank = Mathf.Max(1, bornMonsterData != null ? bornMonsterData.classRank : 1);
             string damageText = bornMonsterData != null ? $" / {ResolveDamageTypeLabel(bornMonsterData.damageType)}" : string.Empty;
-            string levelText = createdMonster != null ? $" / Lv.{createdMonster.Level}" : string.Empty;
+            string levelText = createdMonster != null ? $" / Lv.{createdMonster.Level}{BuildPlusSuffix(createdMonster)}" : string.Empty;
             return $"CLASS {classRank}{damageText}{levelText}";
         }
 
@@ -1819,21 +1886,29 @@ namespace WitchTower.Home
         {
             int level = MonsterLevelService.ClampLevelToMax(monster != null ? monster.Level : 1, monsterData);
             int maxLevel = MonsterLevelService.GetMaxLevel(monsterData);
-            return level >= maxLevel ? $"Lv.{level}/{maxLevel} MAX" : $"Lv.{level}/{maxLevel}";
+            string plusText = BuildPlusSuffix(monster);
+            return level >= maxLevel ? $"Lv.{level}/{maxLevel}{plusText} MAX" : $"Lv.{level}/{maxLevel}{plusText}";
         }
 
         private static string BuildMonsterLevelProgressText(OwnedMonsterData monster, MonsterDataSO monsterData)
         {
             int level = MonsterLevelService.ClampLevelToMax(monster != null ? monster.Level : 1, monsterData);
             int maxLevel = MonsterLevelService.GetMaxLevel(monsterData);
+            string plusText = BuildPlusSuffix(monster);
             if (level >= maxLevel)
             {
-                return $"Lv.{level}/{maxLevel} MAX";
+                return $"Lv.{level}/{maxLevel}{plusText} MAX";
             }
 
             int requiredExp = MonsterLevelService.GetRequiredExpForNextLevel(monster, monsterData);
             int currentExp = Mathf.Max(0, monster != null ? monster.Exp : 0);
-            return $"Lv.{level}/{maxLevel} EXP {currentExp}/{Mathf.Max(1, requiredExp)}";
+            return $"Lv.{level}/{maxLevel}{plusText} 経験値 {currentExp}/{Mathf.Max(1, requiredExp)}";
+        }
+
+        private static string BuildPlusSuffix(OwnedMonsterData monster)
+        {
+            int plusValue = Mathf.Max(0, monster != null ? monster.TotalPlusValue : 0);
+            return plusValue > 0 ? $" +{plusValue}" : string.Empty;
         }
 
         private RectTransform EnsureRootRect()

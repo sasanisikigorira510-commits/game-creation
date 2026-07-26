@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using WitchTower.Data;
 using WitchTower.UI;
@@ -18,6 +19,7 @@ namespace WitchTower.Battle
         private static readonly Color PrimaryActionColor = new Color(0.21f, 0.56f, 0.78f, 1f);
         private static readonly Color RetryActionColor = new Color(0.28f, 0.39f, 0.24f, 1f);
         private static readonly Color SecondaryActionColor = new Color(0.35f, 0.24f, 0.42f, 1f);
+        private const string FallbackHomeSceneName = "HomeScene";
         private const string ResultPanelResourcePath = "UI/BattleResult/BattleResultPanelImage2";
         private static readonly string[] LegacyReturnHomeChromeNames =
         {
@@ -68,6 +70,8 @@ namespace WitchTower.Battle
             string nextFloorAction = entersNextDungeon
                 ? $"{nextDungeonName}\n第{nextLocalFloor}階層へ"
                 : $"第{nextLocalFloor}階層へ";
+            BattleSceneController battleSceneController = ResolveBattleSceneController();
+            bool forceReturnHome = BattleSceneController.RequiresInitialTutorialHomeReturn(viewData);
 
             if (rootObject != null)
             {
@@ -87,19 +91,25 @@ namespace WitchTower.Battle
 
             if (goldText != null)
             {
-                goldText.text = $"ゴールド +{viewData.Gold:N0}";
+                goldText.text = viewData.IsWin
+                    ? $"ゴールド +{viewData.Gold:N0}"
+                    : $"途中獲得ゴールド +{viewData.Gold:N0}";
             }
 
             if (expText != null)
             {
-                expText.text = $"経験値 +{viewData.Exp:N0}";
+                expText.text = viewData.IsWin
+                    ? $"経験値 +{viewData.Exp:N0}"
+                    : $"途中獲得経験値 +{viewData.Exp:N0}";
             }
 
             if (summaryText != null)
             {
                 summaryText.text = viewData.IsWin
-                    ? $"{clearedStageName}\n第{clearedLocalFloor}階層を突破しました\n{nextFloorSummary}"
-                    : "戦闘に敗北しました\nホームで編成や装備を見直しましょう";
+                    ? forceReturnHome
+                        ? $"{clearedStageName}\n第{clearedLocalFloor}階層を突破しました\nホームで装備を確認しましょう"
+                        : $"{clearedStageName}\n第{clearedLocalFloor}階層を突破しました\n{nextFloorSummary}"
+                    : "戦闘に敗北しました\n途中獲得は持ち帰れます\nホームで編成や装備を見直しましょう";
                 summaryText.color = viewData.IsWin ? WinSummaryColor : LoseSummaryColor;
                 summaryText.enableAutoSizing = true;
                 summaryText.fontSizeMin = 13f;
@@ -122,14 +132,14 @@ namespace WitchTower.Battle
 
             if (nextActionText != null)
             {
-                nextActionText.text = viewData.IsWin
+                nextActionText.text = viewData.IsWin && !forceReturnHome
                     ? nextFloorAction
                     : "ホームへ戻る";
             }
 
             if (nextFloorButton != null)
             {
-                nextFloorButton.gameObject.SetActive(viewData.IsWin);
+                nextFloorButton.gameObject.SetActive(viewData.IsWin && !forceReturnHome);
             }
 
             if (returnHomeButton != null)
@@ -138,12 +148,12 @@ namespace WitchTower.Battle
             }
 
             EnsureRetryFloorButton();
-            BattleSceneController battleSceneController = ResolveBattleSceneController();
+            BindReturnHomeButton(battleSceneController);
             bool canAutoRepeat = battleSceneController != null && battleSceneController.HasAutoRepeatFloorUpgrade();
             bool isAutoRepeatActive = battleSceneController != null && battleSceneController.IsAutoRepeatSameFloorActive();
             if (retryFloorButton != null)
             {
-                retryFloorButton.gameObject.SetActive(true);
+                retryFloorButton.gameObject.SetActive(!forceReturnHome);
                 retryFloorButton.onClick.RemoveAllListeners();
                 retryFloorButton.interactable = battleSceneController != null && !isAutoRepeatActive;
                 if (battleSceneController != null && !isAutoRepeatActive)
@@ -178,7 +188,7 @@ namespace WitchTower.Battle
                 returnHomeButtonText.gameObject.SetActive(false);
             }
 
-            ApplyButtonEmphasis(nextFloorButton, viewData.IsWin ? PrimaryActionColor : SecondaryActionColor);
+            ApplyButtonEmphasis(nextFloorButton, viewData.IsWin && !forceReturnHome ? PrimaryActionColor : SecondaryActionColor);
             ApplyButtonEmphasis(retryFloorButton, RetryActionColor);
             HomeReturnButtonStyle.Apply(returnHomeButton);
         }
@@ -313,16 +323,25 @@ namespace WitchTower.Battle
             bool hasRewardVisuals = viewData.RewardVisuals != null && viewData.RewardVisuals.Length > 0;
             if (viewData.Gold <= 0 && viewData.Exp <= 0 && viewData.PartyMonsterExp <= 0 && !hasRewardVisuals)
             {
-                return "今回の獲得報酬はありません。\n強化・編成・装備を整えて再挑戦しましょう。";
+                return viewData.IsWin
+                    ? "今回の獲得報酬はありません。"
+                    : "途中獲得はありません。\n強化・編成・装備を整えて再挑戦しましょう。";
             }
 
             var lines = new List<string>
             {
-                $"プレイヤー経験値 +{viewData.Exp:N0}",
+                viewData.IsWin
+                    ? $"クリア報酬: ゴールド +{viewData.Gold:N0} / プレイヤー経験値 +{viewData.Exp:N0}"
+                    : $"途中獲得: ゴールド +{viewData.Gold:N0} / プレイヤー経験値 +{viewData.Exp:N0}",
                 viewData.PartyMonsterCount > 0
-                    ? $"パーティ経験値 +{viewData.PartyMonsterExp:N0} / {viewData.PartyMonsterCount}体"
-                    : "パーティ経験値 なし"
+                    ? $"討伐報酬: パーティ経験値 +{viewData.PartyMonsterExp:N0} / {viewData.PartyMonsterCount}体"
+                    : "討伐報酬: パーティ経験値 なし"
             };
+
+            if (!viewData.IsWin)
+            {
+                lines.Add("クリア報酬: 未獲得");
+            }
 
             if (viewData.PlayerLevelBefore > 0 &&
                 viewData.PlayerLevelAfter > viewData.PlayerLevelBefore)
@@ -468,7 +487,52 @@ namespace WitchTower.Battle
         private static BattleSceneController ResolveBattleSceneController()
         {
             BattleSceneController[] controllers = FindObjectsOfType<BattleSceneController>(true);
-            return controllers != null && controllers.Length > 0 ? controllers[0] : null;
+            if (controllers == null || controllers.Length == 0)
+            {
+                return null;
+            }
+
+            foreach (BattleSceneController controller in controllers)
+            {
+                if (controller != null && controller.isActiveAndEnabled)
+                {
+                    return controller;
+                }
+            }
+
+            foreach (BattleSceneController controller in controllers)
+            {
+                if (controller != null && controller.gameObject.activeInHierarchy)
+                {
+                    return controller;
+                }
+            }
+
+            return controllers[0];
+        }
+
+        private void BindReturnHomeButton(BattleSceneController battleSceneController)
+        {
+            if (returnHomeButton == null)
+            {
+                return;
+            }
+
+            returnHomeButton.onClick.RemoveAllListeners();
+            returnHomeButton.interactable = true;
+            if (battleSceneController != null)
+            {
+                returnHomeButton.onClick.AddListener(battleSceneController.ReturnHome);
+            }
+            else
+            {
+                returnHomeButton.onClick.AddListener(ReturnHomeFallback);
+            }
+        }
+
+        private static void ReturnHomeFallback()
+        {
+            SceneManager.LoadScene(FallbackHomeSceneName);
         }
 
         private void ApplyGeneratedPanelSprite()

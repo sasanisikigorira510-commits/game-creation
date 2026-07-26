@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using TMPro;
 
 namespace WitchTower.UI
 {
@@ -220,6 +221,24 @@ namespace WitchTower.UI
                 Transform child = buttonTransform.GetChild(i);
                 if (child != null)
                 {
+                    TMP_Text[] tmpLabels = child.GetComponentsInChildren<TMP_Text>(true);
+                    for (int labelIndex = 0; labelIndex < tmpLabels.Length; labelIndex += 1)
+                    {
+                        if (tmpLabels[labelIndex] != null)
+                        {
+                            tmpLabels[labelIndex].text = LabelText;
+                        }
+                    }
+
+                    Text[] uiLabels = child.GetComponentsInChildren<Text>(true);
+                    for (int labelIndex = 0; labelIndex < uiLabels.Length; labelIndex += 1)
+                    {
+                        if (uiLabels[labelIndex] != null)
+                        {
+                            uiLabels[labelIndex].text = LabelText;
+                        }
+                    }
+
                     child.gameObject.SetActive(false);
                 }
             }

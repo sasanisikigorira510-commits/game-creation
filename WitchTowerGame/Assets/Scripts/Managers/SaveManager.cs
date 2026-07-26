@@ -1,4 +1,3 @@
-using System.IO;
 using UnityEngine;
 using WitchTower.Save;
 
@@ -10,7 +9,7 @@ namespace WitchTower.Managers
 
         public PlayerSaveData CurrentSaveData { get; private set; }
 
-        private string SaveFilePath => Path.Combine(Application.persistentDataPath, "save.json");
+        private string SaveFilePath => System.IO.Path.Combine(Application.persistentDataPath, "save.json");
 
         private void Awake()
         {
@@ -26,28 +25,57 @@ namespace WitchTower.Managers
 
         public void LoadOrCreate()
         {
-            if (!File.Exists(SaveFilePath))
+            string primaryPath = SaveFilePath;
+            if (SaveFileStore.TryLoad(primaryPath, out PlayerSaveData primarySave, out string primaryError))
             {
-                CurrentSaveData = PlayerSaveData.CreateDefault();
-                Save(CurrentSaveData);
+                CurrentSaveData = primarySave;
                 return;
             }
 
-            var json = File.ReadAllText(SaveFilePath);
-            CurrentSaveData = JsonUtility.FromJson<PlayerSaveData>(json);
-
-            if (CurrentSaveData == null)
+            string archivedPath = SaveFileStore.TryArchiveUnreadablePrimary(primaryPath);
+            string backupPath = SaveFileStore.GetBackupPath(primaryPath);
+            if (SaveFileStore.TryLoad(backupPath, out PlayerSaveData backupSave, out string backupError))
             {
-                CurrentSaveData = PlayerSaveData.CreateDefault();
-                Save(CurrentSaveData);
+                CurrentSaveData = backupSave;
+                if (!SaveFileStore.TrySave(primaryPath, backupSave, out string restoreError, rotateBackup: false))
+                {
+                    Debug.LogError($"[SaveManager] Loaded backup but could not restore primary save: {restoreError}");
+                }
+
+                Debug.LogWarning(
+                    $"[SaveManager] Recovered save from backup. Primary error: {primaryError}" +
+                    (string.IsNullOrEmpty(archivedPath) ? string.Empty : $" Archived: {archivedPath}"));
+                return;
+            }
+
+            CurrentSaveData = PlayerSaveData.CreateDefault();
+            if (!SaveFileStore.TrySave(primaryPath, CurrentSaveData, out string createError, rotateBackup: false))
+            {
+                Debug.LogError($"[SaveManager] Could not create a new save: {createError}");
+            }
+
+            if (!string.IsNullOrEmpty(primaryError) && primaryError != "Save file does not exist.")
+            {
+                Debug.LogWarning(
+                    $"[SaveManager] Started a new save because primary and backup were unreadable. " +
+                    $"Primary: {primaryError} Backup: {backupError}" +
+                    (string.IsNullOrEmpty(archivedPath) ? string.Empty : $" Archived: {archivedPath}"));
             }
         }
 
         public void Save(PlayerSaveData saveData)
         {
+            if (saveData == null)
+            {
+                Debug.LogError("[SaveManager] Refused to save null data.");
+                return;
+            }
+
             CurrentSaveData = saveData;
-            var json = JsonUtility.ToJson(saveData, true);
-            File.WriteAllText(SaveFilePath, json);
+            if (!SaveFileStore.TrySave(SaveFilePath, saveData, out string error))
+            {
+                Debug.LogError($"[SaveManager] Save failed: {error}");
+            }
         }
 
         public void SaveCurrentGame()

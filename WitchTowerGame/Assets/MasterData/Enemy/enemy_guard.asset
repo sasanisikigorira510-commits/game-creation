@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: enemy_guard
   m_EditorClassIdentifier: 
   enemyId: enemy_guard
-  enemyName: Tower Guard
+  enemyName: 塔の衛兵
   maxHp: 64
   attack: 11
   defense: 5

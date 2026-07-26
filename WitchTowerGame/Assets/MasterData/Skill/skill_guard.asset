@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: skill_guard
   m_EditorClassIdentifier: 
   skillId: skill_guard
-  skillName: Guard
-  description: Raise defense for a short time.
+  skillName: 防御
+  description: 短時間、防御力を上げる。
   cooldown: 10
   powerRate: 0
   healRate: 0

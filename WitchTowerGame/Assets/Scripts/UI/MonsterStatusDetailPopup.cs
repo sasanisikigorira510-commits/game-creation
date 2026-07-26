@@ -704,7 +704,7 @@ namespace WitchTower.UI
             }
 
             int requiredExp = MonsterLevelService.GetRequiredExpForNextLevel(monster, monsterData);
-            return $"Lv.{level}/{maxLevel}  EXP {Mathf.Max(0, monster.Exp)}/{Mathf.Max(1, requiredExp)}";
+            return $"Lv.{level}/{maxLevel}  経験値 {Mathf.Max(0, monster.Exp)}/{Mathf.Max(1, requiredExp)}";
         }
 
         private static string BuildBonusAndEquipmentText(PlayerProfile profile, OwnedMonsterData monster)

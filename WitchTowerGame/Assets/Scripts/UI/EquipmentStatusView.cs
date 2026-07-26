@@ -16,17 +16,17 @@ namespace WitchTower.UI
         {
             if (weaponText != null)
             {
-                weaponText.text = $"Weapon: {weaponName}";
+                weaponText.text = $"武器: {weaponName}";
             }
 
             if (armorText != null)
             {
-                armorText.text = $"Armor: {armorName}";
+                armorText.text = $"防具: {armorName}";
             }
 
             if (accessoryText != null)
             {
-                accessoryText.text = $"Accessory: {accessoryName}";
+                accessoryText.text = $"装飾: {accessoryName}";
             }
 
             if (summaryText != null)
@@ -49,27 +49,27 @@ namespace WitchTower.UI
         {
             if (string.IsNullOrEmpty(summary))
             {
-                return "Battle Build: no preview available";
+                return "戦力プレビューを取得できません";
             }
 
-            if (summary.Contains("Build Grade: Tower-ready"))
+            if (summary.Contains("評価: 最前線"))
             {
-                return summary.Replace("Build Grade: Tower-ready", "Build Grade: <color=#63E6A8>Tower-ready</color>");
+                return summary.Replace("評価: 最前線", "評価: <color=#63E6A8>最前線</color>");
             }
 
-            if (summary.Contains("Build Grade: Stable"))
+            if (summary.Contains("評価: 安定"))
             {
-                return summary.Replace("Build Grade: Stable", "Build Grade: <color=#8FD9FF>Stable</color>");
+                return summary.Replace("評価: 安定", "評価: <color=#8FD9FF>安定</color>");
             }
 
-            if (summary.Contains("Build Grade: Scrappy"))
+            if (summary.Contains("評価: 発展途上"))
             {
-                return summary.Replace("Build Grade: Scrappy", "Build Grade: <color=#F4C66B>Scrappy</color>");
+                return summary.Replace("評価: 発展途上", "評価: <color=#F4C66B>発展途上</color>");
             }
 
-            if (summary.Contains("Build Grade: Fragile"))
+            if (summary.Contains("評価: 脆い"))
             {
-                return summary.Replace("Build Grade: Fragile", "Build Grade: <color=#F07D7D>Fragile</color>");
+                return summary.Replace("評価: 脆い", "評価: <color=#F07D7D>脆い</color>");
             }
 
             return summary;

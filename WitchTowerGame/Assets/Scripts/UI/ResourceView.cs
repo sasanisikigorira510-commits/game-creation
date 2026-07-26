@@ -7,6 +7,7 @@ namespace WitchTower.UI
     public sealed class ResourceView : MonoBehaviour
     {
         [SerializeField] private TMP_Text goldText;
+        [SerializeField] private TMP_Text rebirthPointText;
 
         public void Bind(PlayerProfile profile)
         {
@@ -17,7 +18,12 @@ namespace WitchTower.UI
 
             if (goldText != null)
             {
-                goldText.text = $"Gold Reserve {profile.Gold}";
+                goldText.text = $"所持ゴールド {profile.Gold}";
+            }
+
+            if (rebirthPointText != null)
+            {
+                rebirthPointText.text = $"魂片 {profile.RebirthPoints}";
             }
         }
     }

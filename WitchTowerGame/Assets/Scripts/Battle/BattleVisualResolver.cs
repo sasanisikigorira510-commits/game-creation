@@ -716,7 +716,9 @@ namespace WitchTower.Battle
             }
 
             var frames = new List<Sprite>();
-            for (int i = 0; i < 16; i += 1)
+            // Animation length is defined by the contiguous resource sequence;
+            // do not impose a fixed frame cap on generated smooth animations.
+            for (int i = 0; ; i += 1)
             {
                 Sprite frame = LoadSprite($"{resourcePath}_{i}");
                 if (frame == null)

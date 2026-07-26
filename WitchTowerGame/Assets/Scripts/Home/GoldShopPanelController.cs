@@ -66,13 +66,13 @@ namespace WitchTower.Home
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             if (goldBalanceText != null)
             {
-                goldBalanceText.text = profile != null ? $"所持ゴールド  {profile.Gold:N0} G" : "所持ゴールド  -";
+                goldBalanceText.text = profile != null ? $"所持ゴールド  {profile.Gold:N0}" : "所持ゴールド  -";
             }
 
             if (playerStatusText != null)
             {
                 playerStatusText.text = profile != null
-                    ? $"冒険者 Lv.{profile.Level}  EXP {profile.Exp:N0}/{profile.GetRequiredExpForNextLevel():N0}    モンスター枠 {profile.OwnedMonsters.Count}/{profile.MonsterStorageLimit}    装備枠 {profile.OwnedEquipments.Count}/{profile.EquipmentStorageLimit}"
+                    ? $"冒険者 Lv.{profile.Level}  経験値 {profile.Exp:N0}/{profile.GetRequiredExpForNextLevel():N0}    モンスター枠 {profile.OwnedMonsters.Count}/{profile.MonsterStorageLimit}    装備枠 {profile.OwnedEquipments.Count}/{profile.EquipmentStorageLimit}"
                     : string.Empty;
             }
 
@@ -174,7 +174,7 @@ namespace WitchTower.Home
             AddTextContrast(titleText);
 
             Text bodyText = CreateText("ShopTutorialGuideBody", shopTutorialGuideRoot.transform,
-                "商店では、探索で集めたゴールドを装備や通常遺物と交換できます。\n今回は場所を確認できれば大丈夫です。\n左上の「ホームへ戻る」から拠点へ戻りましょう。",
+                "商店では、探索で集めたゴールドを強化遺物と交換できます。\n今回は場所を確認できれば大丈夫です。\n左上の「ホームへ戻る」から拠点へ戻りましょう。",
                 19, FontStyle.Bold, new Vector2(116f, -102f), new Vector2(590f, 116f),
                 new Color(0.96f, 0.95f, 0.88f, 1f), TextAnchor.UpperLeft);
             bodyText.resizeTextForBestFit = true;
@@ -274,12 +274,12 @@ namespace WitchTower.Home
 
             string category = product.RewardType switch
             {
-                GoldShopRewardType.PlayerExp => "TRAINING",
-                GoldShopRewardType.FreeGachaStones => "STONE",
-                GoldShopRewardType.Equipment => "EQUIPMENT",
-                GoldShopRewardType.EnhancementRelic => "RELIC",
-                GoldShopRewardType.MonsterStorage => "STORAGE",
-                _ => "ITEM"
+                GoldShopRewardType.PlayerExp => "育成",
+                GoldShopRewardType.FreeGachaStones => "石",
+                GoldShopRewardType.Equipment => "装備",
+                GoldShopRewardType.EnhancementRelic => "遺物",
+                GoldShopRewardType.MonsterStorage => "枠拡張",
+                _ => "アイテム"
             };
 
             CreateText("Category", card.transform, category, 16, FontStyle.Bold,
@@ -289,7 +289,7 @@ namespace WitchTower.Home
             CreateText("Description", card.transform, product.Description, 21, FontStyle.Bold,
                 new Vector2(0f, -130f), new Vector2(350f, 52f), TextSub, TextAnchor.MiddleCenter);
 
-            Text priceText = CreateText("Price", card.transform, $"{product.Cost:N0} G", 28, FontStyle.Bold,
+            Text priceText = CreateText("Price", card.transform, $"{product.Cost:N0}ゴールド", 28, FontStyle.Bold,
                 new Vector2(0f, -184f), new Vector2(300f, 42f), AccentGold, TextAnchor.MiddleCenter);
 
             Button buyButton = CreateButton("BuyButton", card.transform, "購入", new Vector2(0f, -226f), new Vector2(320f, 84f),

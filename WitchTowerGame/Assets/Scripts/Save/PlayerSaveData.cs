@@ -6,11 +6,18 @@ namespace WitchTower.Save
     [Serializable]
     public sealed class PlayerSaveData
     {
+        public const int CurrentSchemaVersion = 1;
+
+        public int SchemaVersion;
         public int PlayerLevel;
         public int PlayerExp;
+        public int RebirthPoints;
+        public int TotalRebirthPoints;
+        public int RebirthCount;
         public int Gold;
         public int FreeGachaStones;
         public int PaidGachaStones;
+        public bool HasRemovedAds;
         public int HighestFloor;
         public int CurrentFloor;
         public int AttackUpgradeLevel;
@@ -42,8 +49,10 @@ namespace WitchTower.Save
         public List<MonsterDexEntryData> MonsterDexEntries;
         public List<string> PartyMonsterInstanceIds;
         public List<SkillLevelData> SkillLevels;
+        public List<RebirthSkillLevelData> RebirthSkillLevels;
         public bool HasCompletedTutorial;
         public string TutorialStepId;
+        public int InitialTutorialSummonCount;
         public List<string> SeenStoryEventIds;
         public List<string> SeenTutorialHintIds;
 
@@ -51,11 +60,16 @@ namespace WitchTower.Save
         {
             return new PlayerSaveData
             {
+                SchemaVersion = CurrentSchemaVersion,
                 PlayerLevel = 1,
                 PlayerExp = 0,
+                RebirthPoints = 0,
+                TotalRebirthPoints = 0,
+                RebirthCount = 0,
                 Gold = 100,
-                FreeGachaStones = 300,
+                FreeGachaStones = 900,
                 PaidGachaStones = 0,
+                HasRemovedAds = false,
                 HighestFloor = 0,
                 CurrentFloor = 1,
                 AttackUpgradeLevel = 0,
@@ -101,8 +115,10 @@ namespace WitchTower.Save
                 MonsterDexEntries = new List<MonsterDexEntryData>(),
                 PartyMonsterInstanceIds = new List<string>(),
                 SkillLevels = new List<SkillLevelData>(),
+                RebirthSkillLevels = new List<RebirthSkillLevelData>(),
                 HasCompletedTutorial = false,
                 TutorialStepId = "T00",
+                InitialTutorialSummonCount = 0,
                 SeenStoryEventIds = new List<string>(),
                 SeenTutorialHintIds = new List<string>()
             };
@@ -204,6 +220,13 @@ namespace WitchTower.Save
 
     [Serializable]
     public sealed class SkillLevelData
+    {
+        public string SkillId;
+        public int Level;
+    }
+
+    [Serializable]
+    public sealed class RebirthSkillLevelData
     {
         public string SkillId;
         public int Level;

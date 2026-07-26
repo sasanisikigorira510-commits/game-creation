@@ -53,34 +53,39 @@ namespace WitchTower.Battle
             int maxHpBase =
                 ResolveIndividualIntegerStat(intrinsicMaxHp, ownedMonster != null ? ownedMonster.IndividualHp : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(plusGrowth.maxHpPerPlus * plusValue) +
-                fusionBonusHp;
+                fusionBonusHp +
+                GetPlayerLevelHpBonus(profile);
             int attackBase =
                 ResolveIndividualIntegerStat(intrinsicAttack, ownedMonster != null ? ownedMonster.IndividualAttack : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(plusGrowth.attackPerPlus * plusValue) +
-                fusionBonusAttack;
+                fusionBonusAttack +
+                GetPlayerLevelAttackBonus(profile);
             int wisdomBase =
                 ResolveIndividualIntegerStat(intrinsicWisdom, ownedMonster != null ? ownedMonster.IndividualWisdom : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(plusGrowth.magicAttackPerPlus * plusValue) +
-                fusionBonusWisdom;
+                fusionBonusWisdom +
+                GetPlayerLevelAttackBonus(profile);
             int defenseBase =
                 ResolveIndividualIntegerStat(intrinsicDefense, ownedMonster != null ? ownedMonster.IndividualDefense : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(plusGrowth.defensePerPlus * plusValue) +
-                fusionBonusDefense;
+                fusionBonusDefense +
+                GetPlayerLevelDefenseBonus(profile);
             int magicDefenseBase =
                 ResolveIndividualIntegerStat(intrinsicMagicDefense, ownedMonster != null ? ownedMonster.IndividualMagicDefense : MonsterIndividualValueService.DefaultValue) +
                 Mathf.RoundToInt(plusGrowth.magicDefensePerPlus * plusValue) +
-                fusionBonusMagicDefense;
-            int maxHp = Mathf.Max(1, Mathf.RoundToInt(maxHpBase * (1f + Mathf.Max(0f, equipmentBonus.HpPercent))));
-            int attack = Mathf.Max(1, Mathf.RoundToInt(attackBase * (1f + Mathf.Max(0f, equipmentBonus.AttackPercent))));
-            int wisdom = Mathf.Max(1, Mathf.RoundToInt(wisdomBase * (1f + Mathf.Max(0f, equipmentBonus.WisdomPercent))));
-            int defense = Mathf.Max(1, Mathf.RoundToInt(defenseBase * (1f + Mathf.Max(0f, equipmentBonus.DefensePercent))));
-            int magicDefense = Mathf.Max(1, Mathf.RoundToInt(magicDefenseBase * (1f + Mathf.Max(0f, equipmentBonus.MagicDefensePercent))));
-            float attackSpeed = Mathf.Max(0.2f,
+                fusionBonusMagicDefense +
+                GetPlayerLevelDefenseBonus(profile);
+            int maxHp = Mathf.Max(1, Mathf.RoundToInt(maxHpBase * (1f + Mathf.Max(0f, equipmentBonus.HpPercent)) * GetHpMultiplier(profile)));
+            int attack = Mathf.Max(1, Mathf.RoundToInt(attackBase * (1f + Mathf.Max(0f, equipmentBonus.AttackPercent)) * GetAttackMultiplier(profile)));
+            int wisdom = Mathf.Max(1, Mathf.RoundToInt(wisdomBase * (1f + Mathf.Max(0f, equipmentBonus.WisdomPercent)) * GetAttackMultiplier(profile)));
+            int defense = Mathf.Max(1, Mathf.RoundToInt(defenseBase * (1f + Mathf.Max(0f, equipmentBonus.DefensePercent)) * GetDefenseMultiplier(profile)));
+            int magicDefense = Mathf.Max(1, Mathf.RoundToInt(magicDefenseBase * (1f + Mathf.Max(0f, equipmentBonus.MagicDefensePercent)) * GetDefenseMultiplier(profile)));
+            float attackSpeedBase = Mathf.Max(0.2f,
                 ResolveIndividualAttackSpeed(intrinsicAttackSpeed, ownedMonster != null ? ownedMonster.IndividualAttackSpeed : MonsterIndividualValueService.DefaultValue) +
-                (plusGrowth.attackSpeedPerPlus * plusValue) +
                 fusionBonusAttackSpeed +
                 equipmentBonus.AttackSpeed);
-            float critRate = Mathf.Clamp01(0.05f + (((int)monsterData.rarity - 1) * 0.01f) + equipmentBonus.CritRate);
+            float attackSpeed = Mathf.Max(0.2f, attackSpeedBase * GetAttackSpeedMultiplier(profile));
+            float critRate = Mathf.Clamp01(0.05f + (((int)monsterData.rarity - 1) * 0.01f) + equipmentBonus.CritRate + GetCritRateBonus(profile));
             float critDamage = 1.5f + (((int)monsterData.rarity - 1) * 0.05f);
 
             return new BattleUnitStats
@@ -111,6 +116,46 @@ namespace WitchTower.Battle
             plusValue = Mathf.Max(plusValue, Mathf.Max(0, ownedMonster.PlusDefense));
             plusValue = Mathf.Max(plusValue, Mathf.Max(0, ownedMonster.PlusMagicDefense));
             return plusValue;
+        }
+
+        private static int GetPlayerLevelAttackBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetLevelAttackBonus() : 0;
+        }
+
+        private static int GetPlayerLevelDefenseBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetLevelDefenseBonus() : 0;
+        }
+
+        private static int GetPlayerLevelHpBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetLevelHpBonus() : 0;
+        }
+
+        private static float GetAttackMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetAttackMultiplier() : 1f;
+        }
+
+        private static float GetDefenseMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetDefenseMultiplier() : 1f;
+        }
+
+        private static float GetHpMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetHpMultiplier() : 1f;
+        }
+
+        private static float GetAttackSpeedMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetAttackSpeedMultiplier() : 1f;
+        }
+
+        private static float GetCritRateBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetCritRateBonus() : 0f;
         }
 
         private static int ResolveIntegerLevelGrowth(int levelOffset, float classBaseGrowth, float monsterCoefficient)

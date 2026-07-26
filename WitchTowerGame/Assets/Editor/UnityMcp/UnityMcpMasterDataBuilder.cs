@@ -40,17 +40,17 @@ public static class UnityMcpMasterDataBuilder
         var enemies = new List<EnemyDataSO>
         {
             CreateEnemy("enemy_slime", "Ash Slime", 40, 8, 2, 0.8f, 0.03f, 1.3f, 10, 5, EnemyTrait.None, commonDropTable.dropTableId),
-            CreateEnemy("enemy_guard", "Tower Guard", 64, 11, 5, 0.85f, 0.04f, 1.35f, 16, 8, EnemyTrait.HighDefense, commonDropTable.dropTableId),
+            CreateEnemy("enemy_guard", "塔の衛兵", 64, 11, 5, 0.85f, 0.04f, 1.35f, 16, 8, EnemyTrait.HighDefense, commonDropTable.dropTableId),
             CreateEnemy("enemy_harpy", "Needle Harpy", 55, 12, 3, 1.2f, 0.06f, 1.4f, 20, 10, EnemyTrait.FastAttack, commonDropTable.dropTableId),
-            CreateEnemy("enemy_wraith", "Hollow Wraith", 72, 13, 4, 1.0f, 0.05f, 1.45f, 24, 12, EnemyTrait.Drain, commonDropTable.dropTableId),
+            CreateEnemy("enemy_wraith", "虚ろの亡霊", 72, 13, 4, 1.0f, 0.05f, 1.45f, 24, 12, EnemyTrait.Drain, commonDropTable.dropTableId),
             CreateEnemy("enemy_knight", "Crimson Knight", 92, 16, 7, 0.95f, 0.1f, 1.6f, 30, 16, EnemyTrait.Critical, commonDropTable.dropTableId)
         };
 
         var skills = new[]
         {
-            CreateSkill("skill_strike", "Strike", "Deal a heavy hit to the enemy.", 6f, 2f, 0f, BuffType.None, 0f, 0f),
-            CreateSkill("skill_drain", "Drain", "Damage the enemy and recover some HP.", 8f, 1.2f, 0.5f, BuffType.Heal, 0.5f, 0f),
-            CreateSkill("skill_guard", "Guard", "Raise defense for a short time.", 10f, 0f, 0f, BuffType.DefenseUp, 5f, 5f)
+            CreateSkill("skill_strike", "強撃", "敵に重い一撃を与える。", 6f, 2f, 0f, BuffType.None, 0f, 0f),
+            CreateSkill("skill_drain", "吸収", "敵にダメージを与え、HPを少し回復する。", 8f, 1.2f, 0.5f, BuffType.Heal, 0.5f, 0f),
+            CreateSkill("skill_guard", "防御", "短時間、防御力を上げる。", 10f, 0f, 0f, BuffType.DefenseUp, 5f, 5f)
         };
 
         var equipment = new List<EquipmentDataSO>
@@ -140,6 +140,58 @@ public static class UnityMcpMasterDataBuilder
         AssetDatabase.Refresh();
     }
 
+    [MenuItem("Tools/MCP/Repair Monster Master Data Registration")]
+    public static void RepairMonsterMasterDataRegistration()
+    {
+        MasterDataRoot root = AssetDatabase.LoadAssetAtPath<MasterDataRoot>(ResourceFolder + "/MasterDataRoot.asset");
+        if (root == null)
+        {
+            Debug.LogError("MasterDataRoot was not found. Monster registration was not changed.");
+            return;
+        }
+
+        var registered = new List<MonsterDataSO>();
+        var registeredIds = new HashSet<string>();
+        AddUniqueMonsterData(registered, registeredIds, root.monsterDataList);
+        AddUniqueMonsterData(registered, registeredIds, LoadAssetsInFolder<MonsterDataSO>(MonsterFolder));
+
+        root.monsterDataList = registered.ToArray();
+        EditorUtility.SetDirty(root);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log($"Registered {registered.Count} monster master-data assets in MasterDataRoot.");
+    }
+
+    private static void AddUniqueMonsterData(
+        List<MonsterDataSO> destination,
+        HashSet<string> registeredIds,
+        IEnumerable<MonsterDataSO> source)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        foreach (MonsterDataSO monsterData in source)
+        {
+            // The MasterDataRoot roster contains the current battle-ready lineages.
+            // The folder also has legacy catalog records without a race ID and, in
+            // some cases, no battle sprites; including those would reintroduce
+            // idle-only units into the playable roster.
+            if (monsterData == null ||
+                string.IsNullOrEmpty(monsterData.raceId) ||
+                string.IsNullOrEmpty(monsterData.battleIdleResourcePath) ||
+                string.IsNullOrEmpty(monsterData.battleAttackResourcePath) ||
+                string.IsNullOrEmpty(monsterData.monsterId) ||
+                !registeredIds.Add(monsterData.monsterId))
+            {
+                continue;
+            }
+
+            destination.Add(monsterData);
+        }
+    }
+
     private static EquipmentDataSO[] CreateClassMagicEquipmentSets()
     {
         return new[]
@@ -158,7 +210,23 @@ public static class UnityMcpMasterDataBuilder
 
             CreateEquipment("equip_c4_abyss_grimoire", "深淵の魔導書", EquipmentSlotType.Weapon, 0, 16, 0, 0, 0, 0.05f, 0.04f, EquipmentRarity.Epic),
             CreateEquipment("equip_c4_voidweave_raiment", "虚空織の神衣", EquipmentSlotType.Armor, 0, 0, 4, 13, 28, 0f, 0f, EquipmentRarity.Epic),
-            CreateEquipment("equip_c4_eclipse_core", "蝕星の魔核", EquipmentSlotType.Accessory, 0, 10, 0, 9, 17, 0.05f, 0.05f, EquipmentRarity.Epic)
+            CreateEquipment("equip_c4_eclipse_core", "蝕星の魔核", EquipmentSlotType.Accessory, 0, 10, 0, 9, 17, 0.05f, 0.05f, EquipmentRarity.Epic),
+
+            CreateEquipment("equip_c5_empyrean_codex", "天穹の神典", EquipmentSlotType.Weapon, 0, 23, 0, 0, 0, 0.06f, 0.055f, EquipmentRarity.Legendary, 5),
+            CreateEquipment("equip_c5_celestial_sovereign_blade", "天帝の覇剣", EquipmentSlotType.Weapon, 23, 0, 0, 0, 0, 0.06f, 0.055f, EquipmentRarity.Legendary, 5),
+            CreateEquipment("equip_c5_star_crown_raiment", "星冠の神衣", EquipmentSlotType.Armor, 0, 0, 6, 18, 40, 0f, 0f, EquipmentRarity.Legendary, 5),
+            CreateEquipment("equip_c5_starfortress_aegis", "星砦の神鎧", EquipmentSlotType.Armor, 0, 0, 18, 6, 40, 0f, 0f, EquipmentRarity.Legendary, 5),
+            CreateEquipment("equip_c5_starking_halo", "星王の環", EquipmentSlotType.Accessory, 0, 14, 0, 12, 24, 0.06f, 0.06f, EquipmentRarity.Legendary, 5),
+            CreateEquipment("equip_c5_sovereign_star_crest", "覇王の星章", EquipmentSlotType.Accessory, 14, 0, 12, 0, 24, 0.06f, 0.06f, EquipmentRarity.Legendary, 5),
+            CreateEquipment("equip_c5_chronoguard_wing", "時天の翼環", EquipmentSlotType.Accessory, 0, 0, 10, 10, 32, 0f, 0.10f, EquipmentRarity.Legendary, 5),
+
+            CreateEquipment("equip_c6_genesis_codex", "創世の神典", EquipmentSlotType.Weapon, 0, 30, 0, 0, 0, 0.075f, 0.065f, EquipmentRarity.Legendary, 6),
+            CreateEquipment("equip_c6_celestial_worldbreaker", "開闢の神剣", EquipmentSlotType.Weapon, 30, 0, 0, 0, 0, 0.075f, 0.065f, EquipmentRarity.Legendary, 6),
+            CreateEquipment("equip_c6_origin_regalia", "原初の神衣", EquipmentSlotType.Armor, 0, 0, 8, 24, 55, 0f, 0f, EquipmentRarity.Legendary, 6),
+            CreateEquipment("equip_c6_primordial_emperor_aegis", "万象創世の神鎧", EquipmentSlotType.Armor, 0, 0, 24, 8, 55, 0f, 0f, EquipmentRarity.Legendary, 6),
+            CreateEquipment("equip_c6_sovereign_core", "創世主の核", EquipmentSlotType.Accessory, 0, 19, 0, 16, 32, 0.075f, 0.075f, EquipmentRarity.Legendary, 6),
+            CreateEquipment("equip_c6_wargod_sovereign_crest", "原初王の聖印", EquipmentSlotType.Accessory, 19, 0, 16, 0, 32, 0.075f, 0.075f, EquipmentRarity.Legendary, 6),
+            CreateEquipment("equip_c6_chrono_aegis", "永劫の天翼", EquipmentSlotType.Accessory, 0, 0, 13, 13, 44, 0f, 0.12f, EquipmentRarity.Legendary, 6)
         };
     }
 
@@ -227,7 +295,8 @@ public static class UnityMcpMasterDataBuilder
         int baseHp,
         float bonusCritRate,
         float bonusAttackSpeed,
-        EquipmentRarity rarity)
+        EquipmentRarity rarity,
+        int classRank = 0)
     {
         EquipmentDataSO equipment = CreateOrReplaceAsset<EquipmentDataSO>(EquipmentFolder + "/" + equipmentId + ".asset");
         equipment.equipmentId = equipmentId;
@@ -240,6 +309,7 @@ public static class UnityMcpMasterDataBuilder
         equipment.baseHp = Mathf.Max(0, baseHp);
         equipment.bonusCritRate = Mathf.Max(0f, bonusCritRate);
         equipment.bonusAttackSpeed = Mathf.Max(0f, bonusAttackSpeed);
+        equipment.classRank = Mathf.Clamp(classRank, 0, 6);
         equipment.rarity = rarity;
         return equipment;
     }

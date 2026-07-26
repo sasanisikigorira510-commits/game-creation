@@ -54,7 +54,7 @@ namespace WitchTower.Home
             if (attackUpgradeView != null)
             {
                 attackUpgradeView.Bind(
-                    "Attack",
+                    "攻撃",
                     profile.AttackUpgradeLevel,
                     GetUpgradeCost(profile.AttackUpgradeLevel),
                     profile.GetAttackBonus(),
@@ -64,7 +64,7 @@ namespace WitchTower.Home
             if (defenseUpgradeView != null)
             {
                 defenseUpgradeView.Bind(
-                    "Defense",
+                    "防御",
                     profile.DefenseUpgradeLevel,
                     GetUpgradeCost(profile.DefenseUpgradeLevel),
                     profile.GetDefenseBonus(),
@@ -83,7 +83,7 @@ namespace WitchTower.Home
 
             if (ctaText != null)
             {
-                ctaText.text = HomeActionAdvisor.BuildEnhanceHeadline(profile, baseUpgradeCost);
+                ctaText.text = "強化したい能力を選んでください。";
             }
         }
 
@@ -119,30 +119,16 @@ namespace WitchTower.Home
         {
             if (profile == null)
             {
-                return "Impact: profile unavailable.";
+                return "効果: データを確認できません。";
             }
-
-            int nextFloor = profile.HighestFloor + 1;
-            BattleUnitStats currentStats = PlayerBattleStatsFactory.CreatePreview(profile);
-            BattleUnitStats upgradedStats = PlayerBattleStatsFactory.CreatePreviewAfterUpgrade(profile, upgradeType);
-            BattleUnitStats enemyStats = BattleEncounterAdvisor.CreateEnemyPreview(nextFloor);
-            string currentThreat = BattleEncounterAdvisor.BuildThreatText(currentStats, enemyStats);
-            string upgradedThreat = BattleEncounterAdvisor.BuildThreatText(upgradedStats, enemyStats);
 
             return upgradeType switch
             {
-                UpgradeType.Attack => $"Impact: +3 ATK for floor {nextFloor}, threat {TrimThreat(currentThreat)} -> {TrimThreat(upgradedThreat)}.",
-                UpgradeType.Defense => $"Impact: +2 DEF for floor {nextFloor}, threat {TrimThreat(currentThreat)} -> {TrimThreat(upgradedThreat)}.",
-                UpgradeType.Hp => $"Impact: +10 HP for floor {nextFloor}, threat {TrimThreat(currentThreat)} -> {TrimThreat(upgradedThreat)}.",
-                _ => "Impact: unavailable."
+                UpgradeType.Attack => "効果: 攻撃+3。",
+                UpgradeType.Defense => "効果: 防御+2。",
+                UpgradeType.Hp => "効果: HP+10。",
+                _ => "効果: 確認できません。"
             };
-        }
-
-        private static string TrimThreat(string threatLabel)
-        {
-            return string.IsNullOrEmpty(threatLabel)
-                ? "unknown"
-                : threatLabel.Replace("Threat: ", string.Empty).Trim().ToLowerInvariant();
         }
 
         private static int GetCurrentLevel(Data.PlayerProfile profile, UpgradeType upgradeType)

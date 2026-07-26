@@ -378,19 +378,10 @@ namespace WitchTower.Formation
             }
 
             bool isFirstFormationTutorial = IsFirstFormationTutorial(profile);
-            OwnedMonsterData tutorialMonster = isFirstFormationTutorial
-                ? ResolveFirstFormationTutorialMonster(profile)
-                : null;
             var entryLookup = new Dictionary<string, MonsterEntry>();
             foreach (var ownedMonster in profile.OwnedMonsters)
             {
                 if (ownedMonster == null || string.IsNullOrEmpty(ownedMonster.MonsterId))
-                {
-                    continue;
-                }
-
-                if (tutorialMonster != null &&
-                    !string.Equals(ownedMonster.InstanceId, tutorialMonster.InstanceId, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -2731,7 +2722,10 @@ namespace WitchTower.Formation
                 }
 
                 selectedMonsters[targetSlot] = entry;
-                activeSlotIndex = targetSlot;
+                int nextEmptySlot = FindFirstEmptySlot();
+                activeSlotIndex = IsFirstFormationTutorial(GameManager.Instance?.PlayerProfile) && nextEmptySlot >= 0
+                    ? nextEmptySlot
+                    : targetSlot;
             }
 
             SyncProfileSelection();
@@ -3414,7 +3408,7 @@ namespace WitchTower.Formation
             }
 
             profile.SetPartyMonsterIds(selectedIds);
-            if (CountSelectedSlots() > 0)
+            if (CountSelectedSlots() >= StoryTutorialService.InitialSummonCount)
             {
                 StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstFormation);
             }

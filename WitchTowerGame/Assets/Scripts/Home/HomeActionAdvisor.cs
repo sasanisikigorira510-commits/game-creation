@@ -63,11 +63,11 @@ namespace WitchTower.Home
         {
             if (profile == null)
             {
-                return "Next Step: load a profile to resume the climb.";
+                return "次の一手: データを読み込んで探索を再開します。";
             }
 
             return string.Format(
-                "Next Step: enter Battle and challenge floor {0}.",
+                "次の一手: バトルで{0}階に挑戦しましょう。",
                 profile.HighestFloor + 1);
         }
 
@@ -75,11 +75,11 @@ namespace WitchTower.Home
         {
             if (profile == null)
             {
-                return "Progress: no active run data.";
+                return "進行状況: データがありません。";
             }
 
             return string.Format(
-                "Progress: cleared floor {0}, targeting floor {1}.",
+                "進行状況: {0}階まで踏破、次は{1}階です。",
                 profile.HighestFloor,
                 profile.HighestFloor + 1);
         }
@@ -88,41 +88,52 @@ namespace WitchTower.Home
         {
             if (profile == null)
             {
-                return "Action Cue: profile unavailable.";
+                return "行動メモ: データを確認できません。";
             }
 
             int missionClaims = GetMissionBadgeCount(profile, now);
             if (missionClaims > 0)
             {
-                return string.Format("Action Cue: {0} mission reward{1} ready to claim.", missionClaims, missionClaims == 1 ? "" : "s");
+                return string.Format("行動メモ: 受け取れる報酬が{0}件あります。まずミッションを確認しましょう。", missionClaims);
             }
 
             int affordableUpgrades = GetEnhanceBadgeCount(profile, baseUpgradeCost);
             if (affordableUpgrades > 0)
             {
-                return string.Format("Action Cue: {0} upgrade{1} affordable right now.", affordableUpgrades, affordableUpgrades == 1 ? "" : "s");
+                return string.Format("行動メモ: 今すぐ強化できる項目が{0}件あります。", affordableUpgrades);
             }
 
             int equipmentChoices = GetEquipmentBadgeCount(profile);
             if (equipmentChoices > 0)
             {
-                return string.Format("Action Cue: {0} unlocked gear swap{1} available.", equipmentChoices, equipmentChoices == 1 ? "" : "s");
+                return string.Format("行動メモ: 入れ替え候補の装備が{0}件あります。", equipmentChoices);
             }
 
-            return "Action Cue: build is stable. Push the next battle.";
+            string threat = TrimThreat(GetNextFloorThreat(profile));
+            if (threat.Contains("dangerous"))
+            {
+                return $"行動メモ: {profile.HighestFloor + 1}階は危険です。育成と装備確認を優先しましょう。";
+            }
+
+            if (threat.Contains("even"))
+            {
+                return $"行動メモ: {profile.HighestFloor + 1}階は五分です。ひとつ準備してから挑むと安心です。";
+            }
+
+            return "行動メモ: 準備は安定しています。次のバトルへ進めます。";
         }
 
         public static string BuildRewardForecastText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Reward Forecast: unavailable.";
+                return "報酬予測: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
             BattleRewardResult reward = BattleRewardCalculator.Calculate(nextFloor, profile.HighestFloor);
             return string.Format(
-                "Reward Forecast: floor {0} should pay about {1} Gold and {2} EXP.",
+                "報酬予測: {0}階クリアで約{1}ゴールド / 経験値{2}。",
                 nextFloor,
                 reward.Gold,
                 reward.Exp);
@@ -132,54 +143,75 @@ namespace WitchTower.Home
         {
             if (profile == null)
             {
-                return "Threat Read: unavailable.";
+                return "敵の強さ: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
-            string threat = TrimThreat(GetNextFloorThreat(profile));
-            return $"Threat Read: floor {nextFloor} looks {threat}.";
+            BattleEncounterAdvisor.BattleEncounterAssessment assessment = BattleEncounterAdvisor.AssessFloor(profile, nextFloor);
+            string threat = TrimThreat(assessment.ThreatText);
+            return $"敵の強さ: {nextFloor}階は{DescribeThreatWithNoun(threat)}です（推奨戦力{FormatCombatPower(assessment.RecommendedCombatPower)}以上）。";
         }
 
         public static string BuildConfidenceText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Confidence: unavailable.";
+                return "勝算: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
-            BattleUnitStats playerStats = PlayerBattleStatsFactory.CreatePreview(profile);
-            BattleUnitStats enemyStats = BattleEncounterAdvisor.CreateEnemyPreview(nextFloor);
-            string threat = TrimThreat(BattleEncounterAdvisor.BuildThreatText(playerStats, enemyStats));
-            float score = ScoreThreat(playerStats, enemyStats);
+            BattleEncounterAdvisor.BattleEncounterAssessment assessment = BattleEncounterAdvisor.AssessFloor(profile, nextFloor);
+            string threat = TrimThreat(assessment.ThreatText);
+            string powerRead = BuildPartyPowerRead(assessment);
+            string equipmentRead = assessment.NeedsEquipment ? "装備更新と" : string.Empty;
 
             if (threat.Contains("dangerous"))
             {
-                return score >= 1.05f
-                    ? $"Confidence: low on floor {nextFloor}; bank rewards and prep before the next pull."
-                    : $"Confidence: fragile on floor {nextFloor}; one upgrade or gear swap should steady the climb.";
+                return $"勝算: {nextFloor}階は低めです。{powerRead}推奨戦力{FormatCombatPower(assessment.RecommendedCombatPower)}以上なので、{equipmentRead}育成後に挑みましょう。";
             }
 
             if (threat.Contains("even"))
             {
-                return score >= 0.95f
-                    ? $"Confidence: measured on floor {nextFloor}; take one prep step before you push."
-                    : $"Confidence: steady on floor {nextFloor}; a clean upgrade should flip the matchup.";
+                return $"勝算: {nextFloor}階は五分寄りです。{powerRead}推奨戦力{FormatCombatPower(assessment.RecommendedCombatPower)}以上を目安に、装備を確認すると安定します。";
             }
 
-            if (score <= 0.72f)
+            return $"勝算: {nextFloor}階は高めです。{powerRead}推奨戦力{FormatCombatPower(assessment.RecommendedCombatPower)}以上を満たしていれば挑戦できます。";
+        }
+
+        public static string BuildFloorRiskSummary(PlayerProfile profile, int globalFloor)
+        {
+            return string.Empty;
+        }
+
+        public static string BuildHomeGuideReadinessText(PlayerProfile profile)
+        {
+            if (profile == null)
             {
-                return $"Confidence: high on floor {nextFloor}; this matchup favors an aggressive push.";
+                return "よぉし！\n今日の冒険を始めましょう。";
             }
 
-            return $"Confidence: solid on floor {nextFloor}; rewards can wait if you want momentum.";
+            int nextFloor = Math.Max(1, profile.HighestFloor + 1);
+            string floorLabel = BuildFloorLabel(nextFloor);
+            BattleEncounterAdvisor.BattleEncounterAssessment assessment = BattleEncounterAdvisor.AssessFloor(profile, nextFloor);
+            string threat = TrimThreat(assessment.ThreatText);
+            if (threat.Contains("dangerous"))
+            {
+                return $"まだ準備が要りそうです。\n{floorLabel}は推奨戦力{FormatCombatPower(assessment.RecommendedCombatPower)}以上。装備と育成を整えましょう。";
+            }
+
+            if (threat.Contains("even"))
+            {
+                return $"挑戦圏内ですが慎重に！\n{floorLabel}は推奨戦力{FormatCombatPower(assessment.RecommendedCombatPower)}以上。装備確認後が安心です。";
+            }
+
+            return $"準備はいい感じ！\n{floorLabel}へ挑戦して、報酬を狙いましょう。";
         }
 
         public static string BuildLoadoutAlertText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Loadout Alert: unavailable.";
+                return "装備メモ: 確認できません。";
             }
 
             System.Collections.Generic.List<string> upgrades = new System.Collections.Generic.List<string>();
@@ -201,27 +233,27 @@ namespace WitchTower.Home
 
             if (upgrades.Count == 0)
             {
-                return "Loadout Alert: current gear is already on the strongest unlocked setup.";
+                return "装備メモ: 現在の装備は、解放済みの中では整っています。";
             }
 
             if (upgrades.Count == 1)
             {
-                return $"Loadout Alert: {upgrades[0]} is ready now and stronger than your current slot.";
+                return $"装備メモ: {upgrades[0]}に入れ替えると戦力が上がります。";
             }
 
             if (upgrades.Count == 2)
             {
-                return $"Loadout Alert: {upgrades[0]} and {upgrades[1]} are ready now for an immediate power spike.";
+                return $"装備メモ: {upgrades[0]}と{upgrades[1]}を見直すと一気に強くなります。";
             }
 
-            return $"Loadout Alert: {upgrades[0]}, {upgrades[1]}, and {upgrades[2]} are all ready now for a full upgrade pass.";
+            return $"装備メモ: {upgrades[0]}、{upgrades[1]}、{upgrades[2]}をまとめて更新できます。";
         }
 
         public static string BuildGoldRouteText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
         {
             if (profile == null)
             {
-                return "Gold Route: unavailable.";
+                return "ゴールド導線: 確認できません。";
             }
 
             int readyGold = GetClaimableRewardGold(profile, now);
@@ -233,28 +265,28 @@ namespace WitchTower.Home
 
             if (readyGold > 0)
             {
-                return $"Gold Route: collect {readyGold} Gold first, then decide whether to bank it or buy into floor {profile.HighestFloor + 1}.";
+                return $"ゴールド導線: まず報酬の{readyGold}ゴールドを受け取り、強化に回しましょう。";
             }
 
             if (profile.Gold >= cheapestUpgrade)
             {
                 if (threat.Contains("dangerous"))
                 {
-                    return $"Gold Route: spend now; your stash already covers a defensive upgrade before floor {profile.HighestFloor + 1}.";
+                    return $"ゴールド導線: {profile.HighestFloor + 1}階の前に、防御かHPへ使うのが安全です。";
                 }
 
-                return $"Gold Route: spend now; your stash already covers the next upgrade break point.";
+                return "ゴールド導線: 次の強化費用は足りています。強化タブを確認しましょう。";
             }
 
             int missingGold = Math.Max(0, cheapestUpgrade - profile.Gold);
-            return $"Gold Route: save {missingGold} more Gold to unlock the next upgrade tier, or keep pushing for momentum.";
+            return $"ゴールド導線: あと{missingGold}ゴールドで次の強化ができます。バトルで稼ぎましょう。";
         }
 
         public static string BuildUpgradeRouteText(PlayerProfile profile, int baseUpgradeCost)
         {
             if (profile == null)
             {
-                return "Upgrade Route: unavailable.";
+                return "強化導線: 確認できません。";
             }
 
             string threat = TrimThreat(GetNextFloorThreat(profile));
@@ -266,43 +298,43 @@ namespace WitchTower.Home
             {
                 if (profile.Gold >= defenseCost)
                 {
-                    return $"Upgrade Route: Defense is the cleanest spend at {defenseCost} Gold before floor {profile.HighestFloor + 1}.";
+                    return $"強化導線: {profile.HighestFloor + 1}階の前に防御を{defenseCost}ゴールドで上げましょう。";
                 }
 
                 if (profile.Gold >= hpCost)
                 {
-                    return $"Upgrade Route: HP is the cleanest spend at {hpCost} Gold before floor {profile.HighestFloor + 1}.";
+                    return $"強化導線: {profile.HighestFloor + 1}階の前にHPを{hpCost}ゴールドで上げましょう。";
                 }
 
                 int missing = Math.Min(Math.Max(0, defenseCost - profile.Gold), Math.Max(0, hpCost - profile.Gold));
-                return $"Upgrade Route: save {missing} more Gold for a defensive buy before floor {profile.HighestFloor + 1}.";
+                return $"強化導線: あと{missing}ゴールドで耐久強化に届きます。";
             }
 
             if (threat.Contains("even"))
             {
                 if (profile.Gold >= attackCost)
                 {
-                    return $"Upgrade Route: Attack is the cleanest spend at {attackCost} Gold to flip floor {profile.HighestFloor + 1}.";
+                    return $"強化導線: 攻撃を{attackCost}ゴールドで上げると{profile.HighestFloor + 1}階を押しやすくなります。";
                 }
 
                 int missing = Math.Max(0, attackCost - profile.Gold);
-                return $"Upgrade Route: save {missing} more Gold for the Attack breakpoint on floor {profile.HighestFloor + 1}.";
+                return $"強化導線: あと{missing}ゴールドで攻撃強化に届きます。";
             }
 
             if (profile.Gold >= attackCost)
             {
-                return $"Upgrade Route: Attack is the fastest spend at {attackCost} Gold for a cleaner push.";
+                return $"強化導線: 攻撃を{attackCost}ゴールドで上げると周回が速くなります。";
             }
 
             int cheapest = Math.Min(attackCost, Math.Min(defenseCost, hpCost));
-            return $"Upgrade Route: save {Math.Max(0, cheapest - profile.Gold)} more Gold for the next upgrade break point.";
+            return $"強化導線: あと{Math.Max(0, cheapest - profile.Gold)}ゴールドで次の強化ができます。";
         }
 
         public static string BuildRewardRouteText(PlayerProfile profile, DateTime now)
         {
             if (profile == null)
             {
-                return "Reward Route: unavailable.";
+                return "報酬導線: 確認できません。";
             }
 
             bool dailyReady = DailyRewardService.HasClaimableQuest(profile, now);
@@ -311,31 +343,31 @@ namespace WitchTower.Home
 
             if (dailyReady)
             {
-                return $"Reward Route: claim completed daily quests for {DailyRewardService.GetClaimableRewardFreeGachaStones(profile, now)} free stones before anything else.";
+                return $"報酬導線: デイリー達成分から無償石{DailyRewardService.GetClaimableRewardFreeGachaStones(profile, now)}個を受け取りましょう。";
             }
 
             if (missionFloorReady)
             {
                 MissionDefinition? definition = MissionService.GetDefinition("mission_reach_floor_3");
                 int gold = definition.HasValue ? definition.Value.RewardGold : 0;
-                return $"Reward Route: floor milestone claim next for {gold} Gold.";
+                return $"報酬導線: 階層ミッション報酬の{gold}ゴールドを受け取りましょう。";
             }
 
             if (missionClearReady)
             {
                 MissionDefinition? definition = MissionService.GetDefinition("mission_clear_1");
                 int gold = definition.HasValue ? definition.Value.RewardGold : 0;
-                return $"Reward Route: first victory claim next for {gold} Gold.";
+                return $"報酬導線: 初勝利ミッション報酬の{gold}ゴールドを受け取りましょう。";
             }
 
-            return "Reward Route: no claims are waiting; push the next floor for fresh rewards.";
+            return "報酬導線: 受け取り待ちはありません。次の階で新しい報酬を狙いましょう。";
         }
 
         public static string BuildPushWindowText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
         {
             if (profile == null)
             {
-                return "Push Window: unavailable.";
+                return "挑戦判断: 確認できません。";
             }
 
             string threat = TrimThreat(GetNextFloorThreat(profile));
@@ -348,37 +380,37 @@ namespace WitchTower.Home
 
             if (readyGold > 0)
             {
-                return $"Push Window: hold for a moment, cash out {readyGold} Gold, then reassess the climb.";
+                return $"挑戦判断: 先に{readyGold}ゴールドを受け取り、強化後に再確認しましょう。";
             }
 
             if (threat.Contains("dangerous"))
             {
                 if (best.Label != null)
                 {
-                    return $"Push Window: prep first; {best.Label} gives you the safer entry.";
+                    return $"挑戦判断: 先に{best.Label}を行うと安全に入れます。";
                 }
 
-                return $"Push Window: narrow; floor {profile.HighestFloor + 1} needs a little more setup.";
+                return $"挑戦判断: {profile.HighestFloor + 1}階はまだ危険です。少し準備を足しましょう。";
             }
 
             if (threat.Contains("even"))
             {
                 if (best.Label != null)
                 {
-                    return $"Push Window: flexible; one prep step like {best.Label} should tip the floor.";
+                    return $"挑戦判断: {best.Label}を挟むと{profile.HighestFloor + 1}階が楽になります。";
                 }
 
-                return $"Push Window: playable, but one upgrade would make floor {profile.HighestFloor + 1} cleaner.";
+                return $"挑戦判断: 挑戦は可能です。余裕があれば強化してから進みましょう。";
             }
 
-            return $"Push Window: open now; floor {profile.HighestFloor + 1} is ready for an immediate push.";
+            return $"挑戦判断: {profile.HighestFloor + 1}階は今すぐ挑戦できます。";
         }
 
         public static string BuildRoiReadText(PlayerProfile profile, int baseUpgradeCost)
         {
             if (profile == null)
             {
-                return "ROI Read: unavailable.";
+                return "報酬効率: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -390,23 +422,23 @@ namespace WitchTower.Home
 
             if (reward.Gold >= cheapestUpgrade)
             {
-                return $"ROI Read: one clear covers the next upgrade outright with {reward.Gold} Gold.";
+                return $"報酬効率: 1回クリアすれば{reward.Gold}ゴールドで次の強化に届きます。";
             }
 
             int shortfall = cheapestUpgrade - reward.Gold;
             if (reward.Gold * 2 >= cheapestUpgrade)
             {
-                return $"ROI Read: one clear nearly covers the next upgrade, missing only {shortfall} Gold.";
+                return $"報酬効率: 1回でほぼ強化費用に届きます。不足は{shortfall}ゴールドです。";
             }
 
-            return $"ROI Read: this floor pays {reward.Gold} Gold, so you still need {shortfall} more for the next upgrade.";
+            return $"報酬効率: この階は{reward.Gold}ゴールド。次の強化まであと{shortfall}ゴールドです。";
         }
 
         public static string BuildDecisionLineText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
         {
             if (profile == null)
             {
-                return "Decision Line: unavailable.";
+                return "判断ライン: 確認できません。";
             }
 
             int readyGold = GetClaimableRewardGold(profile, now);
@@ -419,31 +451,31 @@ namespace WitchTower.Home
 
             if (readyGold > 0)
             {
-                return $"Decision Line: cash out first, then revisit the floor with a stronger budget.";
+                return "判断ライン: まず報酬を受け取り、強化できるか見直しましょう。";
             }
 
             if (threat.Contains("dangerous"))
             {
                 return best.Label != null
-                    ? $"Decision Line: take {best.Label}, then enter once the matchup settles."
-                    : $"Decision Line: delay the push and build more safety before floor {profile.HighestFloor + 1}.";
+                    ? $"判断ライン: {best.Label}を済ませてから挑戦しましょう。"
+                    : $"判断ライン: {profile.HighestFloor + 1}階は準備を増やしてから挑みましょう。";
             }
 
             if (threat.Contains("even"))
             {
                 return best.Label != null
-                    ? $"Decision Line: one prep step, then commit to the push."
-                    : $"Decision Line: the floor is playable now, but one more boost is cleaner.";
+                    ? "判断ライン: ひとつ準備してから挑戦するのが安定です。"
+                    : "判断ライン: 今でも挑めますが、もう一段強化すると楽です。";
             }
 
-            return $"Decision Line: push now unless you want to squeeze extra value from open claims.";
+            return "判断ライン: 受け取り待ちがなければ、そのままバトルへ進みましょう。";
         }
 
         public static string BuildDecisionBadgeText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
         {
             if (profile == null)
             {
-                return "Decision: Unknown";
+                return "判断: 不明";
             }
 
             int readyGold = GetClaimableRewardGold(profile, now);
@@ -451,27 +483,27 @@ namespace WitchTower.Home
 
             if (readyGold > 0)
             {
-                return "Decision: Cash Out";
+                return "判断: 報酬受取";
             }
 
             if (threat.Contains("dangerous"))
             {
-                return "Decision: Prep";
+                return "判断: 準備";
             }
 
             if (threat.Contains("even"))
             {
-                return "Decision: Tune";
+                return "判断: 調整";
             }
 
-            return "Decision: Push";
+            return "判断: 挑戦";
         }
 
         public static string BuildCommandStackText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
         {
             if (profile == null)
             {
-                return "Command Stack: unavailable.";
+                return "行動順: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -487,53 +519,53 @@ namespace WitchTower.Home
             string stepOne;
             if (readyGold > 0)
             {
-                stepOne = $"1. Claim {missionClaims} reward {(missionClaims == 1 ? "step" : "steps")} for {readyGold} Gold";
+                stepOne = $"1. 報酬{missionClaims}件を受け取り、{readyGold}ゴールドを確保";
             }
             else if (best.Label != null && (threat.Contains("dangerous") || threat.Contains("even")))
             {
-                stepOne = $"1. Prep with {best.Label}";
+                stepOne = $"1. {best.Label}";
             }
             else
             {
-                stepOne = $"1. Open floor {nextFloor}";
+                stepOne = $"1. {nextFloor}階を開く";
             }
 
             string stepTwo;
             if (best.Label != null)
             {
-                stepTwo = $"2. Lock in {best.Label} ({best.PlanDetail})";
+                stepTwo = $"2. 上昇値を確認（{best.PlanDetail}）";
             }
             else if (threat.Contains("dangerous"))
             {
-                stepTwo = "2. Bank resources before the pull";
+                stepTwo = "2. ゴールドを貯めて安全を作る";
             }
             else
             {
-                stepTwo = "2. Keep the current build";
+                stepTwo = "2. 現在の編成を維持";
             }
 
             string stepThree;
             if (threat.Contains("dangerous"))
             {
-                stepThree = $"3. Recheck floor {nextFloor} before entering";
+                stepThree = $"3. {nextFloor}階の危険度を再確認";
             }
             else if (threat.Contains("even"))
             {
-                stepThree = $"3. Push floor {nextFloor} once the prep lands";
+                stepThree = $"3. 準備後に{nextFloor}階へ挑戦";
             }
             else
             {
-                stepThree = $"3. Push floor {nextFloor} now";
+                stepThree = $"3. 今すぐ{nextFloor}階へ挑戦";
             }
 
-            return $"Command Stack: {stepOne}  {stepTwo}  {stepThree}.";
+            return $"行動順: {stepOne} / {stepTwo} / {stepThree}";
         }
 
         public static string BuildMomentumReadText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
         {
             if (profile == null)
             {
-                return "Momentum Read: unavailable.";
+                return "流れ: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -547,31 +579,31 @@ namespace WitchTower.Home
 
             if (readyGold > 0)
             {
-                return $"Momentum Read: paused; {readyGold} Gold is on the table before floor {nextFloor}.";
+                return $"流れ: {nextFloor}階の前に{readyGold}ゴールドを受け取れます。";
             }
 
             if (threat.Contains("dangerous"))
             {
                 return best.Label != null
-                    ? $"Momentum Read: cautious; {best.Label} is the clean stabilizer before floor {nextFloor}."
-                    : $"Momentum Read: stalled; floor {nextFloor} needs a sturdier setup.";
+                    ? $"流れ: {nextFloor}階の前に{best.Label}で安定させましょう。"
+                    : $"流れ: {nextFloor}階は足止め気味です。育成を挟みましょう。";
             }
 
             if (threat.Contains("even"))
             {
                 return best.Label != null
-                    ? $"Momentum Read: teed up; {best.Label} should flip floor {nextFloor}."
-                    : $"Momentum Read: balanced; one extra spend would make floor {nextFloor} cleaner.";
+                    ? $"流れ: {best.Label}で{nextFloor}階を有利にできます。"
+                    : $"流れ: {nextFloor}階は五分です。少し強化すると安定します。";
             }
 
-            return $"Momentum Read: live; your current build can press floor {nextFloor} immediately.";
+            return $"流れ: 現在の編成で{nextFloor}階に進めます。";
         }
 
         public static string BuildRunCallText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
         {
             if (profile == null)
             {
-                return "Run Call: unavailable.";
+                return "探索判断: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -585,31 +617,31 @@ namespace WitchTower.Home
 
             if (readyGold > 0)
             {
-                return $"Run Call: cash out first, then make the floor {nextFloor} call.";
+                return $"探索判断: 先に報酬を受け取り、{nextFloor}階へ進む準備を整えましょう。";
             }
 
             if (threat.Contains("dangerous"))
             {
                 return best.Label != null
-                    ? $"Run Call: prep with {best.Label}, then reopen the push."
-                    : $"Run Call: do not force floor {nextFloor} yet.";
+                    ? $"探索判断: {best.Label}をしてから挑戦しましょう。"
+                    : $"探索判断: {nextFloor}階はまだ無理押ししない方が安全です。";
             }
 
             if (threat.Contains("even"))
             {
                 return best.Label != null
-                    ? $"Run Call: take {best.Label}, then commit."
-                    : $"Run Call: one small tune, then go.";
+                    ? $"探索判断: {best.Label}を済ませたら挑戦しましょう。"
+                    : "探索判断: 小さく整えてから進みましょう。";
             }
 
-            return $"Run Call: green light, take floor {nextFloor} now.";
+            return $"探索判断: {nextFloor}階へ進んで大丈夫です。";
         }
 
         public static string BuildRiskBufferText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Risk Buffer: unavailable.";
+                return "耐久余裕: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -623,32 +655,32 @@ namespace WitchTower.Home
 
             if (hpMargin <= 0)
             {
-                return $"Risk Buffer: thin; floor {nextFloor} can crack you inside three enemy hits.";
+                return $"耐久余裕: 薄めです。{nextFloor}階では敵の3発以内に崩れる可能性があります。";
             }
 
             if (hpMargin <= 20)
             {
-                return $"Risk Buffer: narrow; you are only {hpMargin} HP above a three-hit break line.";
+                return $"耐久余裕: 小さめです。3発ラインから{hpMargin}HPだけ上回っています。";
             }
 
             if (enemyDamage == 1 && enemyHitsToBreak >= 20)
             {
-                return $"Risk Buffer: locked in; floor {nextFloor} only chips for 1 damage a hit right now.";
+                return $"耐久余裕: 十分です。{nextFloor}階の被ダメージは今のところ1ずつです。";
             }
 
             if (defenseMargin >= 5)
             {
-                return $"Risk Buffer: sturdy; your build carries a {hpMargin} HP cushion into floor {nextFloor}.";
+                return $"耐久余裕: 安定しています。{nextFloor}階に対して{hpMargin}HP分の余裕があります。";
             }
 
-            return $"Risk Buffer: workable; floor {nextFloor} leaves about {hpMargin} HP of breathing room.";
+            return $"耐久余裕: なんとか戦えます。{nextFloor}階に対して約{hpMargin}HPの余裕です。";
         }
 
         public static string BuildEnemyTempoText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Enemy Tempo: unavailable.";
+                return "敵テンポ: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -658,7 +690,7 @@ namespace WitchTower.Home
 
             return string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
-                "Enemy Tempo: floor {0} swings every {1:0.00}s for {2} damage pressure.",
+                "敵テンポ: {0}階は約{1:0.00}秒ごとに攻撃、圧力は攻撃{2}です。",
                 nextFloor,
                 swingSeconds,
                 enemyStats.Attack);
@@ -668,7 +700,7 @@ namespace WitchTower.Home
         {
             if (profile == null)
             {
-                return "Damage Race: unavailable.";
+                return "ダメージ競争: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -684,30 +716,30 @@ namespace WitchTower.Home
             {
                 if (playerHitsToWin <= 3)
                 {
-                    return $"Damage Race: favored; you finish in {playerHitsToWin} hits while the enemy only chips for 1.";
+                    return $"ダメージ競争: 有利です。敵は1ずつしか削れず、こちらは{playerHitsToWin}発で倒せます。";
                 }
 
-                return $"Damage Race: favored; the enemy only chips for 1, so the pace is yours to control over {playerHitsToWin} hits.";
+                return $"ダメージ競争: 有利です。敵の削りは1ずつなので、{playerHitsToWin}発かけても主導権があります。";
             }
 
             if (playerHitsToWin < enemyHitsToBreak)
             {
-                return $"Damage Race: favored; you close in {playerHitsToWin} hits before the enemy can grind through your {enemyHitsToBreak}-hit buffer.";
+                return $"ダメージ競争: 有利です。敵が{enemyHitsToBreak}発で崩す前に、こちらは{playerHitsToWin}発で倒せます。";
             }
 
             if (playerHitsToWin == enemyHitsToBreak)
             {
-                return $"Damage Race: even; both sides project a {playerHitsToWin}-hit finish.";
+                return $"ダメージ競争: 五分です。お互いに約{playerHitsToWin}発で決着します。";
             }
 
-            return $"Damage Race: behind; you need {playerHitsToWin} hits while the enemy can crack you in {enemyHitsToBreak}.";
+            return $"ダメージ競争: 不利です。こちらは{playerHitsToWin}発必要で、敵は{enemyHitsToBreak}発で崩してきます。";
         }
 
         public static string BuildBurstReadText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Burst Read: unavailable.";
+                return "初動火力: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -720,23 +752,23 @@ namespace WitchTower.Home
 
             if (openingBurst >= enemyStats.MaxHp)
             {
-                return $"Burst Read: lethal; a hot opener can erase floor {nextFloor} almost immediately.";
+                return $"初動火力: 強力です。良い初動なら{nextFloor}階を一気に削り切れます。";
             }
 
             int remaining = enemyStats.MaxHp - openingBurst;
             if (remaining <= normalHit)
             {
-                return $"Burst Read: closeout range; one strong opener leaves only {remaining} HP behind.";
+                return $"初動火力: あと一押しです。強い初動なら残り{remaining}HPまで削れます。";
             }
 
-            return $"Burst Read: measured; the opener still leaves about {remaining} HP to clean up.";
+            return $"初動火力: 標準です。初動後も約{remaining}HPの削りが必要です。";
         }
 
         public static string BuildKillClockText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Kill Clock: unavailable.";
+                return "撃破時間: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -750,22 +782,22 @@ namespace WitchTower.Home
 
             if (secondsToKill <= 2.5f)
             {
-                return $"Kill Clock: fast; this build projects a finish in about {FormatDurationShort(secondsToKill)}.";
+                return $"撃破時間: 速いです。約{FormatDurationShort(secondsToKill)}で倒せる見込みです。";
             }
 
             if (secondsToKill <= 4.5f)
             {
-                return $"Kill Clock: steady; expect roughly {FormatDurationShort(secondsToKill)} to close floor {nextFloor}.";
+                return $"撃破時間: 安定です。{nextFloor}階は約{FormatDurationShort(secondsToKill)}で倒せる見込みです。";
             }
 
-            return $"Kill Clock: long; floor {nextFloor} asks for about {FormatDurationShort(secondsToKill)} of clean uptime.";
+            return $"撃破時間: 長めです。{nextFloor}階は約{FormatDurationShort(secondsToKill)}の攻撃時間が必要です。";
         }
 
         public static string BuildCritWindowText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Crit Window: unavailable.";
+                return "会心期待: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -779,27 +811,27 @@ namespace WitchTower.Home
 
             if (critChancePercent <= 0 || critDelta <= 0)
             {
-                return $"Crit Window: flat; floor {nextFloor} is mostly a straight damage check.";
+                return $"会心期待: 低めです。{nextFloor}階は素の火力勝負になります。";
             }
 
             if (critChancePercent >= 15)
             {
-                return $"Crit Window: live; a {critChancePercent}% crit spike adds {critDelta} extra damage to the opener.";
+                return $"会心期待: 高めです。{critChancePercent}%の会心で初動に+{critDelta}ダメージを狙えます。";
             }
 
             if (critChancePercent >= 8)
             {
-                return $"Crit Window: useful; a {critChancePercent}% crit chance can trim {critDelta} damage off the cleanup.";
+                return $"会心期待: 有効です。{critChancePercent}%の会心で削りを{critDelta}分短縮できます。";
             }
 
-            return $"Crit Window: light; crits only show up at {critChancePercent}%, so play the steady line first.";
+            return $"会心期待: 控えめです。会心率{critChancePercent}%なので安定火力を優先しましょう。";
         }
 
         public static string BuildSurvivalWindowText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Survival Window: unavailable.";
+                return "生存時間: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -813,27 +845,27 @@ namespace WitchTower.Home
 
             if (enemyDamage == 1 && enemyHitsToBreak >= 20)
             {
-                return $"Survival Window: massive; floor {nextFloor} needs about {FormatDurationShort(secondsToBreak)} to wear you down at this pace.";
+                return $"生存時間: 十分です。{nextFloor}階が倒し切るには約{FormatDurationShort(secondsToBreak)}かかります。";
             }
 
             if (secondsToBreak <= 3.0f)
             {
-                return $"Survival Window: short; floor {nextFloor} can break you in about {FormatDurationShort(secondsToBreak)}.";
+                return $"生存時間: 短めです。{nextFloor}階では約{FormatDurationShort(secondsToBreak)}で崩されます。";
             }
 
             if (secondsToBreak <= 6.0f)
             {
-                return $"Survival Window: fair; you have about {FormatDurationShort(secondsToBreak)} before the floor turns lethal.";
+                return $"生存時間: 標準です。危険になるまで約{FormatDurationShort(secondsToBreak)}あります。";
             }
 
-            return $"Survival Window: long; you can absorb roughly {FormatDurationShort(secondsToBreak)} of pressure here.";
+            return $"生存時間: 長めです。約{FormatDurationShort(secondsToBreak)}は圧力に耐えられます。";
         }
 
         public static string BuildClockEdgeText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Clock Edge: unavailable.";
+                return "時間差: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -852,27 +884,27 @@ namespace WitchTower.Home
 
             if (edge >= 8f)
             {
-                return $"Clock Edge: dominant; you hold about {FormatDurationShort(edge)} of spare tempo on floor {nextFloor}.";
+                return $"時間差: 大きく有利です。{nextFloor}階で約{FormatDurationShort(edge)}の余裕があります。";
             }
 
             if (edge >= 3f)
             {
-                return $"Clock Edge: favorable; your timer stays ahead by about {FormatDurationShort(edge)}.";
+                return $"時間差: 有利です。約{FormatDurationShort(edge)}先行できます。";
             }
 
             if (edge >= 0f)
             {
-                return $"Clock Edge: narrow; you only keep about {FormatDurationShort(edge)} in hand here.";
+                return $"時間差: ぎりぎり有利です。余裕は約{FormatDurationShort(edge)}です。";
             }
 
-            return $"Clock Edge: behind; floor {nextFloor} beats your pace by about {FormatDurationShort(Math.Abs(edge))}.";
+            return $"時間差: 不利です。{nextFloor}階の方が約{FormatDurationShort(Math.Abs(edge))}速く崩してきます。";
         }
 
         public static string BuildTempoVerdictText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Tempo Verdict: unavailable.";
+                return "テンポ判断: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -891,27 +923,27 @@ namespace WitchTower.Home
 
             if (edge >= 20f)
             {
-                return $"Tempo Verdict: overwhelming; floor {nextFloor} cannot keep up with your current pace.";
+                return $"テンポ判断: 圧倒的に有利です。{nextFloor}階は今の速度についてこられません。";
             }
 
             if (edge >= 6f)
             {
-                return $"Tempo Verdict: yours to control; you have time to cash out and still dictate floor {nextFloor}.";
+                return $"テンポ判断: 主導権があります。報酬を受け取ってからでも{nextFloor}階を押せます。";
             }
 
             if (edge >= 0f)
             {
-                return $"Tempo Verdict: playable; floor {nextFloor} is safe, but the edge is no longer huge.";
+                return $"テンポ判断: 挑戦可能です。{nextFloor}階は安全圏ですが余裕は大きくありません。";
             }
 
-            return $"Tempo Verdict: prep first; floor {nextFloor} wins the timer unless you tune the build.";
+            return $"テンポ判断: 準備優先です。強化しないと{nextFloor}階に押し負けます。";
         }
 
         public static string BuildPressureCallText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Pressure Call: unavailable.";
+                return "圧力判断: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -930,27 +962,27 @@ namespace WitchTower.Home
 
             if (edge >= 20f)
             {
-                return $"Pressure Call: full send; floor {nextFloor} is running on your clock now.";
+                return $"圧力判断: 強気で進めます。{nextFloor}階は完全にこちらのペースです。";
             }
 
             if (edge >= 6f)
             {
-                return $"Pressure Call: favored; you can safely bank rewards and still own the next exchange.";
+                return "圧力判断: 有利です。報酬を受け取ってからでも主導権を保てます。";
             }
 
             if (edge >= 0f)
             {
-                return $"Pressure Call: measured; take the clean line because the timer edge is smaller now.";
+                return "圧力判断: 慎重に進めましょう。時間差は小さめです。";
             }
 
-            return $"Pressure Call: respect the floor; buy time with prep before you take floor {nextFloor}.";
+            return $"圧力判断: {nextFloor}階は強めです。準備で時間を稼いでから挑戦しましょう。";
         }
 
         public static string BuildRewardPaceText(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Reward Pace: unavailable.";
+                return "報酬ペース: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -969,7 +1001,7 @@ namespace WitchTower.Home
             {
                 return string.Format(
                     System.Globalization.CultureInfo.InvariantCulture,
-                    "Reward Pace: rich; this line projects about {0:0} Gold and {1:0} EXP per minute.",
+                    "報酬ペース: 良好です。1分あたり約{0:0}ゴールド / 経験値{1:0}を見込めます。",
                     goldPerMinute,
                     expPerMinute);
             }
@@ -978,14 +1010,14 @@ namespace WitchTower.Home
             {
                 return string.Format(
                     System.Globalization.CultureInfo.InvariantCulture,
-                    "Reward Pace: steady; expect roughly {0:0} Gold and {1:0} EXP per minute.",
+                    "報酬ペース: 安定です。1分あたり約{0:0}ゴールド / 経験値{1:0}です。",
                     goldPerMinute,
                     expPerMinute);
             }
 
             return string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
-                "Reward Pace: lean; floor {0} only returns about {1:0} Gold a minute at this speed.",
+                "報酬ペース: 控えめです。{0}階はこの速度だと1分あたり約{1:0}ゴールドです。",
                 nextFloor,
                 goldPerMinute);
         }
@@ -994,7 +1026,7 @@ namespace WitchTower.Home
         {
             if (profile == null)
             {
-                return "Upgrade Priority: profile unavailable.";
+                return "強化優先: データを確認できません。";
             }
 
             string threat = GetNextFloorThreat(profile);
@@ -1006,12 +1038,12 @@ namespace WitchTower.Home
             {
                 if (profile.Gold >= defenseCost)
                 {
-                    return string.Format("Upgrade Priority: Defense is affordable now for {0} Gold before a dangerous floor.", defenseCost);
+                    return string.Format("強化優先: 危険な階の前に、防御を{0}ゴールドで上げましょう。", defenseCost);
                 }
 
                 if (profile.Gold >= hpCost)
                 {
-                    return string.Format("Upgrade Priority: HP is affordable now for {0} Gold before a dangerous floor.", hpCost);
+                    return string.Format("強化優先: 危険な階の前に、HPを{0}ゴールドで上げましょう。", hpCost);
                 }
             }
 
@@ -1019,71 +1051,71 @@ namespace WitchTower.Home
             {
                 if (profile.Gold >= attackCost)
                 {
-                    return string.Format("Upgrade Priority: Attack is affordable now for {0} Gold to break the even floor.", attackCost);
+                    return string.Format("強化優先: 攻撃を{0}ゴールドで上げると五分の階を押し切れます。", attackCost);
                 }
 
                 if (profile.Gold >= defenseCost)
                 {
-                    return string.Format("Upgrade Priority: Defense is affordable now for {0} Gold to steady the next floor.", defenseCost);
+                    return string.Format("強化優先: 防御を{0}ゴールドで上げると次の階が安定します。", defenseCost);
                 }
             }
 
             if (profile.Gold >= attackCost)
             {
-                return string.Format("Upgrade Priority: Attack is affordable now for {0} Gold.", attackCost);
+                return string.Format("強化優先: 攻撃を{0}ゴールドで上げられます。", attackCost);
             }
 
             int cheapestCost = Math.Min(attackCost, Math.Min(defenseCost, hpCost));
-            return string.Format("Upgrade Priority: save {0} more Gold for the next boost.", cheapestCost - profile.Gold);
+            return string.Format("強化優先: 次の強化まであと{0}ゴールドです。", cheapestCost - profile.Gold);
         }
 
         public static string BuildEquipmentHeadline(PlayerProfile profile)
         {
             if (profile == null)
             {
-                return "Loadout Focus: profile unavailable.";
+                return "装備方針: データを確認できません。";
             }
 
             if (!profile.HasEquipment("equip_iron_sword"))
             {
-                return "Loadout Focus: clear floor 2 to unlock 鉄の剣.";
+                return "装備方針: 2階クリアで鉄の剣が解放されます。";
             }
 
             if (!profile.HasEquipment("equip_bone_mail"))
             {
-                return "Loadout Focus: clear floor 4 to unlock 骨の鎧.";
+                return "装備方針: 4階クリアで骨の鎧が解放されます。";
             }
 
             if (!profile.HasEquipment("equip_quick_charm"))
             {
-                return "Loadout Focus: clear floor 6 to unlock 俊足のお守り.";
+                return "装備方針: 6階クリアで俊足のお守りが解放されます。";
             }
 
             string threat = GetNextFloorThreat(profile);
             if (threat.Contains("dangerous") && profile.EquippedArmorId != "equip_bone_mail")
             {
-                return "Loadout Focus: switch into 骨の鎧 before the dangerous floor.";
+                return "装備方針: 危険な階の前に骨の鎧へ入れ替えましょう。";
             }
 
             if (threat.Contains("even") && profile.EquippedWeaponId != "equip_iron_sword")
             {
-                return "Loadout Focus: switch into 鉄の剣 to push through the even floor.";
+                return "装備方針: 五分の階を押すなら鉄の剣へ入れ替えましょう。";
             }
 
-            return "Loadout Focus: all sample gear unlocked. Tune your build before the next push.";
+            return "装備方針: 解放済み装備は揃っています。次の挑戦前に好みで調整できます。";
         }
 
         public static string BuildMissionHeadline(PlayerProfile profile, DateTime now)
         {
             if (profile == null)
             {
-                return "Mission Focus: profile unavailable.";
+                return "ミッション: データを確認できません。";
             }
 
             if (DailyRewardService.HasClaimableQuest(profile, now))
             {
                 return string.Format(
-                    "Mission Focus: claim today's completed daily quests for {0} free stones.",
+                    "ミッション: 達成済みデイリーから無償石{0}個を受け取りましょう。",
                     DailyRewardService.GetClaimableRewardFreeGachaStones(profile, now));
             }
 
@@ -1092,22 +1124,22 @@ namespace WitchTower.Home
                 DailyQuestDefinition finalQuest = DailyRewardService.GetDefinitions()[DailyRewardService.GetDefinitions().Count - 1];
                 int progress = DailyRewardService.GetBattleWinProgress(profile, now, finalQuest.Id);
                 return string.Format(
-                    "Mission Focus: win {0} battles to complete every daily quest ({1}/{0}).",
+                    "ミッション: デイリー全達成までバトル勝利{1}/{0}です。",
                     DailyRewardService.GetMaximumRequiredBattleWins(),
                     progress);
             }
 
             if (IsMissionClaimable(profile, "mission_clear_1", 1))
             {
-                return "Mission Focus: claim the first battle victory reward.";
+                return "ミッション: 初勝利報酬を受け取りましょう。";
             }
 
             if (IsMissionClaimable(profile, "mission_reach_floor_3", 3))
             {
-                return "Mission Focus: claim the floor 3 milestone reward.";
+                return "ミッション: 3階到達報酬を受け取りましょう。";
             }
 
-            return "Mission Focus: keep climbing to open more reward claims.";
+            return "ミッション: 階層を進めると新しい報酬が開きます。";
         }
 
         public static int GetClaimableMissionGold(PlayerProfile profile)
@@ -1166,21 +1198,21 @@ namespace WitchTower.Home
         {
             if (profile == null)
             {
-                return "Ready Gold: unavailable.";
+                return "受取可能: 確認できません。";
             }
 
             int readyGold = GetClaimableRewardGold(profile, now);
             int missionCount = GetClaimableMissionCount(profile, now);
             return readyGold > 0
-                ? $"Ready Gold: {readyGold} waiting in mission claims ({missionCount} ready)."
-                : "Ready Gold: nothing to claim right now.";
+                ? $"受取可能: ミッションに{readyGold}ゴールド（{missionCount}件）あります。"
+                : "受取可能: 今すぐ受け取れるゴールドはありません。";
         }
 
         public static string BuildMissionRewardSummary(PlayerProfile profile, DateTime now)
         {
             if (profile == null)
             {
-                return "Claimable Rewards: unavailable.";
+                return "受取報酬: 確認できません。";
             }
 
             int missionGold = GetClaimableMissionGold(profile);
@@ -1190,27 +1222,27 @@ namespace WitchTower.Home
             int totalClaims = GetClaimableMissionCount(profile, now);
             if (totalClaims <= 0)
             {
-                return "Claimable Rewards: no reward claims ready.";
+                return "受取報酬: 現在受け取れる報酬はありません。";
             }
 
             if (totalGold > 0 && totalStones > 0)
             {
-                return $"Claimable Rewards: {totalGold} Gold and {totalStones} free stones across {totalClaims} ready claims.";
+                return $"受取報酬: {totalGold}ゴールドと無償石{totalStones}個（{totalClaims}件）を受け取れます。";
             }
 
             if (totalStones > 0)
             {
-                return $"Claimable Rewards: {totalStones} free stones ready.";
+                return $"受取報酬: 無償石{totalStones}個を受け取れます。";
             }
 
-            return $"Claimable Rewards: {totalGold} Gold across {totalClaims} ready claims.";
+            return $"受取報酬: {totalGold}ゴールド（{totalClaims}件）を受け取れます。";
         }
 
         public static string BuildPriorityTabText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
         {
             if (profile == null)
             {
-                return "Priority Tab: unavailable.";
+                return "優先タブ: 確認できません。";
             }
 
             string threat = GetNextFloorThreat(profile);
@@ -1221,10 +1253,10 @@ namespace WitchTower.Home
             {
                 if (threat.Contains("dangerous"))
                 {
-                    return $"Priority Tab: Mission first, bank {claimableGold} Gold before the dangerous floor.";
+                    return $"優先タブ: ミッション。危険な階の前に{claimableGold}ゴールドを受け取りましょう。";
                 }
 
-                return $"Priority Tab: Mission first, {missionClaims} reward claim{(missionClaims == 1 ? "" : "s")} ready.";
+                return $"優先タブ: ミッション。受け取れる報酬が{missionClaims}件あります。";
             }
 
             int enhanceCount = GetEnhanceBadgeCount(profile, baseUpgradeCost);
@@ -1232,15 +1264,15 @@ namespace WitchTower.Home
             {
                 if (threat.Contains("dangerous"))
                 {
-                    return $"Priority Tab: Enhance first, buy Defense or HP before the dangerous floor.";
+                    return "優先タブ: 強化。危険な階の前に防御かHPを上げましょう。";
                 }
 
                 if (threat.Contains("even"))
                 {
-                    return $"Priority Tab: Enhance first, Attack can flip the even floor.";
+                    return "優先タブ: 強化。攻撃を上げると五分の階を押しやすくなります。";
                 }
 
-                return $"Priority Tab: Enhance first, {enhanceCount} boost{(enhanceCount == 1 ? "" : "s")} affordable.";
+                return $"優先タブ: 強化。今すぐ上げられる項目が{enhanceCount}件あります。";
             }
 
             int equipmentCount = GetEquipmentBadgeCount(profile);
@@ -1248,30 +1280,30 @@ namespace WitchTower.Home
             {
                 if (threat.Contains("dangerous"))
                 {
-                    return $"Priority Tab: Equipment first, armor up before the dangerous floor.";
+                    return "優先タブ: 装備。危険な階の前に防具を見直しましょう。";
                 }
 
-                return $"Priority Tab: Equipment first, {equipmentCount} gear swap{(equipmentCount == 1 ? "" : "s")} ready.";
+                return $"優先タブ: 装備。入れ替え候補が{equipmentCount}件あります。";
             }
 
             if (threat.Contains("dangerous"))
             {
-                return $"Priority Tab: Battle only after prep, floor {profile.HighestFloor + 1} looks dangerous.";
+                return $"優先タブ: 育成。{profile.HighestFloor + 1}階は危険なので準備してから挑戦しましょう。";
             }
 
             if (threat.Contains("even"))
             {
-                return $"Priority Tab: Battle next, floor {profile.HighestFloor + 1} looks even.";
+                return $"優先タブ: バトル。{profile.HighestFloor + 1}階は五分なので、準備後なら安定します。";
             }
 
-            return $"Priority Tab: Battle next, floor {profile.HighestFloor + 1} is the clean push.";
+            return $"優先タブ: バトル。{profile.HighestFloor + 1}階へ進めます。";
         }
 
         public static string BuildPrepAdviceText(PlayerProfile profile, int baseUpgradeCost)
         {
             if (profile == null)
             {
-                return "Prep Advice: unavailable.";
+                return "準備アドバイス: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -1281,22 +1313,33 @@ namespace WitchTower.Home
 
             if (best.Label == null)
             {
-                return $"Prep Advice: current build is {TrimThreat(BattleEncounterAdvisor.BuildThreatText(currentStats, enemyStats))}; push when ready.";
+                string currentThreat = TrimThreat(BattleEncounterAdvisor.BuildThreatText(currentStats, enemyStats));
+                return $"準備アドバイス: 現在は{DescribeThreatWithNoun(currentThreat)}です。準備できたら挑戦しましょう。";
             }
 
             if (string.Equals(best.BeforeThreat, best.AfterThreat, StringComparison.Ordinal))
             {
-                return $"Prep Advice: {best.Label} keeps floor {nextFloor} at {best.AfterThreat} while adding {best.Detail}.";
+                if (best.AfterThreat.Contains("dangerous"))
+                {
+                    return $"準備アドバイス: {best.Label}で{best.Detail}。{nextFloor}階はまだ危険なので、追加の育成や装備も見ましょう。";
+                }
+
+                if (best.AfterThreat.Contains("even"))
+                {
+                    return $"準備アドバイス: {best.Label}で{best.Detail}。{nextFloor}階は五分なので、もう一手で安定します。";
+                }
+
+                return $"準備アドバイス: {best.Label}で{best.Detail}。{nextFloor}階は{DescribeThreatWithNoun(best.AfterThreat)}のまま安定します。";
             }
 
-            return $"Prep Advice: {best.Label} shifts floor {nextFloor} from {best.BeforeThreat} to {best.AfterThreat} ({best.Detail}).";
+            return $"準備アドバイス: {best.Label}で{nextFloor}階が{DescribeThreat(best.BeforeThreat)}から{DescribeThreat(best.AfterThreat)}へ改善します（{best.Detail}）。";
         }
 
         public static string BuildBattlePlanText(PlayerProfile profile, int baseUpgradeCost, DateTime now)
         {
             if (profile == null)
             {
-                return "Battle Plan: unavailable.";
+                return "バトル計画: 確認できません。";
             }
 
             int nextFloor = profile.HighestFloor + 1;
@@ -1308,15 +1351,27 @@ namespace WitchTower.Home
                 PlayerBattleStatsFactory.CreatePreview(profile));
 
             string prepStep = best.Label != null
-                ? $"{best.Label} for {best.PlanDetail}, then challenge floor {nextFloor}."
-                : $"challenge floor {nextFloor}.";
+                ? $"{best.Label}（{best.PlanDetail}）後に{nextFloor}階へ挑戦"
+                : $"{nextFloor}階へ挑戦";
+            BattleEncounterAdvisor.BattleEncounterAssessment assessment = BattleEncounterAdvisor.AssessFloor(profile, nextFloor);
+            string threat = TrimThreat(assessment.ThreatText);
 
             if (missionClaims > 0)
             {
-                return $"Battle Plan: claim {missionClaims} reward {(missionClaims == 1 ? "step" : "steps")}, {prepStep}";
+                return $"バトル計画: 報酬{missionClaims}件を受け取ってから、{prepStep}。";
             }
 
-            return $"Battle Plan: build is ready, challenge floor {nextFloor} now.";
+            if (threat.Contains("dangerous"))
+            {
+                return $"バトル計画: {nextFloor}階は推奨戦力{FormatCombatPower(assessment.RecommendedCombatPower)}以上です。挑戦前に育成と装備確認を優先しましょう。";
+            }
+
+            if (threat.Contains("even"))
+            {
+                return $"バトル計画: {nextFloor}階は五分です。{prepStep}の前に装備を確認すると安定します。";
+            }
+
+            return $"バトル計画: 準備は整っています。今から{nextFloor}階へ挑戦できます。";
         }
 
         private static string GetNextFloorThreat(PlayerProfile profile)
@@ -1327,9 +1382,7 @@ namespace WitchTower.Home
             }
 
             int nextFloor = profile.HighestFloor + 1;
-            BattleUnitStats playerStats = PlayerBattleStatsFactory.CreatePreview(profile);
-            BattleUnitStats enemyStats = BattleEncounterAdvisor.CreateEnemyPreview(nextFloor);
-            return BattleEncounterAdvisor.BuildThreatText(playerStats, enemyStats);
+            return BattleEncounterAdvisor.AssessFloor(profile, nextFloor).ThreatText;
         }
 
         private static CandidateAdvice BuildBestCandidate(PlayerProfile profile, int baseUpgradeCost, BattleUnitStats enemyStats, BattleUnitStats currentStats)
@@ -1340,7 +1393,7 @@ namespace WitchTower.Home
 
             EvaluateCandidate(
                 ref best,
-                "Attack upgrade",
+                "攻撃強化",
                 profile.Gold >= GetUpgradeCost(baseUpgradeCost, profile.AttackUpgradeLevel)
                     ? PlayerBattleStatsFactory.CreatePreviewAfterUpgrade(profile, UpgradeType.Attack)
                     : null,
@@ -1351,7 +1404,7 @@ namespace WitchTower.Home
 
             EvaluateCandidate(
                 ref best,
-                "Defense upgrade",
+                "防御強化",
                 profile.Gold >= GetUpgradeCost(baseUpgradeCost, profile.DefenseUpgradeLevel)
                     ? PlayerBattleStatsFactory.CreatePreviewAfterUpgrade(profile, UpgradeType.Defense)
                     : null,
@@ -1362,7 +1415,7 @@ namespace WitchTower.Home
 
             EvaluateCandidate(
                 ref best,
-                "HP upgrade",
+                "HP強化",
                 profile.Gold >= GetUpgradeCost(baseUpgradeCost, profile.HpUpgradeLevel)
                     ? PlayerBattleStatsFactory.CreatePreviewAfterUpgrade(profile, UpgradeType.Hp)
                     : null,
@@ -1444,7 +1497,7 @@ namespace WitchTower.Home
         {
             if (candidateStats == null || currentStats == null)
             {
-                return "preview unavailable";
+                return "変化量を確認できません";
             }
 
             int hpDelta = candidateStats.MaxHp - currentStats.MaxHp;
@@ -1457,7 +1510,7 @@ namespace WitchTower.Home
         {
             if (candidateStats == null || currentStats == null)
             {
-                return "a stronger build";
+                return "戦力アップ";
             }
 
             System.Collections.Generic.List<string> parts = new System.Collections.Generic.List<string>();
@@ -1482,7 +1535,7 @@ namespace WitchTower.Home
 
             if (parts.Count == 0)
             {
-                return "a steadier matchup";
+                return "相性が安定";
             }
 
             if (parts.Count == 1)
@@ -1490,7 +1543,7 @@ namespace WitchTower.Home
                 return parts[0];
             }
 
-            return string.Join(", ", parts.GetRange(0, parts.Count - 1)) + " and " + parts[parts.Count - 1];
+            return string.Join(", ", parts.GetRange(0, parts.Count - 1)) + "、" + parts[parts.Count - 1];
         }
 
         private static string BuildCompactDeltaDetail(int hpDelta, int attackDelta, int defenseDelta)
@@ -1514,10 +1567,85 @@ namespace WitchTower.Home
 
             if (parts.Count == 0)
             {
-                return "no stat shift";
+                return "ステータス変化なし";
             }
 
             return string.Join(", ", parts);
+        }
+
+        private static string BuildPartyPowerRead(BattleEncounterAdvisor.BattleEncounterAssessment assessment)
+        {
+            if (assessment.PartyCombatPower <= 0)
+            {
+                return string.Empty;
+            }
+
+            return $"現戦力{FormatCombatPower(assessment.PartyCombatPower)}/";
+        }
+
+        private static string FormatCombatPower(int combatPower)
+        {
+            return Math.Max(0, combatPower).ToString("N0");
+        }
+
+        private static string BuildFloorLabel(int globalFloor)
+        {
+            int safeFloor = Math.Max(1, globalFloor);
+            string dungeonName = BattleDungeonCatalog.ResolveDungeonName(safeFloor);
+            int localFloor = BattleDungeonCatalog.ResolveLocalFloor(safeFloor);
+            return string.IsNullOrEmpty(dungeonName)
+                ? $"{safeFloor}階"
+                : $"{dungeonName} 第{localFloor}階層";
+        }
+
+        private static string DescribeThreat(string threat)
+        {
+            if (string.IsNullOrEmpty(threat))
+            {
+                return "不明";
+            }
+
+            if (threat.Contains("dangerous"))
+            {
+                return "危険";
+            }
+
+            if (threat.Contains("even"))
+            {
+                return "五分";
+            }
+
+            if (threat.Contains("favorable"))
+            {
+                return "有利";
+            }
+
+            return "不明";
+        }
+
+        private static string DescribeThreatWithNoun(string threat)
+        {
+            if (string.IsNullOrEmpty(threat))
+            {
+                return "強さ不明の相手";
+            }
+
+            if (threat.Contains("dangerous"))
+            {
+                return "危険な相手";
+            }
+
+            if (threat.Contains("even"))
+            {
+                return "五分の相手";
+            }
+
+            if (threat.Contains("favorable"))
+            {
+                return "有利な相手";
+            }
+
+            return "強さ不明の相手";
         }
 
         private static string FormatSigned(int value)

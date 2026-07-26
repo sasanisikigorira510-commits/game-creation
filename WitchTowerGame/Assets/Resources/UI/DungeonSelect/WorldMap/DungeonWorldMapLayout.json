@@ -1,0 +1,126 @@
+{
+  "baseLayer" : "dungeon-world-map-6-base.png",
+  "currentDungeonId" : "curse_library",
+  "dungeons" : [
+    {
+      "floorRange" : "第1〜5階層",
+      "id" : "blight_cavern",
+      "labelTopLeftPx" : {
+        "x" : 72,
+        "y" : 258
+      },
+      "labelWidthPx" : 244,
+      "name" : "見習いの五門洞",
+      "nodeCenterNormalized" : {
+        "x" : 0.15364583333333334,
+        "y" : 0.4443359375
+      },
+      "nodeCenterPx" : {
+        "x" : 236,
+        "y" : 455
+      },
+      "state" : "cleared"
+    },
+    {
+      "floorRange" : "第6〜10階層",
+      "id" : "gear_crypt",
+      "labelTopLeftPx" : {
+        "x" : 382,
+        "y" : 238
+      },
+      "labelWidthPx" : 244,
+      "name" : "獣影の廃工廠",
+      "nodeCenterNormalized" : {
+        "x" : 0.33723958333333331,
+        "y" : 0.427734375
+      },
+      "nodeCenterPx" : {
+        "x" : 518,
+        "y" : 438
+      },
+      "state" : "cleared"
+    },
+    {
+      "floorRange" : "第11〜15階層",
+      "id" : "curse_library",
+      "labelTopLeftPx" : {
+        "x" : 582,
+        "y" : 680
+      },
+      "labelWidthPx" : 284,
+      "name" : "古契約の地下書庫",
+      "nodeCenterNormalized" : {
+        "x" : 0.47135416666666669,
+        "y" : 0.5029296875
+      },
+      "nodeCenterPx" : {
+        "x" : 724,
+        "y" : 515
+      },
+      "state" : "current"
+    },
+    {
+      "floorRange" : "第16〜20階層",
+      "id" : "ember_drake_pass",
+      "labelTopLeftPx" : {
+        "x" : 884,
+        "y" : 246
+      },
+      "labelWidthPx" : 220,
+      "name" : "紅蓮竜道",
+      "nodeCenterNormalized" : {
+        "x" : 0.65559895833333337,
+        "y" : 0.419921875
+      },
+      "nodeCenterPx" : {
+        "x" : 1007,
+        "y" : 430
+      },
+      "state" : "locked"
+    },
+    {
+      "floorRange" : "第21〜25階層",
+      "id" : "star_ore_citadel",
+      "labelTopLeftPx" : {
+        "x" : 1077,
+        "y" : 536
+      },
+      "labelWidthPx" : 220,
+      "name" : "星鉱の巨殿",
+      "nodeCenterNormalized" : {
+        "x" : 0.77734375,
+        "y" : 0.404296875
+      },
+      "nodeCenterPx" : {
+        "x" : 1194,
+        "y" : 414
+      },
+      "state" : "locked"
+    },
+    {
+      "floorRange" : "第26〜30階層",
+      "id" : "abyssal_grimoire_spire",
+      "labelTopLeftPx" : {
+        "x" : 1232,
+        "y" : 170
+      },
+      "labelWidthPx" : 252,
+      "name" : "深淵魔導回廊",
+      "nodeCenterNormalized" : {
+        "x" : 0.89453125,
+        "y" : 0.2919921875
+      },
+      "nodeCenterPx" : {
+        "x" : 1374,
+        "y" : 299
+      },
+      "state" : "locked"
+    }
+  ],
+  "imageSize" : {
+    "height" : 1024,
+    "width" : 1536
+  },
+  "overlayLayer" : "dungeon-world-map-6-overlay.png",
+  "preview" : "dungeon-world-map-6-ui-preview.png"
+}

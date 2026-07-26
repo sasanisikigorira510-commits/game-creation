@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: skill_drain
   m_EditorClassIdentifier: 
   skillId: skill_drain
-  skillName: Drain
-  description: Damage the enemy and recover some HP.
+  skillName: 吸収
+  description: 敵にダメージを与え、HPを少し回復する。
   cooldown: 8
   powerRate: 1.2
   healRate: 0.5

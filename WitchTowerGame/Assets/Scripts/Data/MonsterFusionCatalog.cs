@@ -24,6 +24,7 @@ namespace WitchTower.Data
         Middle = 2,
         Upper = 3,
         Class4 = 4,
+        Class5 = 5,
         Special = 99
     }
 

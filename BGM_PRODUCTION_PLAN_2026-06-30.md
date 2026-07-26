@@ -106,3 +106,70 @@
 - 構成: 8小節 x 4ブロック。低い鼓動、細かいリズム、ホーム主題の短い変奏
 - 用途: 通常バトルBGMの方向性確認用デモ
 - 注意: 最終版ではOgg Vorbis化し、ホーム曲との音量差を実機で確認する
+
+### ダンジョン別バトルBGM
+
+- 生成スクリプト: `tools/generate_dungeon_bgm_demos.py`
+- 方針: 既存作品の旋律や固有フレーズは使わず、儚い合唱風パッド、鐘、撥弦、ピアノ風アタック、控えめな儀式打楽器で暗い幻想感を作る
+- 出力:
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_blight_cavern_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_gear_crypt_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_curse_library_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_ember_drake_pass_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_star_ore_citadel_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_abyssal_grimoire_spire_loop.wav`
+- 実装: `BattleDungeonCatalog.ResolveBattleBgmKey()` が現在のグローバル階層からダンジョンBGMキーを返し、`BattleSceneController` が遭遇更新時に切り替える
+
+### ダンジョン別ボスBGM
+
+- 生成スクリプト: `tools/generate_dungeon_boss_bgm_demos.py`
+- 方針: 通常ダンジョン曲の空気感を残しながら、短い高緊張ループとして打楽器、低音、鐘の密度を上げる
+- 出力:
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_blight_cavern_boss_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_gear_crypt_boss_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_curse_library_boss_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_ember_drake_pass_boss_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_star_ore_citadel_boss_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_abyssal_grimoire_spire_boss_loop.wav`
+
+### 獣影の廃工廠 再制作
+
+- 生成スクリプト: `tools/generate_gear_crypt_bgm.py`
+- 対象:
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_gear_crypt_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_gear_crypt_boss_loop.wav`
+- 方針: 旧ダンジョン共通生成器から分離し、廃工廠らしい金属打撃、歯車クリック、蒸気ノイズ、低い獣の唸り、機械的な非対称パルスを前面に出す
+
+### 古契約の地下書庫 再制作
+
+- 生成スクリプト: `tools/generate_curse_library_bgm.py`
+- 対象:
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_curse_library_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_curse_library_boss_loop.wav`
+- 方針: 「ビッグブリッジの死闘」系の疾走感、跳ねるベース、勇ましい掛け合い、畳みかける展開をモチーフの粒度に留め、既存旋律は使わず、古契約の地下書庫らしいチェンバロ風撥弦、オルガンリード、禁書のページ音、書物打撃、儀式的な鐘で再解釈する
+- ボス調整: 低音進行に対して固定上声が濁って聞こえる箇所を避けるため、ボスの上声とアルペジオを各小節のコードへ追従させる
+
+### 紅蓮竜道 再制作
+
+- 生成スクリプト: `tools/generate_ember_drake_pass_bgm.py`
+- 対象:
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_ember_drake_pass_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_ember_drake_pass_boss_loop.wav`
+- 方針: Shape of My Heart系の細いナイロン弦アルペジオ、哀愁のある近い和声、抑えた低音、柔らかいパーカッションをモチーフの粒度に留め、既存旋律や固有進行は使わず、火の粉、熱風、低い竜の脈動で紅蓮竜道向けに再解釈する
+
+### 星鉱の巨殿 再制作
+
+- 生成スクリプト: `tools/generate_star_ore_citadel_bgm.py`
+- 対象:
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_star_ore_citadel_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_star_ore_citadel_boss_loop.wav`
+- 方針: Ken Arai「Phonecall」系の軽い恋愛ドラマBGM感、小さいベル、柔らかいシンコペーション、電話越しの距離感をモチーフの粒度に留め、既存旋律は使わず、星鉱の巨殿らしい微細な鉱石のきらめきだけを足して再解釈する。エレピは主役ではなく薄い伴奏に下げ、主旋律はベル/電話ブリップで前に出す
+
+### 深淵魔導回廊 再制作
+
+- 生成スクリプト: `tools/generate_abyssal_grimoire_spire_bgm.py`
+- 対象:
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_abyssal_grimoire_spire_loop.wav`
+  - `WitchTowerGame/Assets/Resources/Audio/BGM/dungeon_abyssal_grimoire_spire_boss_loop.wav`
+- 方針: ボサノバ調。ナイロンギターのシンコペーション、アップライトベース風の動き、リムクリック、ブラシ、ヴィブラフォン風メロディを主役にし、オルガン/合唱系の重いダークファンタジー音色は使わない。深淵要素は薄い空気音と控えめな不思議ベルだけに留める
+- ボス調整: ジャズ的なテンションが濁りに聞こえやすい箇所を整理し、ボス版は四和音中心の穏やかなボサノバ和声に寄せる

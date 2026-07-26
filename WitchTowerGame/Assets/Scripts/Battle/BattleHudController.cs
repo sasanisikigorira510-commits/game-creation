@@ -24,6 +24,9 @@ namespace WitchTower.Battle
         [SerializeField] private GameObject loseLabel;
         [SerializeField] private ResultPanelController resultPanelController;
 
+        public float DebugPlayerHpFillAmount => playerHpFillImage != null ? playerHpFillImage.fillAmount : -1f;
+        public float DebugEnemyHpFillAmount => enemyHpFillImage != null ? enemyHpFillImage.fillAmount : -1f;
+
         public void ShowFloor(int floor)
         {
             if (floorText != null)
@@ -36,8 +39,8 @@ namespace WitchTower.Battle
         {
             if (threatText != null)
             {
-                threatText.text = BattleEncounterAdvisor.BuildThreatText(playerStats, enemyStats);
-                threatText.color = BattleEncounterAdvisor.GetThreatColor(threatText.text);
+                threatText.text = string.Empty;
+                threatText.gameObject.SetActive(false);
             }
 
             if (encounterText != null)
@@ -79,22 +82,22 @@ namespace WitchTower.Battle
         {
             if (playerHpText != null && playerStats != null)
             {
-                playerHpText.text = $"Player HP {playerStats.CurrentHp}/{playerStats.MaxHp}";
+                playerHpText.text = $"味方HP {playerStats.CurrentHp}/{playerStats.MaxHp}";
             }
             else if (playerHpText != null)
             {
-                playerHpText.text = "Player HP --/--";
+                playerHpText.text = "味方HP --/--";
             }
 
             UpdateHealthBar(playerHpFillImage, playerStats, new Color(0.22f, 0.74f, 0.65f, 1f), new Color(0.95f, 0.67f, 0.23f, 1f), new Color(0.88f, 0.24f, 0.31f, 1f));
 
             if (enemyHpText != null && enemyStats != null)
             {
-                enemyHpText.text = $"Enemy HP {enemyStats.CurrentHp}/{enemyStats.MaxHp}";
+                enemyHpText.text = $"敵HP {enemyStats.CurrentHp}/{enemyStats.MaxHp}";
             }
             else if (enemyHpText != null)
             {
-                enemyHpText.text = "Enemy HP --/--";
+                enemyHpText.text = "敵HP --/--";
             }
 
             UpdateHealthBar(enemyHpFillImage, enemyStats, new Color(0.93f, 0.42f, 0.49f, 1f), new Color(0.96f, 0.67f, 0.29f, 1f), new Color(0.80f, 0.21f, 0.27f, 1f));
@@ -104,22 +107,22 @@ namespace WitchTower.Battle
         {
             if (playerHpText != null && playerMaxHp > 0)
             {
-                playerHpText.text = $"Player HP {Mathf.Clamp(playerCurrentHp, 0, playerMaxHp)}/{playerMaxHp}";
+                playerHpText.text = $"味方HP {Mathf.Clamp(playerCurrentHp, 0, playerMaxHp)}/{playerMaxHp}";
             }
             else if (playerHpText != null)
             {
-                playerHpText.text = "Player HP --/--";
+                playerHpText.text = "味方HP --/--";
             }
 
             UpdateHealthBar(playerHpFillImage, playerCurrentHp, playerMaxHp, new Color(0.22f, 0.74f, 0.65f, 1f), new Color(0.95f, 0.67f, 0.23f, 1f), new Color(0.88f, 0.24f, 0.31f, 1f));
 
             if (enemyHpText != null && enemyMaxHp > 0)
             {
-                enemyHpText.text = $"Enemy HP {Mathf.Clamp(enemyCurrentHp, 0, enemyMaxHp)}/{enemyMaxHp}";
+                enemyHpText.text = $"敵HP {Mathf.Clamp(enemyCurrentHp, 0, enemyMaxHp)}/{enemyMaxHp}";
             }
             else if (enemyHpText != null)
             {
-                enemyHpText.text = "Enemy HP --/--";
+                enemyHpText.text = "敵HP --/--";
             }
 
             UpdateHealthBar(enemyHpFillImage, enemyCurrentHp, enemyMaxHp, new Color(0.93f, 0.42f, 0.49f, 1f), new Color(0.96f, 0.67f, 0.29f, 1f), new Color(0.80f, 0.21f, 0.27f, 1f));
@@ -134,9 +137,9 @@ namespace WitchTower.Battle
 
         public void UpdateSkillCooldowns(BattleSkillState strikeState, BattleSkillState drainState, BattleSkillState guardState)
         {
-            UpdateSkillCooldown(skillButton1, skillCooldown1Text, strikeState, "Strike");
-            UpdateSkillCooldown(skillButton2, skillCooldown2Text, drainState, "Drain");
-            UpdateSkillCooldown(skillButton3, skillCooldown3Text, guardState, "Guard");
+            UpdateSkillCooldown(skillButton1, skillCooldown1Text, strikeState, "強撃");
+            UpdateSkillCooldown(skillButton2, skillCooldown2Text, drainState, "吸収");
+            UpdateSkillCooldown(skillButton3, skillCooldown3Text, guardState, "防御");
         }
 
         private static void UpdateSkillCooldown(Button button, TMP_Text cooldownText, BattleSkillState state, string readyLabel)

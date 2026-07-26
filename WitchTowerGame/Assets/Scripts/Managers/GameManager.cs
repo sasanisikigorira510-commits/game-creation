@@ -40,7 +40,7 @@ namespace WitchTower.Managers
             int nextProgressFloor = PlayerProfile != null ? PlayerProfile.HighestFloor + 1 : 1;
             CurrentFloor = Mathf.Max(1, Mathf.Max(saveData.CurrentFloor, nextProgressFloor));
             SyncDungeonSelectionFromCurrentFloor();
-            if (ShouldApplyPrototypePartyBootstrap(saveData, PlayerProfile) &&
+            if (PlayerProfile != null &&
                 PrototypePartyBootstrapService.EnsureParty(PlayerProfile))
             {
                 SaveManager.Instance?.SaveCurrentGame();
@@ -102,36 +102,5 @@ namespace WitchTower.Managers
             return false;
         }
 
-        private static bool ShouldApplyPrototypePartyBootstrap(PlayerSaveData saveData, PlayerProfile profile)
-        {
-            if (saveData == null || profile == null || !profile.HasCompletedTutorial)
-            {
-                return false;
-            }
-
-            bool hasTutorialHistory =
-                saveData.SeenStoryEventIds != null && saveData.SeenStoryEventIds.Count > 0 ||
-                saveData.SeenTutorialHintIds != null && saveData.SeenTutorialHintIds.Count > 0;
-            if (hasTutorialHistory)
-            {
-                return false;
-            }
-
-            if (profile.OwnedMonsters.Count == 0)
-            {
-                return true;
-            }
-
-            for (int i = 0; i < profile.PartyMonsterInstanceIds.Count; i += 1)
-            {
-                if (!string.IsNullOrEmpty(profile.PartyMonsterInstanceIds[i]) &&
-                    profile.GetOwnedMonster(profile.PartyMonsterInstanceIds[i]) != null)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
     }
 }

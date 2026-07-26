@@ -7,6 +7,7 @@ namespace WitchTower.UI
     public sealed class ResourceView : MonoBehaviour
     {
         [SerializeField] private TMP_Text goldText;
+        [SerializeField] private TMP_Text rebirthPointText;
 
         public void Bind(PlayerProfile profile)
         {
@@ -18,6 +19,11 @@ namespace WitchTower.UI
             if (goldText != null)
             {
                 goldText.text = profile.Gold.ToString();
+            }
+
+            if (rebirthPointText != null)
+            {
+                rebirthPointText.text = profile.RebirthPoints.ToString();
             }
         }
     }

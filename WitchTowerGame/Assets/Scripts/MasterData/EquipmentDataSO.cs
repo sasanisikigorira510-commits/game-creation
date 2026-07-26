@@ -15,6 +15,8 @@ namespace WitchTower.MasterData
         [Min(0)] public int baseHp;
         [Min(0f)] public float bonusCritRate;
         [Min(0f)] public float bonusAttackSpeed;
+        [Tooltip("0 uses the legacy rarity-based class. Set 1-6 for an explicit equipment class.")]
+        [Min(0)] public int classRank;
         public EquipmentRarity rarity;
         [Min(1)] public int maxEnhancementAttempts = 5;
 
@@ -27,6 +29,7 @@ namespace WitchTower.MasterData
             baseHp = Mathf.Max(0, baseHp);
             bonusCritRate = Mathf.Max(0f, bonusCritRate);
             bonusAttackSpeed = Mathf.Max(0f, bonusAttackSpeed);
+            classRank = Mathf.Clamp(classRank, 0, 6);
         }
     }
 }

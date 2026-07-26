@@ -51,37 +51,37 @@ namespace WitchTower.Home
             new List<GoldShopProductDefinition>
             {
                 new GoldShopProductDefinition(
-                    "iron_sword",
-                    "鉄の剣",
-                    "装備を1個獲得",
-                    800,
-                    GoldShopRewardType.Equipment,
-                    1,
-                    "equip_iron_sword"),
-                new GoldShopProductDefinition(
-                    "bone_mail",
-                    "骨の鎧",
-                    "装備を1個獲得",
-                    800,
-                    GoldShopRewardType.Equipment,
-                    1,
-                    "equip_bone_mail"),
-                new GoldShopProductDefinition(
-                    "quick_charm",
-                    "迅速のお守り",
-                    "装備を1個獲得",
-                    800,
-                    GoldShopRewardType.Equipment,
-                    1,
-                    "equip_quick_charm"),
-                new GoldShopProductDefinition(
                     "safe_ember",
                     "通常遺物",
                     "装備強化用の通常遺物 x1",
                     500,
                     GoldShopRewardType.EnhancementRelic,
                     1,
-                    relicId: "relic_safe_ember")
+                    relicId: "relic_safe_ember"),
+                new GoldShopProductDefinition(
+                    "safe_ember_bundle",
+                    "通常遺物セット",
+                    "装備強化用の通常遺物 x3",
+                    1200,
+                    GoldShopRewardType.EnhancementRelic,
+                    3,
+                    relicId: "relic_safe_ember"),
+                new GoldShopProductDefinition(
+                    "risky_ember",
+                    "上級遺物",
+                    "50%で基礎効果を+15%する遺物 x1",
+                    1500,
+                    GoldShopRewardType.EnhancementRelic,
+                    1,
+                    relicId: "relic_risky_ember"),
+                new GoldShopProductDefinition(
+                    "volatile_ember",
+                    "危険遺物",
+                    "35%で基礎効果を+30%、失敗時に装備が消滅する遺物 x1",
+                    3000,
+                    GoldShopRewardType.EnhancementRelic,
+                    1,
+                    relicId: "relic_volatile_ember")
             };
 
         public static IReadOnlyList<GoldShopProductDefinition> GetProducts()

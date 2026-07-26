@@ -67,10 +67,31 @@ namespace WitchTower.Home
 
         private void SetActive(GameObject target)
         {
-            if (homePanel != null) homePanel.SetActive(target == homePanel);
-            if (enhancePanel != null) enhancePanel.SetActive(target == enhancePanel);
-            if (equipmentPanel != null) equipmentPanel.SetActive(target == equipmentPanel);
-            if (missionPanel != null) missionPanel.SetActive(target == missionPanel);
+            SetPanelVisible(homePanel, target == homePanel);
+            SetPanelVisible(enhancePanel, target == enhancePanel);
+            SetPanelVisible(equipmentPanel, target == equipmentPanel);
+            SetPanelVisible(missionPanel, target == missionPanel);
+        }
+
+        private static void SetPanelVisible(GameObject panel, bool visible)
+        {
+            if (panel == null)
+            {
+                return;
+            }
+
+            CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = visible ? 1f : 0f;
+                canvasGroup.blocksRaycasts = visible;
+                canvasGroup.interactable = visible;
+            }
+
+            if (panel.activeSelf != visible)
+            {
+                panel.SetActive(visible);
+            }
         }
 
         private void SetNavState(Button activeButton)

@@ -11,7 +11,12 @@ namespace WitchTower.Data
     {
         private const int DefaultPartySize = 5;
         private const int DefaultStorageLimit = 100;
-        private static readonly bool UnlockAllImplementedMonstersForPreview = true;
+        private const string ReleaseRecoveryStarterMonsterId = "monster_dragon_whelp";
+#if WITCHTOWER_PREVIEW_ROSTER
+        private const bool UnlockAllImplementedMonstersForPreview = true;
+#else
+        private const bool UnlockAllImplementedMonstersForPreview = false;
+#endif
         private static readonly string[] PrototypePartyMonsterIds =
         {
             "monster_dragon_whelp",
@@ -19,25 +24,6 @@ namespace WitchTower.Data
             "monster_rock_golem",
             "monster_apprentice_swordsman",
             "monster_apprentice_mage"
-        };
-
-        private static readonly string[] PrototypeOwnedMonsterIds =
-        {
-            "monster_dragon_whelp",
-            "monster_flare_drake",
-            "monster_abyss_dragon",
-            "monster_chibi_gear",
-            "monster_armed_droid",
-            "monster_omega_leon",
-            "monster_rock_golem",
-            "monster_ore_giant_garm",
-            "monster_cosmic_ore_fortress_golem",
-            "monster_apprentice_swordsman",
-            "monster_holy_armor_leon",
-            "monster_sword_saint_alvarez",
-            "monster_apprentice_mage",
-            "monster_dark_robe_curse_mage_noah",
-            "monster_abyss_grand_mage_seraphis"
         };
 
         public static bool EnsureParty(PlayerProfile profile, int desiredPartyCount = DefaultPartySize)
@@ -62,22 +48,23 @@ namespace WitchTower.Data
                 changed |= EnsureAllImplementedMonstersOwned(profile, masterDataManager);
                 validPartyIds = ResolveValidPartyIds(profile, targetCount);
             }
-            else if (profile.OwnedMonsters.Count == 0)
+            else if (profile.HasCompletedTutorial && profile.OwnedMonsters.Count == 0)
             {
-                foreach (string monsterId in PrototypeOwnedMonsterIds)
+                OwnedMonsterData ensuredMonster = EnsureOwnedMonster(
+                    profile,
+                    masterDataManager,
+                    ReleaseRecoveryStarterMonsterId,
+                    out bool addedMonster);
+                changed |= addedMonster;
+                if (ensuredMonster != null)
                 {
-                    OwnedMonsterData ensuredMonster = EnsureOwnedMonster(profile, masterDataManager, monsterId, out bool addedMonster);
-                    changed |= addedMonster;
-                    if (ensuredMonster != null)
-                    {
-                        profile.MarkMonsterDexOwned(ensuredMonster.MonsterId);
-                    }
+                    profile.MarkMonsterDexOwned(ensuredMonster.MonsterId);
                 }
 
                 validPartyIds = ResolveValidPartyIds(profile, targetCount);
             }
 
-            if (profile.OwnedMonsters.Count < targetCount)
+            if (UnlockAllImplementedMonstersForPreview && profile.OwnedMonsters.Count < targetCount)
             {
                 MonsterDataSO[] allMonsterData = masterDataManager.GetAllMonsterData();
                 if (allMonsterData != null)
@@ -104,13 +91,18 @@ namespace WitchTower.Data
                 validPartyIds = ResolveValidPartyIds(profile, targetCount);
             }
 
-            bool shouldPrioritizePreviewParty = CountValidPartySlots(validPartyIds) == 0;
+            bool hasNoValidPartyMembers = CountValidPartySlots(validPartyIds) == 0;
+            bool shouldPrioritizePreviewParty = UnlockAllImplementedMonstersForPreview && hasNoValidPartyMembers;
+            bool shouldRecoverCompletedParty = !UnlockAllImplementedMonstersForPreview &&
+                profile.HasCompletedTutorial &&
+                hasNoValidPartyMembers &&
+                profile.OwnedMonsters.Count > 0;
             List<string> resolvedPartyIds = BuildResolvedPartyIds(
                 profile,
                 validPartyIds,
                 targetCount,
                 shouldPrioritizePreviewParty,
-                fillOpenSlots: shouldPrioritizePreviewParty);
+                fillOpenSlots: shouldPrioritizePreviewParty || shouldRecoverCompletedParty);
             if (!profile.PartyMonsterInstanceIds.SequenceEqual(resolvedPartyIds))
             {
                 profile.SetPartyMonsterIds(resolvedPartyIds);
@@ -251,7 +243,10 @@ namespace WitchTower.Data
             }
 
             bool changed = false;
-            int missingMonsterCount = implementedMonsterIds.Count(monsterId => !WasReleasedFromRoster(profile, monsterId) && ResolveOwnedMonsterByMonsterId(profile, monsterId) == null);
+            // Preview ownership is authoritative: every master-data monster must
+            // remain available for battle-behaviour checks, even if a previous
+            // test run released one from the roster.
+            int missingMonsterCount = implementedMonsterIds.Count(monsterId => ResolveOwnedMonsterByMonsterId(profile, monsterId) == null);
             int requiredStorageLimit = Math.Max(DefaultStorageLimit, profile.OwnedMonsters.Count + missingMonsterCount);
             if (profile.MonsterStorageLimit < requiredStorageLimit)
             {
@@ -261,11 +256,6 @@ namespace WitchTower.Data
 
             foreach (string monsterId in implementedMonsterIds)
             {
-                if (WasReleasedFromRoster(profile, monsterId))
-                {
-                    continue;
-                }
-
                 OwnedMonsterData ensuredMonster = EnsureOwnedMonster(profile, masterDataManager, monsterId, out bool addedMonster);
                 changed |= addedMonster;
                 if (ensuredMonster != null)

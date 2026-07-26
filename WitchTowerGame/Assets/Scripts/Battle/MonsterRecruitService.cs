@@ -10,6 +10,7 @@ namespace WitchTower.Battle
     public static class MonsterRecruitService
     {
         private const float DefaultRecruitChance = 0.05f;
+        private const int DungeonBossRecruitIndividualValueMinimum = MonsterIndividualValueService.DefaultValue;
         private const string StorageFullSummary = "これ以上捕獲できません";
 
         public static bool CanAttemptRecruitThisBattle(PlayerProfile profile)
@@ -27,7 +28,8 @@ namespace WitchTower.Battle
             int floor,
             PlayerProfile profile,
             bool recruitWasEnabledAtBattleStart,
-            EnemyDataSO defeatedEnemyData)
+            EnemyDataSO defeatedEnemyData,
+            bool defeatedEnemyIsDungeonBoss)
         {
             if (profile == null)
             {
@@ -64,7 +66,7 @@ namespace WitchTower.Battle
             }
 
             int recruitLevel = CalculateRecruitLevel(floor, defeatedMonster);
-            return GrantRecruitedMonster(profile, defeatedMonster, recruitLevel);
+            return GrantRecruitedMonster(profile, defeatedMonster, recruitLevel, defeatedEnemyIsDungeonBoss);
         }
 
         public static MonsterRecruitResult ResolveAfterBattleWin(int floor, PlayerProfile profile, bool recruitWasEnabledAtBattleStart)
@@ -110,7 +112,8 @@ namespace WitchTower.Battle
             }
 
             int recruitLevel = CalculateRecruitLevel(floor, recruitedMonster);
-            return GrantRecruitedMonster(profile, recruitedMonster, recruitLevel);
+            bool recruitedMonsterIsDungeonBoss = BattleDungeonCatalog.IsBossMonsterOnFloor(floor, recruitedMonster.monsterId);
+            return GrantRecruitedMonster(profile, recruitedMonster, recruitLevel, recruitedMonsterIsDungeonBoss);
         }
 
         private static List<MonsterDataSO> CollectRecruitableMonsters(int floor)
@@ -161,7 +164,7 @@ namespace WitchTower.Battle
             return MonsterLevelService.ClampLevelToMax(floor + rarityBonus, monsterData);
         }
 
-        private static MonsterRecruitResult GrantRecruitedMonster(PlayerProfile profile, MonsterDataSO monsterData, int level)
+        private static MonsterRecruitResult GrantRecruitedMonster(PlayerProfile profile, MonsterDataSO monsterData, int level, bool isDungeonBossMonster)
         {
             if (profile == null || monsterData == null)
             {
@@ -178,6 +181,13 @@ namespace WitchTower.Battle
             if (createdMonster == null)
             {
                 return BuildStorageFullResult(monsterData);
+            }
+
+            if (isDungeonBossMonster)
+            {
+                MonsterIndividualValueService.Apply(
+                    createdMonster,
+                    MonsterIndividualValueService.RollWithMinimum(DungeonBossRecruitIndividualValueMinimum));
             }
 
             int individualAverage = MonsterIndividualValueService.GetAverage(createdMonster);

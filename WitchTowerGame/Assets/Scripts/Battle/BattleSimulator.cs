@@ -139,6 +139,23 @@ namespace WitchTower.Battle
             public float AttackMotionLockRemaining;
         }
 
+        private sealed class EnemyQueueIndexComparer : IComparer<int>
+        {
+            private readonly BattleSimulator owner;
+
+            public EnemyQueueIndexComparer(BattleSimulator owner)
+            {
+                this.owner = owner;
+            }
+
+            public int TargetAllyIndex { get; set; } = -1;
+
+            public int Compare(int leftIndex, int rightIndex)
+            {
+                return owner.CompareEnemyQueueOrder(leftIndex, rightIndex, TargetAllyIndex);
+            }
+        }
+
         [SerializeField] private float playerAttackInterval = 1.0f;
         [SerializeField] private float enemyAttackInterval = 1.2f;
         [SerializeField] private float guardDuration = 5.0f;
@@ -159,6 +176,9 @@ namespace WitchTower.Battle
         private EnemyTraitRuntime enemyTraitRuntime;
         private EnemyDataSO currentEnemyData;
         private MonsterDataSO currentPlayerMonsterData;
+        private BattleSpiritModifier battleSpiritModifier = BattleSpiritModifier.Identity;
+        private bool battleSpiritInvoked;
+        private BattleSpiritDefinition invokedBattleSpiritDefinition;
         private float enemyAttackTimer;
         private float guardRemainingTime;
         private bool isRunning;
@@ -178,12 +198,16 @@ namespace WitchTower.Battle
         private int engagedEnemyCount;
         private bool isBossEncounter;
         private bool currentEnemyIsBoss;
-        private string finalBossMonsterId;
+        private string[] finalBossMonsterIds = new string[0];
         private bool openingBurstSpawned;
         private int nextAllyRuntimeId = 1;
         private int nextEnemyRuntimeId = 1;
         private readonly List<AllyRuntime> activeAllyRuntimes = new List<AllyRuntime>();
         private readonly List<EnemyRuntime> activeEnemyRuntimes = new List<EnemyRuntime>();
+        private readonly List<int> cachedEnemyTargetAllyIndices = new List<int>();
+        private readonly List<int> cachedEnemyQueueIndices = new List<int>();
+        private readonly List<int> enemyQueueSortScratch = new List<int>();
+        private EnemyQueueIndexComparer enemyQueueIndexComparer;
         private const float MeleePresentationDelay = 0.18f;
         private const float TargetImpactPresentationDelay = 0.22f;
         private const float DefaultRangedImpactPresentationDelay = 0.32f;
@@ -199,6 +223,7 @@ namespace WitchTower.Battle
         private const float ResponsiveMeleeAdvancedRearMoveMultiplier = 0.70f;
         private const float ResponsiveMeleeClass2OpeningAttackReadiness = 0.82f;
         private const float RearMeleeMoveSpeedMultiplier = 1.6f;
+        private const float RearMeleeEngagementMoveMultiplier = 1.35f;
         private static readonly Dictionary<string, float> ProjectileImpactPresentationDelays = new Dictionary<string, float>
         {
             { "monster_dragon_whelp", 0.34f },
@@ -215,12 +240,16 @@ namespace WitchTower.Battle
 
         public event System.Action<BattleHitInfo> HitResolved;
         public event System.Action EncounterChanged;
-        public event System.Action<int, int, EnemyDataSO> EnemyDefeated;
+        public event System.Action<int, int, EnemyDataSO, bool> EnemyDefeated;
         public event System.Action<int> AllyDefeated;
+        public event System.Action<BattleSpiritDefinition> SpiritInvoked;
 
         public BattleUnitStats PlayerStats => playerStats;
         public BattleUnitStats EnemyStats => enemyStats;
         public bool IsRunning => isRunning;
+        public bool BattleSpiritInvoked => battleSpiritInvoked;
+        public BattleSpiritDefinition InvokedBattleSpiritDefinition => invokedBattleSpiritDefinition;
+        public BattleSpiritModifier ActiveBattleSpiritModifier => battleSpiritModifier;
         public int DebugTickCount => tickCount;
         public float DebugLastDeltaTime => lastDeltaTime;
         public float DebugPlayerAttackTimer => ResolveLeadAliveAllyRuntime()?.AttackTimer ?? 0f;
@@ -247,7 +276,7 @@ namespace WitchTower.Battle
             get
             {
                 int activeTargetIndex = activeEnemyRuntimes.Count > 0
-                    ? ResolveEnemyAttackTargetIndex(activeEnemyRuntimes[0], 0)
+                    ? ResolveCachedEnemyTargetAllyIndex(activeEnemyRuntimes[0], 0)
                     : -1;
                 return activeTargetIndex >= 0 && activeTargetIndex < activeAllyRuntimes.Count && activeAllyRuntimes[activeTargetIndex] != null
                     ? activeAllyRuntimes[activeTargetIndex].SlotIndex
@@ -260,7 +289,7 @@ namespace WitchTower.Battle
             currentFloor = Mathf.Max(1, floor);
             currentWave = 1;
             isBossEncounter = ResolveBossEncounter(currentFloor);
-            finalBossMonsterId = isBossEncounter ? string.Empty : BattleDungeonCatalog.ResolveBossMonsterId(currentFloor);
+            finalBossMonsterIds = isBossEncounter ? new string[0] : BattleDungeonCatalog.ResolveBossMonsterIds(currentFloor);
             currentEnemyIsBoss = false;
             encounterEnemyCountTarget = ResolveEncounterEnemyCount();
             defeatedEnemiesInCurrentWave = 0;
@@ -273,16 +302,20 @@ namespace WitchTower.Battle
             openingBurstSpawned = false;
             nextAllyRuntimeId = 1;
             nextEnemyRuntimeId = 1;
+            battleSpiritModifier = BattleSpiritModifier.Identity;
+            battleSpiritInvoked = false;
+            invokedBattleSpiritDefinition = null;
             activeAllyRuntimes.Clear();
             CreatePlayerPartyRuntimes();
             SyncPlayerAggregateState();
-            skillSet = new BattleSkillSet();
+            skillSet = new BattleSkillSet(battleSpiritModifier.SkillCooldownMultiplier);
             enemyAttackTimer = 0f;
             guardRemainingTime = 0f;
             enemyStats = null;
             currentEnemyData = null;
             enemyTraitRuntime = default;
             activeEnemyRuntimes.Clear();
+            ClearEnemyMovementQueueCache();
             enemySpawnTimer = ResolveEnemySpawnInterval();
             engagedEnemyCount = 0;
             isRunning = activeAllyRuntimes.Count > 0 && playerStats != null;
@@ -300,7 +333,7 @@ namespace WitchTower.Battle
 
             TickEnemySpawns(deltaTime);
             TickUnitMovement(deltaTime);
-            skillSet ??= new BattleSkillSet();
+            skillSet ??= new BattleSkillSet(battleSpiritModifier.SkillCooldownMultiplier);
             skillSet.Tick(deltaTime);
             TickGuard(deltaTime);
             TickAllyAttackers(deltaTime);
@@ -343,6 +376,29 @@ namespace WitchTower.Battle
         {
             engagedEnemyCount = CountActuallyEngagedEnemies();
             enemyAttackTimer = activeEnemyRuntimes.Count > 0 ? activeEnemyRuntimes[0].AttackTimer : 0f;
+        }
+
+        public bool TryInvokeSpirit(BattleSpiritType spiritType)
+        {
+            if (!isRunning || battleSpiritInvoked)
+            {
+                return false;
+            }
+
+            BattleSpiritDefinition definition = BattleSpiritCatalog.GetDefinition(spiritType);
+            if (definition == null)
+            {
+                return false;
+            }
+
+            battleSpiritModifier = definition.Modifier;
+            battleSpiritInvoked = true;
+            invokedBattleSpiritDefinition = definition;
+            ApplySpiritStatModifiersToAllies();
+            SyncPlayerAggregateState();
+            skillSet = new BattleSkillSet(battleSpiritModifier.SkillCooldownMultiplier);
+            SpiritInvoked?.Invoke(definition);
+            return true;
         }
 
         public bool TryUseSkill(BattleSkillType skillType)
@@ -396,7 +452,9 @@ namespace WitchTower.Battle
             }
 
             EnemyRuntime targetEnemy = activeEnemyRuntimes[targetIndex];
-            var damage = Mathf.Max(1, Mathf.RoundToInt(attacker.Stats.Attack * 2.0f) - targetEnemy.Stats.Defense);
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            float powerRate = 2.0f * GetStrikePowerMultiplier(profile);
+            var damage = Mathf.Max(1, Mathf.RoundToInt(attacker.Stats.Attack * powerRate) - targetEnemy.Stats.Defense);
             targetEnemy.Stats.ApplyDamage(damage);
             if (targetIndex == 0)
             {
@@ -430,6 +488,7 @@ namespace WitchTower.Battle
             }
 
             EnemyRuntime targetEnemy = activeEnemyRuntimes[targetIndex];
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             var damage = Mathf.Max(1, Mathf.RoundToInt(attacker.Stats.Attack * 1.2f) - targetEnemy.Stats.Defense);
             targetEnemy.Stats.ApplyDamage(damage);
             if (targetIndex == 0)
@@ -437,7 +496,7 @@ namespace WitchTower.Battle
                 SyncLeadEnemyState();
             }
 
-            var healAmount = Mathf.Max(1, Mathf.RoundToInt(damage * 0.5f));
+            var healAmount = Mathf.Max(1, Mathf.RoundToInt(damage * 0.5f * GetDrainHealMultiplier(profile)));
             attacker.Stats.CurrentHp = Mathf.Min(attacker.Stats.MaxHp, attacker.Stats.CurrentHp + healAmount);
             SyncPlayerAggregateState();
             LockAttackMotion(attacker);
@@ -454,7 +513,17 @@ namespace WitchTower.Battle
 
         private void UseSkillGuard()
         {
-            guardRemainingTime = guardDuration;
+            guardRemainingTime = Mathf.Max(0.1f, guardDuration * battleSpiritModifier.GuardDurationMultiplier);
+        }
+
+        private static float GetStrikePowerMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetStrikePowerMultiplier() : 1f;
+        }
+
+        private static float GetDrainHealMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetDrainHealMultiplier() : 1f;
         }
 
         private void PerformAttackOnPlayer(EnemyRuntime attacker, int attackerIndex)
@@ -464,7 +533,7 @@ namespace WitchTower.Battle
                 return;
             }
 
-            int targetIndex = ResolveEnemyAttackTargetIndex(attacker, attackerIndex);
+            int targetIndex = ResolveCachedEnemyTargetAllyIndex(attacker, attackerIndex);
             if (targetIndex < 0)
             {
                 return;
@@ -678,10 +747,22 @@ namespace WitchTower.Battle
                 {
                     targetAnchor.y = ally.HomeAnchor.y;
                 }
-                ally.PositionAnchor = MoveRuntimeTowards(ally.PositionAnchor, targetAnchor, ally.MoveSpeed, deltaTime, out bool allyMoving);
+                float movementSpeed = ally.MoveSpeed;
+                if (IsRearAllySlot(ally.SlotIndex) &&
+                    IsMonsterMelee(ally.Data) &&
+                    !CanAllyAttackTarget(ally, targetEnemyIndex))
+                {
+                    // Rear melee units have farther to travel after the front line has
+                    // engaged. Accelerate only that first approach so they do not look
+                    // idle while waiting for a reachable attack position.
+                    movementSpeed *= RearMeleeEngagementMoveMultiplier;
+                }
+
+                ally.PositionAnchor = MoveRuntimeTowards(ally.PositionAnchor, targetAnchor, movementSpeed, deltaTime, out bool allyMoving);
                 ally.IsMoving = allyMoving;
             }
 
+            RebuildEnemyMovementQueueCache();
             for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
             {
                 EnemyRuntime enemy = activeEnemyRuntimes[i];
@@ -709,7 +790,7 @@ namespace WitchTower.Battle
                     continue;
                 }
 
-                int targetAllyIndex = ResolveEnemyAttackTargetIndex(enemy, i);
+                int targetAllyIndex = ResolveCachedEnemyTargetAllyIndex(enemy, i);
                 if (targetAllyIndex < 0)
                 {
                     enemy.PositionAnchor = MoveRuntimeTowards(enemy.PositionAnchor, enemy.HomeAnchor, enemy.MoveSpeed, deltaTime, out bool enemyReturning);
@@ -718,7 +799,7 @@ namespace WitchTower.Battle
                 }
 
                 AllyRuntime targetAlly = activeAllyRuntimes[targetAllyIndex];
-                int queueIndex = ResolveEnemyQueueIndex(enemy, i, targetAllyIndex);
+                int queueIndex = ResolveCachedEnemyQueueIndex(i);
                 Vector2 targetAnchor = ResolveEnemyCombatAnchor(enemy, targetAlly, queueIndex);
                 enemy.PositionAnchor = MoveRuntimeTowards(enemy.PositionAnchor, targetAnchor, enemy.MoveSpeed, deltaTime, out bool enemyMoving);
                 enemy.IsMoving = enemyMoving;
@@ -763,57 +844,185 @@ namespace WitchTower.Battle
             return isRanged ? 0.015f : 0.02f;
         }
 
-        private int ResolveEnemyQueueIndex(EnemyRuntime attacker, int attackerIndex, int targetAllyIndex)
+        private void RebuildEnemyMovementQueueCache()
         {
-            if (attacker == null || targetAllyIndex < 0 || targetAllyIndex >= activeAllyRuntimes.Count)
+            cachedEnemyTargetAllyIndices.Clear();
+            cachedEnemyQueueIndices.Clear();
+            int enemyCount = activeEnemyRuntimes.Count;
+            for (int i = 0; i < enemyCount; i += 1)
+            {
+                cachedEnemyTargetAllyIndices.Add(-1);
+                cachedEnemyQueueIndices.Add(0);
+            }
+
+            for (int i = 0; i < enemyCount; i += 1)
+            {
+                EnemyRuntime enemy = activeEnemyRuntimes[i];
+                if (!IsActiveEnemyRuntime(enemy))
+                {
+                    continue;
+                }
+
+                cachedEnemyTargetAllyIndices[i] = ResolveEnemyAttackTargetIndex(enemy, i);
+            }
+
+            EnemyQueueIndexComparer comparer = ResolveEnemyQueueIndexComparer();
+            for (int allyIndex = 0; allyIndex < activeAllyRuntimes.Count; allyIndex += 1)
+            {
+                enemyQueueSortScratch.Clear();
+                for (int enemyIndex = 0; enemyIndex < enemyCount; enemyIndex += 1)
+                {
+                    if (cachedEnemyTargetAllyIndices[enemyIndex] == allyIndex &&
+                        IsActiveEnemyRuntimeIndex(enemyIndex))
+                    {
+                        enemyQueueSortScratch.Add(enemyIndex);
+                    }
+                }
+
+                if (enemyQueueSortScratch.Count <= 1)
+                {
+                    if (enemyQueueSortScratch.Count == 1)
+                    {
+                        cachedEnemyQueueIndices[enemyQueueSortScratch[0]] = 0;
+                    }
+
+                    continue;
+                }
+
+                comparer.TargetAllyIndex = allyIndex;
+                enemyQueueSortScratch.Sort(comparer);
+                for (int queueIndex = 0; queueIndex < enemyQueueSortScratch.Count; queueIndex += 1)
+                {
+                    cachedEnemyQueueIndices[enemyQueueSortScratch[queueIndex]] = queueIndex;
+                }
+            }
+
+            comparer.TargetAllyIndex = -1;
+            enemyQueueSortScratch.Clear();
+        }
+
+        private void ClearEnemyMovementQueueCache()
+        {
+            cachedEnemyTargetAllyIndices.Clear();
+            cachedEnemyQueueIndices.Clear();
+            enemyQueueSortScratch.Clear();
+        }
+
+        private EnemyQueueIndexComparer ResolveEnemyQueueIndexComparer()
+        {
+            if (enemyQueueIndexComparer == null)
+            {
+                enemyQueueIndexComparer = new EnemyQueueIndexComparer(this);
+            }
+
+            return enemyQueueIndexComparer;
+        }
+
+        private int ResolveCachedEnemyTargetAllyIndex(EnemyRuntime attacker, int attackerIndex)
+        {
+            if (attacker == null)
+            {
+                return -1;
+            }
+
+            bool cacheMatchesActiveEnemies = cachedEnemyTargetAllyIndices.Count == activeEnemyRuntimes.Count;
+            if (cacheMatchesActiveEnemies &&
+                attackerIndex >= 0 &&
+                attackerIndex < cachedEnemyTargetAllyIndices.Count)
+            {
+                int cachedIndex = cachedEnemyTargetAllyIndices[attackerIndex];
+                if (IsActiveAllyRuntimeIndex(cachedIndex))
+                {
+                    return cachedIndex;
+                }
+            }
+
+            int resolvedIndex = ResolveEnemyAttackTargetIndex(attacker, attackerIndex);
+            if (cacheMatchesActiveEnemies &&
+                attackerIndex >= 0 &&
+                attackerIndex < cachedEnemyTargetAllyIndices.Count)
+            {
+                cachedEnemyTargetAllyIndices[attackerIndex] = resolvedIndex;
+            }
+
+            return resolvedIndex;
+        }
+
+        private int ResolveCachedEnemyQueueIndex(int enemyIndex)
+        {
+            bool cacheMatchesActiveEnemies = cachedEnemyQueueIndices.Count == activeEnemyRuntimes.Count;
+            return cacheMatchesActiveEnemies &&
+                enemyIndex >= 0 &&
+                enemyIndex < cachedEnemyQueueIndices.Count
+                    ? Mathf.Max(0, cachedEnemyQueueIndices[enemyIndex])
+                    : 0;
+        }
+
+        private int CompareEnemyQueueOrder(int leftIndex, int rightIndex, int targetAllyIndex)
+        {
+            if (leftIndex == rightIndex)
             {
                 return 0;
+            }
+
+            EnemyRuntime left = leftIndex >= 0 && leftIndex < activeEnemyRuntimes.Count ? activeEnemyRuntimes[leftIndex] : null;
+            EnemyRuntime right = rightIndex >= 0 && rightIndex < activeEnemyRuntimes.Count ? activeEnemyRuntimes[rightIndex] : null;
+            bool leftActive = IsActiveEnemyRuntime(left);
+            bool rightActive = IsActiveEnemyRuntime(right);
+            if (!leftActive || !rightActive)
+            {
+                if (leftActive == rightActive)
+                {
+                    return leftIndex.CompareTo(rightIndex);
+                }
+
+                return leftActive ? -1 : 1;
+            }
+
+            if (!IsActiveAllyRuntimeIndex(targetAllyIndex))
+            {
+                return leftIndex.CompareTo(rightIndex);
             }
 
             AllyRuntime targetAlly = activeAllyRuntimes[targetAllyIndex];
-            if (targetAlly == null)
+            float leftDistance = Vector2.SqrMagnitude(left.PositionAnchor - targetAlly.PositionAnchor);
+            float rightDistance = Vector2.SqrMagnitude(right.PositionAnchor - targetAlly.PositionAnchor);
+            if (Mathf.Abs(leftDistance - rightDistance) > 0.0001f)
             {
-                return 0;
+                return leftDistance < rightDistance ? -1 : 1;
             }
 
-            float attackerDistance = Vector2.SqrMagnitude(attacker.PositionAnchor - targetAlly.PositionAnchor);
-            int queueIndex = 0;
-            for (int i = 0; i < activeEnemyRuntimes.Count; i += 1)
+            float xDifference = left.PositionAnchor.x - right.PositionAnchor.x;
+            if (Mathf.Abs(xDifference) > PositionEpsilon)
             {
-                if (i == attackerIndex)
-                {
-                    continue;
-                }
-
-                EnemyRuntime other = activeEnemyRuntimes[i];
-                if (other == null || other.Stats == null || other.Stats.IsDead())
-                {
-                    continue;
-                }
-
-                int otherTargetAllyIndex = ResolveEnemyAttackTargetIndex(other, i);
-                if (otherTargetAllyIndex != targetAllyIndex)
-                {
-                    continue;
-                }
-
-                float otherDistance = Vector2.SqrMagnitude(other.PositionAnchor - targetAlly.PositionAnchor);
-                bool isAhead = otherDistance < attackerDistance - 0.0001f;
-                if (!isAhead && Mathf.Abs(otherDistance - attackerDistance) <= 0.0001f)
-                {
-                    isAhead =
-                        other.PositionAnchor.x < attacker.PositionAnchor.x - PositionEpsilon ||
-                        (Mathf.Abs(other.PositionAnchor.x - attacker.PositionAnchor.x) <= PositionEpsilon &&
-                         other.RuntimeId < attacker.RuntimeId);
-                }
-
-                if (isAhead)
-                {
-                    queueIndex += 1;
-                }
+                return xDifference < 0f ? -1 : 1;
             }
 
-            return queueIndex;
+            int runtimeComparison = left.RuntimeId.CompareTo(right.RuntimeId);
+            return runtimeComparison != 0 ? runtimeComparison : leftIndex.CompareTo(rightIndex);
+        }
+
+        private bool IsActiveEnemyRuntimeIndex(int enemyIndex)
+        {
+            return enemyIndex >= 0 &&
+                enemyIndex < activeEnemyRuntimes.Count &&
+                IsActiveEnemyRuntime(activeEnemyRuntimes[enemyIndex]);
+        }
+
+        private bool IsActiveAllyRuntimeIndex(int allyIndex)
+        {
+            if (allyIndex < 0 || allyIndex >= activeAllyRuntimes.Count)
+            {
+                return false;
+            }
+
+            AllyRuntime ally = activeAllyRuntimes[allyIndex];
+            return ally != null && ally.Stats != null && !ally.Stats.IsDead();
+        }
+
+        private static bool IsActiveEnemyRuntime(EnemyRuntime enemy)
+        {
+            return enemy != null && enemy.Stats != null && !enemy.Stats.IsDead();
         }
 
         private Vector2 ResolveEnemyCombatAnchor(EnemyRuntime enemy, AllyRuntime targetAlly, int queueIndex)
@@ -883,11 +1092,13 @@ namespace WitchTower.Battle
 
                 int slotIndex = i;
                 Vector2 homeAnchor = ResolveAllyHomeAnchor(slotIndex, monsterData);
+                BattleUnitStats allyStats = MonsterBattleStatsFactory.Create(profile, ownedMonster, monsterData);
+                ApplySpiritStatModifiers(allyStats);
                 activeAllyRuntimes.Add(new AllyRuntime
                 {
                     RuntimeId = nextAllyRuntimeId++,
                     SlotIndex = slotIndex,
-                    Stats = MonsterBattleStatsFactory.Create(profile, ownedMonster, monsterData),
+                    Stats = allyStats,
                     Data = monsterData,
                     OwnedMonster = ownedMonster,
                     AttackTimer = 0f,
@@ -908,6 +1119,7 @@ namespace WitchTower.Battle
             BattleUnitStats fallbackStats = PlayerBattleStatsFactory.CreatePreview(profile);
             if (fallbackStats != null)
             {
+                ApplySpiritStatModifiers(fallbackStats);
                 int allyIndex = activeAllyRuntimes.Count;
                 Vector2 homeAnchor = ResolveAllyHomeAnchor(allyIndex, null);
                 activeAllyRuntimes.Add(new AllyRuntime
@@ -925,6 +1137,41 @@ namespace WitchTower.Battle
                     SearchReachAnchor = ResolveAllySearchReach(null, allyIndex),
                     MoveSpeed = ResolveAllyMoveSpeed(null, allyIndex)
                 });
+            }
+        }
+
+        private void ApplySpiritStatModifiers(BattleUnitStats stats)
+        {
+            if (stats == null)
+            {
+                return;
+            }
+
+            float hpRatio = stats.MaxHp > 0
+                ? Mathf.Clamp01((float)Mathf.Max(0, stats.CurrentHp) / stats.MaxHp)
+                : 1f;
+            stats.MaxHp = Mathf.Max(1, Mathf.RoundToInt(stats.MaxHp * battleSpiritModifier.MaxHpMultiplier));
+            stats.CurrentHp = Mathf.Clamp(Mathf.RoundToInt(stats.MaxHp * hpRatio), 1, stats.MaxHp);
+            stats.Attack = Mathf.Max(1, Mathf.RoundToInt(stats.Attack * battleSpiritModifier.AttackMultiplier));
+            stats.Wisdom = Mathf.Max(1, Mathf.RoundToInt(stats.Wisdom * battleSpiritModifier.WisdomMultiplier));
+            stats.Defense = Mathf.Max(0, Mathf.RoundToInt(stats.Defense * battleSpiritModifier.DefenseMultiplier));
+            stats.MagicDefense = Mathf.Max(0, Mathf.RoundToInt(stats.MagicDefense * battleSpiritModifier.MagicDefenseMultiplier));
+            stats.AttackSpeed = Mathf.Max(0.1f, stats.AttackSpeed * battleSpiritModifier.AttackSpeedMultiplier);
+            stats.CritRate = Mathf.Clamp01(stats.CritRate + battleSpiritModifier.CritRateBonus);
+            stats.CritDamage = Mathf.Max(1f, stats.CritDamage + battleSpiritModifier.CritDamageBonus);
+        }
+
+        private void ApplySpiritStatModifiersToAllies()
+        {
+            for (int i = 0; i < activeAllyRuntimes.Count; i += 1)
+            {
+                AllyRuntime ally = activeAllyRuntimes[i];
+                if (ally == null || ally.Stats == null || ally.Stats.IsDead())
+                {
+                    continue;
+                }
+
+                ApplySpiritStatModifiers(ally.Stats);
             }
         }
 
@@ -1498,7 +1745,7 @@ namespace WitchTower.Battle
                     continue;
                 }
 
-                int targetAllyIndex = ResolveEnemyAttackTargetIndex(enemy, i);
+                int targetAllyIndex = ResolveCachedEnemyTargetAllyIndex(enemy, i);
                 if (CanEnemyAttackTarget(enemy, i, targetAllyIndex))
                 {
                     count += 1;
@@ -2039,7 +2286,7 @@ namespace WitchTower.Battle
             }
 
             EnemyRuntime enemy = activeEnemyRuntimes[index];
-            int activeTargetIndex = ResolveEnemyAttackTargetIndex(enemy, index);
+            int activeTargetIndex = ResolveCachedEnemyTargetAllyIndex(enemy, index);
             return activeTargetIndex >= 0 && activeTargetIndex < activeAllyRuntimes.Count && activeAllyRuntimes[activeTargetIndex] != null
                 ? activeAllyRuntimes[activeTargetIndex].SlotIndex
                 : -1;
@@ -2069,7 +2316,7 @@ namespace WitchTower.Battle
                 return false;
             }
 
-            int targetAllyIndex = ResolveEnemyAttackTargetIndex(enemy, index);
+            int targetAllyIndex = ResolveCachedEnemyTargetAllyIndex(enemy, index);
             if (targetAllyIndex < 0 || targetAllyIndex >= activeAllyRuntimes.Count)
             {
                 return false;
@@ -2091,7 +2338,7 @@ namespace WitchTower.Battle
                 return false;
             }
 
-            int targetAllyIndex = ResolveEnemyAttackTargetIndex(enemy, index);
+            int targetAllyIndex = ResolveCachedEnemyTargetAllyIndex(enemy, index);
             if (targetAllyIndex < 0 || targetAllyIndex >= activeAllyRuntimes.Count)
             {
                 return false;
@@ -2122,22 +2369,44 @@ namespace WitchTower.Battle
 
         private bool HasFinalBossEnemy()
         {
-            return !isBossEncounter && !string.IsNullOrEmpty(finalBossMonsterId);
+            return !isBossEncounter && finalBossMonsterIds != null && finalBossMonsterIds.Length > 0;
+        }
+
+        private int ResolveFinalBossEnemyCount()
+        {
+            return HasFinalBossEnemy()
+                ? Mathf.Clamp(finalBossMonsterIds.Length, 1, CurrentEnemyCountTarget)
+                : 0;
         }
 
         private bool IsFinalBossSpawnIndex(int spawnIndex)
         {
-            return HasFinalBossEnemy() && spawnIndex >= CurrentEnemyCountTarget - 1;
+            int finalBossEnemyCount = ResolveFinalBossEnemyCount();
+            return finalBossEnemyCount > 0 && spawnIndex >= CurrentEnemyCountTarget - finalBossEnemyCount;
+        }
+
+        private string ResolveFinalBossMonsterIdForSpawnIndex(int spawnIndex)
+        {
+            if (!IsFinalBossSpawnIndex(spawnIndex) || finalBossMonsterIds == null || finalBossMonsterIds.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            int firstBossSpawnIndex = Mathf.Max(0, CurrentEnemyCountTarget - ResolveFinalBossEnemyCount());
+            int bossIndex = Mathf.Clamp(spawnIndex - firstBossSpawnIndex, 0, finalBossMonsterIds.Length - 1);
+            return finalBossMonsterIds[bossIndex] ?? string.Empty;
         }
 
         private bool ShouldDelayFinalBossSpawn()
         {
-            if (!HasFinalBossEnemy() || spawnedEnemiesInCurrentWave != CurrentEnemyCountTarget - 1)
+            int finalBossEnemyCount = ResolveFinalBossEnemyCount();
+            int firstBossSpawnIndex = CurrentEnemyCountTarget - finalBossEnemyCount;
+            if (finalBossEnemyCount <= 0 || spawnedEnemiesInCurrentWave != firstBossSpawnIndex)
             {
                 return false;
             }
 
-            int requiredDefeatedMinions = Mathf.Max(0, CurrentEnemyCountTarget - 1);
+            int requiredDefeatedMinions = Mathf.Max(0, firstBossSpawnIndex);
             return defeatedEnemiesInCurrentWave < requiredDefeatedMinions || activeEnemyRuntimes.Count > 0;
         }
 
@@ -2163,15 +2432,9 @@ namespace WitchTower.Battle
             anticipatedUnspawnedEnemyMaxHpInCurrentWave = 0;
 
             int targetCount = Mathf.Max(0, CurrentEnemyCountTarget);
-            int normalEnemyMaxHp = EstimateEnemyMaxHpForSpawnIndex(0);
-            int finalBossEnemyMaxHp = HasFinalBossEnemy()
-                ? EstimateEnemyMaxHpForSpawnIndex(targetCount - 1)
-                : normalEnemyMaxHp;
             for (int spawnIndex = 0; spawnIndex < targetCount; spawnIndex += 1)
             {
-                int estimatedMaxHp = IsFinalBossSpawnIndex(spawnIndex)
-                    ? finalBossEnemyMaxHp
-                    : normalEnemyMaxHp;
+                int estimatedMaxHp = EstimateEnemyMaxHpForSpawnIndex(spawnIndex);
                 anticipatedEnemyMaxHpBySpawnIndex.Add(estimatedMaxHp);
                 anticipatedUnspawnedEnemyMaxHpInCurrentWave += estimatedMaxHp;
             }
@@ -2191,7 +2454,8 @@ namespace WitchTower.Battle
         {
             var masterDataManager = MasterDataManager.Instance;
             bool applyBossModifiers = isBossEncounter || IsFinalBossSpawnIndex(spawnIndex);
-            if (IsFinalBossSpawnIndex(spawnIndex) && !string.IsNullOrEmpty(finalBossMonsterId))
+            string finalBossMonsterId = ResolveFinalBossMonsterIdForSpawnIndex(spawnIndex);
+            if (!string.IsNullOrEmpty(finalBossMonsterId))
             {
                 return EstimateEnemyMaxHpForMonster(currentFloor, masterDataManager, finalBossMonsterId, true);
             }
@@ -2374,7 +2638,9 @@ namespace WitchTower.Battle
         {
             int spawnIndex = Mathf.Max(0, spawnedEnemiesInCurrentWave - 1);
             bool isBossEnemy = isBossEncounter || IsFinalBossSpawnIndex(spawnIndex);
-            string forcedMonsterId = isBossEnemy && !isBossEncounter ? finalBossMonsterId : string.Empty;
+            string forcedMonsterId = isBossEnemy && !isBossEncounter
+                ? ResolveFinalBossMonsterIdForSpawnIndex(spawnIndex)
+                : string.Empty;
             BattleUnitStats spawnedStats = CreateEnemyStats(currentFloor, isBossEnemy, forcedMonsterId, out EnemyTraitRuntime spawnedTrait, out EnemyDataSO spawnedData);
             ConsumeAnticipatedEnemyMaxHp(spawnIndex);
             Vector2 homeAnchor = new Vector2(EnemySpawnX, ResolveEnemySpawnLaneY(spawnIndex));
@@ -2395,6 +2661,7 @@ namespace WitchTower.Battle
             };
 
             activeEnemyRuntimes.Add(runtime);
+            ClearEnemyMovementQueueCache();
             activeEnemiesInCurrentWave = activeEnemyRuntimes.Count;
             SyncLeadEnemyState();
             encounterSerial += 1;
@@ -2465,15 +2732,18 @@ namespace WitchTower.Battle
                 return activeEnemyRuntimes.Count > 0;
             }
 
-            EnemyDataSO defeatedEnemyData = activeEnemyRuntimes[removalIndex]?.Data;
-            defeatedEnemyMaxHpInCurrentWave += Mathf.Max(0, activeEnemyRuntimes[removalIndex]?.Stats?.MaxHp ?? 0);
+            EnemyRuntime defeatedEnemy = activeEnemyRuntimes[removalIndex];
+            EnemyDataSO defeatedEnemyData = defeatedEnemy?.Data;
+            bool defeatedEnemyIsDungeonBoss = defeatedEnemy != null && defeatedEnemy.IsBoss;
+            defeatedEnemyMaxHpInCurrentWave += Mathf.Max(0, defeatedEnemy?.Stats?.MaxHp ?? 0);
             activeEnemyRuntimes.RemoveAt(removalIndex);
+            ClearEnemyMovementQueueCache();
 
             defeatedEnemiesInCurrentWave += 1;
             activeEnemiesInCurrentWave = activeEnemyRuntimes.Count;
             RetargetAlliesToNearestSearchableEnemies();
             SetEngagedEnemyCount(Mathf.Min(engagedEnemyCount, activeEnemiesInCurrentWave));
-            EnemyDefeated?.Invoke(CurrentRemainingEnemyCount, removalIndex, defeatedEnemyData);
+            EnemyDefeated?.Invoke(CurrentRemainingEnemyCount, removalIndex, defeatedEnemyData, defeatedEnemyIsDungeonBoss);
 
             if (activeEnemyRuntimes.Count > 0)
             {
@@ -2569,7 +2839,7 @@ namespace WitchTower.Battle
                     continue;
                 }
 
-                int targetIndex = ResolveEnemyAttackTargetIndex(runtime, i);
+                int targetIndex = ResolveCachedEnemyTargetAllyIndex(runtime, i);
                 if (CanEnemyAttackTarget(runtime, i, targetIndex))
                 {
                     return true;
@@ -2623,7 +2893,7 @@ namespace WitchTower.Battle
                     continue;
                 }
 
-                int targetIndex = ResolveEnemyAttackTargetIndex(attacker, i);
+                int targetIndex = ResolveCachedEnemyTargetAllyIndex(attacker, i);
                 if (!CanEnemyAttackTarget(attacker, i, targetIndex))
                 {
                     attacker.AttackTimer = 0f;
@@ -2761,9 +3031,16 @@ namespace WitchTower.Battle
             };
         }
 
+        private int ResolveCurrentGuardDefenseBonus()
+        {
+            return guardRemainingTime > 0f
+                ? guardDefenseBonus + Mathf.Max(0, battleSpiritModifier.GuardDefenseBonus)
+                : 0;
+        }
+
         public int GetCurrentPlayerDefense()
         {
-            var guardBonus = guardRemainingTime > 0f ? guardDefenseBonus : 0;
+            var guardBonus = ResolveCurrentGuardDefenseBonus();
             AllyRuntime leadAlly = ResolveLeadAliveAllyRuntime();
             return leadAlly != null && leadAlly.Stats != null ? leadAlly.Stats.Defense + guardBonus : 0;
         }
@@ -2775,7 +3052,7 @@ namespace WitchTower.Battle
                 return 0;
             }
 
-            var guardBonus = guardRemainingTime > 0f ? guardDefenseBonus : 0;
+            var guardBonus = ResolveCurrentGuardDefenseBonus();
             return ally.Stats.Defense + guardBonus;
         }
 
@@ -2786,7 +3063,7 @@ namespace WitchTower.Battle
                 return null;
             }
 
-            int guardBonus = guardRemainingTime > 0f ? guardDefenseBonus : 0;
+            int guardBonus = ResolveCurrentGuardDefenseBonus();
             return new BattleUnitStats
             {
                 MaxHp = ally.Stats.MaxHp,

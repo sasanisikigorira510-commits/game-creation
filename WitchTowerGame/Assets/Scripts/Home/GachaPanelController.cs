@@ -26,6 +26,9 @@ namespace WitchTower.Home
         private const string LegendaryEffectSpritePath = "UI/GachaPage/Effects/GachaContractEffect_Legendary";
         private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
         private const string TutorialHighlightFramePath = "UI/Tutorial/TutorialSummonHighlightFrameImage2";
+        private const string RockGolemMonsterId = "monster_rock_golem";
+        private const string RockGolemHomeHeroSpritePath = "MonsterBattle/mon_rock_golem_attack_0";
+        private const int TutorialStarterIndividualValue = 50;
         private const int GachaStoneCostPerPull = 300;
         private const int PaidTenPullGuaranteedClassRank = 3;
         private const int FreeClass3SummonRatePercent = 1;
@@ -33,6 +36,12 @@ namespace WitchTower.Home
         private const int PaidClass4SummonRatePercent = 1;
         private const int PaidClass3SummonRatePercent = 3;
         private const int PaidClass2SummonRatePercent = 9;
+        private static readonly string[] InitialTutorialMonsterIds =
+        {
+            "monster_dragon_whelp",
+            "monster_rock_golem",
+            "monster_apprentice_mage"
+        };
 
         private static readonly Color PanelColor = new Color(0.035f, 0.030f, 0.028f, 0.72f);
         private static readonly Color DeepPanelColor = new Color(0.015f, 0.012f, 0.014f, 0.82f);
@@ -320,7 +329,7 @@ namespace WitchTower.Home
             summonTutorialGuideBodyText = CreateText(
                 "GachaSummonTutorialGuideBody",
                 summonTutorialGuideRoot.transform,
-                "今回の召喚用に、魔晶石を300個用意しました。\n契約炉に石を捧げて、最初の眷属を呼び戻しましょう。",
+                "今回の召喚用に、魔晶石を900個用意しました。\n契約炉に石を捧げて、最初の探索隊を3体そろえましょう。",
                 20,
                 FontStyle.Bold,
                 new Vector2(0f, 1f),
@@ -333,7 +342,7 @@ namespace WitchTower.Home
             summonTutorialGuideFooterText = CreateText(
                 "GachaSummonTutorialGuideFooter",
                 summonTutorialGuideRoot.transform,
-                "次の操作: 枠で囲まれた「1回 / 300個」をタップ",
+                "次の操作: 「1回 / 300個」をタップ（あと3体）",
                 17,
                 FontStyle.Bold,
                 new Vector2(0f, 0f),
@@ -413,11 +422,16 @@ namespace WitchTower.Home
 
         private void UpdatePreviewState()
         {
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            if (StoryTutorialService.EnsureInitialSummonResources(profile))
+            {
+                SaveManager.Instance?.SaveCurrentGame();
+            }
+
             UpdateInventoryHeader();
 
             if (statusText != null)
             {
-                PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
                 statusText.text = BuildPreviewStatusText(profile);
             }
 
@@ -504,6 +518,8 @@ namespace WitchTower.Home
                 return;
             }
 
+            StoryTutorialService.EnsureInitialSummonResources(profile);
+
             int availableSlots = GetAvailableMonsterStorageSlots(profile);
             if (availableSlots < requestedCount)
             {
@@ -548,14 +564,19 @@ namespace WitchTower.Home
             AudioManager.Instance?.PlaySe(AudioCue.GachaStart);
             var results = new List<MonsterDataSO>();
             bool paidTenPullGuarantee = usePaidStones && requestedCount >= 10;
+            bool isInitialSummonTutorial = !usePaidStones &&
+                !profile.HasCompletedTutorial &&
+                string.Equals(profile.TutorialStepId, StoryTutorialService.StepFirstSummon, StringComparison.Ordinal);
             bool hasGuaranteedClass = false;
             for (int i = 0; i < actualCount; i += 1)
             {
                 int remainingPulls = actualCount - i;
                 bool shouldForceGuarantee = paidTenPullGuarantee && !hasGuaranteedClass && remainingPulls <= 1;
-                MonsterDataSO result = shouldForceGuarantee
-                    ? DrawGuaranteedClass(summonPool, PaidTenPullGuaranteedClassRank)
-                    : DrawMonster(summonPool, usePaidStones);
+                MonsterDataSO result = isInitialSummonTutorial
+                    ? DrawInitialTutorialMonster(summonPool, profile)
+                    : shouldForceGuarantee
+                        ? DrawGuaranteedClass(summonPool, PaidTenPullGuaranteedClassRank)
+                        : DrawMonster(summonPool, usePaidStones);
                 if (result == null)
                 {
                     continue;
@@ -565,7 +586,22 @@ namespace WitchTower.Home
                 OwnedMonsterData addedMonster = profile.AddOwnedMonster(result.monsterId, 1);
                 if (addedMonster != null)
                 {
-                    if (usePaidStones)
+                    if (isInitialSummonTutorial)
+                    {
+                        MonsterIndividualValueService.Apply(
+                            addedMonster,
+                            new MonsterIndividualValues(
+                                TutorialStarterIndividualValue,
+                                TutorialStarterIndividualValue,
+                                TutorialStarterIndividualValue,
+                                TutorialStarterIndividualValue,
+                                TutorialStarterIndividualValue,
+                                TutorialStarterIndividualValue));
+                        profile.InitialTutorialSummonCount = Math.Min(
+                            StoryTutorialService.InitialSummonCount,
+                            profile.InitialTutorialSummonCount + 1);
+                    }
+                    else if (usePaidStones)
                     {
                         MonsterIndividualValueService.Apply(addedMonster, MonsterIndividualValueService.RollHighQuality());
                     }
@@ -574,7 +610,7 @@ namespace WitchTower.Home
                 }
             }
 
-            if (results.Count > 0)
+            if (results.Count > 0 && StoryTutorialService.HasCompletedInitialSummons(profile))
             {
                 StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstSummon);
             }
@@ -649,13 +685,9 @@ namespace WitchTower.Home
 
         private void Close()
         {
-            if (closeAction != null)
-            {
-                closeAction.Invoke();
-                return;
-            }
-
+            SetResultStageInputActive(false);
             gameObject.SetActive(false);
+            closeAction?.Invoke();
         }
 
         private void ClearChildren()
@@ -906,8 +938,8 @@ namespace WitchTower.Home
             resultStageRoot = CreateUiObject("GachaResultStageRoot", transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             effectCanvasGroup = resultStageRoot.AddComponent<CanvasGroup>();
             effectCanvasGroup.alpha = 0f;
-            effectCanvasGroup.blocksRaycasts = true;
-            effectCanvasGroup.interactable = true;
+            effectCanvasGroup.blocksRaycasts = false;
+            effectCanvasGroup.interactable = false;
 
             CreateFullScreenImage("GachaResultBackground", resultStageRoot.transform, BackgroundSpritePath, new Color(0.008f, 0.010f, 0.018f, 1f));
             CreateStretchImage("GachaResultDarkVeil", resultStageRoot.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, new Color(0f, 0f, 0f, 0.42f));
@@ -960,6 +992,7 @@ namespace WitchTower.Home
             BuildResultTutorialGuide();
 
             SetResultButtonsVisible(false);
+            SetResultStageInputActive(false);
             resultStageRoot.SetActive(false);
         }
 
@@ -1091,6 +1124,7 @@ namespace WitchTower.Home
             }
 
             resultStageRoot.SetActive(true);
+            SetResultStageInputActive(true);
             SetResultButtonsVisible(false);
             PopulateResultStage(results, featuredMonster, requestedCount, actualCount, tier);
             effectImage.sprite = effectSprite;
@@ -1247,7 +1281,9 @@ namespace WitchTower.Home
 
             if (summonTutorialGuideFooterText != null && shouldShow)
             {
-                summonTutorialGuideFooterText.text = "次の操作: 枠で囲まれた「1回 / 300個」をタップ";
+                PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+                int remaining = StoryTutorialService.GetInitialSummonRemainingCount(profile);
+                summonTutorialGuideFooterText.text = $"次の操作: 「1回 / 300個」をタップ（あと{remaining}体）";
             }
 
             if (summonTutorialSinglePullHighlight != null)
@@ -1314,6 +1350,8 @@ namespace WitchTower.Home
                 resultStageRoot.SetActive(false);
             }
 
+            SetResultStageInputActive(false);
+
             if (contractHomeRoot != null)
             {
                 contractHomeRoot.SetActive(true);
@@ -1346,6 +1384,21 @@ namespace WitchTower.Home
             }
 
             RefreshResultTutorialGuide(showTutorialGuide);
+        }
+
+        private void SetResultStageInputActive(bool active)
+        {
+            if (effectCanvasGroup == null)
+            {
+                return;
+            }
+
+            effectCanvasGroup.blocksRaycasts = active;
+            effectCanvasGroup.interactable = active;
+            if (!active)
+            {
+                effectCanvasGroup.alpha = 0f;
+            }
         }
 
         private static bool ShouldShowResultTutorialGuide()
@@ -1568,6 +1621,15 @@ namespace WitchTower.Home
                 return null;
             }
 
+            if (string.Equals(monsterData.monsterId, RockGolemMonsterId, StringComparison.Ordinal))
+            {
+                Sprite rockGolemHomeSprite = LoadSprite(RockGolemHomeHeroSpritePath);
+                if (rockGolemHomeSprite != null)
+                {
+                    return rockGolemHomeSprite;
+                }
+            }
+
             if (monsterData.illustrationSprite != null)
             {
                 return monsterData.illustrationSprite;
@@ -1736,6 +1798,23 @@ namespace WitchTower.Home
 
             MonsterDataSO fallback = DrawFromClassRank(summonPool, 1);
             return fallback != null ? fallback : summonPool[UnityEngine.Random.Range(0, summonPool.Count)];
+        }
+
+        private static MonsterDataSO DrawInitialTutorialMonster(List<MonsterDataSO> summonPool, PlayerProfile profile)
+        {
+            int ownedCount = profile?.OwnedMonsters?.Count ?? 0;
+            int index = Mathf.Clamp(ownedCount, 0, InitialTutorialMonsterIds.Length - 1);
+            string monsterId = InitialTutorialMonsterIds[index];
+            for (int i = 0; i < summonPool.Count; i += 1)
+            {
+                MonsterDataSO candidate = summonPool[i];
+                if (candidate != null && string.Equals(candidate.monsterId, monsterId, StringComparison.Ordinal))
+                {
+                    return candidate;
+                }
+            }
+
+            return DrawMonster(summonPool, false);
         }
 
         private static MonsterDataSO DrawGuaranteedClass(List<MonsterDataSO> summonPool, int guaranteedClassRank)

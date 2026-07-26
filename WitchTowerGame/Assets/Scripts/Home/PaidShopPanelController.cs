@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using WitchTower.Data;
 using WitchTower.Managers;
+using WitchTower.Monetization;
 using WitchTower.UI;
 
 namespace WitchTower.Home
@@ -62,6 +63,13 @@ namespace WitchTower.Home
         public void Show(Action closeCallback)
         {
             onClosed = closeCallback;
+            if (!MonetizationFeatureFlags.StorefrontEnabled)
+            {
+                gameObject.SetActive(false);
+                onClosed?.Invoke();
+                return;
+            }
+
             if (!isBuilt)
             {
                 Build();
@@ -219,17 +227,38 @@ namespace WitchTower.Home
 
         public void OpenCrystalShop()
         {
+            if (!MonetizationFeatureFlags.StorefrontEnabled)
+            {
+                return;
+            }
+
             OpenCategory(ShopCategory.Crystal);
         }
 
         public void OpenPremiumItemShop()
         {
+            if (!MonetizationFeatureFlags.StorefrontEnabled)
+            {
+                return;
+            }
+
             OpenCategory(ShopCategory.PremiumItem);
         }
 
         public void OpenPermanentUpgradeShop()
         {
+            if (!MonetizationFeatureFlags.StorefrontEnabled)
+            {
+                return;
+            }
+
             OpenCategory(ShopCategory.PermanentUpgrade);
+        }
+
+        public void ShowPurchasedPermanentUpgradeList(Action closeCallback)
+        {
+            onClosed = closeCallback;
+            OpenPurchasedPermanentUpgradeList();
         }
 
         public void OpenPurchasedPermanentUpgradeList()

@@ -8,8 +8,8 @@ namespace WitchTower.Home
     {
         private static readonly Dictionary<string, MissionDefinition> Definitions = new()
         {
-            { "mission_clear_1", new MissionDefinition("mission_clear_1", "Win 1 Battle", 1, 30) },
-            { "mission_reach_floor_3", new MissionDefinition("mission_reach_floor_3", "Reach Floor 3", 3, 60) }
+            { "mission_clear_1", new MissionDefinition("mission_clear_1", "バトルに1回勝利", 1, 30) },
+            { "mission_reach_floor_3", new MissionDefinition("mission_reach_floor_3", "3階に到達", 3, 60) }
         };
 
         public static void RecordBattleWin(PlayerProfile profile)
@@ -48,7 +48,7 @@ namespace WitchTower.Home
 
         public static MissionDefinition? GetDefinition(string missionId)
         {
-            return Definitions.TryGetValue(missionId, out var definition) ? definition : null;
+            return Definitions.TryGetValue(missionId, out var definition) ? definition : (MissionDefinition?)null;
         }
 
         private static void IncrementProgress(PlayerProfile profile, string missionId, int amount)

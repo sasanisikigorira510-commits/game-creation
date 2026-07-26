@@ -17,6 +17,24 @@ Draft BGM clips in this folder should be imported as Streaming/Vorbis with backg
 - `battle_boss_loop.ogg`
 - `battle_boss_loop.wav`
 
+Dungeon battle BGM keys:
+
+- `dungeon_blight_cavern_loop.wav`
+- `dungeon_gear_crypt_loop.wav`
+- `dungeon_curse_library_loop.wav`
+- `dungeon_ember_drake_pass_loop.wav`
+- `dungeon_star_ore_citadel_loop.wav`
+- `dungeon_abyssal_grimoire_spire_loop.wav`
+
+Dungeon boss BGM keys:
+
+- `dungeon_blight_cavern_boss_loop.wav`
+- `dungeon_gear_crypt_boss_loop.wav`
+- `dungeon_curse_library_boss_loop.wav`
+- `dungeon_ember_drake_pass_boss_loop.wav`
+- `dungeon_star_ore_citadel_boss_loop.wav`
+- `dungeon_abyssal_grimoire_spire_boss_loop.wav`
+
 Optional stem files use the same key plus suffix:
 
 - `_base`

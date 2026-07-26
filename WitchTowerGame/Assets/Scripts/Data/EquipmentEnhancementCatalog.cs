@@ -114,19 +114,19 @@ namespace WitchTower.Data
             {
                 RelicId = "relic_risky_ember",
                 RelicName = "上級遺物",
-                SuccessRate = 0.3f,
-                BonusPercent = 0.10f,
+                SuccessRate = 0.50f,
+                BonusPercent = 0.15f,
                 DestroysOnFailure = false,
-                Description = "装備の基礎効果を強化し、会心・速度付き装備には固定ボーナスを加える。失敗しても装備は残る。"
+                Description = "半分の確率で大きく強化する。失敗しても装備は残るが、強化回数は消費する。"
             },
             new EnhancementRelicDefinition
             {
                 RelicId = "relic_volatile_ember",
                 RelicName = "危険遺物",
-                SuccessRate = 0.10f,
-                BonusPercent = 0.25f,
+                SuccessRate = 0.35f,
+                BonusPercent = 0.30f,
                 DestroysOnFailure = true,
-                Description = "装備の基礎効果を大きく強化し、会心・速度付き装備には固定ボーナスを加える。失敗時に装備が消滅する。"
+                Description = "成功すれば最大級の強化。失敗時は装備が消滅し、強化回数も失う。"
             }
         };
 
@@ -169,6 +169,36 @@ namespace WitchTower.Data
         {
             EquipmentRarity quality = equipmentData != null ? equipmentData.rarity : EquipmentRarity.Common;
             return Mathf.Clamp((int)quality + 1, 1, 5);
+        }
+
+        public static int ResolveEquipmentClassRank(EquipmentDataSO equipmentData)
+        {
+            if (equipmentData == null)
+            {
+                return 1;
+            }
+
+            int legacyClassRank = ((int)equipmentData.rarity) + 1;
+            int explicitClassRank = equipmentData.classRank;
+            return Mathf.Clamp(explicitClassRank > 0 ? explicitClassRank : legacyClassRank, 1, 6);
+        }
+
+        public static float ResolveEquipmentClassMultiplier(EquipmentDataSO equipmentData)
+        {
+            return ResolveEquipmentClassRank(equipmentData) switch
+            {
+                2 => 1.4f,
+                3 => 1.9f,
+                4 => 2.6f,
+                5 => 3.4f,
+                6 => 4.3f,
+                _ => 1f
+            };
+        }
+
+        public static string BuildEquipmentClassLabel(EquipmentDataSO equipmentData)
+        {
+            return $"装備クラス{ResolveEquipmentClassRank(equipmentData)}";
         }
 
         public static int ResolveQualityRank(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
@@ -250,7 +280,7 @@ namespace WitchTower.Data
 
         public static string BuildQualityLabel(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
         {
-            return $"品質:{ResolveQualityName(equipmentData, ownedEquipment)}";
+            return $"{BuildEquipmentClassLabel(equipmentData)} / 品質:{ResolveQualityName(equipmentData, ownedEquipment)}";
         }
 
         public static string BuildEnhanceAttemptsLabel(EquipmentDataSO equipmentData, OwnedEquipmentData ownedEquipment)
@@ -398,13 +428,15 @@ namespace WitchTower.Data
             EquipmentRolledBaseBonus rolledBase = ResolveBaseBonus(equipmentData, ownedEquipment);
             float enhancementMultiplier = 1f + Mathf.Max(0f, ownedEquipment.EnhancementBonusRate);
             float qualityMultiplier = ResolveQualityMultiplier(equipmentData, ownedEquipment);
-            float attackPercent = (((rolledBase.Attack * enhancementMultiplier) + ownedEquipment.EnhancementAttackFlat) * qualityMultiplier) / 100f;
-            float wisdomPercent = (((rolledBase.Wisdom * enhancementMultiplier) + ownedEquipment.EnhancementWisdomFlat) * qualityMultiplier) / 100f;
-            float defensePercent = (((rolledBase.Defense * enhancementMultiplier) + ownedEquipment.EnhancementDefenseFlat) * qualityMultiplier) / 100f;
-            float magicDefensePercent = (((rolledBase.MagicDefense * enhancementMultiplier) + ownedEquipment.EnhancementMagicDefenseFlat) * qualityMultiplier) / 100f;
-            float hpPercent = (((rolledBase.Hp * enhancementMultiplier) + ownedEquipment.EnhancementHpFlat) * qualityMultiplier) / 100f;
-            float critRate = (rolledBase.CritRate + ownedEquipment.EnhancementCritRateFlat) * qualityMultiplier;
-            float attackSpeed = (rolledBase.AttackSpeed + ownedEquipment.EnhancementAttackSpeedFlat) * qualityMultiplier;
+            float classMultiplier = ResolveEquipmentClassMultiplier(equipmentData);
+            float statMultiplier = qualityMultiplier * classMultiplier;
+            float attackPercent = (((rolledBase.Attack * enhancementMultiplier) + ownedEquipment.EnhancementAttackFlat) * statMultiplier) / 100f;
+            float wisdomPercent = (((rolledBase.Wisdom * enhancementMultiplier) + ownedEquipment.EnhancementWisdomFlat) * statMultiplier) / 100f;
+            float defensePercent = (((rolledBase.Defense * enhancementMultiplier) + ownedEquipment.EnhancementDefenseFlat) * statMultiplier) / 100f;
+            float magicDefensePercent = (((rolledBase.MagicDefense * enhancementMultiplier) + ownedEquipment.EnhancementMagicDefenseFlat) * statMultiplier) / 100f;
+            float hpPercent = (((rolledBase.Hp * enhancementMultiplier) + ownedEquipment.EnhancementHpFlat) * statMultiplier) / 100f;
+            float critRate = (rolledBase.CritRate + ownedEquipment.EnhancementCritRateFlat) * statMultiplier;
+            float attackSpeed = (rolledBase.AttackSpeed + ownedEquipment.EnhancementAttackSpeedFlat) * statMultiplier;
             return new EquipmentResolvedBonus(attackPercent, wisdomPercent, defensePercent, magicDefensePercent, hpPercent, critRate, attackSpeed);
         }
 

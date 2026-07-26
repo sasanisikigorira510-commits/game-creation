@@ -114,16 +114,19 @@ namespace WitchTower.Battle
 
         private void UseSkillStrike()
         {
-            var damage = Mathf.Max(1, Mathf.RoundToInt(playerStats.Attack * 2.0f) - enemyStats.Defense);
+            var profile = GetProfile();
+            var powerRate = 2.0f * GetStrikePowerMultiplier(profile);
+            var damage = Mathf.Max(1, Mathf.RoundToInt(playerStats.Attack * powerRate) - enemyStats.Defense);
             enemyStats.ApplyDamage(damage);
             RaiseHitResolved(new BattleHitInfo(false, damage, false, true));
         }
 
         private void UseSkillDrain()
         {
+            var profile = GetProfile();
             var damage = Mathf.Max(1, Mathf.RoundToInt(playerStats.Attack * 1.2f) - enemyStats.Defense);
             enemyStats.ApplyDamage(damage);
-            var healAmount = Mathf.Max(1, Mathf.RoundToInt(damage * 0.5f));
+            var healAmount = Mathf.Max(1, Mathf.RoundToInt(damage * 0.5f * GetDrainHealMultiplier(profile)));
             playerStats.CurrentHp = Mathf.Min(playerStats.MaxHp, playerStats.CurrentHp + healAmount);
             RaiseHitResolved(new BattleHitInfo(false, damage, false, true));
         }
@@ -171,15 +174,18 @@ namespace WitchTower.Battle
             }
 
             var equipmentBonus = GetEquipmentBonus(profile);
-            var maxHp = playerData.initialHp + GetHpBonus(profile) + equipmentBonus.Hp;
+            var maxHpBeforeMultiplier = playerData.initialHp + GetLevelHpBonus(profile) + GetHpBonus(profile) + equipmentBonus.Hp;
+            var attackBeforeMultiplier = playerData.initialAttack + GetLevelAttackBonus(profile) + GetAttackBonus(profile) + equipmentBonus.Attack;
+            var defenseBeforeMultiplier = playerData.initialDefense + GetLevelDefenseBonus(profile) + GetDefenseBonus(profile) + equipmentBonus.Defense;
+            var maxHp = Mathf.Max(1, Mathf.RoundToInt(maxHpBeforeMultiplier * GetHpMultiplier(profile)));
             return new BattleUnitStats
             {
                 MaxHp = maxHp,
                 CurrentHp = maxHp,
-                Attack = playerData.initialAttack + GetAttackBonus(profile) + equipmentBonus.Attack,
-                Defense = playerData.initialDefense + GetDefenseBonus(profile) + equipmentBonus.Defense,
-                AttackSpeed = playerData.initialAttackSpeed + equipmentBonus.AttackSpeed,
-                CritRate = playerData.initialCritRate + equipmentBonus.CritRate,
+                Attack = Mathf.Max(1, Mathf.RoundToInt(attackBeforeMultiplier * GetAttackMultiplier(profile))),
+                Defense = Mathf.Max(0, Mathf.RoundToInt(defenseBeforeMultiplier * GetDefenseMultiplier(profile))),
+                AttackSpeed = (playerData.initialAttackSpeed + equipmentBonus.AttackSpeed) * GetAttackSpeedMultiplier(profile),
+                CritRate = playerData.initialCritRate + equipmentBonus.CritRate + GetCritRateBonus(profile),
                 CritDamage = playerData.initialCritDamage
             };
         }
@@ -221,17 +227,40 @@ namespace WitchTower.Battle
         private static BattleUnitStats CreateFallbackPlayerStats(PlayerProfile profile)
         {
             var equipmentBonus = GetEquipmentBonus(profile);
-            var maxHp = 100 + GetHpBonus(profile) + equipmentBonus.Hp;
+            var maxHpBeforeMultiplier = 100 + GetLevelHpBonus(profile) + GetHpBonus(profile) + equipmentBonus.Hp;
+            var attackBeforeMultiplier = 15 + GetLevelAttackBonus(profile) + GetAttackBonus(profile) + equipmentBonus.Attack;
+            var defenseBeforeMultiplier = 5 + GetLevelDefenseBonus(profile) + GetDefenseBonus(profile) + equipmentBonus.Defense;
+            var maxHp = Mathf.Max(1, Mathf.RoundToInt(maxHpBeforeMultiplier * GetHpMultiplier(profile)));
             return new BattleUnitStats
             {
                 MaxHp = maxHp,
                 CurrentHp = maxHp,
-                Attack = 15 + GetAttackBonus(profile) + equipmentBonus.Attack,
-                Defense = 5 + GetDefenseBonus(profile) + equipmentBonus.Defense,
-                AttackSpeed = 1.0f + equipmentBonus.AttackSpeed,
-                CritRate = 0.05f + equipmentBonus.CritRate,
+                Attack = Mathf.Max(1, Mathf.RoundToInt(attackBeforeMultiplier * GetAttackMultiplier(profile))),
+                Defense = Mathf.Max(0, Mathf.RoundToInt(defenseBeforeMultiplier * GetDefenseMultiplier(profile))),
+                AttackSpeed = (1.0f + equipmentBonus.AttackSpeed) * GetAttackSpeedMultiplier(profile),
+                CritRate = 0.05f + equipmentBonus.CritRate + GetCritRateBonus(profile),
                 CritDamage = 1.5f
             };
+        }
+
+        private static PlayerProfile GetProfile()
+        {
+            return GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+        }
+
+        private static int GetLevelAttackBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetLevelAttackBonus() : 0;
+        }
+
+        private static int GetLevelDefenseBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetLevelDefenseBonus() : 0;
+        }
+
+        private static int GetLevelHpBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetLevelHpBonus() : 0;
         }
 
         private static int GetAttackBonus(PlayerProfile profile)
@@ -247,6 +276,41 @@ namespace WitchTower.Battle
         private static int GetHpBonus(PlayerProfile profile)
         {
             return profile != null ? profile.GetHpBonus() : 0;
+        }
+
+        private static float GetAttackMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetAttackMultiplier() : 1f;
+        }
+
+        private static float GetDefenseMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetDefenseMultiplier() : 1f;
+        }
+
+        private static float GetHpMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetHpMultiplier() : 1f;
+        }
+
+        private static float GetCritRateBonus(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetCritRateBonus() : 0f;
+        }
+
+        private static float GetAttackSpeedMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetAttackSpeedMultiplier() : 1f;
+        }
+
+        private static float GetStrikePowerMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetStrikePowerMultiplier() : 1f;
+        }
+
+        private static float GetDrainHealMultiplier(PlayerProfile profile)
+        {
+            return profile != null ? profile.GetDrainHealMultiplier() : 1f;
         }
 
         private static EquipmentBonus GetEquipmentBonus(PlayerProfile profile)

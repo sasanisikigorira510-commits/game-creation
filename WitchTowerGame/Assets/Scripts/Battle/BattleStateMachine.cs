@@ -11,6 +11,14 @@ namespace WitchTower.Battle
 
         public BattleFlowState CurrentState { get; private set; }
         public BattleSimulator Simulator => simulator;
+        public int DisplayedWaveEnemyHp => displayedWaveEnemyHp;
+        public int DisplayedWaveEnemyMaxHp => displayedWaveEnemyMaxHp;
+        public float DisplayedWaveEnemyRatio => displayedWaveEnemyMaxHp > 0
+            ? Mathf.Clamp01((float)displayedWaveEnemyHp / displayedWaveEnemyMaxHp)
+            : 0f;
+        public int DebugDisplayedWaveEnemyHp => DisplayedWaveEnemyHp;
+        public int DebugDisplayedWaveEnemyMaxHp => DisplayedWaveEnemyMaxHp;
+        public float DebugDisplayedWaveEnemyRatio => DisplayedWaveEnemyRatio;
         private readonly List<PendingPresentedHit> pendingPresentedHits = new List<PendingPresentedHit>();
         private readonly List<int> displayedAllyHpBySlot = new List<int>();
         private readonly List<int> displayedEnemyHpByIndex = new List<int>();
@@ -141,6 +149,25 @@ namespace WitchTower.Battle
             simulator.TryUseSkill(skillType);
             UpdateDisplayedHpHud();
             RefreshSkillHud();
+        }
+
+        public bool InvokeSpirit(BattleSpiritType spiritType)
+        {
+            if (CurrentState != BattleFlowState.Fighting || simulator == null)
+            {
+                return false;
+            }
+
+            bool invoked = simulator.TryInvokeSpirit(spiritType);
+            if (!invoked)
+            {
+                return false;
+            }
+
+            SyncDisplayedHpToActual();
+            UpdateDisplayedHpHud();
+            RefreshSkillHud();
+            return true;
         }
 
         private void RefreshSkillHud()

@@ -169,11 +169,13 @@ namespace WitchTower.Data
 
             int resultLevel = MonsterLevelService.ClampLevelToMax(Math.Max(parentA.Level, parentB.Level), resultMonsterData);
             FusionInheritedStats inheritedStats = CalculateInheritedStats(profile, parentA, parentB, masterDataManager);
+            int inheritedPlusValue = CalculateInheritedPlusValue(parentA, parentB);
             MonsterIndividualValues inheritedIndividualValues = MonsterIndividualValueService.Inherit(parentA, parentB);
             RemoveParent(profile, parentA);
             RemoveParent(profile, parentB);
 
             OwnedMonsterData createdMonster = profile.AddOwnedMonster(resultMonsterData.monsterId, resultLevel);
+            ApplyInheritedPlusValue(createdMonster, inheritedPlusValue);
             ApplyInheritedStats(createdMonster, inheritedStats);
             MonsterIndividualValueService.Apply(createdMonster, inheritedIndividualValues);
             return new MonsterFusionResult(
@@ -310,6 +312,29 @@ namespace WitchTower.Data
         {
             float total = Mathf.Max(0f, firstValue) + Mathf.Max(0f, secondValue);
             return total <= 0f ? 0f : total * 0.05f;
+        }
+
+        private static int CalculateInheritedPlusValue(OwnedMonsterData parentA, OwnedMonsterData parentB)
+        {
+            int plusA = parentA != null ? parentA.TotalPlusValue : 0;
+            int plusB = parentB != null ? parentB.TotalPlusValue : 0;
+            return Math.Max(0, plusA) + Math.Max(0, plusB);
+        }
+
+        private static void ApplyInheritedPlusValue(OwnedMonsterData createdMonster, int inheritedPlusValue)
+        {
+            if (createdMonster == null)
+            {
+                return;
+            }
+
+            int plusValue = Math.Max(0, inheritedPlusValue);
+            createdMonster.PlusValue = plusValue;
+            createdMonster.PlusHp = plusValue;
+            createdMonster.PlusAttack = plusValue;
+            createdMonster.PlusWisdom = plusValue;
+            createdMonster.PlusDefense = plusValue;
+            createdMonster.PlusMagicDefense = plusValue;
         }
 
         private static void ApplyInheritedStats(OwnedMonsterData createdMonster, FusionInheritedStats inheritedStats)

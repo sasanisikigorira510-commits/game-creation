@@ -133,6 +133,17 @@ def main():
         assert_true(ping.get("ok"), "Ping failed")
         record("ping", ping)
 
+        initial_info = call("/project-info")
+        record("initial_info", initial_info)
+        if initial_info.get("isPlaying"):
+            preflight_exit = post("/play-mode", {"action": "exit"})
+            record("preflight_exit_play", preflight_exit)
+            record("preflight_stopped", wait_for_play_state(False, timeout_sec=30))
+
+        clear_console = post("/clear-console")
+        assert_true(clear_console.get("ok"), "Could not clear Unity console")
+        record("clear_console", clear_console)
+
         refresh = post("/refresh-assets")
         assert_true(refresh.get("ok"), "Asset refresh failed")
         record("refresh", refresh)
@@ -204,6 +215,14 @@ def main():
 
         final_info = call("/project-info")
         record("final_info", final_info)
+
+        console = call("/console")
+        record("console", console)
+        error_entries = [
+            entry for entry in console.get("entries", [])
+            if entry.get("type") in {"Error", "Exception", "Assert"}
+        ]
+        assert_true(not error_entries, f"Unity logged {len(error_entries)} error(s) during smoke test")
 
         print(json.dumps({"ok": True, "report": report}, ensure_ascii=False, indent=2))
         return 0

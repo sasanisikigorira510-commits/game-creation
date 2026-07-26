@@ -9,6 +9,7 @@ namespace WitchTower.Battle
         [SerializeField] private TMP_Text enemyDamageText;
         [SerializeField] private CanvasGroup playerFlashGroup;
         [SerializeField] private CanvasGroup enemyFlashGroup;
+        [SerializeField] private bool showDamageNumbers;
         [SerializeField] private float textDuration = 0.45f;
         [SerializeField] private float textFloatDistance = 28f;
         [SerializeField] private float flashFadeSpeed = 5f;
@@ -42,7 +43,7 @@ namespace WitchTower.Battle
             var targetRect = hitInfo.TargetIsPlayer ? playerDamageRect : enemyDamageRect;
             var basePosition = hitInfo.TargetIsPlayer ? playerDamageBasePosition : enemyDamageBasePosition;
 
-            if (targetText != null)
+            if (showDamageNumbers && targetText != null)
             {
                 targetText.text = hitInfo.IsCritical ? $"CRIT {hitInfo.Damage}" : hitInfo.Damage.ToString();
                 targetText.color = hitInfo.IsCritical
@@ -64,6 +65,14 @@ namespace WitchTower.Battle
             else
             {
                 enemyTextRemaining = textDuration;
+            }
+
+            if (!showDamageNumbers)
+            {
+                playerTextRemaining = 0f;
+                enemyTextRemaining = 0f;
+                HideDamageText(playerDamageText, playerDamageRect, playerDamageBasePosition);
+                HideDamageText(enemyDamageText, enemyDamageRect, enemyDamageBasePosition);
             }
 
             if (flashGroup != null)
@@ -135,6 +144,17 @@ namespace WitchTower.Battle
             var color = targetText.color;
             color.a = 1f;
             targetText.color = color;
+        }
+
+        private static void HideDamageText(TMP_Text targetText, RectTransform targetRect, Vector2 basePosition)
+        {
+            if (targetText == null)
+            {
+                return;
+            }
+
+            targetText.gameObject.SetActive(false);
+            ResetTextVisual(targetText, targetRect, basePosition);
         }
     }
 }

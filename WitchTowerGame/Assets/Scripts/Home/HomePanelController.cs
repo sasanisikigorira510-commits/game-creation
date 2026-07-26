@@ -38,7 +38,7 @@ namespace WitchTower.Home
 
             if (ctaText != null)
             {
-                ctaText.text = HomeActionAdvisor.BuildHomeHeadline(profile);
+                HideHomeAdviceText(ctaText);
             }
 
             if (rewardSummaryText != null)
@@ -48,12 +48,12 @@ namespace WitchTower.Home
 
             if (prepAdviceText != null)
             {
-                prepAdviceText.text = HomeActionAdvisor.BuildPrepAdviceText(profile, 10);
+                HideHomeAdviceText(prepAdviceText);
             }
 
             if (battlePlanText != null)
             {
-                battlePlanText.text = HomeActionAdvisor.BuildBattlePlanText(profile, 10, System.DateTime.Now);
+                HideHomeAdviceText(battlePlanText);
             }
         }
 
@@ -77,6 +77,17 @@ namespace WitchTower.Home
                     descendant.gameObject.SetActive(false);
                 }
             }
+        }
+
+        private static void HideHomeAdviceText(TMP_Text text)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            text.text = string.Empty;
+            text.gameObject.SetActive(false);
         }
     }
 }

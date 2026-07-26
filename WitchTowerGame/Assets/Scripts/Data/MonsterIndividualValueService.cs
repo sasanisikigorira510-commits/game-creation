@@ -51,6 +51,18 @@ namespace WitchTower.Data
                 RollOne());
         }
 
+        public static MonsterIndividualValues RollWithMinimum(int minimum)
+        {
+            int resolvedMinimum = Clamp(minimum);
+            return new MonsterIndividualValues(
+                RollOne(resolvedMinimum),
+                RollOne(resolvedMinimum),
+                RollOne(resolvedMinimum),
+                RollOne(resolvedMinimum),
+                RollOne(resolvedMinimum),
+                RollOne(resolvedMinimum));
+        }
+
         public static MonsterIndividualValues RollHighQuality()
         {
             MonsterIndividualValues bestValues = Roll();
@@ -152,7 +164,13 @@ namespace WitchTower.Data
 
         private static int RollOne()
         {
-            return Random.Next(MinValue, MaxValue + 1);
+            return RollOne(MinValue);
+        }
+
+        private static int RollOne(int minimum)
+        {
+            int resolvedMinimum = Clamp(minimum);
+            return Random.Next(resolvedMinimum, MaxValue + 1);
         }
 
         private static MonsterIndividualValues RollForExistingMonster(OwnedMonsterData monster)

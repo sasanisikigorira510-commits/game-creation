@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: skill_strike
   m_EditorClassIdentifier: 
   skillId: skill_strike
-  skillName: Strike
-  description: Deal a heavy hit to the enemy.
+  skillName: 強撃
+  description: 敵に重い一撃を与える。
   cooldown: 6
   powerRate: 2
   healRate: 0

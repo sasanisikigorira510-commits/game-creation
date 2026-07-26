@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WitchTower BGM Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: #111417;
+      color: #f1eee7;
+    }
+
+    body {
+      margin: 0;
+      padding: 28px;
+      background: radial-gradient(circle at 20% 0%, #2b2630 0, #111417 42%);
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 22px;
+      color: #c9c2b7;
+      line-height: 1.7;
+    }
+
+    section {
+      margin: 18px 0;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(8, 10, 12, 0.64);
+      border-radius: 8px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    .track {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .track:first-of-type {
+      border-top: 0;
+    }
+
+    .label {
+      font-weight: 700;
+      color: #f5d77f;
+    }
+
+    audio {
+      width: 100%;
+      min-width: 0;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 18px;
+      }
+
+      .track {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>WitchTower BGM Preview</h1>
+    <p>ダンジョン別BGMとボスBGMの試聴ページです。各ブラウザの音量とOS音量に注意してください。</p>
+
+    <section>
+      <h2>通常ダンジョン</h2>
+      <div class="track">
+        <div class="label">見習いの五門洞</div>
+        <audio controls preload="none" src="dungeon_blight_cavern_loop.wav"></audio>
+      </div>
+      <div class="track">
+        <div class="label">獣影の廃工廠</div>
+        <audio controls preload="none" src="dungeon_gear_crypt_loop.wav?v=gear-crypt-v2"></audio>
+      </div>
+      <div class="track">
+        <div class="label">古契約の地下書庫</div>
+        <audio controls preload="none" src="dungeon_curse_library_loop.wav?v=curse-library-v3"></audio>
+      </div>
+      <div class="track">
+        <div class="label">紅蓮竜道</div>
+        <audio controls preload="none" src="dungeon_ember_drake_pass_loop.wav?v=ember-drake-v3"></audio>
+      </div>
+      <div class="track">
+        <div class="label">星鉱の巨殿</div>
+        <audio controls preload="none" src="dungeon_star_ore_citadel_loop.wav?v=star-ore-v4"></audio>
+      </div>
+      <div class="track">
+        <div class="label">深淵魔導回廊</div>
+        <audio controls preload="none" src="dungeon_abyssal_grimoire_spire_loop.wav?v=abyssal-bossa-v3"></audio>
+      </div>
+    </section>
+
+    <section>
+      <h2>ボス</h2>
+      <div class="track">
+        <div class="label">五門洞 ボス</div>
+        <audio controls preload="none" src="dungeon_blight_cavern_boss_loop.wav"></audio>
+      </div>
+      <div class="track">
+        <div class="label">廃工廠 ボス</div>
+        <audio controls preload="none" src="dungeon_gear_crypt_boss_loop.wav?v=gear-crypt-v2"></audio>
+      </div>
+      <div class="track">
+        <div class="label">地下書庫 ボス</div>
+        <audio controls preload="none" src="dungeon_curse_library_boss_loop.wav?v=curse-library-v3"></audio>
+      </div>
+      <div class="track">
+        <div class="label">紅蓮竜道 ボス</div>
+        <audio controls preload="none" src="dungeon_ember_drake_pass_boss_loop.wav?v=ember-drake-v3"></audio>
+      </div>
+      <div class="track">
+        <div class="label">星鉱の巨殿 ボス</div>
+        <audio controls preload="none" src="dungeon_star_ore_citadel_boss_loop.wav?v=star-ore-v4"></audio>
+      </div>
+      <div class="track">
+        <div class="label">深淵魔導回廊 ボス</div>
+        <audio controls preload="none" src="dungeon_abyssal_grimoire_spire_boss_loop.wav?v=abyssal-bossa-v3"></audio>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -13,7 +13,7 @@ namespace WitchTower.Data
 
     public static class MonsterPlusService
     {
-        public const double PlusGrantChancePerKill = 0.00005d; // 0.005%
+        public const double PlusGrantChancePerKill = 0.0001d; // 0.01%
 
         public static bool TryRollAndGrant(PlayerProfile profile, Random random, out MonsterPlusGrantResult result)
         {

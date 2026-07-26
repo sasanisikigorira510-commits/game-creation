@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using WitchTower.Core;
 
 namespace WitchTower.Managers
 {
@@ -33,7 +34,9 @@ namespace WitchTower.Managers
         FusionSuccess,
         UpgradeSuccess,
         UpgradeFail,
-        UpgradeBreak
+        UpgradeBreak,
+        Attack,
+        CriticalHit
     }
 
     public sealed class AudioManager : MonoBehaviour
@@ -42,6 +45,7 @@ namespace WitchTower.Managers
         private const float ButtonScanInterval = 0.5f;
         private const float DefaultBgmFadeSeconds = 1.0f;
         private const string BgmResourceRoot = "Audio/BGM/";
+        private const string SeResourceRoot = "Audio/SE/";
         private const string BgmVolumePrefsKey = "witchtower_audio_bgm_volume";
         private const string SeVolumePrefsKey = "witchtower_audio_se_volume";
         private const string HapticsEnabledPrefsKey = "witchtower_audio_haptics_enabled";
@@ -56,9 +60,11 @@ namespace WitchTower.Managers
         [SerializeField] private bool hapticsEnabled = true;
 
         private readonly Dictionary<AudioCue, AudioClip> proceduralSeCache = new Dictionary<AudioCue, AudioClip>();
+        private readonly Dictionary<AudioCue, AudioClip> resourceSeCache = new Dictionary<AudioCue, AudioClip>();
         private readonly Dictionary<AudioCue, float> lastCueTimes = new Dictionary<AudioCue, float>();
         private readonly Dictionary<string, string> sceneBgmKeys = new Dictionary<string, string>();
         private readonly HashSet<string> missingBgmKeys = new HashSet<string>();
+        private readonly HashSet<AudioCue> missingResourceSeCues = new HashSet<AudioCue>();
         private readonly List<AudioSource> stemSources = new List<AudioSource>();
 
         private AudioSource bgmSourceA;
@@ -141,7 +147,7 @@ namespace WitchTower.Managers
                 return;
             }
 
-            PlaySe(GetOrCreateProceduralSe(cue));
+            PlaySe(GetSeClip(cue));
             PlayHaptic(cue);
         }
 
@@ -292,6 +298,7 @@ namespace WitchTower.Managers
                 return;
             }
 
+            ManagerFactory.NormalizeAudioListeners();
             BindButtonClickEmitters();
             if (sceneBgmKeys.TryGetValue(scene.name, out string bgmKey))
             {
@@ -571,12 +578,20 @@ namespace WitchTower.Managers
                 case "skill":
                 case "cast":
                     return AudioCue.Skill;
+                case "attack":
+                case "swing":
+                case "slash":
+                    return AudioCue.Attack;
                 case "battle_start":
                 case "battlestart":
                     return AudioCue.BattleStart;
                 case "hit":
                 case "damage":
                     return AudioCue.Hit;
+                case "critical":
+                case "critical_hit":
+                case "crit":
+                    return AudioCue.CriticalHit;
                 case "enemy_defeat":
                 case "enemydefeat":
                     return AudioCue.EnemyDefeat;
@@ -665,8 +680,12 @@ namespace WitchTower.Managers
             {
                 case AudioCue.UiClick:
                     return 0.035f;
+                case AudioCue.Attack:
+                    return 0.045f;
                 case AudioCue.Hit:
                     return 0.055f;
+                case AudioCue.CriticalHit:
+                    return 0.08f;
                 case AudioCue.EnemyDefeat:
                     return 0.10f;
                 case AudioCue.AllyDefeat:
@@ -689,6 +708,7 @@ namespace WitchTower.Managers
                 case AudioCue.UiCancel:
                 case AudioCue.Error:
                 case AudioCue.Skill:
+                case AudioCue.CriticalHit:
                 case AudioCue.BattleStart:
                 case AudioCue.Victory:
                 case AudioCue.Defeat:
@@ -716,6 +736,7 @@ namespace WitchTower.Managers
                 case AudioCue.Error:
                     return 0.35f;
                 case AudioCue.Skill:
+                case AudioCue.CriticalHit:
                 case AudioCue.GachaStart:
                 case AudioCue.FusionStart:
                     return 0.45f;
@@ -753,6 +774,105 @@ namespace WitchTower.Managers
             return clip;
         }
 
+        private AudioClip GetSeClip(AudioCue cue)
+        {
+            AudioClip clip = LoadResourceSeClip(cue);
+            return clip != null ? clip : GetOrCreateProceduralSe(cue);
+        }
+
+        private AudioClip LoadResourceSeClip(AudioCue cue)
+        {
+            if (resourceSeCache.TryGetValue(cue, out AudioClip cachedClip) && cachedClip != null)
+            {
+                return cachedClip;
+            }
+
+            string resourceName = ResolveSeResourceName(cue);
+            if (string.IsNullOrEmpty(resourceName))
+            {
+                return null;
+            }
+
+            AudioClip clip = Resources.Load<AudioClip>(SeResourceRoot + resourceName);
+            if (clip != null)
+            {
+                resourceSeCache[cue] = clip;
+                return clip;
+            }
+
+            if (missingResourceSeCues.Add(cue))
+            {
+                Debug.Log($"[AudioManager] SE not found. Falling back to procedural cue. Add {SeResourceRoot}{resourceName} under Resources when ready.");
+            }
+
+            return null;
+        }
+
+        private static string ResolveSeResourceName(AudioCue cue)
+        {
+            switch (cue)
+            {
+                case AudioCue.UiClick:
+                    return "ui_click";
+                case AudioCue.UiConfirm:
+                    return "ui_confirm";
+                case AudioCue.UiCancel:
+                    return "ui_cancel";
+                case AudioCue.Skill:
+                    return "skill_cast";
+                case AudioCue.Attack:
+                    return "attack_swing";
+                case AudioCue.Hit:
+                    return "hit_impact";
+                case AudioCue.CriticalHit:
+                    return "critical_hit";
+                case AudioCue.EnemyDefeat:
+                    return "enemy_defeat";
+                case AudioCue.AllyDefeat:
+                    return "ally_defeat";
+                case AudioCue.BattleStart:
+                    return "battle_start";
+                case AudioCue.Victory:
+                    return "victory_fanfare";
+                case AudioCue.Defeat:
+                    return "defeat";
+                case AudioCue.Reward:
+                    return "reward";
+                case AudioCue.LevelUp:
+                    return "level_up";
+                case AudioCue.Error:
+                    return "error";
+                case AudioCue.EquipmentDrop:
+                    return "equipment_drop";
+                case AudioCue.MissionComplete:
+                    return "mission_complete";
+                case AudioCue.DailyReward:
+                    return "daily_reward";
+                case AudioCue.GachaStart:
+                    return "summon_start";
+                case AudioCue.GachaReveal:
+                    return "summon_reveal";
+                case AudioCue.GachaRareReveal:
+                    return "summon_rare";
+                case AudioCue.GachaLegendaryReveal:
+                    return "summon_legendary";
+                case AudioCue.FusionStart:
+                    return "fusion_start";
+                case AudioCue.Fusion:
+                    return "fusion_mix";
+                case AudioCue.FusionSuccess:
+                    return "fusion_success";
+                case AudioCue.UpgradeSuccess:
+                    return "upgrade_success";
+                case AudioCue.UpgradeFail:
+                    return "upgrade_fail";
+                case AudioCue.UpgradeBreak:
+                    return "upgrade_break";
+                default:
+                    return string.Empty;
+            }
+        }
+
         private static AudioClip CreateProceduralSe(AudioCue cue)
         {
             switch (cue)
@@ -775,10 +895,23 @@ namespace WitchTower.Managers
                         float sweep = Mathf.Lerp(360f, 1280f, Mathf.Clamp01(t / 0.16f));
                         return (Sine(sweep, t) * 0.45f + Noise(i) * 0.10f) * Envelope(t, 0.22f, 8f) * 0.48f;
                     });
+                case AudioCue.Attack:
+                    return CreateToneClip("SE_Attack", 0.11f, delegate(float t, int i)
+                    {
+                        float sweep = Mathf.Lerp(980f, 360f, Mathf.Clamp01(t / 0.09f));
+                        return (Sine(sweep, t) * 0.32f + Noise(i) * 0.18f) * Envelope(t, 0.11f, 18f) * 0.36f;
+                    });
                 case AudioCue.Hit:
                     return CreateToneClip("SE_Hit", 0.09f, delegate(float t, int i)
                     {
                         return (Sine(120f, t) * 0.55f + Noise(i) * 0.32f) * Envelope(t, 0.09f, 22f) * 0.52f;
+                    });
+                case AudioCue.CriticalHit:
+                    return CreateToneClip("SE_CriticalHit", 0.22f, delegate(float t, int i)
+                    {
+                        float strike = Sine(Mathf.Lerp(160f, 90f, Mathf.Clamp01(t / 0.16f)), t) * 0.44f;
+                        float shine = Sine(1320f, t) * Mathf.Exp(-t * 11f) * 0.28f;
+                        return (strike + shine + Noise(i) * 0.15f) * Envelope(t, 0.22f, 9f) * 0.52f;
                     });
                 case AudioCue.EnemyDefeat:
                     return CreateToneClip("SE_EnemyDefeat", 0.20f, delegate(float t, int i)

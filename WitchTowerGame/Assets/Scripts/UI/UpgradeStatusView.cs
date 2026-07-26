@@ -15,27 +15,27 @@ namespace WitchTower.UI
         {
             if (labelText != null)
             {
-                labelText.text = $"{label} Boost";
+                labelText.text = $"{label}強化";
             }
 
             if (levelText != null)
             {
-                levelText.text = $"Tier {level}";
+                levelText.text = $"段階 {level}";
             }
 
             if (costText != null)
             {
-                costText.text = $"Next upgrade costs {cost} Gold";
+                costText.text = $"次の強化: {cost}ゴールド";
             }
 
             if (bonusText != null)
             {
                 string bonusLabel = label switch
                 {
-                    "Attack" => "power",
-                    "Defense" => "guard",
-                    "HP" => "vitality",
-                    _ => "bonus"
+                    "攻撃" => "攻撃",
+                    "防御" => "防御",
+                    "HP" => "HP",
+                    _ => "補正"
                 };
                 bonusText.text = $"+{totalBonus} {bonusLabel}";
             }

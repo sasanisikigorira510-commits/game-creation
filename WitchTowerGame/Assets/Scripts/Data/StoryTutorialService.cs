@@ -68,17 +68,32 @@ namespace WitchTower.Data
         public const string HintEquipmentEnhanceRelicReceived = "tutorial_equipment_enhance_relic_received";
         public const string HintEquipmentEnhanceReturnHome = "tutorial_equipment_enhance_return_home";
         public const string HintFusion = "tutorial_fusion";
+        public const string HintFusionInheritance = "tutorial_fusion_inheritance";
+        public const string HintFusionInheritanceGiftReceived = "tutorial_fusion_inheritance_gift_received";
         public const string HintDex = "tutorial_dex";
         public const string HintShop = "tutorial_shop";
         public const string HintHomeGuideComplete = "tutorial_home_guide_complete";
 
         public const int TutorialCompletionRewardFreeGachaStones = 600;
+        public const int InitialSummonCount = 3;
+        public const int InitialSummonStoneCost = 300;
+        public const int Chapter2UnlockFloor = 10;
+        public const int Chapter3UnlockFloor = 20;
+        public const int Chapter4UnlockFloor = 30;
+        public const int Chapter5UnlockFloor = 40;
+        public const int Chapter6UnlockFloor = 50;
+        public const int FirstArcCompleteFloor = 60;
+        public const int FusionInheritanceTutorialUnlockFloor = Chapter3UnlockFloor;
 
         private const string DefaultStarterMonsterId = "monster_dragon_whelp";
         private const string HintTutorialCompletionReward = "tutorial_completion_reward_free_stones";
         public const string EquipmentTutorialGiftEquipmentId = "equip_apprentice_charm";
         public const string EquipmentEnhanceTutorialGiftRelicId = "relic_safe_ember";
+        public const string FusionInheritanceTutorialGiftMonsterId = MonsterFusionCatalog.RockGolemId;
         private const string EquipmentTutorialGiftInstanceIdPrefix = "tutorial_gift_equipment_";
+        private const string FusionInheritanceTutorialGiftInstanceIdPrefix = "tutorial_gift_fusion_rock_golem_";
+        private const string FusionInheritanceTutorialGiftFirstInstanceIdPrefix = "tutorial_gift_fusion_rock_golem_a_";
+        private const string FusionInheritanceTutorialGiftSecondInstanceIdPrefix = "tutorial_gift_fusion_rock_golem_b_";
 
         private static readonly Dictionary<string, string> NextStepByCompletedStep = new Dictionary<string, string>
         {
@@ -137,9 +152,45 @@ namespace WitchTower.Data
                  HasSeenHint(profile, HintShop));
         }
 
+        public static int GetInitialSummonRemainingCount(PlayerProfile profile)
+        {
+            int completedSummons = Math.Max(0, profile?.InitialTutorialSummonCount ?? 0);
+            return Math.Max(0, InitialSummonCount - completedSummons);
+        }
+
+        public static bool HasCompletedInitialSummons(PlayerProfile profile)
+        {
+            return GetInitialSummonRemainingCount(profile) <= 0;
+        }
+
+        public static bool EnsureInitialSummonResources(PlayerProfile profile)
+        {
+            if (profile == null || profile.HasCompletedTutorial ||
+                !string.Equals(profile.TutorialStepId, StepFirstSummon, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            int requiredStones = GetInitialSummonRemainingCount(profile) * InitialSummonStoneCost;
+            int missingStones = Math.Max(0, requiredStones - Math.Max(0, profile.FreeGachaStones));
+            if (missingStones <= 0)
+            {
+                return false;
+            }
+
+            profile.AddFreeGachaStones(missingStones);
+            return true;
+        }
+
         public static bool MarkStorySeen(PlayerProfile profile, string eventId)
         {
-            return MarkSeen(profile?.SeenStoryEventIds, eventId);
+            bool changed = MarkSeen(profile?.SeenStoryEventIds, eventId);
+            if (eventId == StoryChapter3Unlocked)
+            {
+                changed |= EnsureFusionInheritanceTutorialGift(profile);
+            }
+
+            return changed;
         }
 
         public static bool MarkHintSeen(PlayerProfile profile, string hintId)
@@ -203,6 +254,66 @@ namespace WitchTower.Data
             return changed;
         }
 
+        public static bool EnsureFusionInheritanceTutorialGift(PlayerProfile profile)
+        {
+            if (profile == null || HasSeenHint(profile, HintFusionInheritance))
+            {
+                return false;
+            }
+
+            bool hasFirstGift = FindFusionInheritanceTutorialGift(profile, true) != null;
+            bool hasSecondGift = FindFusionInheritanceTutorialGift(profile, false) != null;
+            int missingGiftCount = (hasFirstGift ? 0 : 1) + (hasSecondGift ? 0 : 1);
+            if (missingGiftCount > 0)
+            {
+                profile.MonsterStorageLimit = Math.Max(
+                    profile.MonsterStorageLimit,
+                    profile.OwnedMonsters.Count + missingGiftCount);
+            }
+
+            bool changed = false;
+            if (!hasFirstGift)
+            {
+                changed |= AddFusionInheritanceTutorialGiftMonster(
+                    profile,
+                    FusionInheritanceTutorialGiftFirstInstanceIdPrefix,
+                    1,
+                    new MonsterIndividualValues(10, 30, 50, 10, 30, 50)) != null;
+            }
+
+            if (!hasSecondGift)
+            {
+                changed |= AddFusionInheritanceTutorialGiftMonster(
+                    profile,
+                    FusionInheritanceTutorialGiftSecondInstanceIdPrefix,
+                    2,
+                    new MonsterIndividualValues(50, 10, 10, 50, 10, 10)) != null;
+            }
+
+            changed |= MarkHintSeen(profile, HintFusionInheritanceGiftReceived);
+            return changed;
+        }
+
+        public static bool TryGetFusionInheritanceTutorialGiftParents(
+            PlayerProfile profile,
+            out string firstParentInstanceId,
+            out string secondParentInstanceId)
+        {
+            OwnedMonsterData firstGift = FindFusionInheritanceTutorialGift(profile, true);
+            OwnedMonsterData secondGift = FindFusionInheritanceTutorialGift(profile, false);
+            firstParentInstanceId = firstGift?.InstanceId ?? string.Empty;
+            secondParentInstanceId = secondGift?.InstanceId ?? string.Empty;
+            return !string.IsNullOrEmpty(firstParentInstanceId) &&
+                !string.IsNullOrEmpty(secondParentInstanceId);
+        }
+
+        public static bool IsFusionInheritanceTutorialGift(OwnedMonsterData monster)
+        {
+            return monster != null &&
+                !string.IsNullOrEmpty(monster.InstanceId) &&
+                monster.InstanceId.StartsWith(FusionInheritanceTutorialGiftInstanceIdPrefix, StringComparison.Ordinal);
+        }
+
         public static OwnedEquipmentData FindEquipmentTutorialGift(PlayerProfile profile)
         {
             return profile?.OwnedEquipments?
@@ -239,12 +350,12 @@ namespace WitchTower.Data
                 return;
             }
 
-            MarkClearedChapterStory(profile, 5, StoryChapter2Unlocked);
-            MarkClearedChapterStory(profile, 10, StoryChapter3Unlocked);
-            MarkClearedChapterStory(profile, 15, StoryChapter4Unlocked);
-            MarkClearedChapterStory(profile, 20, StoryChapter5Unlocked);
-            MarkClearedChapterStory(profile, 25, StoryChapter6Unlocked);
-            MarkClearedChapterStory(profile, 30, StoryFirstArcComplete);
+            MarkClearedChapterStory(profile, Chapter2UnlockFloor, StoryChapter2Unlocked);
+            MarkClearedChapterStory(profile, Chapter3UnlockFloor, StoryChapter3Unlocked);
+            MarkClearedChapterStory(profile, Chapter4UnlockFloor, StoryChapter4Unlocked);
+            MarkClearedChapterStory(profile, Chapter5UnlockFloor, StoryChapter5Unlocked);
+            MarkClearedChapterStory(profile, Chapter6UnlockFloor, StoryChapter6Unlocked);
+            MarkClearedChapterStory(profile, FirstArcCompleteFloor, StoryFirstArcComplete);
         }
 
         public static bool AdvanceTutorial(PlayerProfile profile, string completedStepId)
@@ -350,12 +461,13 @@ namespace WitchTower.Data
                             true)
                         : null;
                 case StepFirstSummon:
+                    int remainingSummons = GetInitialSummonRemainingCount(profile);
                     return IsScene(normalizedSceneName, "GachaScene")
                         ? new StoryTutorialEvent(
                             "tutorial_first_summon",
                             StepFirstSummon,
-                            "契約召喚",
-                            "今回の召喚用に、魔晶石を300個用意しました。\n契約炉に石を捧げて、最初の眷属を呼び戻しましょう。",
+                            "最初の探索隊",
+                            $"今回の召喚用に、魔晶石を{InitialSummonStoneCost * InitialSummonCount}個用意しました。\n最初の探索隊として眷属を{InitialSummonCount}体呼び戻しましょう。（あと{remainingSummons}体）",
                             "gacha.single_free",
                             true)
                         : null;
@@ -373,8 +485,8 @@ namespace WitchTower.Data
                         ? new StoryTutorialEvent(
                             StoryFirstSummonDone,
                             StepOpenFormation,
-                            "最初の眷属",
-                            "呼び戻した眷属を編成に入れて、探索隊として送り出しましょう。",
+                            "最初の探索隊",
+                            "呼び戻した3体を編成に入れて、探索隊として送り出しましょう。",
                             "home.formation",
                             true)
                         : null;
@@ -384,7 +496,7 @@ namespace WitchTower.Data
                             "tutorial_first_formation",
                             StepFirstFormation,
                             "探索隊編成",
-                            "モンスターカード右下の「編成」ボタンをタップして、先頭の前衛枠に配置しましょう。",
+                            "モンスターカード右下の「編成」ボタンをタップして、最初の3枠を埋めましょう。",
                             "formation.slot_1",
                             true)
                         : null;
@@ -470,27 +582,27 @@ namespace WitchTower.Data
                 return null;
             }
 
-            if (profile.HighestFloor >= 5 && !HasSeenStory(profile, StoryChapter2Unlocked))
+            if (profile.HighestFloor >= Chapter2UnlockFloor && !HasSeenStory(profile, StoryChapter2Unlocked))
             {
                 return new StoryTutorialEvent(
                     StoryChapter2Unlocked,
                     string.Empty,
                     "第2章 獣影の廃工廠",
-                    "五つの小門が点灯し、廃工廠への転移門が開きました。次は編成と装備を整えて、暴走した生産炉を止めましょう。",
+                    "十の小門が点灯し、廃工廠への転移門が開きました。次は編成と装備を整えて、暴走した生産炉を止めましょう。",
                     "home.battle");
             }
 
-            if (profile.HighestFloor >= 10 && !HasSeenStory(profile, StoryChapter3Unlocked))
+            if (profile.HighestFloor >= Chapter3UnlockFloor && !HasSeenStory(profile, StoryChapter3Unlocked))
             {
                 return new StoryTutorialEvent(
                     StoryChapter3Unlocked,
                     string.Empty,
                     "第3章 古契約の地下書庫",
-                    "廃工廠の生産炉が静まり、古い契約記録への道が現れました。ロックと品質を確かめ、失いたくない力を守りましょう。",
-                    "home.battle");
+                    "廃工廠の生産炉が静まり、古い契約記録への道が現れました。ルシェが配合炉の教材を用意しています。個体値とプラス値の継承を確認してから地下書庫へ進みましょう。",
+                    "home.fusion");
             }
 
-            if (profile.HighestFloor >= 15 && !HasSeenStory(profile, StoryChapter4Unlocked))
+            if (profile.HighestFloor >= Chapter4UnlockFloor && !HasSeenStory(profile, StoryChapter4Unlocked))
             {
                 return new StoryTutorialEvent(
                     StoryChapter4Unlocked,
@@ -500,7 +612,7 @@ namespace WitchTower.Data
                     "home.battle");
             }
 
-            if (profile.HighestFloor >= 20 && !HasSeenStory(profile, StoryChapter5Unlocked))
+            if (profile.HighestFloor >= Chapter5UnlockFloor && !HasSeenStory(profile, StoryChapter5Unlocked))
             {
                 return new StoryTutorialEvent(
                     StoryChapter5Unlocked,
@@ -510,7 +622,7 @@ namespace WitchTower.Data
                     "home.battle");
             }
 
-            if (profile.HighestFloor >= 25 && !HasSeenStory(profile, StoryChapter6Unlocked))
+            if (profile.HighestFloor >= Chapter6UnlockFloor && !HasSeenStory(profile, StoryChapter6Unlocked))
             {
                 return new StoryTutorialEvent(
                     StoryChapter6Unlocked,
@@ -520,7 +632,7 @@ namespace WitchTower.Data
                     "home.battle");
             }
 
-            if (profile.HighestFloor >= 30 && !HasSeenStory(profile, StoryFirstArcComplete))
+            if (profile.HighestFloor >= FirstArcCompleteFloor && !HasSeenStory(profile, StoryFirstArcComplete))
             {
                 return new StoryTutorialEvent(
                     StoryFirstArcComplete,
@@ -536,6 +648,22 @@ namespace WitchTower.Data
         private static StoryTutorialEvent GetOptionalHint(PlayerProfile profile, string sceneName)
         {
             string normalizedSceneName = sceneName ?? string.Empty;
+            if (IsScene(normalizedSceneName, "HomeScene") || IsScene(normalizedSceneName, "FusionScene"))
+            {
+                if (ShouldShowFusionInheritanceTutorial(profile))
+                {
+                    bool inFusionScene = IsScene(normalizedSceneName, "FusionScene");
+                    return new StoryTutorialEvent(
+                        HintFusionInheritance,
+                        string.Empty,
+                        "ルシェの配合レッスン",
+                        inFusionScene
+                            ? "教材として、最大レベルのロックゴーレムを2体用意しました。\n親1は+1で個体値10/30/50/10/30/50、親2は+2で50/10/10/50/10/10です。\n配合では個体値・親ステータスの一部・親のプラス値合計を継承します。"
+                            : "地下書庫へ進む前に配合の継承を見ておきましょう。\n最大Lvのロックゴーレム2体を教材として用意しました。",
+                        inFusionScene ? "fusion.guide" : "home.fusion");
+                }
+            }
+
             if (IsScene(normalizedSceneName, "EquipmentScene") || IsScene(normalizedSceneName, "HomeScene"))
             {
                 if (!HasSeenHint(profile, HintEquipment) && profile.OwnedMonsters.Count > 0)
@@ -544,12 +672,12 @@ namespace WitchTower.Data
                     bool tutorialGiftEquipped = tutorialGift != null && !string.IsNullOrEmpty(tutorialGift.EquippedMonsterInstanceId);
                     string targetKey = tutorialGiftEquipped && IsScene(normalizedSceneName, "EquipmentScene")
                         ? "equipment.enhance_button"
-                        : "equipment.first_item";
+                        : "equipment.auto_equip";
                     string body = IsScene(normalizedSceneName, "EquipmentScene")
                         ? tutorialGiftEquipped
                             ? "見習いの護符を装備できました。\nこのまま同じ装備カードの「強化」から、装備を鍛える流れも確認しましょう。"
-                            : "ルシェから練習用の「見習いの護符」を受け取りました。所持装備の先頭に出しておきます。カードの「装備」を押すと、上のモンスターに持たせられます。"
-                        : "ルシェが「見習いの護符」を用意しました。\n下の装備から受け取り、モンスターに装備しましょう。";
+                            : "ルシェから練習用の「見習いの護符」を受け取りました。画面上部の「自動装備」を押すと、選択中のモンスターに適した装備をまとめて持たせられます。"
+                        : "ルシェが「見習いの護符」を用意しました。\n装備画面で「自動装備」を使って、モンスターに装備しましょう。";
                     return new StoryTutorialEvent(
                         HintEquipment,
                         string.Empty,
@@ -703,6 +831,79 @@ namespace WitchTower.Data
             }
 
             return profile.OwnedEquipments.Any(equipment => equipment != null && equipment.RemainingEnhanceAttempts > 0);
+        }
+
+        private static bool ShouldShowFusionInheritanceTutorial(PlayerProfile profile)
+        {
+            return profile != null &&
+                profile.HasCompletedTutorial &&
+                profile.HighestFloor >= FusionInheritanceTutorialUnlockFloor &&
+                !HasSeenHint(profile, HintFusionInheritance);
+        }
+
+        private static OwnedMonsterData FindFusionInheritanceTutorialGift(PlayerProfile profile, bool firstGift)
+        {
+            if (profile?.OwnedMonsters == null)
+            {
+                return null;
+            }
+
+            string prefix = firstGift
+                ? FusionInheritanceTutorialGiftFirstInstanceIdPrefix
+                : FusionInheritanceTutorialGiftSecondInstanceIdPrefix;
+            return profile.OwnedMonsters.FirstOrDefault(monster =>
+                monster != null &&
+                !string.IsNullOrEmpty(monster.InstanceId) &&
+                monster.InstanceId.StartsWith(prefix, StringComparison.Ordinal));
+        }
+
+        private static OwnedMonsterData AddFusionInheritanceTutorialGiftMonster(
+            PlayerProfile profile,
+            string instanceIdPrefix,
+            int plusValue,
+            MonsterIndividualValues individualValues)
+        {
+            if (profile == null)
+            {
+                return null;
+            }
+
+            MasterDataManager.Instance?.Initialize();
+            MonsterDataSO monsterData = MasterDataManager.Instance?.GetMonsterData(FusionInheritanceTutorialGiftMonsterId);
+            int maxLevel = monsterData != null
+                ? MonsterLevelService.GetMaxLevel(monsterData)
+                : MonsterLevelService.GetMaxLevel(1);
+
+            OwnedMonsterData gift = profile.AddOwnedMonster(FusionInheritanceTutorialGiftMonsterId, maxLevel, plusValue);
+            if (gift == null)
+            {
+                return null;
+            }
+
+            gift.InstanceId = instanceIdPrefix + Guid.NewGuid().ToString("N");
+            gift.Level = maxLevel;
+            gift.Exp = 0;
+            gift.IsFavorite = false;
+            gift.IsLocked = false;
+            ApplyMonsterPlusValue(gift, plusValue);
+            MonsterIndividualValueService.Apply(gift, individualValues);
+            return gift;
+        }
+
+        private static void ApplyMonsterPlusValue(OwnedMonsterData monster, int plusValue)
+        {
+            if (monster == null)
+            {
+                return;
+            }
+
+            int normalizedPlus = Math.Max(0, plusValue);
+            monster.PlusValue = normalizedPlus;
+            monster.PlusHp = normalizedPlus;
+            monster.PlusAttack = normalizedPlus;
+            monster.PlusWisdom = normalizedPlus;
+            monster.PlusDefense = normalizedPlus;
+            monster.PlusMagicDefense = normalizedPlus;
         }
 
         private static bool GrantTutorialCompletionReward(PlayerProfile profile)
