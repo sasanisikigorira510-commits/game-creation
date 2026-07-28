@@ -56,12 +56,7 @@ namespace WitchTower.Battle
         {
             var masterDataManager = MasterDataManager.Instance;
             masterDataManager?.Initialize();
-            var floorData = masterDataManager != null ? masterDataManager.GetFloorData(floor) : null;
             EnemyDataSO enemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, masterDataManager);
-            if (enemyData == null)
-            {
-                enemyData = floorData != null ? floorData.enemyData : null;
-            }
 
             if (enemyData == null)
             {
@@ -101,11 +96,6 @@ namespace WitchTower.Battle
             masterDataManager?.Initialize();
             BattleUnitStats enemyStats = CreateEnemyPreview(safeFloor);
             EnemyDataSO enemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(safeFloor, masterDataManager);
-            if (enemyData == null)
-            {
-                FloorDataSO floorData = masterDataManager != null ? masterDataManager.GetFloorData(safeFloor) : null;
-                enemyData = floorData != null ? floorData.enemyData : null;
-            }
 
             int enemyCount = Mathf.Max(1, BattleDungeonCatalog.ResolveEnemyCount(safeFloor));
             int recommendedPartyLevel = ResolveRecommendedPartyLevel(safeFloor);

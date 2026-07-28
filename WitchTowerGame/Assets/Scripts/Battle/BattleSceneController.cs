@@ -300,23 +300,7 @@ namespace WitchTower.Battle
             { "monster_astral_eclipse_golem", TargetBurstEffect(ImageGeneratedMonsterAttackEffectPath("astral_eclipse_golem"), 0.98f, 0.44f, 0f, 20f, 1.24f) },
             { "monster_magic_sword_saint_luciel", SwordSlashEffect(ImageGeneratedMonsterAttackEffectPath("magic_sword_saint_luciel"), 0.94f, 0.32f, -8f, 12f, 1.18f) },
             { "monster_seraph_michael", TargetBurstEffect(ImageGeneratedMonsterAttackEffectPath("seraph_michael"), 0.88f, 0.40f, 0f, 28f, 1.22f) },
-            { SpiritQueenTitaniaMonsterId, SustainedBeamEffect(TitaniaStaffBeamEffectPath, 82f, 0.48f, 86f, 26f, 10f, 22f, 24f) },
-            { "monster_worm", PunchImpactEffect(PremiumImpactAttackEffectPath, 0.62f, 0.22f, -16f, -2f, 1.00f) },
-            { "monster_bat", ProjectileEffect(PremiumDragonAttackEffectPath, 0.74f, 0.30f, 22f, 8f, 8f, 1.08f) },
-            { "monster_goblin", SwordSlashEffect(PremiumSwordAttackEffectPath, 0.58f, 0.22f, -10f, 4f, 1.00f) },
-            { "monster_wraith", TargetBurstEffect(PremiumMagicAttackEffectPath, 0.62f, 0.32f, 0f, 18f, 1.08f) },
-            { "monster_bee", ProjectileEffect(PremiumDragonAttackEffectPath, 0.62f, 0.26f, 22f, 8f, 8f, 1.04f) },
-            { "monster_naga", PunchImpactEffect(PremiumImpactAttackEffectPath, 0.66f, 0.24f, -18f, 0f, 1.04f) },
-            { "monster_centaur", ProjectileEffect(PremiumSwordAttackEffectPath, 0.72f, 0.30f, 20f, 10f, 6f, 1.08f) },
-            { "monster_death_mage_elf", TargetBurstEffect(PremiumMagicAttackEffectPath, 0.72f, 0.36f, 0f, 22f, 1.12f) },
-            { "monster_hell_knight", SwordSlashEffect(PremiumSwordAttackEffectPath, 0.82f, 0.30f, -10f, 8f, 1.14f) },
-            { "monster_shadow", TargetBurstEffect(PremiumMagicAttackEffectPath, 0.60f, 0.28f, 0f, 16f, 1.04f) },
-            { "monster_dragoon", SwordSlashEffect(PremiumSwordAttackEffectPath, 0.82f, 0.30f, -10f, 10f, 1.14f) },
-            { "monster_ghost", TargetBurstEffect(PremiumMagicAttackEffectPath, 0.60f, 0.28f, 0f, 18f, 1.04f) },
-            { "monster_naga_mage", TargetBurstEffect(PremiumMagicAttackEffectPath, 0.70f, 0.34f, 0f, 22f, 1.12f) },
-            { "monster_soul_eater", TargetBurstEffect(PremiumMagicAttackEffectPath, 0.84f, 0.38f, 0f, 24f, 1.18f) },
-            { "monster_spectral_warrior", SwordSlashEffect(PremiumSwordAttackEffectPath, 0.76f, 0.28f, -10f, 8f, 1.10f) },
-            { "monster_vault_guard", PunchImpactEffect(PremiumImpactAttackEffectPath, 0.86f, 0.32f, -22f, 4f, 1.16f) }
+            { SpiritQueenTitaniaMonsterId, SustainedBeamEffect(TitaniaStaffBeamEffectPath, 82f, 0.48f, 86f, 26f, 10f, 22f, 24f) }
         };
 
         private static MonsterAttackEffectDefinition ProjectileEffect(
@@ -2775,19 +2759,22 @@ namespace WitchTower.Battle
                 return string.Empty;
             }
 
-            if (!string.IsNullOrEmpty(monsterData.portraitResourcePath))
+            string portraitPath = ResolveExistingSpriteResourcePath(monsterData.portraitResourcePath);
+            if (HasSpriteResource(portraitPath))
             {
-                return monsterData.portraitResourcePath;
+                return portraitPath;
             }
 
-            if (!string.IsNullOrEmpty(monsterData.illustrationResourcePath))
+            string illustrationPath = ResolveExistingSpriteResourcePath(monsterData.illustrationResourcePath);
+            if (HasSpriteResource(illustrationPath))
             {
-                return monsterData.illustrationResourcePath;
+                return illustrationPath;
             }
 
-            if (!string.IsNullOrEmpty(monsterData.battleIdleResourcePath))
+            string battleIdlePath = ResolveExistingSpriteResourcePath(monsterData.battleIdleResourcePath);
+            if (HasSpriteResource(battleIdlePath))
             {
-                return ResolveExistingSpriteResourcePath(monsterData.battleIdleResourcePath);
+                return battleIdlePath;
             }
 
             return string.Empty;
@@ -2875,8 +2862,7 @@ namespace WitchTower.Battle
                 : null;
             if (enemyData == null)
             {
-                enemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, MasterDataManager.Instance)
-                    ?? MasterDataManager.Instance?.GetFloorData(floor)?.enemyData;
+                enemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, MasterDataManager.Instance);
             }
 
             EnsureMonsterPreviewRoot();
@@ -3071,11 +3057,11 @@ namespace WitchTower.Battle
             UpdatePreviewLayout();
             Sprite[] previewPartySprites =
             {
-                BattleVisualResolver.LoadSprite("FamilyMonsterCards/Golem/rock_golem"),
-                BattleVisualResolver.LoadSprite("FormationMonsters/Goblin"),
-                BattleVisualResolver.LoadSprite("FormationMonsters/Wraith"),
-                BattleVisualResolver.LoadSprite("FormationMonsters/Centaur"),
-                BattleVisualResolver.LoadSprite("FormationMonsters/HellKnight")
+                BattleVisualResolver.LoadSprite("MonsterBattle/mon_dragon_whelp_idle_0"),
+                BattleVisualResolver.LoadSprite("MonsterBattle/mon_chibi_gear_idle_0"),
+                BattleVisualResolver.LoadSprite("MonsterBattle/mon_rock_golem_idle_0"),
+                BattleVisualResolver.LoadSprite("MonsterBattle/mon_apprentice_swordsman_idle_0"),
+                BattleVisualResolver.LoadSprite("MonsterBattle/mon_apprentice_mage_idle_0")
             };
 
             allyIdleSprites.Clear();
@@ -3090,7 +3076,7 @@ namespace WitchTower.Battle
                 SetImageSprite(allyPreviewImages[i], sprite);
             }
 
-            Sprite previewEnemySprite = BattleVisualResolver.LoadSprite("FormationMonsters/HellKnight");
+            Sprite previewEnemySprite = BattleVisualResolver.LoadSprite("MonsterBattle/mon_dragon_whelp_idle_0");
             enemyIdleSprites = previewEnemySprite != null ? new List<Sprite> { previewEnemySprite } : new List<Sprite>();
             enemyMoveSprites = previewEnemySprite != null ? new List<Sprite> { previewEnemySprite } : new List<Sprite>();
             enemyAttackSprites = previewEnemySprite != null ? new List<Sprite> { previewEnemySprite } : new List<Sprite>();
@@ -3110,8 +3096,9 @@ namespace WitchTower.Battle
             allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_rock_golem")));
             allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_apprentice_swordsman")));
             allySearchRanges.Add(BattleAttackRangeResolver.ResolveMonsterSearchRange(MasterDataManager.Instance?.GetMonsterData("monster_apprentice_mage")));
-            enemyAttackRange = BattleAttackRangeResolver.ResolveEnemyAttackRange(MasterDataManager.Instance?.GetFloorData(1)?.enemyData);
-            enemySearchRange = BattleAttackRangeResolver.ResolveEnemySearchRange(MasterDataManager.Instance?.GetFloorData(1)?.enemyData);
+            EnemyDataSO previewEnemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(1, MasterDataManager.Instance);
+            enemyAttackRange = BattleAttackRangeResolver.ResolveEnemyAttackRange(previewEnemyData);
+            enemySearchRange = BattleAttackRangeResolver.ResolveEnemySearchRange(previewEnemyData);
             combatStartProgress = BattleAttackRangeResolver.ResolveCombatStartProgress(allyAttackRanges, enemyAttackRange);
             combatSearchProgress = Mathf.Min(
                 Mathf.Max(0.12f, combatStartProgress - 0.12f),
@@ -3306,7 +3293,10 @@ namespace WitchTower.Battle
                 }
             }
 
-            return SelectAnimatedFrame(idleSprites, 4f, index * 0.09f);
+            Sprite idleSprite = SelectAnimatedFrame(idleSprites, 4f, index * 0.09f);
+            return idleSprite != null
+                ? idleSprite
+                : BattleVisualResolver.ResolveEnemyIdleSprite(enemyData);
         }
 
         private BattleVisualPose ResolveEnemyPreviewPose(int index, bool isMoving, bool isAttackEngaged)
@@ -5624,6 +5614,11 @@ namespace WitchTower.Battle
                     ResolveEnemyPreviewReferenceSprites(enemyPose, enemyVisualData),
                     ResolveEnemyPreviewMeasurementMode(enemyData, enemyPose));
                 Color color = ResolveHitFlashColor(new Color(1f, 1f, 1f, 1f - enemyVanishT), false, i);
+                if (image.sprite == null)
+                {
+                    color.a = 0f;
+                }
+
                 image.color = color;
 
                 if (simulator.IsBossWave && i == 0)

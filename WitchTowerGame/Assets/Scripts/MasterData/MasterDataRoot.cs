@@ -7,10 +7,8 @@ namespace WitchTower.MasterData
     {
         public PlayerBaseDataSO playerBaseData;
         public MonsterDataSO[] monsterDataList;
-        public EnemyDataSO[] enemyDataList;
         public SkillDataSO[] skillDataList;
         public EquipmentDataSO[] equipmentDataList;
-        public FloorDataSO[] floorDataList;
         public DropTableDataSO[] dropTableDataList;
     }
 }

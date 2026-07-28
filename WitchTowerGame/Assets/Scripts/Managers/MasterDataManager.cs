@@ -13,10 +13,8 @@ namespace WitchTower.Managers
         [Header("Master Data")]
         [SerializeField] private PlayerBaseDataSO playerBaseData;
         [SerializeField] private MonsterDataSO[] monsterDataList;
-        [SerializeField] private EnemyDataSO[] enemyDataList;
         [SerializeField] private SkillDataSO[] skillDataList;
         [SerializeField] private EquipmentDataSO[] equipmentDataList;
-        [SerializeField] private FloorDataSO[] floorDataList;
         [SerializeField] private DropTableDataSO[] dropTableDataList;
 
         private void Awake()
@@ -33,7 +31,7 @@ namespace WitchTower.Managers
 
         public void Initialize()
         {
-            if (playerBaseData != null || floorDataList != null && floorDataList.Length > 0)
+            if (playerBaseData != null || monsterDataList != null && monsterDataList.Length > 0)
             {
                 return;
             }
@@ -51,42 +49,6 @@ namespace WitchTower.Managers
         public PlayerBaseDataSO GetPlayerBaseData()
         {
             return playerBaseData;
-        }
-
-        public FloorDataSO GetFloorData(int floorNumber)
-        {
-            if (floorDataList == null)
-            {
-                return null;
-            }
-
-            foreach (var floorData in floorDataList)
-            {
-                if (floorData != null && floorData.floorNumber == floorNumber)
-                {
-                    return floorData;
-                }
-            }
-
-            return null;
-        }
-
-        public EnemyDataSO GetEnemyData(string enemyId)
-        {
-            if (enemyDataList == null)
-            {
-                return null;
-            }
-
-            foreach (var enemyData in enemyDataList)
-            {
-                if (enemyData != null && enemyData.enemyId == enemyId)
-                {
-                    return enemyData;
-                }
-            }
-
-            return null;
         }
 
         public MonsterDataSO GetMonsterData(string monsterId)
@@ -262,10 +224,8 @@ namespace WitchTower.Managers
         {
             playerBaseData = root.playerBaseData;
             monsterDataList = root.monsterDataList;
-            enemyDataList = root.enemyDataList;
             skillDataList = root.skillDataList;
             equipmentDataList = root.equipmentDataList;
-            floorDataList = root.floorDataList;
             dropTableDataList = root.dropTableDataList;
         }
     }

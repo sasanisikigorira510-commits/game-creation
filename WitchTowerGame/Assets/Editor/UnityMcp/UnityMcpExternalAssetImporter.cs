@@ -1,5 +1,4 @@
 using System.IO;
-using System.IO.Compression;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
@@ -16,7 +15,6 @@ public static class UnityMcpExternalAssetImporter
         public string TargetPath;
         public string SourcePage;
         public string License;
-        public bool ExtractZip;
     }
 
     [MenuItem("Tools/MCP/Import Free Pixel Assets")]
@@ -37,14 +35,6 @@ public static class UnityMcpExternalAssetImporter
                 TargetPath = RootFolder + "/RpgTileset/RPGTileset.png",
                 SourcePage = "https://opengameart.org/content/stunning-pixel-art-rpg-tileset",
                 License = "CC0"
-            },
-            new DownloadAsset
-            {
-                Url = "https://opengameart.org/sites/default/files/Basic%20Green%20Monster%20Colection%20Batch%201-3_0.zip",
-                TargetPath = RootFolder + "/GreenMonsters/basic_green_monsters_batch1-3.zip",
-                SourcePage = "https://opengameart.org/content/basic-green-monster-collection",
-                License = "CC0",
-                ExtractZip = true
             }
         };
 
@@ -67,17 +57,6 @@ public static class UnityMcpExternalAssetImporter
             manifest.AppendLine("License: " + asset.License);
             manifest.AppendLine();
 
-            if (asset.ExtractZip)
-            {
-                string extractFolder = Path.Combine(Path.GetDirectoryName(absoluteTarget) ?? Application.dataPath, "Extracted");
-                if (Directory.Exists(extractFolder))
-                {
-                    Directory.Delete(extractFolder, true);
-                }
-
-                Directory.CreateDirectory(extractFolder);
-                ZipFile.ExtractToDirectory(absoluteTarget, extractFolder);
-            }
         }
 
         string manifestPath = ToAbsolutePath(RootFolder + "/README_FreeAssets.txt");
@@ -140,10 +119,6 @@ public static class UnityMcpExternalAssetImporter
             RootFolder + "/RpgTileset/RPGTileset.png",
             DerivedFolder + "/grass_tile.png",
             0, 80, 32, 32);
-
-        string monsterSource = RootFolder + "/GreenMonsters/Extracted/Basic Green Monster Colection/Death Mage Elf.png";
-        string monsterTarget = ToAbsolutePath(DerivedFolder + "/enemy_death_mage_elf.png");
-        File.Copy(ToAbsolutePath(monsterSource), monsterTarget, true);
 
         AssetDatabase.Refresh();
 

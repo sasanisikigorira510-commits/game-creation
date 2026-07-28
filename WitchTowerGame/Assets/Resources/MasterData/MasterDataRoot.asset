@@ -41,12 +41,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e986cae38d8d4121b53f3ceead81f65f, type: 2}
   - {fileID: 11400000, guid: 53565d41c6f3464e958dfbdb558c886a, type: 2}
   - {fileID: 11400000, guid: 7366f4308f614429a1d5ee9d770a2df2, type: 2}
-  enemyDataList:
-  - {fileID: 11400000, guid: c84bd75f92d78dc4db72767294c83c05, type: 2}
-  - {fileID: 11400000, guid: cb74962307d647c46b210b716978252b, type: 2}
-  - {fileID: 11400000, guid: d6bd540a4cfd45b4eaa26197295b5eba, type: 2}
-  - {fileID: 11400000, guid: af3cc02865d046741ba8a0aa4f8e2f67, type: 2}
-  - {fileID: 11400000, guid: 017644b08e52d334aa4edb53aff1b6c4, type: 2}
   skillDataList:
   - {fileID: 11400000, guid: e620dcda6a0ddb4488d12cfe08d0ed98, type: 2}
   - {fileID: 11400000, guid: 8360131f3777c8f40ac2c1271e6033e1, type: 2}
@@ -94,16 +88,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 84771dcfd0e4cd31425d01fbd29a275c, type: 2}
   - {fileID: 11400000, guid: 72e8b31d661dd114b92cd795413f2a0d, type: 2}
   - {fileID: 11400000, guid: 8a4a2886dc3a70c713a024d3f8ac1ce3, type: 2}
-  floorDataList:
-  - {fileID: 11400000, guid: 974f3e0295592654080bc902842facaa, type: 2}
-  - {fileID: 11400000, guid: 03af447f52211364aa4b42e6c6c34413, type: 2}
-  - {fileID: 11400000, guid: 9e446df0ce02e6f4d90b842d4a240814, type: 2}
-  - {fileID: 11400000, guid: ee1b723190c86a14ba1df16bac15b622, type: 2}
-  - {fileID: 11400000, guid: 6290828adf76d34499e68c8d43bb84a0, type: 2}
-  - {fileID: 11400000, guid: 54e238e837eee1e4194caf5f606a9372, type: 2}
-  - {fileID: 11400000, guid: 38f6afb4a1f113a46aaa5709120443ba, type: 2}
-  - {fileID: 11400000, guid: 90bc2c4945a3bd248a5bcaad0b0f37de, type: 2}
-  - {fileID: 11400000, guid: 7dfd9cee69a5f34449f0998d5a671d67, type: 2}
-  - {fileID: 11400000, guid: 06fb040e2fb12c04a8ff257ca3e0d8f0, type: 2}
   dropTableDataList:
   - {fileID: 11400000, guid: a6e5b9a1c72564b448364be7ba936cb3, type: 2}

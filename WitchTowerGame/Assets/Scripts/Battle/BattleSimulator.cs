@@ -232,10 +232,7 @@ namespace WitchTower.Battle
             { "monster_abyss_grand_mage_seraphis", 0.48f },
             { "monster_mecha_dragon_valdrake", 0.60f },
             { "monster_abyss_dragon_mage_valflare", 0.50f },
-            { "monster_fortress_machine_gigafort", 0.34f },
-            { "monster_bat", 0.30f },
-            { "monster_bee", 0.26f },
-            { "monster_centaur", 0.30f }
+            { "monster_fortress_machine_gigafort", 0.34f }
         };
 
         public event System.Action<BattleHitInfo> HitResolved;
@@ -2961,14 +2958,9 @@ namespace WitchTower.Battle
         private BattleUnitStats CreateEnemyStats(int floor, bool applyBossModifiers, string forcedMonsterId, out EnemyTraitRuntime runtime, out EnemyDataSO enemyData)
         {
             var masterDataManager = MasterDataManager.Instance;
-            var floorData = masterDataManager != null ? masterDataManager.GetFloorData(floor) : null;
             enemyData = !string.IsNullOrEmpty(forcedMonsterId)
                 ? BattleDungeonCatalog.CreateEnemyDataForMonsterAtGlobalFloor(floor, masterDataManager, forcedMonsterId)
                 : BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, masterDataManager, true);
-            if (enemyData == null)
-            {
-                enemyData = floorData != null ? floorData.enemyData : null;
-            }
 
             if (enemyData == null)
             {

@@ -133,7 +133,7 @@ namespace WitchTower.Battle
                 }
 
                 MonsterDataSO monsterData = MasterDataManager.Instance?.GetMonsterData(monsterId);
-                if (monsterData != null)
+                if (IsRegisteredCurrentMonster(monsterData))
                 {
                     results.Add(monsterData);
                 }
@@ -155,7 +155,8 @@ namespace WitchTower.Battle
                 return null;
             }
 
-            return MasterDataManager.Instance?.GetMonsterData(monsterId);
+            MonsterDataSO monsterData = MasterDataManager.Instance?.GetMonsterData(monsterId);
+            return IsRegisteredCurrentMonster(monsterData) ? monsterData : null;
         }
 
         private static int CalculateRecruitLevel(int floor, MonsterDataSO monsterData)
@@ -166,7 +167,7 @@ namespace WitchTower.Battle
 
         private static MonsterRecruitResult GrantRecruitedMonster(PlayerProfile profile, MonsterDataSO monsterData, int level, bool isDungeonBossMonster)
         {
-            if (profile == null || monsterData == null)
+            if (profile == null || !IsRegisteredCurrentMonster(monsterData))
             {
                 return MonsterRecruitResult.Empty;
             }
@@ -221,6 +222,17 @@ namespace WitchTower.Battle
                 monsterName: monsterData.monsterName,
                 summary: $"{monsterData.monsterName} が仲間になりました。",
                 individualAverage: individualAverage);
+        }
+
+        private static bool IsRegisteredCurrentMonster(MonsterDataSO monsterData)
+        {
+            if (monsterData == null || string.IsNullOrEmpty(monsterData.monsterId))
+            {
+                return false;
+            }
+
+            MonsterDataSO registeredMonster = MasterDataManager.Instance?.GetMonsterData(monsterData.monsterId);
+            return registeredMonster != null && registeredMonster == monsterData;
         }
 
         private static MonsterRecruitResult BuildStorageFullResult(MonsterDataSO monsterData, int individualAverage = -1)

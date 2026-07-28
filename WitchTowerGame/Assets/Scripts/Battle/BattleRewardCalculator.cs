@@ -18,13 +18,8 @@ namespace WitchTower.Battle
         {
             var masterDataManager = MasterDataManager.Instance;
             masterDataManager?.Initialize();
-            var floorData = masterDataManager != null ? masterDataManager.GetFloorData(floor) : null;
             EnemyDataSO enemyData = BattleDungeonCatalog.CreateEnemyDataForGlobalFloor(floor, masterDataManager);
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-            if (enemyData == null)
-            {
-                enemyData = floorData != null ? floorData.enemyData : null;
-            }
 
             if (enemyData == null)
             {
@@ -36,7 +31,7 @@ namespace WitchTower.Battle
             var gold = enemyData.rewardGold;
             if (floor > highestClearedFloor)
             {
-                gold += ResolveFirstClearRewardGold(floorData, floor);
+                gold += ResolveFirstClearRewardGold(floor);
             }
 
             return new BattleRewardResult(
@@ -56,13 +51,8 @@ namespace WitchTower.Battle
             return Mathf.Max(0, Mathf.RoundToInt(Mathf.Max(0, exp) * spiritModifier.ExpRewardMultiplier * rebirthMultiplier));
         }
 
-        private static int ResolveFirstClearRewardGold(FloorDataSO floorData, int floor)
+        private static int ResolveFirstClearRewardGold(int floor)
         {
-            if (floorData != null && floorData.firstClearRewardGold > 0)
-            {
-                return floorData.firstClearRewardGold;
-            }
-
             return 5 + Mathf.Max(1, floor) * 2;
         }
     }

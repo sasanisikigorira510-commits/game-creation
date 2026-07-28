@@ -23,7 +23,7 @@ public static class UnityMcpSceneBuilder
     private const string UiPresentationCameraName = "UiPresentationCamera";
     private const string WitchSpritePath = "Assets/Art/External/Derived/witch_idle.png";
     private const string WitchCastSpritePath = "Assets/Art/External/Derived/witch_cast.png";
-    private const string EnemySpritePath = "Assets/Art/External/Derived/enemy_death_mage_elf.png";
+    private const string EnemySpritePath = "Assets/Resources/MonsterBattle/mon_dragon_whelp_idle_0.png";
     private const string TreeSpritePath = "Assets/Art/External/Derived/tree.png";
     private const string DirtTilePath = "Assets/Art/External/Derived/dirt_tile.png";
     private const string GrassTilePath = "Assets/Art/External/Derived/grass_tile.png";

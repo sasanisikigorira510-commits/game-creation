@@ -7,10 +7,8 @@ public static class UnityMcpMasterDataBuilder
 {
     private const string PlayerFolder = "Assets/MasterData/Player";
     private const string MonsterFolder = "Assets/MasterData/Monster";
-    private const string EnemyFolder = "Assets/MasterData/Enemy";
     private const string SkillFolder = "Assets/MasterData/Skill";
     private const string EquipmentFolder = "Assets/MasterData/Equipment";
-    private const string FloorFolder = "Assets/MasterData/Floor";
     private const string DropTableFolder = "Assets/MasterData/DropTable";
     private const string ResourceFolder = "Assets/Resources/MasterData";
 
@@ -35,15 +33,6 @@ public static class UnityMcpMasterDataBuilder
         {
             new MaterialDropEntry { materialId = "mat_stone_shard", amount = 1, dropRate = 0.75f },
             new MaterialDropEntry { materialId = "mat_shadow_thread", amount = 1, dropRate = 0.3f }
-        };
-
-        var enemies = new List<EnemyDataSO>
-        {
-            CreateEnemy("enemy_slime", "Ash Slime", 40, 8, 2, 0.8f, 0.03f, 1.3f, 10, 5, EnemyTrait.None, commonDropTable.dropTableId),
-            CreateEnemy("enemy_guard", "塔の衛兵", 64, 11, 5, 0.85f, 0.04f, 1.35f, 16, 8, EnemyTrait.HighDefense, commonDropTable.dropTableId),
-            CreateEnemy("enemy_harpy", "Needle Harpy", 55, 12, 3, 1.2f, 0.06f, 1.4f, 20, 10, EnemyTrait.FastAttack, commonDropTable.dropTableId),
-            CreateEnemy("enemy_wraith", "虚ろの亡霊", 72, 13, 4, 1.0f, 0.05f, 1.45f, 24, 12, EnemyTrait.Drain, commonDropTable.dropTableId),
-            CreateEnemy("enemy_knight", "Crimson Knight", 92, 16, 7, 0.95f, 0.1f, 1.6f, 30, 16, EnemyTrait.Critical, commonDropTable.dropTableId)
         };
 
         var skills = new[]
@@ -74,34 +63,15 @@ public static class UnityMcpMasterDataBuilder
         };
         equipment.AddRange(CreateClassMagicEquipmentSets());
 
-        var floors = new List<FloorDataSO>();
-        for (int floorNumber = 1; floorNumber <= 10; floorNumber++)
-        {
-            EnemyDataSO enemy = enemies[Mathf.Min((floorNumber - 1) / 2, enemies.Count - 1)];
-            FloorDataSO floor = CreateOrReplaceAsset<FloorDataSO>(FloorFolder + "/Floor_" + floorNumber + ".asset");
-            floor.floorNumber = floorNumber;
-            floor.enemyData = enemy;
-            floor.firstClearRewardGold = 5 + floorNumber * 2;
-            floor.repeatRewardTableId = commonDropTable.dropTableId;
-            floors.Add(floor);
-        }
-
         MasterDataRoot root = CreateOrReplaceAsset<MasterDataRoot>(ResourceFolder + "/MasterDataRoot.asset");
         root.playerBaseData = playerBaseData;
         root.monsterDataList = LoadAssetsInFolder<MonsterDataSO>(MonsterFolder);
-        root.enemyDataList = enemies.ToArray();
         root.skillDataList = skills;
         root.equipmentDataList = equipment.ToArray();
-        root.floorDataList = floors.ToArray();
         root.dropTableDataList = new[] { commonDropTable };
 
         EditorUtility.SetDirty(playerBaseData);
         EditorUtility.SetDirty(commonDropTable);
-        foreach (EnemyDataSO enemy in enemies)
-        {
-            EditorUtility.SetDirty(enemy);
-        }
-
         foreach (SkillDataSO skill in skills)
         {
             EditorUtility.SetDirty(skill);
@@ -110,11 +80,6 @@ public static class UnityMcpMasterDataBuilder
         foreach (EquipmentDataSO equipmentData in equipment)
         {
             EditorUtility.SetDirty(equipmentData);
-        }
-
-        foreach (FloorDataSO floor in floors)
-        {
-            EditorUtility.SetDirty(floor);
         }
 
         EditorUtility.SetDirty(root);
@@ -230,36 +195,6 @@ public static class UnityMcpMasterDataBuilder
         };
     }
 
-    private static EnemyDataSO CreateEnemy(
-        string enemyId,
-        string enemyName,
-        int maxHp,
-        int attack,
-        int defense,
-        float attackSpeed,
-        float critRate,
-        float critDamage,
-        int rewardGold,
-        int rewardExp,
-        EnemyTrait enemyTrait,
-        string dropTableId)
-    {
-        EnemyDataSO enemy = CreateOrReplaceAsset<EnemyDataSO>(EnemyFolder + "/" + enemyId + ".asset");
-        enemy.enemyId = enemyId;
-        enemy.enemyName = enemyName;
-        enemy.maxHp = maxHp;
-        enemy.attack = attack;
-        enemy.defense = defense;
-        enemy.attackSpeed = attackSpeed;
-        enemy.critRate = critRate;
-        enemy.critDamage = critDamage;
-        enemy.rewardGold = rewardGold;
-        enemy.rewardExp = rewardExp;
-        enemy.dropTableId = dropTableId;
-        enemy.enemyTrait = enemyTrait;
-        return enemy;
-    }
-
     private static SkillDataSO CreateSkill(
         string skillId,
         string skillName,
@@ -348,10 +283,8 @@ public static class UnityMcpMasterDataBuilder
         EnsureFolder("Assets", "MasterData");
         EnsureFolder("Assets/MasterData", "Player");
         EnsureFolder("Assets/MasterData", "Monster");
-        EnsureFolder("Assets/MasterData", "Enemy");
         EnsureFolder("Assets/MasterData", "Skill");
         EnsureFolder("Assets/MasterData", "Equipment");
-        EnsureFolder("Assets/MasterData", "Floor");
         EnsureFolder("Assets/MasterData", "DropTable");
         EnsureFolder("Assets", "Resources");
         EnsureFolder("Assets/Resources", "MasterData");

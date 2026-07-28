@@ -7,8 +7,3 @@ License: CC0
 RPGTileset.png
 Source: https://opengameart.org/content/stunning-pixel-art-rpg-tileset
 License: CC0
-
-basic_green_monsters_batch1-3.zip
-Source: https://opengameart.org/content/basic-green-monster-collection
-License: CC0
-

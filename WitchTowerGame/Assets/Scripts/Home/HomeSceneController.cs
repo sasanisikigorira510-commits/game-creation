@@ -90,10 +90,10 @@ namespace WitchTower.Home
         private static readonly Vector2 HomeMenuButtonSize = new Vector2(480f, 250f);
         private static readonly Vector2 HomeMainActionButtonSize = new Vector2(470f, 220f);
         private static readonly Vector2 HomeBottomNavButtonSize = new Vector2(196f, 152f);
-        private const float HomeBottomNavVisualWidth = 1064f;
+        private const float HomeBottomNavVisualWidth = 1080f;
         private const float HomeBottomNavSlotWidth = HomeBottomNavVisualWidth / 5f;
         private const float HomeBottomNavHeight = 190f;
-        private const float HomeBottomNavCenterOffsetX = 4f;
+        private const float HomeBottomNavCenterOffsetX = 0f;
         private const float HomeBottomNavCenterY = HomeFooterContentInset + 94f;
         private const float FirstSummonHighlightOffsetX = 11f;
         private const float ShopHighlightOffsetX = 21f;
@@ -106,7 +106,7 @@ namespace WitchTower.Home
         private static readonly Vector2 HomeBottomNavLabelSize = new Vector2(HomeBottomNavSlotWidth, 46f);
         private static readonly Vector2[] HomeBottomNavLabelPositions =
         {
-            new Vector2(18f, 37f),
+            new Vector2(18f, 47f),
             new Vector2(10f, 42f),
             new Vector2(-1f, 42f),
             new Vector2(-14f, 42f),
@@ -294,6 +294,7 @@ namespace WitchTower.Home
                 return;
             }
 
+            NormalizeCanvasScales();
             EnsureRuntimeState();
             RefreshAllPanels();
             RefreshCurrentTab();

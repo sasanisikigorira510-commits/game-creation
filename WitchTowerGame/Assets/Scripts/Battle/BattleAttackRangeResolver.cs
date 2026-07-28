@@ -18,34 +18,9 @@ namespace WitchTower.Battle
         private static readonly Dictionary<string, float> MonsterAttackRangeDefaults = new Dictionary<string, float>
         {
             { "monster_rock_golem", 0.95f },
-            { "monster_goblin", 1.00f },
-            { "monster_hell_knight", 1.10f },
-            { "monster_shadow", 1.00f },
-            { "monster_soul_eater", 1.05f },
-            { "monster_spectral_warrior", 1.15f },
-            { "monster_vault_guard", 1.10f },
-            { "monster_worm", 0.90f },
-            { "monster_naga", 1.20f },
-            { "monster_dragoon", 1.30f },
             { "monster_dragon_whelp", 2.80f },
             { "monster_flare_drake", 3.05f },
-            { "monster_abyss_dragon", 3.30f },
-            { "monster_bat", 2.60f },
-            { "monster_bee", 2.55f },
-            { "monster_centaur", 2.90f },
-            { "monster_death_mage_elf", 3.20f },
-            { "monster_ghost", 2.85f },
-            { "monster_naga_mage", 3.10f },
-            { "monster_wraith", 3.00f }
-        };
-
-        private static readonly Dictionary<string, float> EnemyAttackRangeDefaults = new Dictionary<string, float>
-        {
-            { "enemy_slime", 0.90f },
-            { "enemy_guard", 1.10f },
-            { "enemy_harpy", 1.75f },
-            { "enemy_knight", 1.10f },
-            { "enemy_wraith", 2.10f }
+            { "monster_abyss_dragon", 3.30f }
         };
 
         public static float ResolveMonsterAttackRange(MonsterDataSO monsterData)
@@ -79,12 +54,6 @@ namespace WitchTower.Battle
             if (enemyData.attackRange > 0f)
             {
                 return enemyData.attackRange;
-            }
-
-            if (!string.IsNullOrEmpty(enemyData.enemyId) &&
-                EnemyAttackRangeDefaults.TryGetValue(enemyData.enemyId, out float defaultRange))
-            {
-                return defaultRange;
             }
 
             return 1.0f;
