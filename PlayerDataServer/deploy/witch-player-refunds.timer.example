@@ -1,0 +1,11 @@
+[Unit]
+Description=Refund reconciliation timer (template, not installed)
+
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=60
+AccuracySec=5
+Unit=witch-player-refunds.service
+
+[Install]
+WantedBy=timers.target

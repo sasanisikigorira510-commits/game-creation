@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly encrypted offsite player backup
+
+[Timer]
+OnCalendar=*-*-* *:15:00
+RandomizedDelaySec=60
+Persistent=true
+Unit=witch-player-offsite.service
+
+[Install]
+WantedBy=timers.target

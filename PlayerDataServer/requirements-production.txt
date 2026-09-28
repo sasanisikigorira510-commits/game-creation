@@ -1,0 +1,2 @@
+# Python 3.12+, tested with the version below. Apple verification is opt-in.
+gunicorn==26.2.0

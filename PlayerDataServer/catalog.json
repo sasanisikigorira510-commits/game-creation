@@ -1,0 +1,137 @@
+[
+  {
+    "monsterId": "monster_dragon_whelp",
+    "classRank": 1,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_flare_drake",
+    "classRank": 2,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_abyss_dragon",
+    "classRank": 3,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_chibi_gear",
+    "classRank": 1,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_armed_droid",
+    "classRank": 2,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_omega_leon",
+    "classRank": 3,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_rock_golem",
+    "classRank": 1,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_ore_giant_garm",
+    "classRank": 2,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_cosmic_ore_fortress_golem",
+    "classRank": 3,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_apprentice_swordsman",
+    "classRank": 1,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_holy_armor_leon",
+    "classRank": 2,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_sword_saint_alvarez",
+    "classRank": 3,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_apprentice_mage",
+    "classRank": 1,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_dark_robe_curse_mage_noah",
+    "classRank": 2,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_abyss_grand_mage_seraphis",
+    "classRank": 3,
+    "fusionExclusive": false
+  },
+  {
+    "monsterId": "monster_mecha_dragon_valdrake",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_drag_gaia",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_dragon_sword_saint_agito",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_abyss_dragon_mage_valflare",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_fortress_machine_gigafort",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_mecha_sword_saint_gransaber",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_dark_magic_machine_god_merchion",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_rock_knight_gaius",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_astral_eclipse_golem",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_magic_sword_saint_luciel",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_seraph_michael",
+    "classRank": 4,
+    "fusionExclusive": true
+  },
+  {
+    "monsterId": "monster_spirit_queen_titania",
+    "classRank": 4,
+    "fusionExclusive": true
+  }
+]

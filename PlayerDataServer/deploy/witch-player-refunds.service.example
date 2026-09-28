@@ -1,0 +1,25 @@
+[Unit]
+Description=Refund reconciliation (template, explicit provisioning required)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=witchplayer
+Group=witchplayer
+WorkingDirectory=/opt/witch-player-refunds
+ExecStart=/opt/witch-player-refunds/venv/bin/python -I -B /opt/witch-player-refunds/run_refund_worker.py --config /etc/witch-player-refunds/worker.json --run
+UMask=0077
+TimeoutStartSec=180
+TimeoutStopSec=5
+KillMode=control-group
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/witch-player /var/lib/witch-player-refunds
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=256M
+LimitCORE=0

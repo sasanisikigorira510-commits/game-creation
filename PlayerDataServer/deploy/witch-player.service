@@ -1,0 +1,28 @@
+[Unit]
+Description=Witch player data API
+After=network.target
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=witchplayer
+Group=witchplayer
+WorkingDirectory=/opt/witch-player/server
+EnvironmentFile=/etc/witch-player/server.env
+ExecStart=/opt/witch-player/venv/bin/gunicorn --config gunicorn.conf.py production:application_factory()
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/witch-player
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+MemoryMax=600M
+
+[Install]
+WantedBy=multi-user.target

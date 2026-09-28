@@ -1,0 +1,20 @@
+[Unit]
+Description=Publish sanitized backup health for external monitoring
+After=witch-player-offsite.timer witch-player-backup.timer
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/python3 /usr/local/lib/nasus-backup/publish_backup_health.py
+RuntimeDirectory=witch-player-health
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/run/witch-player-health
+RestrictAddressFamilies=AF_UNIX
+TimeoutStartSec=50
+MemoryMax=64M

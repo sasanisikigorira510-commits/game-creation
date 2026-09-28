@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly player data backup
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=60
+Persistent=true
+
+[Install]
+WantedBy=timers.target

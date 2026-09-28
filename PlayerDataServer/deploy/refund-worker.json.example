@@ -1,0 +1,9 @@
+{
+  "Version": 1,
+  "InstanceId": "REPLACE_WITH_REVIEWED_INSTANCE",
+  "DataDirectory": "/var/lib/witch-player",
+  "StateDirectory": "/var/lib/witch-player-refunds",
+  "AppleConfigFile": "/etc/witch-player-refunds/apple.json",
+  "Environment": "Sandbox",
+  "BatchLimit": 2
+}

@@ -1,0 +1,16 @@
+.data*/
+.venv*/
+*.tar.gz
+.env
+*.env
+operators.json
+*-token
+__pycache__/
+*.sqlite*
+*.pem
+*.p8
+*.cer
+
+# Machine-specific deployment evidence can contain credentials and player data.
+/deploy/reports/
+*.log

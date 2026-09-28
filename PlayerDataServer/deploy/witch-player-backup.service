@@ -1,0 +1,19 @@
+[Unit]
+Description=Verified player database backup
+After=witch-player.service
+
+[Service]
+Type=oneshot
+User=witchplayer
+Group=witchplayer
+WorkingDirectory=/opt/witch-player/server
+ExecStart=/opt/witch-player/venv/bin/python maintenance.py backup --database /var/lib/witch-player/players.sqlite --output-dir /var/backups/witch-player
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# SQLite may access/create its shared-memory files even with mode=ro.
+ReadWritePaths=/var/lib/witch-player /var/backups/witch-player
+TimeoutStartSec=600
+Nice=10

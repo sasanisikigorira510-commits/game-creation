@@ -1,0 +1,18 @@
+[Unit]
+Description=Expire only verified DB backup generations older than 30 days
+After=network-online.target witch-player-offsite.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/python3 -I -B /usr/local/lib/nasus-retention-20260926/expire_backups.py --execute
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/witch-player-retention /var/lib/witch-player-offsite/lock
+TimeoutStartSec=900
+MemoryMax=256M
+Nice=10

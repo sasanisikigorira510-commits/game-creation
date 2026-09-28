@@ -1,0 +1,20 @@
+[Unit]
+Description=Encrypted and read-back verified Sakura offsite database backup
+After=network-online.target witch-player.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/witch-player/server
+ExecStart=/usr/bin/python3 /usr/local/lib/nasus-backup/sakura_offsite_backup.py
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/witch-player /var/lib/witch-player-offsite
+TimeoutStartSec=1800
+MemoryMax=256M
+Nice=10
+

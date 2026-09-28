@@ -1,0 +1,5 @@
+# Optional Apple account identity verification; separate from StoreKit verification.
+PyJWT[crypto]==2.15.0
+cryptography==50.0.1
+cffi==2.1.1
+pycparser==3.0

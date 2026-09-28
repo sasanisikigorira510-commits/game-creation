@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "InstanceId": "REPLACE_WITH_EXISTING_DATABASE_INSTANCE",
+  "ClientId": "REPLACE_WITH_NATIVE_BUNDLE_ID",
+  "TeamId": "REPLACE_WITH_APPLE_TEAM_ID",
+  "KeyId": "REPLACE_WITH_SIGN_IN_WITH_APPLE_KEY_ID",
+  "DataDirectory": "/var/lib/witch-player",
+  "SigningKeyFile": "/etc/witch-player-apple/signing.p8",
+  "TokenEncryptionKeyFile": "/etc/witch-player-apple/token-encryption.key",
+  "StateDirectory": "/var/lib/witch-player-apple"
+}

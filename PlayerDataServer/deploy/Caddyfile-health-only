@@ -1,0 +1,37 @@
+{
+    email {$ACME_EMAIL}
+    acme_ca https://acme-v02.api.letsencrypt.org/directory
+    servers {
+        max_header_size 16KB
+        timeouts {
+            read_header 10s
+            read_body 20s
+            write 60s
+            idle 60s
+        }
+    }
+}
+
+{$WITCH_DOMAIN} {
+    request_body {
+        max_size 4194304
+    }
+    @health {
+        path /healthz
+        method GET HEAD
+    }
+    handle @health {
+        reverse_proxy 127.0.0.1:8788 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-Proto https
+            transport http {
+                dial_timeout 3s
+                response_header_timeout 45s
+            }
+        }
+    }
+    handle {
+        header Retry-After 3600
+        respond "Service setup in progress" 503
+    }
+}

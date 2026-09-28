@@ -1,0 +1,23 @@
+[Unit]
+Description=Verified encrypted deletion journal sidecar (API remains closed)
+After=network-online.target witch-player.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/python3 -I /usr/local/lib/nasus-deletion/run_worker.py
+StateDirectory=witch-player-deletion
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/witch-player /var/lib/witch-player-deletion
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+TimeoutStartSec=180
+MemoryMax=128M
+LimitCORE=0
+

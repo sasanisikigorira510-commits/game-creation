@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly 30-day encrypted DB backup expiration
+
+[Timer]
+OnCalendar=*-*-* *:40:00
+RandomizedDelaySec=60
+Persistent=true
+Unit=witch-player-retention.service
+
+[Install]
+WantedBy=timers.target

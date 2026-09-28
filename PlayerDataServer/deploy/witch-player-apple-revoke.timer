@@ -1,0 +1,11 @@
+[Unit]
+Description=Poll existing Apple revocation queue
+
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=60
+AccuracySec=5
+Unit=witch-player-apple-revoke.service
+
+[Install]
+WantedBy=timers.target

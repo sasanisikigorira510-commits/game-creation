@@ -1,0 +1,25 @@
+[Unit]
+Description=Apple token revocation worker (requires explicit reviewed provisioning)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=witchplayer
+Group=witchplayer
+WorkingDirectory=/opt/nasus-apple-worker-20260926
+ExecStart=/opt/nasus-apple-20260926/venv/bin/python -I -B /opt/nasus-apple-worker-20260926/run_apple_revocation.py --config /etc/witch-player-apple/worker.json --run
+UMask=0077
+TimeoutStartSec=90
+TimeoutStopSec=5
+KillMode=control-group
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/witch-player /var/lib/witch-player-apple
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=256M
+LimitCORE=0
