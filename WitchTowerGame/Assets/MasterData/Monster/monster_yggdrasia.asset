@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_yggdrasia
+  m_EditorClassIdentifier: 
+  monsterId: monster_yggdrasia
+  monsterName: "世界樹女神ユグドラシア"
+  encyclopediaNumber: 40
+  raceId: spirit
+  classRank: 5
+  rarity: 5
+  element: 1
+  rangeType: 1
+  damageType: 1
+  baseStats:
+    maxHp: 500
+    attack: 55
+    magicAttack: 155
+    defense: 85
+    magicDefense: 155
+    attackSpeed: 1
+  attackRange: 4.6
+  normalAttackTargetCount: 3
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 3
+    attackPerPlus: 2
+    magicAttackPerPlus: 3
+    defensePerPlus: 2
+    magicDefensePerPlus: 4
+    attackSpeedPerPlus: 0.003
+  levelGrowth:
+    maxHpCoefficient: 1
+    attackCoefficient: 0.45
+    magicAttackCoefficient: 1.05
+    defenseCoefficient: 0.8
+    magicDefenseCoefficient: 1.3
+    attackSpeedCoefficient: 1.2
+  fusionExclusive: 1
+  fusionRecipes:
+  - parentMonsterIdA: monster_spirit_queen_titania
+    parentMonsterIdB: monster_seraph_michael
+    ignoreOrder: 0
+    note: "両親クラス４・Lv80、子Lv1。親の順番で結果が変化。"
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsters/Class5/yggdrasia
+  illustrationResourcePath: FamilyMonsters/Class5/yggdrasia
+  battleIdleResourcePath: MonsterBattle/mon_yggdrasia_idle
+  battleIdleFacing: 1
+  battleMoveResourcePath: MonsterBattle/mon_yggdrasia_move
+  battleMoveFacing: 1
+  battleAttackResourcePath: MonsterBattle/mon_yggdrasia_attack
+  battleAttackFacing: 1
+  battleVisualScale: 1.25
+  description: "雪崩・範囲魔法と足止め。デイリー試練の星核で固有スキルを育成できるクラス５の配合個体。"

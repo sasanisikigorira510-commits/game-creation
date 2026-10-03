@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using WitchTower.Core;
 using WitchTower.Managers;
 using WitchTower.Save;
+using WitchTower.UI;
 
 namespace WitchTower.Home
 {
@@ -34,12 +35,27 @@ namespace WitchTower.Home
                 return;
             }
 
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             EnsureRuntimeState();
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             ShowFusionPanel(ReturnHome);
         }
 
         private void Update()
         {
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             if (Application.isPlaying && Input.GetKeyDown(KeyCode.Escape))
             {
                 ReturnHome();
@@ -48,8 +64,13 @@ namespace WitchTower.Home
 
         public void ReturnHome()
         {
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             SaveManager.Instance?.SaveCurrentGame();
-            SceneManager.LoadScene(homeSceneName);
+            SceneTransitionGuard.LoadScene(homeSceneName);
         }
 
         private void ApplyEditorPreview()
@@ -93,9 +114,19 @@ namespace WitchTower.Home
 
         private static void EnsureRuntimeState()
         {
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             Application.runInBackground = true;
             ManagerFactory.EnsureGameManager();
             ManagerFactory.EnsureSaveManager();
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             ManagerFactory.EnsureMasterDataManager();
             ManagerFactory.EnsureAudioManager();
             ManagerFactory.EnsureUiPresentationCamera();
@@ -113,17 +144,29 @@ namespace WitchTower.Home
             }
         }
 
-        private static Canvas EnsureCanvas()
+        private Canvas EnsureCanvas()
         {
-            Canvas canvas = FindObjectOfType<Canvas>(true);
+            // A completed purchase leaves its persistent input-blocker canvas
+            // inactive. Never build the live panel under that foreign overlay
+            // and leave this scene's unbound editor preview on screen.
+            Canvas canvas = SceneCanvasOwner.Find(this, "FusionCanvas");
             if (canvas == null)
             {
-                GameObject canvasObject = new GameObject("FusionCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-                canvas = canvasObject.GetComponent<Canvas>();
+                GameObject canvasObject = new GameObject("FusionCanvas", typeof(RectTransform));
+                SceneManager.MoveGameObjectToScene(canvasObject, gameObject.scene);
+                RectTransform canvasRect = canvasObject.GetComponent<RectTransform>();
+                canvasRect.localScale = Vector3.one;
+                canvasRect.sizeDelta = new Vector2(1080f, 1920f);
+                canvas = canvasObject.AddComponent<Canvas>();
+                canvasObject.AddComponent<CanvasScaler>();
+                canvasObject.AddComponent<GraphicRaycaster>();
             }
 
+            canvas.gameObject.SetActive(true);
+            canvas.enabled = true;
             canvas.transform.localScale = Vector3.one;
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.worldCamera = null;
 
             CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
             if (scaler == null)
@@ -165,15 +208,12 @@ namespace WitchTower.Home
             rectTransform.localScale = Vector3.one;
         }
 
-        private static void NormalizeCanvasScales()
+        private void NormalizeCanvasScales()
         {
-            Canvas[] canvases = FindObjectsOfType<Canvas>(true);
-            foreach (Canvas canvas in canvases)
+            Canvas canvas = SceneCanvasOwner.Find(this, "FusionCanvas");
+            if (canvas != null)
             {
-                if (canvas != null)
-                {
-                    canvas.transform.localScale = Vector3.one;
-                }
+                canvas.transform.localScale = Vector3.one;
             }
         }
     }

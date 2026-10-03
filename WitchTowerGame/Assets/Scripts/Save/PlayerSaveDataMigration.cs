@@ -22,6 +22,8 @@ namespace WitchTower.Save
             // Schema 0 is every save written before explicit versioning was added.
             // Newly introduced fields intentionally retain their serialized defaults.
             saveData.DailyClaimedQuestIds ??= new List<string>();
+            saveData.DailyClaimedAdRewardIds ??= new List<string>();
+            saveData.ProcessedIapTransactionIds ??= new List<string>();
             saveData.MissionProgressList ??= new List<MissionProgressData>();
             saveData.OwnedMaterials ??= new List<OwnedMaterialData>();
             saveData.OwnedEquipments ??= new List<OwnedEquipmentData>();
@@ -32,7 +34,14 @@ namespace WitchTower.Save
             saveData.SkillLevels ??= new List<SkillLevelData>();
             saveData.RebirthSkillLevels ??= new List<RebirthSkillLevelData>();
             saveData.SeenStoryEventIds ??= new List<string>();
+            saveData.StoryDialogueEventId ??= string.Empty;
+            saveData.StoryDialogueLineIndex = System.Math.Max(0, saveData.StoryDialogueLineIndex);
             saveData.SeenTutorialHintIds ??= new List<string>();
+            saveData.OwnedGuardians ??= new List<OwnedGuardianData>();
+            saveData.GuardianCoreIds ??= new List<string>();
+            saveData.EquippedGuardianId ??= string.Empty;
+            saveData.GuardianOathIds ??= new List<string>();
+            saveData.SeenGuardianDialogueIds ??= new List<string>();
             saveData.SchemaVersion = PlayerSaveData.CurrentSchemaVersion;
             return true;
         }

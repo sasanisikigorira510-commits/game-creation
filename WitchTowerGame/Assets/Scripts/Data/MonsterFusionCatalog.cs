@@ -33,7 +33,8 @@ namespace WitchTower.Data
         ClassUp = 0,
         SameClassParentRace = 1,
         Special = 2,
-        ParentRaceHighestClass = 3
+        ParentRaceHighestClass = 3,
+        HighestClassParent = 4
     }
 
     public sealed class MonsterFusionMonsterDefinition
@@ -109,6 +110,14 @@ namespace WitchTower.Data
         public const string DarkRobeCurseMageNoahId = "monster_dark_robe_curse_mage_noah";
         public const string AbyssGrandMageSeraphisId = "monster_abyss_grand_mage_seraphis";
 
+        public const string ApprenticeAngelLumieId = "monster_apprentice_angel_lumie";
+        public const string HolyWingAngelLumielId = "monster_holy_wing_angel_lumiel";
+        public const string ArchangelSeraphinaId = "monster_archangel_seraphina";
+
+        public const string BudFairyLiliId = "monster_bud_fairy_lili";
+        public const string FlowerFairyLiliaId = "monster_flower_fairy_lilia";
+        public const string FlowerCrownSpiritLilianaId = "monster_flower_crown_spirit_liliana";
+
         public const string MechaDragonValdrakeId = "monster_mecha_dragon_valdrake";
         public const string DragGaiaId = "monster_drag_gaia";
         public const string DragonSwordSaintAgitoId = "monster_dragon_sword_saint_agito";
@@ -144,6 +153,14 @@ namespace WitchTower.Data
             new MonsterFusionMonsterDefinition(DarkRobeCurseMageNoahId, "黒衣の呪術師ノア", MonsterRace.Mage, MonsterClass.Middle),
             new MonsterFusionMonsterDefinition(AbyssGrandMageSeraphisId, "深淵大魔導セラフィス", MonsterRace.Mage, MonsterClass.Upper),
 
+            new MonsterFusionMonsterDefinition(ApprenticeAngelLumieId, "見習い天使ルミエ", MonsterRace.Angel, MonsterClass.Lower),
+            new MonsterFusionMonsterDefinition(HolyWingAngelLumielId, "聖翼天使ルミエル", MonsterRace.Angel, MonsterClass.Middle),
+            new MonsterFusionMonsterDefinition(ArchangelSeraphinaId, "大天使セラフィナ", MonsterRace.Angel, MonsterClass.Upper),
+
+            new MonsterFusionMonsterDefinition(BudFairyLiliId, "芽吹きの妖精リリ", MonsterRace.Spirit, MonsterClass.Lower),
+            new MonsterFusionMonsterDefinition(FlowerFairyLiliaId, "花妖精リリア", MonsterRace.Spirit, MonsterClass.Middle),
+            new MonsterFusionMonsterDefinition(FlowerCrownSpiritLilianaId, "花冠の精霊リリアーナ", MonsterRace.Spirit, MonsterClass.Upper),
+
             new MonsterFusionMonsterDefinition(MechaDragonValdrakeId, "機竜ヴァルドレイク", MonsterRace.Special, MonsterClass.Class4),
             new MonsterFusionMonsterDefinition(DragGaiaId, "竜岩巨兵ドラグガイア", MonsterRace.Special, MonsterClass.Class4),
             new MonsterFusionMonsterDefinition(DragonSwordSaintAgitoId, "竜剣聖アギト", MonsterRace.Special, MonsterClass.Class4),
@@ -155,7 +172,14 @@ namespace WitchTower.Data
             new MonsterFusionMonsterDefinition(AstralEclipseGolemId, "星蝕魔像アストラルゴーレム", MonsterRace.Special, MonsterClass.Class4),
             new MonsterFusionMonsterDefinition(MagicSwordSaintLucielId, "魔剣聖ルシエル", MonsterRace.Special, MonsterClass.Class4),
             new MonsterFusionMonsterDefinition(SeraphMichaelId, "熾天使ミカエル", MonsterRace.Angel, MonsterClass.Class4),
-            new MonsterFusionMonsterDefinition(SpiritQueenTitaniaId, "精霊女王ティターニア", MonsterRace.Spirit, MonsterClass.Class4)
+            new MonsterFusionMonsterDefinition(SpiritQueenTitaniaId, "精霊女王ティターニア", MonsterRace.Spirit, MonsterClass.Class4),
+            new MonsterFusionMonsterDefinition("monster_astravarn", "星甲竜帝アストラヴァーン", MonsterRace.Dragon, MonsterClass.Class5),
+            new MonsterFusionMonsterDefinition("monster_ordion", "創世機神オルディオン", MonsterRace.Robot, MonsterClass.Class5),
+            new MonsterFusionMonsterDefinition("monster_geoatlas", "星核巨神ジオアトラス", MonsterRace.Golem, MonsterClass.Class5),
+            new MonsterFusionMonsterDefinition("monster_regnard", "覇天剣皇レグナード", MonsterRace.Swordsman, MonsterClass.Class5),
+            new MonsterFusionMonsterDefinition("monster_noxveil", "深淵魔導帝ノクスヴェイル", MonsterRace.Mage, MonsterClass.Class5),
+            new MonsterFusionMonsterDefinition("monster_celestia", "天界女王セレスティア", MonsterRace.Angel, MonsterClass.Class5),
+            new MonsterFusionMonsterDefinition("monster_yggdrasia", "世界樹女神ユグドラシア", MonsterRace.Spirit, MonsterClass.Class5),
         };
 
         private static readonly MonsterFusionRecipeDefinition[] Recipes =
@@ -175,6 +199,14 @@ namespace WitchTower.Data
             new MonsterFusionRecipeDefinition(ApprenticeMageId, ApprenticeMageId, DarkRobeCurseMageNoahId, MonsterFusionRecipeType.ClassUp),
             new MonsterFusionRecipeDefinition(DarkRobeCurseMageNoahId, DarkRobeCurseMageNoahId, AbyssGrandMageSeraphisId, MonsterFusionRecipeType.ClassUp),
 
+            new MonsterFusionRecipeDefinition(ApprenticeAngelLumieId, ApprenticeAngelLumieId, HolyWingAngelLumielId, MonsterFusionRecipeType.ClassUp),
+            new MonsterFusionRecipeDefinition(HolyWingAngelLumielId, HolyWingAngelLumielId, ArchangelSeraphinaId, MonsterFusionRecipeType.ClassUp),
+            new MonsterFusionRecipeDefinition(ArchangelSeraphinaId, ArchangelSeraphinaId, SeraphMichaelId, MonsterFusionRecipeType.ClassUp),
+
+            new MonsterFusionRecipeDefinition(BudFairyLiliId, BudFairyLiliId, FlowerFairyLiliaId, MonsterFusionRecipeType.ClassUp),
+            new MonsterFusionRecipeDefinition(FlowerFairyLiliaId, FlowerFairyLiliaId, FlowerCrownSpiritLilianaId, MonsterFusionRecipeType.ClassUp),
+            new MonsterFusionRecipeDefinition(FlowerCrownSpiritLilianaId, FlowerCrownSpiritLilianaId, SpiritQueenTitaniaId, MonsterFusionRecipeType.ClassUp),
+
             new MonsterFusionRecipeDefinition(AbyssDragonId, OmegaLeonId, MechaDragonValdrakeId, MonsterFusionRecipeType.Special),
             new MonsterFusionRecipeDefinition(AbyssDragonId, CosmicOreFortressGolemId, DragGaiaId, MonsterFusionRecipeType.Special),
             new MonsterFusionRecipeDefinition(AbyssDragonId, SwordSaintAlvarezId, DragonSwordSaintAgitoId, MonsterFusionRecipeType.Special),
@@ -184,7 +216,14 @@ namespace WitchTower.Data
             new MonsterFusionRecipeDefinition(OmegaLeonId, AbyssGrandMageSeraphisId, DarkMagicMachineGodMerchionId, MonsterFusionRecipeType.Special),
             new MonsterFusionRecipeDefinition(CosmicOreFortressGolemId, SwordSaintAlvarezId, RockKnightGaiusId, MonsterFusionRecipeType.Special),
             new MonsterFusionRecipeDefinition(CosmicOreFortressGolemId, AbyssGrandMageSeraphisId, AstralEclipseGolemId, MonsterFusionRecipeType.Special),
-            new MonsterFusionRecipeDefinition(SwordSaintAlvarezId, AbyssGrandMageSeraphisId, MagicSwordSaintLucielId, MonsterFusionRecipeType.Special)
+            new MonsterFusionRecipeDefinition(SwordSaintAlvarezId, AbyssGrandMageSeraphisId, MagicSwordSaintLucielId, MonsterFusionRecipeType.Special),
+            new MonsterFusionRecipeDefinition("monster_mecha_dragon_valdrake", "monster_drag_gaia", "monster_astravarn", MonsterFusionRecipeType.Special, true),
+            new MonsterFusionRecipeDefinition("monster_fortress_machine_gigafort", "monster_mecha_sword_saint_gransaber", "monster_ordion", MonsterFusionRecipeType.Special, true),
+            new MonsterFusionRecipeDefinition("monster_rock_knight_gaius", "monster_astral_eclipse_golem", "monster_geoatlas", MonsterFusionRecipeType.Special, true),
+            new MonsterFusionRecipeDefinition("monster_dragon_sword_saint_agito", "monster_magic_sword_saint_luciel", "monster_regnard", MonsterFusionRecipeType.Special, true),
+            new MonsterFusionRecipeDefinition("monster_abyss_dragon_mage_valflare", "monster_dark_magic_machine_god_merchion", "monster_noxveil", MonsterFusionRecipeType.Special, true),
+            new MonsterFusionRecipeDefinition("monster_seraph_michael", "monster_spirit_queen_titania", "monster_celestia", MonsterFusionRecipeType.Special, false),
+            new MonsterFusionRecipeDefinition("monster_spirit_queen_titania", "monster_seraph_michael", "monster_yggdrasia", MonsterFusionRecipeType.Special, false),
         };
 
         public static IReadOnlyList<MonsterFusionMonsterDefinition> GetMonsterDefinitions()
@@ -262,18 +301,28 @@ namespace WitchTower.Data
 
             int firstClassRank = Math.Max(1, firstParentData.classRank);
             int secondClassRank = Math.Max(1, secondParentData.classRank);
-            if (!IsNormalClassRank(firstClassRank) || !IsNormalClassRank(secondClassRank))
+            if (firstClassRank >= 4 || secondClassRank >= 4)
             {
-                return false;
+                // Explicit catalog recipes are resolved first by the service.
+                // Without one, retain the higher-class parent's exact species;
+                // equal classes use parent 1, so swapping parents is meaningful.
+                resultMonsterData = secondClassRank > firstClassRank ? secondParentData : firstParentData;
+                recipe = new MonsterFusionRecipeDefinition(
+                    firstParentData.monsterId,
+                    secondParentData.monsterId,
+                    resultMonsterData.monsterId,
+                    MonsterFusionRecipeType.HighestClassParent,
+                    false);
+                return true;
             }
 
             bool sameRace = string.Equals(firstParentData.raceId, secondParentData.raceId, StringComparison.OrdinalIgnoreCase);
             bool sameClass = firstClassRank == secondClassRank;
-            bool classUp = sameRace && sameClass;
+            bool classUp = sameRace && sameClass && firstClassRank < 3;
             // 通常配合は異種族・クラス違いも許可する。結果は親1の種族で、高い方のクラスにそろえる。
             int resultClassRank = classUp
                 ? firstClassRank + 1
-                : Math.Max(firstClassRank, secondClassRank);
+                : Math.Min(3, Math.Max(firstClassRank, secondClassRank));
             if (!IsNormalClassRank(resultClassRank))
             {
                 return false;

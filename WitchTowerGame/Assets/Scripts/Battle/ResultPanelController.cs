@@ -71,7 +71,7 @@ namespace WitchTower.Battle
                 ? $"{nextDungeonName}\n第{nextLocalFloor}階層へ"
                 : $"第{nextLocalFloor}階層へ";
             BattleSceneController battleSceneController = ResolveBattleSceneController();
-            bool forceReturnHome = BattleSceneController.RequiresInitialTutorialHomeReturn(viewData);
+            bool forceReturnHome = BattleSceneController.RequiresHomeReturn(viewData);
 
             if (rootObject != null)
             {
@@ -107,7 +107,9 @@ namespace WitchTower.Battle
             {
                 summaryText.text = viewData.IsWin
                     ? forceReturnHome
-                        ? $"{clearedStageName}\n第{clearedLocalFloor}階層を突破しました\nホームで装備を確認しましょう"
+                        ? BattleSceneController.RequiresDungeonClearHomeReturn(viewData)
+                            ? $"{clearedStageName}\n第{clearedLocalFloor}階層を突破しました\n探索完了！ ホームへ戻りましょう"
+                            : $"{clearedStageName}\n第{clearedLocalFloor}階層を突破しました\nホームで装備を確認しましょう"
                         : $"{clearedStageName}\n第{clearedLocalFloor}階層を突破しました\n{nextFloorSummary}"
                     : "戦闘に敗北しました\n途中獲得は持ち帰れます\nホームで編成や装備を見直しましょう";
                 summaryText.color = viewData.IsWin ? WinSummaryColor : LoseSummaryColor;
@@ -331,11 +333,9 @@ namespace WitchTower.Battle
             var lines = new List<string>
             {
                 viewData.IsWin
-                    ? $"クリア報酬: ゴールド +{viewData.Gold:N0} / プレイヤー経験値 +{viewData.Exp:N0}"
-                    : $"途中獲得: ゴールド +{viewData.Gold:N0} / プレイヤー経験値 +{viewData.Exp:N0}",
-                viewData.PartyMonsterCount > 0
-                    ? $"討伐報酬: パーティ経験値 +{viewData.PartyMonsterExp:N0} / {viewData.PartyMonsterCount}体"
-                    : "討伐報酬: パーティ経験値 なし"
+                    ? $"クリア報酬: ゴールド +{viewData.Gold:N0}"
+                    : $"途中獲得: ゴールド +{viewData.Gold:N0}",
+                $"経験値 +{viewData.Exp:N0}"
             };
 
             if (!viewData.IsWin)
@@ -361,7 +361,7 @@ namespace WitchTower.Battle
             SetObjectActive(rewardHintText, true);
             SetObjectActive(nextRewardForecastText, false);
             SetObjectActive(nextActionText, true);
-            ApplyGeneratedPanelSprite();
+            ApplyGeneratedPanelSprite(viewData.IsWin);
 
             if (goldText != null && goldText.transform.parent != null)
             {
@@ -532,10 +532,10 @@ namespace WitchTower.Battle
 
         private static void ReturnHomeFallback()
         {
-            SceneManager.LoadScene(FallbackHomeSceneName);
+            SceneTransitionGuard.LoadScene(FallbackHomeSceneName);
         }
 
-        private void ApplyGeneratedPanelSprite()
+        private void ApplyGeneratedPanelSprite(bool isWin)
         {
             Transform rootTransform = rootObject != null ? rootObject.transform : transform;
             Image frameImage = rootTransform.Find("ResultFrame")?.GetComponent<Image>();
@@ -550,10 +550,7 @@ namespace WitchTower.Battle
                 return;
             }
 
-            frameImage.sprite = panelSprite;
-            frameImage.color = Color.white;
-            frameImage.type = Image.Type.Simple;
-            frameImage.preserveAspect = false;
+            BattleResultPresentation.ApplyBackground(frameImage, isWin);
         }
 
         private void ShowRewardVisuals(BattleResultViewData viewData)
@@ -575,11 +572,12 @@ namespace WitchTower.Battle
 
             rewardVisualRoot.SetActive(true);
             int count = Mathf.Min(visuals.Length, 4);
-            float spacing = count > 1 ? 148f : 0f;
+            float spacing = count > 1 ? 210f : 0f;
             float startX = -((count - 1) * spacing * 0.5f);
             for (int i = 0; i < count; i += 1)
             {
                 GameObject slot = CreateRewardVisual(visuals[i], rewardVisualRoot.transform);
+                BattleResultPresentation.EnlargeRewardSlot(slot);
                 RectTransform slotRect = slot.GetComponent<RectTransform>();
                 slotRect.anchoredPosition = new Vector2(startX + i * spacing, 0f);
                 rewardVisualObjects.Add(slot);
@@ -608,11 +606,11 @@ namespace WitchTower.Battle
                 rect.SetParent(rootTransform, false);
             }
 
-            rect.anchorMin = new Vector2(0.5f, 0.30f);
-            rect.anchorMax = new Vector2(0.5f, 0.30f);
+            rect.anchorMin = new Vector2(0.5f, 0.35f);
+            rect.anchorMax = new Vector2(0.5f, 0.35f);
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(660f, 150f);
+            rect.sizeDelta = new Vector2(840f, 300f);
         }
 
         private static GameObject CreateRewardVisual(BattleResultRewardVisual visual, Transform parent)
@@ -764,29 +762,29 @@ namespace WitchTower.Battle
                 rootRect.anchorMax = new Vector2(0.5f, 0.5f);
                 rootRect.pivot = new Vector2(0.5f, 0.5f);
                 rootRect.anchoredPosition = Vector2.zero;
-                rootRect.sizeDelta = new Vector2(780f, 620f);
+                rootRect.sizeDelta = new Vector2(960f, 1120f);
             }
 
             Transform rootTransform = rootObject != null ? rootObject.transform : transform;
-            ConfigureRect(rootTransform.Find("ResultFrame") as RectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(720f, 560f));
-            ConfigureText(titleText, new Vector2(0.5f, 1f), new Vector2(0f, -48f), new Vector2(660f, 56f), 34f, FontStyles.Bold, TextAlignmentOptions.Center);
-            ConfigureText(summaryText, new Vector2(0.5f, 0.61f), new Vector2(0f, 0f), new Vector2(660f, 92f), 18f, FontStyles.Bold, TextAlignmentOptions.Center);
-            ConfigureText(rewardHintText, new Vector2(0.5f, 0.46f), new Vector2(0f, 0f), new Vector2(680f, 92f), 15f, FontStyles.Bold, TextAlignmentOptions.Center);
+            ConfigureRect(rootTransform.Find("ResultFrame") as RectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 1120f));
+            ConfigureText(titleText, new Vector2(0.5f, .9f), Vector2.zero, new Vector2(820f, 90f), 60f, FontStyles.Bold, TextAlignmentOptions.Center);
+            ConfigureText(summaryText, new Vector2(0.5f, .72f), Vector2.zero, new Vector2(820f, 120f), 30f, FontStyles.Bold, TextAlignmentOptions.Center);
+            ConfigureText(rewardHintText, new Vector2(0.5f, .57f), Vector2.zero, new Vector2(820f, 190f), 28f, FontStyles.Bold, TextAlignmentOptions.Center);
             ConfigureText(nextRewardForecastText, new Vector2(0.5f, 0.25f), new Vector2(0f, 0f), new Vector2(660f, 42f), 15f, FontStyles.Normal, TextAlignmentOptions.Center);
-            ConfigureText(nextActionText, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(580f, 32f), 16f, FontStyles.Bold, TextAlignmentOptions.Center);
+            ConfigureText(nextActionText, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(820f, 40f), 26f, FontStyles.Bold, TextAlignmentOptions.Center);
 
             Transform rewardStrip = goldText != null ? goldText.transform.parent : null;
-            ConfigureRect(rewardStrip as RectTransform, new Vector2(0.5f, 0.74f), Vector2.zero, new Vector2(660f, 96f));
+            ConfigureRect(rewardStrip as RectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(840f, 96f));
             ConfigureRect(rewardStrip != null ? rewardStrip.Find("RewardStripFrame") as RectTransform : null, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620f, 44f));
-            ConfigureText(goldText, new Vector2(0.30f, 0.36f), Vector2.zero, new Vector2(260f, 36f), 21f, FontStyles.Bold, TextAlignmentOptions.Center);
-            ConfigureText(expText, new Vector2(0.70f, 0.36f), Vector2.zero, new Vector2(260f, 36f), 21f, FontStyles.Bold, TextAlignmentOptions.Center);
+            ConfigureText(goldText, new Vector2(0.25f, 0.36f), Vector2.zero, new Vector2(410f, 50f), 28f, FontStyles.Bold, TextAlignmentOptions.Center);
+            ConfigureText(expText, new Vector2(0.75f, 0.36f), Vector2.zero, new Vector2(410f, 50f), 28f, FontStyles.Bold, TextAlignmentOptions.Center);
 
             Transform nextMoveStrip = nextActionText != null ? nextActionText.transform.parent : null;
-            ConfigureRect(nextMoveStrip as RectTransform, new Vector2(0.5f, 0.17f), Vector2.zero, new Vector2(640f, 46f));
+            ConfigureRect(nextMoveStrip as RectTransform, new Vector2(0.5f, 0.18f), Vector2.zero, new Vector2(840f, 46f));
             ConfigureRect(nextMoveStrip != null ? nextMoveStrip.Find("NextMoveStripFrame") as RectTransform : null, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(600f, 22f));
 
             Transform buttonRail = nextFloorButton != null ? nextFloorButton.transform.parent : null;
-            ConfigureRect(buttonRail as RectTransform, new Vector2(0.5f, 0.055f), Vector2.zero, new Vector2(640f, 70f));
+            ConfigureRect(buttonRail as RectTransform, new Vector2(0.5f, 0.09f), Vector2.zero, new Vector2(840f, 90f));
             ConfigureRect(buttonRail != null ? buttonRail.Find("ResultButtonRailFrame") as RectTransform : null, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(600f, 38f));
         }
 

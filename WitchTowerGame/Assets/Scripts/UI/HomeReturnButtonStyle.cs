@@ -14,7 +14,10 @@ namespace WitchTower.UI
 
         public static readonly Vector2 Anchor = Vector2.up;
         public static readonly Vector2 Pivot = Vector2.up;
-        public static readonly Vector2 AnchoredPosition = new Vector2(34f, -34f);
+        // Keep the same touch target and visual inset on every page. The
+        // safe-area fitter remaps the anchor for notched devices; the local
+        // margin must remain page-independent.
+        public static readonly Vector2 AnchoredPosition = new Vector2(64f, -48f);
         public static readonly Vector2 Size = new Vector2(240f, 78f);
 
         private static readonly Color BackgroundColor = new Color(0.56f, 0.2f, 0.07f, 1f);

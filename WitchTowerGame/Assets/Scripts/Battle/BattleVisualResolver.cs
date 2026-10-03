@@ -12,7 +12,8 @@ namespace WitchTower.Battle
     {
         Idle = 0,
         Move = 1,
-        Attack = 2
+        Attack = 2,
+        Skill = 3
     }
 
     public readonly struct BattleSpriteVisualMetrics
@@ -59,6 +60,7 @@ namespace WitchTower.Battle
 
         private static readonly Dictionary<string, string> EnemyBattleBasePaths = new Dictionary<string, string>
         {
+            { GarzaBossPresentation.EnemyId, GarzaBossPresentation.ResourceBase },
             { "enemy_class1_dragon_whelp", "MonsterBattle/mon_dragon_whelp" },
             { "enemy_class1_chibi_gear", "MonsterBattle/mon_chibi_gear" },
             { "enemy_class1_rock_golem", "MonsterBattle/mon_rock_golem" },
@@ -223,6 +225,8 @@ namespace WitchTower.Battle
 
         public static Sprite ResolveEnemyIdleSprite(EnemyDataSO enemyData)
         {
+            var guardian = GuardianService.TrialDefinition(enemyData);
+            if (guardian != null) return ResolveMonsterIdleSprite(GuardianService.Monster(guardian.Id));
             if (enemyData == null)
             {
                 return LoadSprite(FallbackEnemyIdlePath);
@@ -249,6 +253,8 @@ namespace WitchTower.Battle
 
         public static Sprite ResolveEnemyMoveSprite(EnemyDataSO enemyData)
         {
+            var guardian = GuardianService.TrialDefinition(enemyData);
+            if (guardian != null) return ResolveMonsterMoveSprite(GuardianService.Monster(guardian.Id));
             if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
             {
                 Sprite frame = LoadSprite($"{battleBasePath}_move_0");
@@ -270,6 +276,8 @@ namespace WitchTower.Battle
 
         public static Sprite ResolveEnemyAttackSprite(EnemyDataSO enemyData)
         {
+            var guardian = GuardianService.TrialDefinition(enemyData);
+            if (guardian != null) return ResolveMonsterAttackSprite(GuardianService.Monster(guardian.Id));
             if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
             {
                 Sprite frame = LoadSprite($"{battleBasePath}_attack_0");
@@ -361,6 +369,8 @@ namespace WitchTower.Battle
 
         public static List<Sprite> ResolveEnemyIdleSprites(EnemyDataSO enemyData)
         {
+            var guardian = GuardianService.TrialDefinition(enemyData);
+            if (guardian != null) return ResolveMonsterIdleSprites(GuardianService.Monster(guardian.Id));
             if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
             {
                 return LoadSpriteFrames($"{battleBasePath}_idle");
@@ -381,6 +391,8 @@ namespace WitchTower.Battle
 
         public static List<Sprite> ResolveEnemyMoveSprites(EnemyDataSO enemyData)
         {
+            var guardian = GuardianService.TrialDefinition(enemyData);
+            if (guardian != null) return ResolveMonsterMoveSprites(GuardianService.Monster(guardian.Id));
             if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
             {
                 List<Sprite> frames = LoadSpriteFrames($"{battleBasePath}_move");
@@ -402,6 +414,8 @@ namespace WitchTower.Battle
 
         public static List<Sprite> ResolveEnemyAttackSprites(EnemyDataSO enemyData)
         {
+            var guardian = GuardianService.TrialDefinition(enemyData);
+            if (guardian != null) return ResolveMonsterAttackSprites(GuardianService.Monster(guardian.Id));
             if (enemyData != null && EnemyBattleBasePaths.TryGetValue(enemyData.enemyId, out string battleBasePath))
             {
                 List<Sprite> frames = LoadSpriteFrames($"{battleBasePath}_attack");
@@ -433,6 +447,7 @@ namespace WitchTower.Battle
                 case BattleVisualPose.Move:
                     return monsterData.battleMoveFacing;
                 case BattleVisualPose.Attack:
+                case BattleVisualPose.Skill:
                     return monsterData.battleAttackFacing;
                 case BattleVisualPose.Idle:
                 default:
@@ -661,7 +676,7 @@ namespace WitchTower.Battle
                 return null;
             }
 
-            if (SpriteCache.TryGetValue(resourcePath, out Sprite cachedSprite))
+            if (SpriteCache.TryGetValue(resourcePath, out Sprite cachedSprite) && cachedSprite != null)
             {
                 return cachedSprite;
             }
@@ -706,7 +721,7 @@ namespace WitchTower.Battle
 
             if (SpriteFramesCache.TryGetValue(resourcePath, out List<Sprite> cachedFrames))
             {
-                if (cachedFrames.Count > 0)
+                if (cachedFrames.Count > 0 && cachedFrames.All(frame => frame != null))
                 {
                     return cachedFrames;
                 }
@@ -715,6 +730,25 @@ namespace WitchTower.Battle
             }
 
             var frames = new List<Sprite>();
+            if (resourcePath.StartsWith("UI/BattleSpirit/Animation/", System.StringComparison.Ordinal))
+            {
+                // Existing image2 guardian animations are four frames in one
+                // horizontal texture, rather than individual sprite assets.
+                var sheet = Resources.Load<Texture2D>(resourcePath);
+                if (sheet != null)
+                {
+                    int width = sheet.width / 4;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        var frame = Sprite.Create(sheet,new Rect(i*width,0,width,sheet.height),new Vector2(.5f,.5f),100,0,SpriteMeshType.FullRect);
+                        frame.hideFlags = HideFlags.HideAndDontSave;
+                        frame.name = sheet.name + "_" + i;
+                        frames.Add(frame);
+                    }
+                    SpriteFramesCache[resourcePath] = frames;
+                    return frames;
+                }
+            }
             // Animation length is defined by the contiguous resource sequence;
             // do not impose a fixed frame cap on generated smooth animations.
             for (int i = 0; ; i += 1)

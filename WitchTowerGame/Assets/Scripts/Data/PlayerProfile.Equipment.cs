@@ -376,6 +376,37 @@ namespace WitchTower.Data
             }
         }
 
+        // ToSaveData normalizes derived equipment state before the repository
+        // commits. A failed bulk-sale save must put even an older/inconsistent
+        // assignment back exactly; this is not a general transaction callback.
+        internal Action CaptureEquipmentSaveNormalizationRollback()
+        {
+            string weapon = legacyEquippedWeaponId;
+            string armor = legacyEquippedArmorId;
+            string accessory = legacyEquippedAccessoryId;
+            var equipmentState = OwnedEquipments.Where(x => x != null)
+                .Select(x => new { Item = x, x.IsEquipped, x.EquippedMonsterInstanceId }).ToArray();
+            var monsterState = OwnedMonsters.Where(x => x != null)
+                .Select(x => new { Item = x, x.EquippedWeaponInstanceId, x.EquippedArmorInstanceId, x.EquippedAccessoryInstanceId }).ToArray();
+            return () =>
+            {
+                legacyEquippedWeaponId = weapon;
+                legacyEquippedArmorId = armor;
+                legacyEquippedAccessoryId = accessory;
+                foreach (var state in equipmentState)
+                {
+                    state.Item.IsEquipped = state.IsEquipped;
+                    state.Item.EquippedMonsterInstanceId = state.EquippedMonsterInstanceId;
+                }
+                foreach (var state in monsterState)
+                {
+                    state.Item.EquippedWeaponInstanceId = state.EquippedWeaponInstanceId;
+                    state.Item.EquippedArmorInstanceId = state.EquippedArmorInstanceId;
+                    state.Item.EquippedAccessoryInstanceId = state.EquippedAccessoryInstanceId;
+                }
+            };
+        }
+
         private void TryEquipLegacyRepresentative(EquipmentSlotType slotType, string equipmentId)
         {
             if (string.IsNullOrEmpty(equipmentId)) return;

@@ -14,14 +14,22 @@ namespace WitchTower.Data
         public const int DefaultEquipmentStorageLimit = 100;
         private const string LegacyPrimaryDailyQuestId = "daily_battle_win_1";
 
+        public string PlayerId { get; set; }
+        public long EconomyRevision { get; set; }
+        public int RecoveryEpoch { get; set; }
         public int Level { get; set; }
         public int Exp { get; set; }
         public int RebirthPoints { get; set; }
         public int TotalRebirthPoints { get; set; }
         public int RebirthCount { get; set; }
         public int Gold { get; set; }
+        public int TrainingDrops { get; set; }
+        public int TrialStarCores { get; set; }
+        public List<TrainingFusionReceipt> TrainingFusionReceipts { get; }
+        public DailyChallengeState DailyChallenges { get; set; }
         public int FreeGachaStones { get; set; }
         public int PaidGachaStones { get; set; }
+        public List<string> ProcessedIapTransactionIds { get; }
         public bool HasRemovedAds { get; set; }
         public int HighestFloor { get; set; }
         public int AttackUpgradeLevel { get; set; }
@@ -39,6 +47,8 @@ namespace WitchTower.Data
         public string DailyQuestProgressDate { get; set; }
         public int DailyBattleWinCount { get; set; }
         public List<string> DailyClaimedQuestIds { get; }
+        public string DailyAdRewardDate { get; set; }
+        public List<string> DailyClaimedAdRewardIds { get; }
         public string LastActiveAt { get; set; }
         public List<OwnedMaterialData> OwnedMaterials { get; }
         public List<OwnedEquipmentData> OwnedEquipments { get; }
@@ -53,20 +63,34 @@ namespace WitchTower.Data
         public bool HasCompletedTutorial { get; set; }
         public string TutorialStepId { get; set; }
         public int InitialTutorialSummonCount { get; set; }
+        public string StoryDialogueEventId { get; set; }
+        public int StoryDialogueLineIndex { get; set; }
         public List<string> SeenStoryEventIds { get; }
         public List<string> SeenTutorialHintIds { get; }
 
         public PlayerProfile(PlayerSaveData saveData)
         {
+            PlayerId = saveData.PlayerId;
+            EconomyRevision = saveData.EconomyRevision;
+            RecoveryEpoch = saveData.RecoveryEpoch;
             Level = Math.Max(1, saveData.PlayerLevel);
             Exp = Math.Max(0, saveData.PlayerExp);
             RebirthPoints = Math.Max(0, saveData.RebirthPoints);
             TotalRebirthPoints = Math.Max(0, saveData.TotalRebirthPoints);
             RebirthCount = Math.Max(0, saveData.RebirthCount);
             Gold = saveData.Gold;
+            TrainingDrops = Math.Max(0, saveData.TrainingDrops);
+            TrialStarCores = Math.Max(0, saveData.TrialStarCores);
+            TrainingFusionReceipts = CloneTrainingFusionReceipts(saveData.TrainingFusionReceipts);
+            DailyChallenges = saveData.DailyChallenges ?? new DailyChallengeState();
             FreeGachaStones = Math.Max(0, saveData.FreeGachaStones);
             PaidGachaStones = Math.Max(0, saveData.PaidGachaStones);
-            HasRemovedAds = saveData.HasRemovedAds;
+            ProcessedIapTransactionIds = (saveData.ProcessedIapTransactionIds ?? new List<string>())
+                .Where(transactionId => !string.IsNullOrWhiteSpace(transactionId))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+            // Existing customers retain the benefit even after spending every paid stone.
+            HasRemovedAds = saveData.HasRemovedAds || ProcessedIapTransactionIds.Count > 0;
             HighestFloor = saveData.HighestFloor;
             AttackUpgradeLevel = saveData.AttackUpgradeLevel;
             DefenseUpgradeLevel = saveData.DefenseUpgradeLevel;
@@ -83,6 +107,8 @@ namespace WitchTower.Data
             DailyQuestProgressDate = saveData.DailyQuestProgressDate ?? string.Empty;
             DailyBattleWinCount = Math.Max(0, saveData.DailyBattleWinCount);
             DailyClaimedQuestIds = saveData.DailyClaimedQuestIds ?? new List<string>();
+            DailyAdRewardDate = saveData.DailyAdRewardDate ?? string.Empty;
+            DailyClaimedAdRewardIds = saveData.DailyClaimedAdRewardIds ?? new List<string>();
             LastActiveAt = saveData.LastActiveAt ?? string.Empty;
             OwnedMaterials = saveData.OwnedMaterials ?? new List<OwnedMaterialData>();
             OwnedEquipments = saveData.OwnedEquipments ?? new List<OwnedEquipmentData>();
@@ -102,15 +128,20 @@ namespace WitchTower.Data
                 ? saveData.TutorialStepId
                 : "Complete";
             InitialTutorialSummonCount = Math.Max(0, saveData.InitialTutorialSummonCount);
+            StoryDialogueEventId = saveData.StoryDialogueEventId ?? string.Empty;
+            StoryDialogueLineIndex = saveData.StoryDialogueLineIndex;
             SeenStoryEventIds = saveData.SeenStoryEventIds ?? new List<string>();
             SeenTutorialHintIds = saveData.SeenTutorialHintIds ?? new List<string>();
             if (!hasSavedTutorialState)
             {
                 StoryTutorialService.BackfillClearedChapterStories(this);
             }
+            StoryDialogueProgress.NormalizeSavedProgress(this);
             NormalizeMonsterPlusValues();
             NormalizeMonsterIndividualValues();
+            NormalizeMonsterTrainingProgress();
             InitializeEquipmentState(saveData);
+            InitializeGuardians(saveData);
         }
 
         public void AddGold(int amount)
@@ -148,6 +179,31 @@ namespace WitchTower.Data
             }
 
             PaidGachaStones += amount;
+        }
+
+        public bool HasProcessedIapTransaction(string transactionId)
+        {
+            return !string.IsNullOrWhiteSpace(transactionId) &&
+                ProcessedIapTransactionIds.Contains(transactionId);
+        }
+
+        public bool TryGrantPaidStonePurchase(
+            string productId,
+            int paidStoneAmount,
+            string transactionId)
+        {
+            if (string.IsNullOrWhiteSpace(productId) ||
+                paidStoneAmount <= 0 ||
+                string.IsNullOrWhiteSpace(transactionId) ||
+                HasProcessedIapTransaction(transactionId))
+            {
+                return false;
+            }
+
+            PaidGachaStones += paidStoneAmount;
+            ProcessedIapTransactionIds.Add(transactionId);
+            HasRemovedAds = true;
+            return true;
         }
 
         public bool CanSpendFreeGachaStones(int amount)
@@ -283,18 +339,7 @@ namespace WitchTower.Data
 
         public int ApplyRebirth()
         {
-            int gainedPoints = RebirthService.CalculateRebirthPointReward(this);
-            if (gainedPoints <= 0)
-            {
-                return 0;
-            }
-
-            RebirthPoints += gainedPoints;
-            TotalRebirthPoints += gainedPoints;
-            RebirthCount += 1;
-            Level = 1;
-            Exp = 0;
-            return gainedPoints;
+            return 0; // Legacy entry point; never reset progress for a removed feature.
         }
 
         public bool TrySpendRebirthPoints(int amount)
@@ -587,6 +632,15 @@ namespace WitchTower.Data
             }
         }
 
+        private void NormalizeMonsterTrainingProgress()
+        {
+            foreach (OwnedMonsterData monster in OwnedMonsters)
+            {
+                MonsterTrainingService.Normalize(monster);
+                if (monster != null) monster.MonsterSkillLevel = MonsterSkillGrowthCatalog.NormalizeLevel(monster.MonsterSkillLevel);
+            }
+        }
+
         public void MarkMonsterDexOwned(string monsterId)
         {
             if (string.IsNullOrEmpty(monsterId))
@@ -622,6 +676,12 @@ namespace WitchTower.Data
             if (monster == null)
             {
                 message = "対象モンスターが見つかりません。";
+                return false;
+            }
+
+            if (IsDailyChallengePartyMonster(monster.InstanceId))
+            {
+                message = "挑戦中のデイリー試練の参加モンスターは逃がせません。試練を終了してから操作してください。";
                 return false;
             }
 
@@ -686,22 +746,58 @@ namespace WitchTower.Data
             return MissionProgressList.FirstOrDefault(x => x.MissionId == missionId);
         }
 
+        public bool IsDailyChallengePartyMonster(string instanceId)
+        {
+            var run = DailyChallenges?.ActiveRun;
+            return !string.IsNullOrEmpty(instanceId) && run != null && run.IsActive &&
+                run.PartyInstanceIds != null && run.PartyInstanceIds.Contains(instanceId, StringComparer.Ordinal);
+        }
+
+        // Only authoritative snapshot ACKs may remove unobserved fusion ancestry.
+        // Save the acknowledged clone before mutating this live list.
+        public int AcknowledgeTrainingFusionReceipts(IEnumerable<string> childInstanceIds)
+        {
+            if (childInstanceIds == null) return 0;
+            var acknowledged = new HashSet<string>(childInstanceIds.Where(id => !string.IsNullOrEmpty(id)), StringComparer.Ordinal);
+            return TrainingFusionReceipts.RemoveAll(receipt => receipt != null && acknowledged.Contains(receipt.ChildInstanceId));
+        }
+
+        private static List<TrainingFusionReceipt> CloneTrainingFusionReceipts(IEnumerable<TrainingFusionReceipt> source)
+        {
+            return (source ?? Enumerable.Empty<TrainingFusionReceipt>()).Where(receipt => receipt != null)
+                .Select(receipt => new TrainingFusionReceipt
+                {
+                    ChildInstanceId = receipt.ChildInstanceId, ChildMonsterId = receipt.ChildMonsterId,
+                    ParentInstanceIdA = receipt.ParentInstanceIdA, ParentInstanceIdB = receipt.ParentInstanceIdB,
+                    ParentMonsterIdA = receipt.ParentMonsterIdA, ParentMonsterIdB = receipt.ParentMonsterIdB
+                }).ToList();
+        }
+
         public PlayerSaveData ToSaveData(int currentFloor)
         {
             SyncLegacyRepresentativeEquipmentIds();
             SyncEquippedFlags();
+            NormalizeMonsterTrainingProgress();
 
             return new PlayerSaveData
             {
                 SchemaVersion = PlayerSaveData.CurrentSchemaVersion,
+                PlayerId = PlayerId,
+                EconomyRevision = EconomyRevision,
+                RecoveryEpoch = RecoveryEpoch,
                 PlayerLevel = Level,
                 PlayerExp = Exp,
                 RebirthPoints = RebirthPoints,
                 TotalRebirthPoints = TotalRebirthPoints,
                 RebirthCount = RebirthCount,
                 Gold = Gold,
+                TrainingDrops = Math.Max(0, TrainingDrops),
+                TrialStarCores = Math.Max(0, TrialStarCores),
+                TrainingFusionReceipts = CloneTrainingFusionReceipts(TrainingFusionReceipts),
+                DailyChallenges = DailyChallenges ?? new DailyChallengeState(),
                 FreeGachaStones = FreeGachaStones,
                 PaidGachaStones = PaidGachaStones,
+                ProcessedIapTransactionIds = new List<string>(ProcessedIapTransactionIds),
                 HasRemovedAds = HasRemovedAds,
                 HighestFloor = HighestFloor,
                 CurrentFloor = currentFloor,
@@ -732,6 +828,8 @@ namespace WitchTower.Data
                 DailyQuestProgressDate = DailyQuestProgressDate,
                 DailyBattleWinCount = DailyBattleWinCount,
                 DailyClaimedQuestIds = new List<string>(DailyClaimedQuestIds),
+                DailyAdRewardDate = DailyAdRewardDate,
+                DailyClaimedAdRewardIds = new List<string>(DailyClaimedAdRewardIds),
                 LastActiveAt = LastActiveAt,
                 MissionProgressList = new List<MissionProgressData>(MissionProgressList),
                 EquippedWeaponId = legacyEquippedWeaponId,
@@ -750,7 +848,15 @@ namespace WitchTower.Data
                 HasCompletedTutorial = HasCompletedTutorial,
                 TutorialStepId = TutorialStepId ?? string.Empty,
                 InitialTutorialSummonCount = InitialTutorialSummonCount,
+                StoryDialogueEventId = StoryDialogueEventId ?? string.Empty,
+                StoryDialogueLineIndex = StoryDialogueLineIndex,
                 SeenStoryEventIds = new List<string>(SeenStoryEventIds),
+                OwnedGuardians = OwnedGuardians.Select(g => new OwnedGuardianData { Id = g.Id, Level = g.Level, Exp = g.Exp, ContractId = g.ContractId }).ToList(),
+                GuardianCoreIds = new List<string>(GuardianCoreIds),
+                EquippedGuardianId = EquippedGuardianId,
+                GuardianIndividualProgressInitialized = true,
+                GuardianOathIds = new List<string>(GuardianOathIds),
+                SeenGuardianDialogueIds = new List<string>(SeenGuardianDialogueIds),
                 SeenTutorialHintIds = new List<string>(SeenTutorialHintIds)
             };
         }
@@ -768,13 +874,7 @@ namespace WitchTower.Data
 
         private float GetRebirthSkillValue(RebirthSkillEffectType effectType)
         {
-            float value = 0f;
-            foreach (RebirthSkillDefinition definition in RebirthSkillCatalog.GetDefinitionsForEffect(effectType))
-            {
-                value += definition.GetTotalValue(GetRebirthSkillLevel(definition.SkillId));
-            }
-
-            return value;
+            return 0f; // Soul tree removed; old save fields are read only for compatibility.
         }
 
         private static int ClampEquipmentQualityThreshold(int qualityRank)

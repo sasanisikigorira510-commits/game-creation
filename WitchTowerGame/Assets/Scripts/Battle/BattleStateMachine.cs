@@ -234,6 +234,8 @@ namespace WitchTower.Battle
 
         private void PresentHit(BattleHitInfo hitInfo)
         {
+            // Delayed hits identify a runtime, never whichever unit inherited its slot.
+            if (simulator != null && !simulator.TryResolvePresentationHit(hitInfo, out hitInfo)) return;
             if (feedbackController != null)
             {
                 feedbackController.ShowHit(hitInfo);

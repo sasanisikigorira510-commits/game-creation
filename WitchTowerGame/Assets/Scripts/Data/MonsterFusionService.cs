@@ -18,7 +18,9 @@ namespace WitchTower.Data
         NoRecipe = 6,
         ResultMonsterDataMissing = 7,
         ParentLevelTooLow = 8,
-        LockedParentBlocked = 9
+        LockedParentBlocked = 9,
+        PendingTrainingSyncRequired = 10,
+        DailyChallengePartyLocked = 11
     }
 
     public sealed class MonsterFusionResult
@@ -47,6 +49,7 @@ namespace WitchTower.Data
 
     public static class MonsterFusionService
     {
+        public const int MaxPendingTrainingFusionReceipts = 512;
         public static MonsterFusionResult PreviewFusion(
             PlayerProfile profile,
             string parentInstanceIdA,
@@ -73,6 +76,18 @@ namespace WitchTower.Data
             if (parentA == null || parentB == null)
             {
                 return new MonsterFusionResult(MonsterFusionStatus.ParentNotOwned, message: "選択した親モンスターが所持一覧にありません。");
+            }
+
+            if (profile.IsDailyChallengePartyMonster(parentA.InstanceId) || profile.IsDailyChallengePartyMonster(parentB.InstanceId))
+            {
+                return new MonsterFusionResult(MonsterFusionStatus.DailyChallengePartyLocked,
+                    message: "挑戦中のデイリー試練の参加モンスターは配合できません。試練を終了してから操作してください。");
+            }
+
+            if (profile.TrainingFusionReceipts.Count >= MaxPendingTrainingFusionReceipts)
+            {
+                return new MonsterFusionResult(MonsterFusionStatus.PendingTrainingSyncRequired,
+                    message: "配合の未同期記録が上限に達しました。オンラインでデータを同期してから配合してください。");
             }
 
             masterDataManager ??= MasterDataManager.Instance;
@@ -104,7 +119,7 @@ namespace WitchTower.Data
             {
                 return new MonsterFusionResult(
                     MonsterFusionStatus.NoRecipe,
-                    message: "通常配合はクラス1〜3同士なら異種族・クラス違いでも可能です。クラス4以降は特殊配合の組み合わせが必要です。");
+                    message: "配合結果のモンスターデータが見つかりません。");
             }
 
             return new MonsterFusionResult(
@@ -167,17 +182,27 @@ namespace WitchTower.Data
                     message: "配合結果データが見つかりません。");
             }
 
-            int resultLevel = MonsterLevelService.ClampLevelToMax(Math.Max(parentA.Level, parentB.Level), resultMonsterData);
             FusionInheritedStats inheritedStats = CalculateInheritedStats(profile, parentA, parentB, masterDataManager);
             int inheritedPlusValue = CalculateInheritedPlusValue(parentA, parentB);
             MonsterIndividualValues inheritedIndividualValues = MonsterIndividualValueService.Inherit(parentA, parentB);
+            string trainingParentInstanceIdA = parentA.InstanceId;
+            string trainingParentInstanceIdB = parentB.InstanceId;
             RemoveParent(profile, parentA);
             RemoveParent(profile, parentB);
 
-            OwnedMonsterData createdMonster = profile.AddOwnedMonster(resultMonsterData.monsterId, resultLevel);
+            OwnedMonsterData createdMonster = profile.AddOwnedMonster(resultMonsterData.monsterId, 1);
             ApplyInheritedPlusValue(createdMonster, inheritedPlusValue);
             ApplyInheritedStats(createdMonster, inheritedStats);
             MonsterIndividualValueService.Apply(createdMonster, inheritedIndividualValues);
+            MonsterTrainingService.Inherit(parentA, parentB, createdMonster);
+            createdMonster.TrainingParentInstanceIdA = trainingParentInstanceIdA;
+            createdMonster.TrainingParentInstanceIdB = trainingParentInstanceIdB;
+            profile.TrainingFusionReceipts.Add(new TrainingFusionReceipt
+            {
+                ChildInstanceId = createdMonster.InstanceId, ChildMonsterId = createdMonster.MonsterId,
+                ParentInstanceIdA = trainingParentInstanceIdA, ParentInstanceIdB = trainingParentInstanceIdB,
+                ParentMonsterIdA = parentA.MonsterId, ParentMonsterIdB = parentB.MonsterId
+            });
             return new MonsterFusionResult(
                 MonsterFusionStatus.Success,
                 recipe,

@@ -89,6 +89,7 @@ namespace WitchTower.Home
 
         private bool TryUpgrade(UpgradeType upgradeType)
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return false;
             var profile = GameManager.Instance.PlayerProfile;
             if (profile == null)
             {

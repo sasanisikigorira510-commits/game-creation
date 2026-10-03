@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_geoatlas
+  m_EditorClassIdentifier: 
+  monsterId: monster_geoatlas
+  monsterName: "星核巨神ジオアトラス"
+  encyclopediaNumber: 36
+  raceId: golem
+  classRank: 5
+  rarity: 5
+  element: 0
+  rangeType: 0
+  damageType: 0
+  baseStats:
+    maxHp: 1000
+    attack: 125
+    magicAttack: 35
+    defense: 225
+    magicDefense: 180
+    attackSpeed: 0.62
+  attackRange: 1.4
+  normalAttackTargetCount: 2
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 5
+    attackPerPlus: 2
+    magicAttackPerPlus: 2
+    defensePerPlus: 5
+    magicDefensePerPlus: 4
+    attackSpeedPerPlus: 0.001
+  levelGrowth:
+    maxHpCoefficient: 1.7
+    attackCoefficient: 0.8
+    magicAttackCoefficient: 0.4
+    defenseCoefficient: 1.8
+    magicDefenseCoefficient: 1.5
+    attackSpeedCoefficient: 0.7
+  fusionExclusive: 1
+  fusionRecipes:
+  - parentMonsterIdA: monster_rock_knight_gaius
+    parentMonsterIdB: monster_astral_eclipse_golem
+    ignoreOrder: 1
+    note: "両親クラス４・Lv80、子Lv1。"
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsters/Class5/geoatlas
+  illustrationResourcePath: FamilyMonsters/Class5/geoatlas
+  battleIdleResourcePath: MonsterBattle/mon_geoatlas_idle
+  battleIdleFacing: 1
+  battleMoveResourcePath: MonsterBattle/mon_geoatlas_move
+  battleMoveFacing: 1
+  battleAttackResourcePath: MonsterBattle/mon_geoatlas_attack
+  battleAttackFacing: 1
+  battleVisualScale: 1.25
+  description: "両ステージ・前衛耐久。デイリー試練の星核で固有スキルを育成できるクラス５の配合個体。"

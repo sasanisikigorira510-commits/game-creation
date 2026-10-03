@@ -45,6 +45,7 @@ namespace WitchTower.Home
         private Text floorDescriptionText;
         private Text enemyPreviewText;
         private Button startBattleButton;
+        private Button worldAtlasButton;
         private GameObject dungeonTutorialGuideRoot;
         private Text dungeonTutorialGuideTitleText;
         private Text dungeonTutorialGuideBodyText;
@@ -85,6 +86,7 @@ namespace WitchTower.Home
 
         private void Update()
         {
+            if (WorldAtlasController.IsShowing) return;
             AnimateDungeonTutorialGuide();
             if (!Application.isPlaying || panelRoot == null || !panelRoot.activeInHierarchy || !Input.GetMouseButtonDown(0))
             {
@@ -112,6 +114,10 @@ namespace WitchTower.Home
             panelRoot.SetActive(true);
             panelRoot.transform.SetAsLastSibling();
             RefreshDungeonTutorialGuide(GetDungeonTutorialEvent());
+            bool worldAvailable = WorldAtlasCatalog.IsAvailable(GameManager.Instance?.PlayerProfile);
+            worldAtlasButton.gameObject.SetActive(worldAvailable);
+            titleText.rectTransform.anchoredPosition = new Vector2(worldAvailable ? -110f : 0f, -38f);
+            if (worldAvailable && Application.isPlaying) OpenWorldAtlas();
         }
 
         private void EnsurePanel()
@@ -122,7 +128,10 @@ namespace WitchTower.Home
                 return;
             }
 
-            Canvas canvas = FindObjectOfType<Canvas>(true);
+            // The home builder already owns this panel. Never adopt a persistent
+            // communication overlay: Home has just hidden its menu, so parenting
+            // this map under an inactive overlay leaves the player on a black screen.
+            Canvas canvas = SceneCanvasOwner.Find(this, "HomeCanvas");
             if (canvas == null)
             {
                 return;
@@ -170,6 +179,11 @@ namespace WitchTower.Home
             titleText = CreateText("Title", panel.transform, "ダンジョン選択", 46, FontStyle.Bold,
                 TextAnchor.MiddleCenter, new Color(1f, 0.94f, 0.78f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f), new Vector2(0f, -38f), new Vector2(520f, 58f));
+
+            worldAtlasButton = CreateTextButton("OpenWorldAtlas", panel.transform, "世界地図",
+                new Vector2(.5f,1f),new Vector2(.5f,1f),new Vector2(.5f,1f),
+                new Vector2(310f,-36f),new Vector2(230f,68f),new Color(.16f,.28f,.33f),OpenWorldAtlas,28);
+            worldAtlasButton.gameObject.SetActive(false);
 
             CreateText("SubTitle", panel.transform, "挑む場所と階層を選んで戦闘を開始します", 20, FontStyle.Bold,
                 TextAnchor.MiddleCenter, new Color(0.78f, 0.88f, 0.96f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -294,8 +308,8 @@ namespace WitchTower.Home
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
-                new Vector2(0f, 236f),
-                new Vector2(900f, 222f),
+                new Vector2(0f, 320f),
+                new Vector2(930f, 320f),
                 new Color(0.025f, 0.035f, 0.055f, 0.98f));
 
             Outline panelOutline = dungeonTutorialGuideRoot.AddComponent<Outline>();
@@ -310,8 +324,8 @@ namespace WitchTower.Home
                 new Vector2(0f, 0.5f),
                 new Vector2(0f, 0.5f),
                 new Vector2(0.5f, 0.5f),
-                new Vector2(94f, -4f),
-                new Vector2(170f, 170f),
+                new Vector2(138f, -4f),
+                new Vector2(276f, 276f),
                 true);
             dungeonTutorialGuideCharacterImage.raycastTarget = false;
 
@@ -319,60 +333,60 @@ namespace WitchTower.Home
                 "DungeonTutorialGuideBadge",
                 dungeonTutorialGuideRoot.transform,
                 "TUTORIAL",
-                16,
+                19,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(1f, 0.78f, 0.38f, 1f),
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
-                new Vector2(290f, -22f),
+                new Vector2(330f, -24f),
                 new Vector2(140f, 28f));
 
             dungeonTutorialGuideTitleText = CreateText(
                 "DungeonTutorialGuideTitle",
                 dungeonTutorialGuideRoot.transform,
                 "ルシェの探索案内",
-                28,
+                42,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(1f, 0.96f, 0.78f, 1f),
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
-                new Vector2(290f, -58f),
-                new Vector2(570f, 42f));
+                new Vector2(330f, -68f),
+                new Vector2(570f, 56f));
 
             dungeonTutorialGuideBodyText = CreateText(
                 "DungeonTutorialGuideBody",
                 dungeonTutorialGuideRoot.transform,
                 string.Empty,
-                19,
+                32,
                 FontStyle.Bold,
                 TextAnchor.UpperLeft,
                 new Color(0.94f, 0.89f, 0.80f, 0.96f),
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
-                new Vector2(290f, -108f),
-                new Vector2(570f, 72f));
+                new Vector2(330f, -134f),
+                new Vector2(570f, 142f));
             dungeonTutorialGuideBodyText.resizeTextForBestFit = true;
-            dungeonTutorialGuideBodyText.resizeTextMinSize = 14;
-            dungeonTutorialGuideBodyText.resizeTextMaxSize = 19;
+            dungeonTutorialGuideBodyText.resizeTextMinSize = 27;
+            dungeonTutorialGuideBodyText.resizeTextMaxSize = 32;
 
             dungeonTutorialGuideFooterText = CreateText(
                 "DungeonTutorialGuideFooter",
                 dungeonTutorialGuideRoot.transform,
                 "次の操作: 枠で囲まれた「この階層へ挑む」をタップ",
-                17,
+                25,
                 FontStyle.Bold,
                 TextAnchor.MiddleLeft,
                 new Color(0.78f, 0.92f, 1f, 1f),
                 new Vector2(0f, 0f),
                 new Vector2(0f, 0f),
                 new Vector2(0f, 0f),
-                new Vector2(290f, 24f),
-                new Vector2(570f, 32f));
+                new Vector2(330f, 28f),
+                new Vector2(570f, 42f));
 
             dungeonTutorialStartHighlight = CreateImage(
                 "DungeonTutorialStartHighlight",
@@ -794,14 +808,10 @@ namespace WitchTower.Home
         private static bool ShouldShowDungeonTutorialGuide(StoryTutorialEvent tutorialEvent)
         {
             PlayerProfile profile = GameManager.Instance?.PlayerProfile;
-            if (StoryTutorialService.HasFinishedHomeGuide(profile))
-            {
-                return false;
-            }
-
             if (tutorialEvent != null &&
                 tutorialEvent.IsValid &&
-                tutorialEvent.StepId == StoryTutorialService.StepFirstBattle &&
+                (tutorialEvent.StepId == StoryTutorialService.StepFirstBattle ||
+                 tutorialEvent.StepId == StoryTutorialService.StepFirstResult) &&
                 string.Equals(tutorialEvent.TargetKey, "dungeon.start", StringComparison.Ordinal))
             {
                 return true;
@@ -870,36 +880,30 @@ namespace WitchTower.Home
                 }
             }
 
-            int finalBossCount = floor.BossMonsterIds != null ? floor.BossMonsterIds.Count : 0;
-            if (floor.IsBossEncounter || finalBossCount > 0)
+            int finalBossCount = floor.BossEnemyCount;
+            string bossSuffix = string.Empty;
+            if (finalBossCount > 0)
             {
-                if (finalBossCount > 0)
+                // The pool can contain twelve names; keep this preview readable on phones.
+                MonsterDataSO bossData = MasterDataManager.Instance?.GetMonsterData(floor.BossMonsterId);
+                bossSuffix = floor.BossMonsterId == GarzaBossPresentation.MonsterId
+                    ? "\nボス：魔王ガルザ（捕獲不可）"
+                    : bossData != null
+                    ? $"\nボス：クラス{bossData.classRank}からランダムに1体"
+                    : "\nボス：候補からランダムに1体";
+            }
+            else if (floor.IsBossEncounter)
+            {
+                string bossName = ResolveMonsterName(floor.BossMonsterId);
+                string bossLabel = string.IsNullOrEmpty(bossName) ? string.Empty : bossName + " ボス";
+                if (!string.IsNullOrEmpty(bossLabel) && !enemyNames.Contains(bossLabel))
                 {
-                    for (int i = 0; i < floor.BossMonsterIds.Count; i += 1)
-                    {
-                        string bossName = ResolveMonsterName(floor.BossMonsterIds[i]);
-                        string bossLabel = string.IsNullOrEmpty(bossName) ? string.Empty : bossName + " ボス";
-                        if (!string.IsNullOrEmpty(bossLabel) && !enemyNames.Contains(bossLabel))
-                        {
-                            enemyNames.Add(bossLabel);
-                        }
-                    }
+                    enemyNames.Add(bossLabel);
                 }
-                else
-                {
-                    string bossName = ResolveMonsterName(floor.BossMonsterId);
-                    string bossLabel = string.IsNullOrEmpty(bossName) ? string.Empty : bossName + " ボス";
-                    if (!string.IsNullOrEmpty(bossLabel) && !enemyNames.Contains(bossLabel))
-                    {
-                        enemyNames.Add(bossLabel);
-                    }
-                }
+                bossSuffix = "  ボス出現";
             }
 
             string enemySummary = enemyNames.Count > 0 ? string.Join(" / ", enemyNames) : "未確認";
-            string bossSuffix = finalBossCount > 1
-                ? "  ボス2体出現"
-                : floor.IsBossEncounter || finalBossCount > 0 ? "  ボス出現" : string.Empty;
             string riskSummary = dungeon != null
                 ? HomeActionAdvisor.BuildFloorRiskSummary(
                     GameManager.Instance?.PlayerProfile,
@@ -943,7 +947,7 @@ namespace WitchTower.Home
             }
 
             GameManager.Instance?.SetCurrentDungeonFloor(selectedDungeonId, selectedLocalFloor);
-            SceneManager.LoadScene(battleSceneName);
+            SceneTransitionGuard.LoadScene(battleSceneName);
         }
 
         private static int ResolveMaxUnlockedGlobalFloor()
@@ -1005,6 +1009,16 @@ namespace WitchTower.Home
             }
 
             closeCallback?.Invoke();
+        }
+
+        private void OpenWorldAtlas()
+        {
+            WorldAtlasController.TryShow(panelRoot.transform, () =>
+            {
+                if (panelRoot == null) return;
+                panelRoot.SetActive(true);
+                titleText.text = "故郷の地方";
+            });
         }
 
         private static GameObject CreateUiObject(string objectName, Transform parent)

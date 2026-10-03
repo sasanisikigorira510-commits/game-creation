@@ -1,0 +1,28 @@
+{
+  "canvasWidth": 1000,
+  "canvasHeight": 1300,
+  "leftShoulder": {
+    "x": 411,
+    "y": 334
+  },
+  "rightShoulder": {
+    "x": 587,
+    "y": 334
+  },
+  "leftElbow": {
+    "x": 372,
+    "y": 442
+  },
+  "rightElbow": {
+    "x": 626,
+    "y": 442
+  },
+  "leftPalm": {
+    "x": 269,
+    "y": 439
+  },
+  "rightPalm": {
+    "x": 729,
+    "y": 439
+  }
+}

@@ -64,8 +64,11 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
     {
         string normalizedPath = assetPath.Replace('\\', '/');
         bool isMonsterBattleTexture = normalizedPath.StartsWith("Assets/Resources/MonsterBattle/");
+        bool isWorldAtlasTexture = normalizedPath.StartsWith("Assets/Resources/UI/DungeonSelect/WorldMap/VastWorldAtlas");
         bool isBattlePixelArt =
             isMonsterBattleTexture ||
+            isWorldAtlasTexture ||
+            normalizedPath.StartsWith("Assets/Resources/UI/StoryPortraits/Garza/") ||
             normalizedPath.StartsWith("Assets/Resources/BattleEffects/");
         bool isCardPortrait = normalizedPath.StartsWith("Assets/Resources/FamilyMonsterCards/");
         bool isLegacyPortrait = normalizedPath.StartsWith("Assets/Resources/FamilyMonsters/");
@@ -74,6 +77,8 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
             normalizedPath.StartsWith("Assets/Resources/EquipmentFrames/");
         bool isHomeMenuTexture = normalizedPath.StartsWith("Assets/Resources/UI/HomeMenu/");
         bool isFusionPageTexture = normalizedPath.StartsWith("Assets/Resources/UI/FusionPage/");
+        bool isFusionIonaFrame = normalizedPath.StartsWith("Assets/Resources/UI/FusionPage/Cinematic/IonaFrames/")
+            || normalizedPath.StartsWith("Assets/Resources/UI/FusionPage/Cinematic/IonaRig/");
         bool isGachaPageTexture = normalizedPath.StartsWith("Assets/Resources/UI/GachaPage/");
         bool isBattleResultTexture = normalizedPath.StartsWith("Assets/Resources/UI/BattleResult/");
 
@@ -86,9 +91,17 @@ public sealed class WitchTowerPixelTexturePostprocessor : AssetPostprocessor
         importer.spriteImportMode = SpriteImportMode.Single;
         importer.wrapMode = TextureWrapMode.Clamp;
         importer.npotScale = TextureImporterNPOTScale.None;
-        importer.filterMode = (isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture || isGachaPageTexture || isBattleResultTexture) ? FilterMode.Trilinear : FilterMode.Point;
-        importer.mipmapEnabled = isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture || isGachaPageTexture || isBattleResultTexture;
-        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.filterMode = isFusionIonaFrame ? FilterMode.Point
+            : (isCardPortrait || isFrameTexture || isHomeMenuTexture || isFusionPageTexture || isGachaPageTexture || isBattleResultTexture) ? FilterMode.Bilinear : FilterMode.Point;
+        // These textures are presented as screen-space UI or 2D sprites. Mipmaps
+        // add roughly one third more texture data without improving their output.
+        importer.mipmapEnabled = false;
+        importer.textureCompression = isFusionIonaFrame || isWorldAtlasTexture || normalizedPath.Contains("/Garza/")
+            ? TextureImporterCompression.Uncompressed : TextureImporterCompression.CompressedHQ;
+        // The full-body cinematic uses high-resolution image2 layers.
+        // Preserve their native detail instead of applying the generic
+        // FusionPage smoothing/compression policy during later reimports.
+        if (isFusionIonaFrame) importer.maxTextureSize = 2048;
         importer.alphaIsTransparency = true;
         importer.isReadable = isMonsterBattleTexture;
         return true;

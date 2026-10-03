@@ -6,7 +6,7 @@ namespace WitchTower.Monetization
     /// <summary>
     /// Attach this to a future banner-ad host. The ad SDK should call
     /// <see cref="SetBannerLoaded"/> after it has a banner ready and route its verified
-    /// remove-ads purchase callback through <see cref="ApplyVerifiedPurchase"/>.
+    /// purchase callback through <see cref="ApplyVerifiedPurchase"/>.
     /// </summary>
     public sealed class BannerAdVisibilityController : MonoBehaviour
     {

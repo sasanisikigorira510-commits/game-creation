@@ -118,7 +118,7 @@ namespace WitchTower.Home
 
             CreateFullScreenImage("ShopBackground", transform, "UI/FusionPage/FusionBackground");
             GameObject panel = CreatePanel("ShopMainPanel", transform, "UI/FusionPage/FusionMainFrame",
-                Vector2.zero, new Vector2(1000f, 1710f), PanelColor);
+                new Vector2(0f, -160f), new Vector2(1000f, 1710f), PanelColor);
 
             CreateText("Title", panel.transform, "商店", 50, FontStyle.Bold,
                 new Vector2(0f, -48f), new Vector2(650f, 68f), AccentGold, TextAnchor.MiddleCenter);
@@ -155,36 +155,43 @@ namespace WitchTower.Home
             }
 
             shopTutorialGuideRoot = CreatePanel("ShopTutorialGuideRoot", panelTransform, null,
-                new Vector2(0f, -1350f), new Vector2(920f, 300f), new Color(0.025f, 0.035f, 0.055f, 0.98f));
+                new Vector2(0f, -1310f), new Vector2(920f, 380f), new Color(0.025f, 0.035f, 0.055f, 0.98f));
 
-            Outline panelOutline = shopTutorialGuideRoot.AddComponent<Outline>();
-            panelOutline.effectColor = new Color(1f, 0.78f, 0.24f, 0.94f);
-            panelOutline.effectDistance = new Vector2(4f, -4f);
-            panelOutline.useGraphicAlpha = false;
+            Image guideFrame = CreateImage("ShopTutorialGuideFrame", shopTutorialGuideRoot.transform,
+                TutorialHighlightFramePath, Vector2.zero, new Vector2(920f, 380f));
+            guideFrame.preserveAspect = false;
+            if (guideFrame.sprite != null)
+            {
+                Texture2D texture = guideFrame.sprite.texture;
+                guideFrame.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(100, 100, 100, 100));
+                guideFrame.type = Image.Type.Sliced;
+                guideFrame.pixelsPerUnitMultiplier = 6f;
+            }
 
             shopTutorialGuideCharacterImage = CreateImage("ShopTutorialGuideLuse", shopTutorialGuideRoot.transform,
-                TutorialGuideSpritePath, new Vector2(-323f, -38f), new Vector2(218f, 218f));
+                TutorialGuideSpritePath, new Vector2(-303f, -42f), new Vector2(286f, 286f));
 
-            Text badgeText = CreateText("ShopTutorialGuideBadge", shopTutorialGuideRoot.transform, "TUTORIAL", 17, FontStyle.Bold,
+            Text badgeText = CreateText("ShopTutorialGuideBadge", shopTutorialGuideRoot.transform, "TUTORIAL", 20, FontStyle.Bold,
                 new Vector2(-116f, -22f), new Vector2(136f, 28f), AccentGold, TextAnchor.MiddleCenter);
             AddTextContrast(badgeText);
 
-            Text titleText = CreateText("ShopTutorialGuideTitle", shopTutorialGuideRoot.transform, "ルシェの商店案内", 29, FontStyle.Bold,
-                new Vector2(116f, -56f), new Vector2(560f, 36f), new Color(1f, 0.96f, 0.78f, 1f), TextAnchor.MiddleLeft);
+            Text titleText = CreateText("ShopTutorialGuideTitle", shopTutorialGuideRoot.transform, "ルシェの商店案内", 40, FontStyle.Bold,
+                new Vector2(140f, -66f), new Vector2(520f, 48f), new Color(1f, 0.96f, 0.78f, 1f), TextAnchor.MiddleLeft);
             AddTextContrast(titleText);
 
             Text bodyText = CreateText("ShopTutorialGuideBody", shopTutorialGuideRoot.transform,
-                "商店では、探索で集めたゴールドを強化遺物と交換できます。\n今回は場所を確認できれば大丈夫です。\n左上の「ホームへ戻る」から拠点へ戻りましょう。",
-                19, FontStyle.Bold, new Vector2(116f, -102f), new Vector2(590f, 116f),
+                "ここでは探索で集めたゴールドで商品を購入できます。\n欲しい商品の「購入」を押して、次の探索の準備を整えましょう。\n購入後は左上の「ホームへ戻る」から拠点へ戻ります。",
+                30, FontStyle.Bold, new Vector2(140f, -124f), new Vector2(520f, 178f),
                 new Color(0.96f, 0.95f, 0.88f, 1f), TextAnchor.UpperLeft);
             bodyText.resizeTextForBestFit = true;
-            bodyText.resizeTextMinSize = 15;
-            bodyText.resizeTextMaxSize = 19;
+            bodyText.resizeTextMinSize = 25;
+            bodyText.resizeTextMaxSize = 30;
             AddTextContrast(bodyText);
 
             Text footerText = CreateText("ShopTutorialGuideFooter", shopTutorialGuideRoot.transform,
-                "次の操作: 左上の「ホームへ戻る」をタップ", 18, FontStyle.Bold,
-                new Vector2(116f, -248f), new Vector2(590f, 30f), new Color(0.78f, 0.92f, 1f, 1f), TextAnchor.MiddleLeft);
+                "次の操作: 左上の「ホームへ戻る」をタップ", 24, FontStyle.Bold,
+                new Vector2(140f, -328f), new Vector2(520f, 40f), new Color(0.78f, 0.92f, 1f, 1f), TextAnchor.MiddleLeft);
             AddTextContrast(footerText);
 
             if (closeButtonTransform != null)
@@ -231,7 +238,8 @@ namespace WitchTower.Home
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
             return tutorialEvent != null &&
-                tutorialEvent.EventId == StoryTutorialService.HintShop &&
+                (tutorialEvent.EventId == StoryTutorialService.HintShop ||
+                 tutorialEvent.StepId == StoryTutorialService.StepFirstShop) &&
                 string.Equals(tutorialEvent.TargetKey, "home.shop", StringComparison.Ordinal);
         }
 
@@ -239,6 +247,10 @@ namespace WitchTower.Home
         {
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             bool changed = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintShop);
+            if (profile != null && profile.TutorialStepId == StoryTutorialService.StepFirstShop)
+            {
+                changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstShop);
+            }
             if (changed && Application.isPlaying)
             {
                 SaveManager.Instance?.SaveCurrentGame();
@@ -304,6 +316,7 @@ namespace WitchTower.Home
 
         private void Purchase(string productId)
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             bool purchased = GoldShopService.TryPurchase(profile, productId, out string message);
             if (purchased)

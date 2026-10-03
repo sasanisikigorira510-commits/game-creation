@@ -69,7 +69,7 @@ namespace WitchTower.Home
                 new GoldShopProductDefinition(
                     "risky_ember",
                     "上級遺物",
-                    "50%で基礎効果を+15%する遺物 x1",
+                    "50%で基礎効果を1.15倍にする遺物 x1",
                     1500,
                     GoldShopRewardType.EnhancementRelic,
                     1,
@@ -77,7 +77,7 @@ namespace WitchTower.Home
                 new GoldShopProductDefinition(
                     "volatile_ember",
                     "危険遺物",
-                    "35%で基礎効果を+30%、失敗時に装備が消滅する遺物 x1",
+                    "35%で基礎効果を1.3倍、失敗時に装備が消滅する遺物 x1",
                     3000,
                     GoldShopRewardType.EnhancementRelic,
                     1,

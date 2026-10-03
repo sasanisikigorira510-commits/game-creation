@@ -34,5 +34,11 @@ namespace WitchTower.Battle
         {
             RemainingCooldown = Cooldown;
         }
+
+        public void RestoreCooldown(float remaining)
+        {
+            RemainingCooldown = float.IsNaN(remaining) || float.IsInfinity(remaining)
+                ? 0f : System.Math.Max(0f, System.Math.Min(Cooldown, remaining));
+        }
     }
 }

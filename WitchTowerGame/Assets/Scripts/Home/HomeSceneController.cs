@@ -11,11 +11,12 @@ using WitchTower.Managers;
 using WitchTower.MasterData;
 using WitchTower.Monetization;
 using WitchTower.Save;
+using WitchTower.UI;
 
 namespace WitchTower.Home
 {
     [ExecuteAlways]
-    public sealed class HomeSceneController : MonoBehaviour
+    public sealed partial class HomeSceneController : MonoBehaviour
     {
         private sealed class DailyQuestCardView
         {
@@ -70,7 +71,7 @@ namespace WitchTower.Home
         private const string HomeTeamCombatPowerFramePath = "UI/HomeRedesign/HomeTeamCombatPowerFrame";
         private const string HomeFallbackHeroSpritePath = "FamilyMonsterCards/Dragon/dragon_whelp";
         private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
-        private const string TutorialPrologueBackgroundPath = "UI/Tutorial/TutorialPrologueContractFurnace";
+        private const string TutorialPrologueBackgroundPath = "UI/Tutorial/TutorialPrologueVillageImage2";
         private const string TutorialPrologueSparklePath = "UI/Tutorial/TutorialPrologueSpark";
         private const string TutorialSummonHighlightFramePath = "UI/Tutorial/TutorialSummonHighlightFrameImage2";
         private const string AudioSettingsPanelFramePath = "UI/AudioSettings/SettingsPanelFrameImage2";
@@ -78,15 +79,15 @@ namespace WitchTower.Home
         private const string AudioSettingsActionButtonPath = "UI/AudioSettings/SettingsActionButtonImage2";
         private const string AudioSettingsSliderTrackPath = "UI/AudioSettings/SettingsSliderTrackImage2";
         private const string AudioSettingsSliderKnobPath = "UI/AudioSettings/SettingsSliderKnobImage2";
-        private const string AudioSettingsToggleFramePath = "UI/AudioSettings/SettingsToggleFrameImage2";
-        private const int TutorialProloguePageCount = 4;
+        private const string PrivacyPolicyUrl = "https://nasus-gaming-support.sasanisikigorira.chatgpt.site/#privacy";
+        private const int TutorialProloguePageCount = 6;
         private const string RockGolemMonsterId = "monster_rock_golem";
         private const string RockGolemHomeHeroSpritePath = "MonsterBattle/mon_rock_golem_attack_0";
         // Keeps the home controls clear of the native banner area when a banner is enabled later.
         // No Unity-side ad placeholder is drawn while no banner is present.
         private const float HomeFooterContentInset = 170f;
         private static readonly Vector2 HomeGuidePanelPosition = new Vector2(0f, HomeFooterContentInset + 1050f);
-        private static readonly Vector2 HomeGuidePanelSize = new Vector2(920f, 318f);
+        private static readonly Vector2 HomeGuidePanelSize = new Vector2(960f, 380f);
         private static readonly Vector2 HomeMenuButtonSize = new Vector2(480f, 250f);
         private static readonly Vector2 HomeMainActionButtonSize = new Vector2(470f, 220f);
         private static readonly Vector2 HomeBottomNavButtonSize = new Vector2(196f, 152f);
@@ -132,21 +133,26 @@ namespace WitchTower.Home
             "GoldShopButton",
             "PermanentUpgradeButton",
             "SkillTreeButton",
+            "TrainingButton",
             "QuestButton"
         };
         private static readonly string[] TutorialPrologueSpeakers =
         {
-            "古い契約記録",
-            "契約網崩壊の日",
-            "？？？",
-            "契約炉の案内役・ルシェ"
+            "プロローグ",
+            "プロローグ",
+            "プロローグ",
+            "プロローグ",
+            "プロローグ",
+            "プロローグ"
         };
         private static readonly string[] TutorialPrologueBodies =
         {
-            "かつて、六つの大迷宮は\nひとつの「契約網」で結ばれていた。",
-            "だがある夜、契約網は何者かに断ち切られ、\n眷属たちの記憶は契約片となって\n各地のダンジョンへ散った。",
-            "……聞こえますか、契約師様。\n私は契約炉の案内役ルシェ。\nこの灯が消える前にあなたを待っていました。",
-            "最後の契約炉があなたを選びました。\n失われた仲間を呼び戻し六つのダンジョンを巡って\n契約網を壊した者の正体を突き止めましょう。"
+            "魔王ガルザの軍勢が次々と村や町を襲っていた。",
+            "旅の途中で小さな村を訪れたあなたは案内役のルシェと召喚の儀式を担うイオナに出会う。",
+            "人を襲うモンスターもいれば人とともに戦うモンスターもいる。",
+            "頼れる仲間を集めて育てよう。力を合わせれば強大な敵にも立ち向かえる。",
+            "まずは村の近くにある「見習いの五門洞」へ。",
+            "この村を守るために始めた戦いはやがて魔王討伐の冒険へとつながっていく。"
         };
         private static readonly string[] HomeBottomNavPartPaths =
         {
@@ -226,6 +232,7 @@ namespace WitchTower.Home
         private Text homeGuideTitleText;
         private Image homeGuideCharacterImage;
         private Button homeGuideButton;
+        private Button homeGuideAdvanceOverlayButton;
         private GameObject homeTutorialFocusRoot;
         private Text homeTutorialFocusText;
         private readonly List<Image> homeTutorialFocusFrameImages = new List<Image>();
@@ -265,10 +272,13 @@ namespace WitchTower.Home
         private GameObject audioSettingsRoot;
         private Slider audioSettingsBgmSlider;
         private Slider audioSettingsSeSlider;
-        private Toggle audioSettingsHapticsToggle;
         private Text audioSettingsBgmValueText;
         private Text audioSettingsSeValueText;
-        private Text audioSettingsHapticsValueText;
+        private Button audioSettingsPrivacyButton;
+#if UNITY_EDITOR
+        // Tests intercept only the external navigation, never opening a browser.
+        internal static Action<string> EditorPrivacyPolicyOpenOverride;
+#endif
         private GameObject dailyQuestListRoot;
         private Text dailyQuestStatusText;
         private BannerAdVisibilityController homeBannerAdVisibilityController;
@@ -294,23 +304,44 @@ namespace WitchTower.Home
                 return;
             }
 
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             NormalizeCanvasScales();
             EnsureRuntimeState();
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             RefreshAllPanels();
             RefreshCurrentTab();
             HideLegacyHomeUi();
             BuildUnifiedMenu();
+            if (DailyChallengeSession.IsActive) DailyChallengeSession.End(false);
+            TryShowPendingStoryDialogue();
+            if (DailyChallengeSession.ReopenPanel) OpenDailyChallengePanel();
+            AdMobBannerService.PrivacyOptionsAvailabilityChanged += RefreshAudioSettingsPrivacyButton;
+            RefreshAudioSettingsPrivacyButton();
+        }
+
+        private void OnDisable() => StoreReviewService.ResetIdleTimer();
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused) StoreReviewService.ResetIdleTimer();
+        }
+
+        private void OnDestroy()
+        {
+            AdMobBannerService.PrivacyOptionsAvailabilityChanged -= RefreshAudioSettingsPrivacyButton;
         }
 
         private void Update()
         {
-            if (!Application.isPlaying)
+            if (!Application.isPlaying || SaveManager.Instance?.StorageAccessAvailable == false ||
+                SaveManager.Instance?.RecoveryRequired == true)
             {
                 return;
             }
 
             if (unifiedMenuRoot != null && unifiedMenuRoot.activeInHierarchy)
             {
+                TryShowPendingStoryDialogue();
                 if (homeQuestButton == null || homeShopButton == null)
                 {
                     EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
@@ -327,29 +358,28 @@ namespace WitchTower.Home
                 RefreshHomeStoneBalanceBar();
                 RefreshDailyQuestList();
                 AnimateHomeTutorialFocus();
+                RefreshDailyGiftPanel();
                 AnimateFirstSummonTutorialPulse();
+                if (audioSettingsRoot != null && audioSettingsRoot.activeSelf) RefreshAudioSettingsLayout();
             }
+
+            var sanctuary = FindFirstObjectByType<GuardianSanctuaryController>();
+            StoreReviewService.Tick(GetRuntimeProfile(), IsHomeMenuVisible && !StoryDialogueController.IsShowing
+                && StoryDialogueProgress.GetPendingHomeDialogue(GetRuntimeProfile()) == null
+                && (sanctuary == null || !sanctuary.IsOpen));
 
             if (IsHomePrologueVisible())
             {
                 AnimateHomePrologue();
-                if (Input.GetMouseButtonDown(0))
-                {
-                    InvokeButtonUnderPointer(homePrologueRoot.transform, Input.mousePosition);
-                }
-
+                // The prologue root is a full-screen Button and is already
+                // handled by the scene EventSystem.  Manually invoking it here
+                // as well can process one touch twice and briefly show two
+                // dialogue/layout states during the first transition.
                 return;
             }
 
-            if (!Input.GetMouseButtonDown(0))
-            {
-                return;
-            }
-
-            if (unifiedMenuRoot != null && unifiedMenuRoot.activeInHierarchy)
-            {
-                InvokeButtonUnderPointer(unifiedMenuRoot.transform, Input.mousePosition);
-            }
+            // The EventSystem owns button clicks. Dispatching another click
+            // on pointer-down can load the next screen before this touch ends.
         }
 
         private void ApplyEditorPreview()
@@ -358,6 +388,29 @@ namespace WitchTower.Home
             HideLegacyHomeUi();
             RebuildUnifiedMenu();
         }
+
+        private bool TryShowPendingStoryDialogue()
+        {
+            if ((dailyChallengePanel != null && dailyChallengePanel.IsVisible) || IsMonsterTrainingPageOpen) return false;
+            if (!Application.isPlaying) return false;
+            if (StoryDialogueController.IsShowing) return true;
+            if (IsAudioSettingsOpen()) return false;
+            if (unifiedMenuRoot == null || !unifiedMenuRoot.activeInHierarchy || IsHomePrologueVisible()) return false;
+            var pending = StoryDialogueProgress.GetPendingHomeDialogue(GetRuntimeProfile());
+            if (pending == null) return false;
+            return StoryDialogueController.TryShow(pending.EventId, () =>
+            {
+                if (this == null) return;
+                RefreshHomeStoneBalanceBar();
+                TryShowPendingStoryDialogue();
+            });
+        }
+
+        public bool IsHomeMenuVisible => unifiedMenuRoot != null && unifiedMenuRoot.activeInHierarchy
+            && (dailyChallengePanel == null || !dailyChallengePanel.IsVisible)
+            && !IsMonsterTrainingPageOpen
+            && !IsHomePrologueVisible() && !IsDailyQuestListOpen()
+            && (audioSettingsRoot == null || !audioSettingsRoot.activeInHierarchy);
 
         private void RebuildUnifiedMenu()
         {
@@ -413,7 +466,7 @@ namespace WitchTower.Home
             if (panel == null)
             {
                 GameManager.Instance.SetCurrentFloor(Mathf.Max(1, GameManager.Instance.CurrentFloor));
-                SceneManager.LoadScene(battleSceneName);
+                SceneTransitionGuard.LoadScene(battleSceneName);
                 return;
             }
 
@@ -507,9 +560,11 @@ namespace WitchTower.Home
 
         private static void EnsureRuntimeState()
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             Application.runInBackground = true;
             ManagerFactory.EnsureGameManager();
             ManagerFactory.EnsureSaveManager();
+            if (SaveManager.Instance == null || !SaveManager.Instance.StorageAccessAvailable) return;
             ManagerFactory.EnsureMasterDataManager();
             ManagerFactory.EnsureUiPresentationCamera();
             EnsureUiInputPipeline();
@@ -546,6 +601,8 @@ namespace WitchTower.Home
                     EnsureHomeGuidePanel(unifiedMenuRoot.transform);
                     EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
                     EnsureHomeBannerAdSlot(unifiedMenuRoot.transform);
+                    EnsureDailyChallengeShortcut(unifiedMenuRoot.transform);
+                    EnsureMonsterTrainingShortcut(unifiedMenuRoot.transform);
                     RefreshHomeStoneBalanceBar();
                     RefreshHomePrologue(GetRuntimeProfile());
                     unifiedMenuRoot.transform.SetAsLastSibling();
@@ -553,7 +610,7 @@ namespace WitchTower.Home
                 }
             }
 
-            Canvas canvas = FindObjectOfType<Canvas>(true);
+            Canvas canvas = SceneCanvasOwner.Find(this, "HomeCanvas");
             if (canvas == null)
             {
                 return;
@@ -566,7 +623,7 @@ namespace WitchTower.Home
                 DestroySceneObject(existingMenu.gameObject);
             }
 
-            Sprite backgroundSprite = Resources.Load<Sprite>("UI/HomeMenu/HomeMenuBackground_NoAdZone");
+            Sprite backgroundSprite = Resources.Load<Sprite>("UI/HomeMenu/HomeVillageSquareImage2");
             Sprite panelSprite = Resources.Load<Sprite>("UI/HomeMenu/HomeMenuPanel");
             if (backgroundSprite == null)
             {
@@ -576,7 +633,7 @@ namespace WitchTower.Home
             unifiedMenuRoot = CreateUiRoot("UnifiedHomeMenu", canvas.transform);
             unifiedMenuRuntimeBound = Application.isPlaying;
             unifiedMenuRoot.transform.SetAsLastSibling();
-            CreateMenuImage("UnifiedHomeBackground", unifiedMenuRoot.transform, backgroundSprite, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1080f, 1920f), false);
+            CreatePortraitCoverBackground("UnifiedHomeBackground", unifiedMenuRoot.transform, backgroundSprite);
             CreateHomeAtmosphere(unifiedMenuRoot.transform);
             CreateHomeHeroShowcase(unifiedMenuRoot.transform);
             EnsureHomeGuidePanel(unifiedMenuRoot.transform);
@@ -590,6 +647,8 @@ namespace WitchTower.Home
 
             CreateHomeSpriteButton("BattleButton", unifiedMenuRoot.transform, battleSprite, "冒険開始", new Vector2(-250f, HomeFooterContentInset + 324f), HomeMainActionButtonSize, StartBattle, 36);
             CreateHomeSpriteButton("FormationButton", unifiedMenuRoot.transform, formationSprite, "編成", new Vector2(250f, HomeFooterContentInset + 324f), HomeMainActionButtonSize, OpenFormationMenu, 36);
+            EnsureDailyChallengeShortcut(unifiedMenuRoot.transform);
+            EnsureMonsterTrainingShortcut(unifiedMenuRoot.transform);
             CreateHomeBottomNavigation(unifiedMenuRoot.transform, panelSprite, gachaSprite, dexSprite, equipmentSprite, fusionSprite);
             EnsureHomeBannerAdSlot(unifiedMenuRoot.transform);
             EnsureHomeStoneBalanceBar(unifiedMenuRoot.transform);
@@ -609,7 +668,7 @@ namespace WitchTower.Home
                 return;
             }
 
-            SceneManager.LoadScene(formationSceneName);
+            SceneTransitionGuard.LoadScene(formationSceneName);
         }
 
         public void OpenEquipmentMenu()
@@ -624,7 +683,7 @@ namespace WitchTower.Home
                 return;
             }
 
-            SceneManager.LoadScene(equipmentSceneName);
+            SceneTransitionGuard.LoadScene(equipmentSceneName);
         }
 
         public void OpenFusionMenu()
@@ -639,7 +698,7 @@ namespace WitchTower.Home
                 return;
             }
 
-            SceneManager.LoadScene(fusionSceneName);
+            SceneTransitionGuard.LoadScene(fusionSceneName);
         }
 
         public void OpenGachaMenu()
@@ -654,7 +713,7 @@ namespace WitchTower.Home
                 return;
             }
 
-            SceneManager.LoadScene(gachaSceneName);
+            SceneTransitionGuard.LoadScene(gachaSceneName);
         }
 
         private void OpenMonsterDexMenu()
@@ -794,28 +853,7 @@ namespace WitchTower.Home
 
         public void OpenSkillTreeScene()
         {
-            if (!Application.isPlaying)
-            {
-                return;
-            }
-
-            HideUnifiedMenu();
-            RebirthPanelController skillTreePanel = EnsureRebirthSkillTreePanel();
-            if (skillTreePanel == null)
-            {
-                BuildUnifiedMenu();
-                return;
-            }
-
-            skillTreePanel.Show(() =>
-            {
-                if (unifiedMenuRoot != null)
-                {
-                    unifiedMenuRoot.SetActive(true);
-                    unifiedMenuRoot.transform.SetAsLastSibling();
-                    RefreshHomeStoneBalanceBar();
-                }
-            });
+            // Legacy scene callback retained for save/scene compatibility; feature removed.
         }
 
         private void HideUnifiedMenu()
@@ -863,15 +901,11 @@ namespace WitchTower.Home
                 return;
             }
 
-            PlayerProfile profile = GetRuntimeProfile();
-            int claimedStones = DailyRewardService.Claim(profile, DateTime.Now, questId);
-            if (claimedStones > 0)
-            {
-                SaveManager.Instance?.SaveCurrentGame();
-            }
-
-            RefreshAllPanels();
-            RefreshDailyQuestList();
+            WitchTower.Save.OnlinePlayerData.ClaimReward(questId, _ => {
+                if (this == null) return;
+                RefreshAllPanels();
+                RefreshDailyQuestList();
+            });
         }
 
         private MonsterDexPanelController EnsureMonsterDexPanel()
@@ -881,7 +915,7 @@ namespace WitchTower.Home
                 return monsterDexPanelController;
             }
 
-            Canvas canvas = FindObjectOfType<Canvas>(true);
+            Canvas canvas = SceneCanvasOwner.Find(this, "HomeCanvas");
             if (canvas == null)
             {
                 return null;
@@ -910,7 +944,7 @@ namespace WitchTower.Home
                 return goldShopPanelController;
             }
 
-            Canvas canvas = FindObjectOfType<Canvas>(true);
+            Canvas canvas = SceneCanvasOwner.Find(this, "HomeCanvas");
             if (canvas == null)
             {
                 return null;
@@ -939,7 +973,7 @@ namespace WitchTower.Home
                 return paidShopPanelController;
             }
 
-            Canvas canvas = FindObjectOfType<Canvas>(true);
+            Canvas canvas = SceneCanvasOwner.Find(this, "HomeCanvas");
             if (canvas == null)
             {
                 return null;
@@ -963,31 +997,7 @@ namespace WitchTower.Home
 
         private RebirthPanelController EnsureRebirthSkillTreePanel()
         {
-            if (rebirthPanelController != null)
-            {
-                return rebirthPanelController;
-            }
-
-            Canvas canvas = FindObjectOfType<Canvas>(true);
-            if (canvas == null)
-            {
-                return null;
-            }
-
-            Transform existingPanel = canvas.transform.Find("RebirthSkillTreePanel");
-            GameObject panelObject = existingPanel != null
-                ? existingPanel.gameObject
-                : CreateUiRoot("RebirthSkillTreePanel", canvas.transform);
-
-            rebirthPanelController = panelObject.GetComponent<RebirthPanelController>();
-            if (rebirthPanelController == null)
-            {
-                rebirthPanelController = panelObject.AddComponent<RebirthPanelController>();
-            }
-
-            panelObject.SetActive(false);
-            panelObject.transform.SetAsLastSibling();
-            return rebirthPanelController;
+            return null;
         }
 
         private DungeonSelectionPanelController EnsureDungeonSelectionPanel()
@@ -997,7 +1007,7 @@ namespace WitchTower.Home
                 return dungeonSelectionPanelController;
             }
 
-            Canvas canvas = FindObjectOfType<Canvas>(true);
+            Canvas canvas = SceneCanvasOwner.Find(this, "HomeCanvas");
             if (canvas == null)
             {
                 return null;
@@ -1189,6 +1199,9 @@ namespace WitchTower.Home
         {
             GameObject showcase = new GameObject("HomeHeroShowcase", typeof(RectTransform));
             showcase.transform.SetParent(menuRoot, false);
+            // Keep hero artwork inside its showcase on devices with a different
+            // aspect ratio than the 1080x1920 reference canvas.
+            showcase.AddComponent<RectMask2D>();
             RectTransform showcaseRect = showcase.GetComponent<RectTransform>();
             showcaseRect.anchorMin = new Vector2(0.5f, 0f);
             showcaseRect.anchorMax = new Vector2(0.5f, 0f);
@@ -1262,6 +1275,52 @@ namespace WitchTower.Home
             homeGuideButton.onClick.RemoveAllListeners();
             homeGuideButton.onClick.AddListener(AdvanceHomeGuidePanel);
 
+            // The guide panel used to be the only clickable area while a
+            // tutorial message was waiting for confirmation.  On a phone it
+            // is easy to miss that relatively small rectangle, so add a
+            // transparent full-screen confirmation surface behind the panel.
+            Transform existingAdvanceOverlay = menuRoot.Find("HomeGuideAdvanceOverlay");
+            if (existingAdvanceOverlay == null)
+            {
+                GameObject overlayObject = new GameObject(
+                    "HomeGuideAdvanceOverlay",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image),
+                    typeof(Button));
+                overlayObject.transform.SetParent(menuRoot, false);
+                existingAdvanceOverlay = overlayObject.transform;
+            }
+
+            RectTransform overlayRect = existingAdvanceOverlay.GetComponent<RectTransform>();
+            if (overlayRect != null)
+            {
+                overlayRect.anchorMin = Vector2.zero;
+                overlayRect.anchorMax = Vector2.one;
+                overlayRect.pivot = new Vector2(0.5f, 0.5f);
+                overlayRect.offsetMin = Vector2.zero;
+                overlayRect.offsetMax = Vector2.zero;
+            }
+
+            Image overlayImage = existingAdvanceOverlay.GetComponent<Image>();
+            if (overlayImage != null)
+            {
+                overlayImage.color = new Color(1f, 1f, 1f, 0.001f);
+                overlayImage.raycastTarget = true;
+            }
+
+            homeGuideAdvanceOverlayButton = existingAdvanceOverlay.GetComponent<Button>();
+            if (homeGuideAdvanceOverlayButton != null)
+            {
+                homeGuideAdvanceOverlayButton.transition = Selectable.Transition.None;
+                homeGuideAdvanceOverlayButton.targetGraphic = overlayImage;
+                homeGuideAdvanceOverlayButton.onClick.RemoveAllListeners();
+                homeGuideAdvanceOverlayButton.onClick.AddListener(AdvanceHomeGuidePanel);
+                homeGuideAdvanceOverlayButton.interactable = false;
+                existingAdvanceOverlay.SetAsFirstSibling();
+                existingAdvanceOverlay.gameObject.SetActive(false);
+            }
+
             RectTransform panelRect = existingPanel.GetComponent<RectTransform>();
             if (panelRect != null)
             {
@@ -1281,8 +1340,8 @@ namespace WitchTower.Home
                     LoadSpriteResource(TutorialGuideSpritePath, "TutorialGuideAssistant"),
                     new Vector2(0f, 0.5f),
                     new Vector2(0f, 0.5f),
-                    new Vector2(126f, -8f),
-                    new Vector2(230f, 230f),
+                    new Vector2(145f, -8f),
+                    new Vector2(276f, 276f),
                     true);
             }
 
@@ -1291,8 +1350,8 @@ namespace WitchTower.Home
                 new Vector2(0f, 0.5f),
                 new Vector2(0f, 0.5f),
                 new Vector2(0.5f, 0.5f),
-                new Vector2(126f, -8f),
-                new Vector2(230f, 230f));
+                new Vector2(145f, -8f),
+                new Vector2(276f, 276f));
             homeGuideCharacterImage.sprite = LoadSpriteResource(TutorialGuideSpritePath, "TutorialGuideAssistant");
             homeGuideCharacterImage.preserveAspect = true;
             homeGuideCharacterImage.raycastTarget = false;
@@ -1336,12 +1395,12 @@ namespace WitchTower.Home
                     "HomeGuideTitleText",
                     existingPanel,
                     string.Empty,
-                    26,
+                    40,
                     FontStyle.Bold,
                     new Vector2(0f, 1f),
                     new Vector2(0f, 1f),
-                    new Vector2(615f, -48f),
-                    new Vector2(560f, 54f),
+                    new Vector2(630f, -58f),
+                    new Vector2(600f, 64f),
                     new Color(1f, 0.96f, 0.78f, 1f),
                     TextAnchor.MiddleCenter);
                 AddTextShadow(homeGuideTitleText, new Color(0f, 0f, 0f, 0.9f), new Vector2(1.6f, -1.6f));
@@ -1352,11 +1411,12 @@ namespace WitchTower.Home
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
                 new Vector2(0.5f, 0.5f),
-                new Vector2(615f, -48f),
-                new Vector2(560f, 54f));
+                new Vector2(630f, -58f),
+                new Vector2(600f, 64f));
+            homeGuideTitleText.fontSize = 40;
             homeGuideTitleText.resizeTextForBestFit = true;
-            homeGuideTitleText.resizeTextMinSize = 25;
-            homeGuideTitleText.resizeTextMaxSize = 32;
+            homeGuideTitleText.resizeTextMinSize = 34;
+            homeGuideTitleText.resizeTextMaxSize = 40;
             homeGuideTitleText.horizontalOverflow = HorizontalWrapMode.Wrap;
             homeGuideTitleText.verticalOverflow = VerticalWrapMode.Truncate;
 
@@ -1367,12 +1427,12 @@ namespace WitchTower.Home
                     "HomeGuideText",
                     existingPanel,
                     string.Empty,
-                    22,
+                    36,
                     FontStyle.Bold,
                     new Vector2(0f, 0.5f),
                     new Vector2(0f, 0.5f),
-                    new Vector2(615f, 18f),
-                    new Vector2(560f, 128f),
+                    new Vector2(630f, 12f),
+                    new Vector2(600f, 172f),
                     new Color(0.96f, 0.95f, 0.88f, 1f),
                     TextAnchor.MiddleCenter);
                 AddTextShadow(homeGuideText, new Color(0f, 0f, 0f, 0.82f), new Vector2(1.4f, -1.4f));
@@ -1383,11 +1443,12 @@ namespace WitchTower.Home
                 new Vector2(0f, 0.5f),
                 new Vector2(0f, 0.5f),
                 new Vector2(0.5f, 0.5f),
-                new Vector2(615f, 18f),
-                new Vector2(560f, 128f));
+                new Vector2(630f, 12f),
+                new Vector2(600f, 172f));
+            homeGuideText.fontSize = 36;
             homeGuideText.resizeTextForBestFit = true;
-            homeGuideText.resizeTextMinSize = 18;
-            homeGuideText.resizeTextMaxSize = 26;
+            homeGuideText.resizeTextMinSize = 28;
+            homeGuideText.resizeTextMaxSize = 36;
             homeGuideText.horizontalOverflow = HorizontalWrapMode.Wrap;
             homeGuideText.verticalOverflow = VerticalWrapMode.Truncate;
 
@@ -1398,12 +1459,12 @@ namespace WitchTower.Home
                     "HomeNextFloorText",
                     existingPanel,
                     string.Empty,
-                    18,
+                    26,
                     FontStyle.Bold,
                     new Vector2(0f, 0f),
                     new Vector2(0f, 0f),
-                    new Vector2(615f, 42f),
-                    new Vector2(560f, 42f),
+                    new Vector2(630f, 45f),
+                    new Vector2(600f, 48f),
                     new Color(0.70f, 0.90f, 1f, 0.98f),
                     TextAnchor.MiddleCenter);
                 AddTextShadow(homeNextFloorText, new Color(0f, 0f, 0f, 0.9f), new Vector2(1.4f, -1.4f));
@@ -1414,11 +1475,12 @@ namespace WitchTower.Home
                 new Vector2(0f, 0f),
                 new Vector2(0f, 0f),
                 new Vector2(0.5f, 0.5f),
-                new Vector2(615f, 42f),
-                new Vector2(560f, 42f));
+                new Vector2(630f, 45f),
+                new Vector2(600f, 48f));
+            homeNextFloorText.fontSize = 26;
             homeNextFloorText.resizeTextForBestFit = true;
-            homeNextFloorText.resizeTextMinSize = 17;
-            homeNextFloorText.resizeTextMaxSize = 21;
+            homeNextFloorText.resizeTextMinSize = 23;
+            homeNextFloorText.resizeTextMaxSize = 28;
             homeNextFloorText.horizontalOverflow = HorizontalWrapMode.Wrap;
             homeNextFloorText.verticalOverflow = VerticalWrapMode.Truncate;
         }
@@ -1527,7 +1589,7 @@ namespace WitchTower.Home
             Image background = CreateMenuImage(
                 "HomePrologueBackground",
                 homePrologueRoot.transform,
-                LoadSpriteResource(TutorialPrologueBackgroundPath, "TutorialPrologueContractFurnace"),
+                LoadSpriteResource(TutorialPrologueBackgroundPath, "TutorialPrologueVillageImage2"),
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 Vector2.zero,
@@ -1535,6 +1597,8 @@ namespace WitchTower.Home
                 false);
             background.color = Color.white;
             homePrologueBackgroundRect = background.transform as RectTransform;
+            homePrologueBackgroundRect.localScale = new Vector3(1.105f, 1.105f, 1f);
+            homePrologueBackgroundRect.anchoredPosition = new Vector2(0f, 118f);
 
             Image upperShade = CreateMenuImage(
                 "HomePrologueUpperShade",
@@ -1542,8 +1606,8 @@ namespace WitchTower.Home
                 null,
                 new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f),
-                new Vector2(0f, -145f),
-                new Vector2(1080f, 290f),
+                new Vector2(0f, -92f),
+                new Vector2(480f, 88f),
                 false);
             upperShade.color = new Color(0f, 0f, 0f, 0.28f);
 
@@ -1563,7 +1627,7 @@ namespace WitchTower.Home
             homePrologueTitleText = CreateUiText(
                 "HomePrologueTitle",
                 homePrologueRoot.transform,
-                "序章　最後の契約炉",
+                "魔王を倒して帰ろう",
                 42,
                 FontStyle.Bold,
                 new Vector2(0.5f, 1f),
@@ -1573,6 +1637,10 @@ namespace WitchTower.Home
                 new Color(1f, 0.93f, 0.72f, 1f),
                 TextAnchor.MiddleCenter);
             AddTextShadow(homePrologueTitleText, new Color(0f, 0f, 0f, 0.95f), new Vector2(3f, -3f));
+            // Keep the shade close to the title instead of dimming the entire sky.
+            upperShade.rectTransform.sizeDelta = new Vector2(
+                homePrologueTitleText.preferredWidth + 64f,
+                homePrologueTitleText.preferredHeight + 32f);
 
             homePrologueGuideImage = CreateMenuImage(
                 "HomePrologueGuide",
@@ -1609,8 +1677,8 @@ namespace WitchTower.Home
                 FontStyle.Bold,
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
-                new Vector2(-320f, 438f),
-                new Vector2(300f, 52f),
+                new Vector2(0f, 438f),
+                new Vector2(850f, 52f),
                 new Color(0.50f, 0.88f, 1f, 1f),
                 TextAnchor.MiddleLeft);
             AddTextShadow(homePrologueSpeakerText, new Color(0f, 0f, 0f, 0.95f), new Vector2(2f, -2f));
@@ -1624,12 +1692,12 @@ namespace WitchTower.Home
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
                 new Vector2(0f, 302f),
-                new Vector2(900f, 245f),
+                new Vector2(850f, 245f),
                 new Color(0.98f, 0.97f, 0.91f, 1f),
-                TextAnchor.MiddleCenter);
-            homePrologueBodyText.resizeTextForBestFit = true;
-            homePrologueBodyText.resizeTextMinSize = 29;
-            homePrologueBodyText.resizeTextMaxSize = 38;
+                TextAnchor.MiddleLeft);
+            homePrologueBodyText.resizeTextForBestFit = false;
+            homePrologueBodyText.resizeTextMinSize = 33;
+            homePrologueBodyText.resizeTextMaxSize = 42;
             homePrologueBodyText.horizontalOverflow = HorizontalWrapMode.Wrap;
             homePrologueBodyText.verticalOverflow = VerticalWrapMode.Truncate;
             AddTextShadow(homePrologueBodyText, new Color(0f, 0f, 0f, 0.94f), new Vector2(2f, -2f));
@@ -1660,6 +1728,46 @@ namespace WitchTower.Home
                 new Color(1f, 0.90f, 0.58f, 1f),
                 TextAnchor.MiddleCenter);
             AddTextShadow(homeProloguePromptText, new Color(0f, 0f, 0f, 0.95f), new Vector2(2f, -2f));
+            RefreshHomePrologueBannerInset();
+        }
+
+        private void RefreshHomePrologueBannerInset()
+        {
+            if (homePrologueRoot == null) return;
+            var root = (RectTransform)homePrologueRoot.transform;
+            var canvas = root.GetComponentInParent<Canvas>();
+            Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera : null;
+            float bottom = RectTransformUtility.WorldToScreenPoint(camera,
+                root.TransformPoint(new Vector3(0f, root.rect.yMin, 0f))).y;
+            float top = RectTransformUtility.WorldToScreenPoint(camera,
+                root.TransformPoint(new Vector3(0f, root.rect.yMax, 0f))).y;
+            float inset = CalculateHomePrologueBannerInset(bottom, top, root.rect.height,
+                Screen.safeArea.yMin, AdMobBannerService.Instance?.VisibleHeightPixels ?? 0f);
+            ApplyHomePrologueBannerInset(inset);
+        }
+
+        private static float CalculateHomePrologueBannerInset(float rootBottomPixels, float rootTopPixels,
+            float rootHeight, float safeBottomPixels, float bannerHeightPixels)
+        {
+            if (bannerHeightPixels <= 0f || rootTopPixels <= rootBottomPixels) return 0f;
+            // The native banner sits above the home indicator. The menu may already
+            // include that safe-area inset; reserve only the remaining overlap.
+            return Mathf.Max(0f, safeBottomPixels + bannerHeightPixels - rootBottomPixels)
+                * rootHeight / (rootTopPixels - rootBottomPixels);
+        }
+
+        private void ApplyHomePrologueBannerInset(float inset)
+        {
+            // Absolute baseline positions prevent cumulative drift when ads load,
+            // disappear, or change adaptive height while a narration page is open.
+            homePrologueDialoguePanel.rectTransform.anchoredPosition = new Vector2(0f, 300f + inset);
+            homePrologueSpeakerText.rectTransform.anchoredPosition = new Vector2(0f, 438f + inset);
+            homePrologueBodyText.rectTransform.anchoredPosition = new Vector2(0f, 302f + inset);
+            homePrologueProgressText.rectTransform.anchoredPosition = new Vector2(0f, 118f + inset);
+            homeProloguePromptText.rectTransform.anchoredPosition = new Vector2(0f, 68f + inset);
+            var shade = (RectTransform)homePrologueRoot.transform.Find("HomePrologueLowerShade");
+            shade.anchoredPosition = new Vector2(0f, 260f + inset);
         }
 
         private void CreateHomePrologueSparks(Transform parent)
@@ -1710,33 +1818,13 @@ namespace WitchTower.Home
             if (homePrologueBodyText != null)
             {
                 homePrologueBodyText.text = TutorialPrologueBodies[homeProloguePageIndex];
-                RectTransform bodyRect = homePrologueBodyText.transform as RectTransform;
-                if (bodyRect != null)
-                {
-                    bool guideVisible = homeProloguePageIndex >= 2;
-                    bodyRect.anchoredPosition = new Vector2(guideVisible ? 20f : 0f, 302f);
-                    bodyRect.sizeDelta = new Vector2(guideVisible ? 720f : 850f, 245f);
-                }
-
-                homePrologueBodyText.alignment = homeProloguePageIndex >= 2
-                    ? TextAnchor.MiddleLeft
-                    : TextAnchor.MiddleCenter;
-            }
-
-            if (homePrologueSpeakerText != null)
-            {
-                RectTransform speakerRect = homePrologueSpeakerText.transform as RectTransform;
-                if (speakerRect != null)
-                {
-                    bool guideVisible = homeProloguePageIndex >= 2;
-                    speakerRect.anchoredPosition = new Vector2(guideVisible ? -40f : -320f, 438f);
-                    speakerRect.sizeDelta = new Vector2(guideVisible ? 600f : 300f, 52f);
-                }
             }
 
             if (homePrologueGuideImage != null)
             {
-                homePrologueGuideImage.gameObject.SetActive(homeProloguePageIndex >= 2);
+                homePrologueGuideImage.color = Color.white;
+                // All six pages are narration, not a spoken line from Luse.
+                homePrologueGuideImage.gameObject.SetActive(false);
             }
 
             if (homePrologueProgressText != null)
@@ -1747,7 +1835,7 @@ namespace WitchTower.Home
             if (homeProloguePromptText != null)
             {
                 homeProloguePromptText.text = homeProloguePageIndex >= TutorialProloguePageCount - 1
-                    ? "タップして契約を始める"
+                    ? "タップして冒険を始める"
                     : "タップして次へ";
             }
         }
@@ -1776,6 +1864,7 @@ namespace WitchTower.Home
             }
 
             homePrologueRoot.transform.SetAsLastSibling();
+            RefreshHomePrologueBannerInset();
             float now = Time.unscaledTime;
             if (homePrologueClosing)
             {
@@ -1793,21 +1882,14 @@ namespace WitchTower.Home
                 return;
             }
 
-            float pageAge = Mathf.Max(0f, now - homeProloguePageStartedAt);
-            float textAlpha = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((pageAge - 0.08f) / 0.55f));
+            // Keep the prologue content continuously visible while a page is
+            // changed.  Fading the shared text/image alpha from zero on every
+            // tap made the lower dialogue and Luse briefly disappear between
+            // pages, which looked like a broken transition on phones.
+            const float textAlpha = 1f;
             if (homePrologueCanvasGroup != null)
             {
                 homePrologueCanvasGroup.alpha = 1f;
-            }
-
-            if (homePrologueBackgroundRect != null)
-            {
-                float drift = Mathf.Clamp01(pageAge / 8f);
-                float baseScale = 1.105f + homeProloguePageIndex * 0.006f;
-                float scale = baseScale - drift * 0.025f;
-                homePrologueBackgroundRect.localScale = new Vector3(scale, scale, 1f);
-                homePrologueBackgroundRect.anchoredPosition =
-                    new Vector2(Mathf.Sin(now * 0.13f) * 5f, 118f + Mathf.Sin(now * 0.20f) * 6f);
             }
 
             SetTextAlpha(homePrologueSpeakerText, textAlpha);
@@ -1816,18 +1898,6 @@ namespace WitchTower.Home
             float promptPulse = 0.72f + Mathf.Sin(now * 3.2f) * 0.18f;
             SetTextAlpha(homeProloguePromptText, textAlpha * promptPulse);
             SetTextAlpha(homePrologueTitleText, Mathf.Min(1f, textAlpha + 0.25f));
-
-            if (homePrologueGuideImage != null && homePrologueGuideImage.gameObject.activeSelf)
-            {
-                homePrologueGuideImage.color = new Color(1f, 1f, 1f, textAlpha);
-                RectTransform guideRect = homePrologueGuideImage.transform as RectTransform;
-                if (guideRect != null)
-                {
-                    float slide = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(pageAge / 0.65f));
-                    guideRect.anchoredPosition =
-                        new Vector2(Mathf.Lerp(195f, 250f, slide), 700f + Mathf.Sin(now * 1.4f) * 7f);
-                }
-            }
 
             AnimateHomePrologueSparks(now);
         }
@@ -1851,7 +1921,7 @@ namespace WitchTower.Home
                 sparkleRect.anchoredPosition = new Vector2(x, y);
                 float scale = 0.65f + Mathf.Sin(cycle * Mathf.PI) * 0.6f;
                 sparkleRect.localScale = new Vector3(scale, scale, 1f);
-                float alpha = Mathf.Sin(cycle * Mathf.PI) * (0.20f + homeProloguePageIndex * 0.07f);
+                float alpha = Mathf.Sin(cycle * Mathf.PI) * 0.20f;
                 sparkleImage.color = new Color(0.48f, 0.88f, 1f, Mathf.Clamp01(alpha));
             }
         }
@@ -2612,6 +2682,8 @@ namespace WitchTower.Home
             audioSettingsRoot.SetActive(true);
             audioSettingsRoot.transform.SetAsLastSibling();
             RefreshAudioSettingsPanel();
+            RefreshAudioSettingsLayout();
+            RefreshHomeGuidance();
         }
 
         private void CloseAudioSettingsPanel()
@@ -2620,10 +2692,27 @@ namespace WitchTower.Home
             {
                 audioSettingsRoot.SetActive(false);
             }
+            RefreshHomeGuidance();
+        }
+
+        private bool IsAudioSettingsOpen() => audioSettingsRoot != null && audioSettingsRoot.activeInHierarchy;
+
+        private void RefreshHomeGuidance()
+        {
+            if (unifiedMenuRoot == null || !unifiedMenuRoot.activeInHierarchy) return;
+            var profile = GetRuntimeProfile();
+            ApplyHomeGuideDisplay(profile);
+            ApplyHomeTutorialFocus(profile);
+            RefreshFirstSummonTutorialPulse(profile, unifiedMenuRoot.transform);
         }
 
         private void BuildAudioSettingsPanel(Transform parent)
         {
+            bool accountEnabled = OnlinePlayerData.AppleAccountEnabled;
+            float panelHeight = accountEnabled ? 1500f : 1360f;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            panelHeight += 140f;
+#endif
             audioSettingsRoot = new GameObject("AudioSettingsPanelRoot", typeof(RectTransform));
             audioSettingsRoot.transform.SetParent(parent, false);
             RectTransform rootRect = audioSettingsRoot.GetComponent<RectTransform>();
@@ -2647,13 +2736,18 @@ namespace WitchTower.Home
                 audioSettingsRoot.transform,
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
-                new Vector2(0f, 92f),
-                new Vector2(760f, 540f),
+                Vector2.zero,
+                new Vector2(960f, panelHeight),
                 new Color(0.018f, 0.020f, 0.030f, 0.98f));
             panelImage.raycastTarget = true;
             if (!ApplyGeneratedUiSprite(panelImage, AudioSettingsPanelFramePath, "SettingsPanelFrameImage2"))
             {
                 AddUiOutline(panelImage.gameObject, new Color(0.42f, 0.72f, 0.92f, 0.80f), new Vector2(3f, -3f));
+            }
+            else
+            {
+                panelImage.type = Image.Type.Sliced;
+                panelImage.pixelsPerUnitMultiplier = 2.2f;
             }
 
             Transform panel = panelImage.transform;
@@ -2661,57 +2755,44 @@ namespace WitchTower.Home
                 "AudioSettingsTitle",
                 panel,
                 "設定",
-                36,
+                50,
                 FontStyle.Bold,
                 new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f),
-                new Vector2(0f, -58f),
-                new Vector2(360f, 54f),
+                new Vector2(0f, -100f),
+                new Vector2(680f, 80f),
                 new Color(1f, 0.84f, 0.48f, 1f),
                 TextAnchor.MiddleCenter);
             CreateUiText(
                 "AudioSettingsBgmLabel",
                 panel,
                 "BGM",
-                26,
+                38,
                 FontStyle.Bold,
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
-                new Vector2(178f, -160f),
-                new Vector2(130f, 42f),
+                new Vector2(195f, -220f),
+                new Vector2(130f, 60f),
                 Color.white,
                 TextAnchor.MiddleLeft);
             CreateUiText(
                 "AudioSettingsSeLabel",
                 panel,
                 "SE",
-                26,
+                38,
                 FontStyle.Bold,
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
-                new Vector2(178f, -256f),
-                new Vector2(130f, 42f),
+                new Vector2(195f, -390f),
+                new Vector2(130f, 60f),
                 Color.white,
                 TextAnchor.MiddleLeft);
-            CreateUiText(
-                "AudioSettingsHapticsLabel",
-                panel,
-                "振動",
-                26,
-                FontStyle.Bold,
-                new Vector2(0f, 1f),
-                new Vector2(0f, 1f),
-                new Vector2(178f, -352f),
-                new Vector2(130f, 42f),
-                Color.white,
-                TextAnchor.MiddleLeft);
-            audioSettingsBgmValueText = CreateAudioSettingsValueText(panel, "AudioSettingsBgmValue", new Vector2(606f, -160f));
-            audioSettingsSeValueText = CreateAudioSettingsValueText(panel, "AudioSettingsSeValue", new Vector2(606f, -256f));
-            audioSettingsHapticsValueText = CreateAudioSettingsValueText(panel, "AudioSettingsHapticsValue", new Vector2(606f, -352f));
+            audioSettingsBgmValueText = CreateAudioSettingsValueText(panel, "AudioSettingsBgmValue", new Vector2(770f, -220f));
+            audioSettingsSeValueText = CreateAudioSettingsValueText(panel, "AudioSettingsSeValue", new Vector2(770f, -390f));
             audioSettingsBgmSlider = CreateAudioVolumeSlider(
                 "AudioSettingsBgmSlider",
                 panel,
-                new Vector2(405f, -160f),
+                new Vector2(480f, -300f),
                 delegate(float value)
                 {
                     AudioManager.Instance?.SetBgmVolume(value);
@@ -2720,53 +2801,125 @@ namespace WitchTower.Home
             audioSettingsSeSlider = CreateAudioVolumeSlider(
                 "AudioSettingsSeSlider",
                 panel,
-                new Vector2(405f, -256f),
+                new Vector2(480f, -470f),
                 delegate(float value)
                 {
                     AudioManager.Instance?.SetSeVolume(value);
                     RefreshAudioSettingsValueTexts();
                 });
-            audioSettingsHapticsToggle = CreateAudioSettingsToggle(
-                "AudioSettingsHapticsToggle",
-                panel,
-                new Vector2(405f, -352f),
-                delegate(bool enabled)
-                {
-                    AudioManager audioManager = AudioManager.Instance;
-                    audioManager?.SetHapticsEnabled(enabled);
-                    RefreshAudioSettingsValueTexts();
-                    if (enabled)
-                    {
-                        audioManager?.PlayHaptic(AudioCue.UiConfirm);
-                    }
-                });
 
-            CreateAudioSettingsActionButton(
+            Button unmuteButton = CreateAudioSettingsActionButton(
                 panel,
                 "AudioSettingsUnmuteButton",
                 "ミュート解除",
-                new Vector2(-232f, 92f),
+                new Vector2(-195f, panelHeight - 635f),
                 delegate
                 {
                     SetAudioSettingsVolumes(0.58f, 0.76f, true);
                 });
-            CreateAudioSettingsActionButton(
+            ((RectTransform)unmuteButton.transform).sizeDelta = new Vector2(350f, 112f);
+            Button muteButton = CreateAudioSettingsActionButton(
                 panel,
                 "AudioSettingsMuteButton",
                 "ミュート",
-                new Vector2(0f, 92f),
+                new Vector2(195f, panelHeight - 635f),
                 delegate
                 {
                     SetAudioSettingsVolumes(0f, 0f, false);
                 });
+            ((RectTransform)muteButton.transform).sizeDelta = new Vector2(350f, 112f);
+            audioSettingsPrivacyButton = CreateAudioSettingsActionButton(
+                panel,
+                "AudioSettingsPrivacyButton",
+                "広告プライバシー設定",
+                new Vector2(0f, panelHeight - (accountEnabled ? 1060f : 920f)),
+                delegate
+                {
+                    AdMobBannerService.Instance?.ShowPrivacyOptions();
+                });
+            // This app-owned policy entry is independent of UMP's optional form
+            // and Apple linking. The URL never contains player or device data.
+            CreateAudioSettingsActionButton(panel, "PrivacyPolicyButton", "プライバシーポリシー",
+                new Vector2(0f, panelHeight - (accountEnabled ? 1200f : 1060f)), OpenPrivacyPolicy);
             CreateAudioSettingsActionButton(
                 panel,
                 "AudioSettingsCloseButton",
                 "閉じる",
-                new Vector2(232f, 92f),
+                new Vector2(0f, 150f),
                 CloseAudioSettingsPanel);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            CreateAudioSettingsActionButton(panel, "DevelopmentGameSpeedButton", BattlePlaybackSpeed.Label,
+                new Vector2(0f, 290f), () =>
+                {
+                    BattlePlaybackSpeed.Cycle();
+                    RefreshGameSpeedLabel();
+                });
+#endif
+
+            CreateAudioSettingsActionButton(panel, "StoryArchiveButton", "物語を読み返す",
+                new Vector2(0f, panelHeight - (accountEnabled ? 920f : 780f)), () =>
+                {
+                    CloseAudioSettingsPanel();
+                    if (!TryShowPendingStoryDialogue()) StoryDialogueController.TryShowArchive();
+                });
+
+            if (accountEnabled)
+            {
+                CreateAudioSettingsActionButton(panel, "AppleAccountButton", "アカウント管理・データ削除",
+                    new Vector2(0f, panelHeight - 780f), () =>
+                    {
+                        CloseAudioSettingsPanel();
+                        OnlinePlayerData.Ensure().OpenAppleAccount();
+                    });
+            }
+
+            RefreshAudioSettingsPrivacyButton();
             audioSettingsRoot.SetActive(false);
+        }
+
+        private static void OpenPrivacyPolicy()
+        {
+#if UNITY_EDITOR
+            if (EditorPrivacyPolicyOpenOverride != null)
+            {
+                EditorPrivacyPolicyOpenOverride(PrivacyPolicyUrl);
+                return;
+            }
+#endif
+            Application.OpenURL(PrivacyPolicyUrl);
+        }
+
+        private void RefreshAudioSettingsLayout()
+        {
+            if (audioSettingsRoot == null) return;
+            var root = (RectTransform)audioSettingsRoot.transform;
+            var canvas = root.GetComponentInParent<Canvas>();
+            Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera : null;
+            Vector2 bottom = RectTransformUtility.WorldToScreenPoint(camera, root.TransformPoint(root.rect.min));
+            Vector2 top = RectTransformUtility.WorldToScreenPoint(camera, root.TransformPoint(root.rect.max));
+            if (top.x <= bottom.x || top.y <= bottom.y) return;
+            Rect safe = Screen.safeArea;
+            float banner = AdMobBannerService.Instance?.VisibleHeightPixels ?? 0f;
+            var available = Rect.MinMaxRect(
+                Mathf.Max(bottom.x, safe.xMin), Mathf.Max(bottom.y, safe.yMin + banner),
+                Mathf.Min(top.x, safe.xMax), Mathf.Min(top.y, safe.yMax));
+            if (available.width <= 0f || available.height <= 0f) return;
+            Vector2 units = new Vector2(root.rect.width / (top.x - bottom.x), root.rect.height / (top.y - bottom.y));
+            ApplyAudioSettingsAvailableRect(new Rect(root.rect.min + Vector2.Scale(available.min - bottom, units),
+                Vector2.Scale(available.size, units)));
+        }
+
+        private void ApplyAudioSettingsAvailableRect(Rect available)
+        {
+            var panel = audioSettingsRoot.transform.Find("AudioSettingsPanel") as RectTransform;
+            var root = (RectTransform)audioSettingsRoot.transform;
+            if (panel == null || available.width <= 48f || available.height <= 48f) return;
+            float scale = Mathf.Min(1f, (available.width - 48f) / panel.sizeDelta.x,
+                (available.height - 48f) / panel.sizeDelta.y);
+            panel.localScale = new Vector3(scale, scale, 1f);
+            panel.anchoredPosition = available.center - root.rect.center;
         }
 
         private static Text CreateAudioSettingsValueText(Transform parent, string name, Vector2 anchoredPosition)
@@ -2775,17 +2928,17 @@ namespace WitchTower.Home
                 name,
                 parent,
                 "100%",
-                24,
+                36,
                 FontStyle.Bold,
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
                 anchoredPosition,
-                new Vector2(82f, 42f),
+                new Vector2(120f, 60f),
                 new Color(0.72f, 0.92f, 1f, 1f),
                 TextAnchor.MiddleRight);
             text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 16;
-            text.resizeTextMaxSize = 24;
+            text.resizeTextMinSize = 30;
+            text.resizeTextMaxSize = 36;
             return text;
         }
 
@@ -2802,7 +2955,7 @@ namespace WitchTower.Home
             rootRect.anchorMax = new Vector2(0f, 1f);
             rootRect.pivot = new Vector2(0.5f, 0.5f);
             rootRect.anchoredPosition = anchoredPosition;
-            rootRect.sizeDelta = new Vector2(370f, 54f);
+            rootRect.sizeDelta = new Vector2(690f, 96f);
 
             Image hitArea = root.GetComponent<Image>();
             hitArea.color = new Color(1f, 1f, 1f, 0.001f);
@@ -2827,8 +2980,8 @@ namespace WitchTower.Home
             RectTransform fillAreaRect = fillArea.GetComponent<RectTransform>();
             fillAreaRect.anchorMin = Vector2.zero;
             fillAreaRect.anchorMax = Vector2.one;
-            fillAreaRect.offsetMin = hasTrackArt ? new Vector2(58f, 23f) : new Vector2(0f, 18f);
-            fillAreaRect.offsetMax = hasTrackArt ? new Vector2(-58f, -23f) : new Vector2(0f, -18f);
+            fillAreaRect.offsetMin = hasTrackArt ? new Vector2(58f, 44f) : new Vector2(0f, 18f);
+            fillAreaRect.offsetMax = hasTrackArt ? new Vector2(-58f, -44f) : new Vector2(0f, -18f);
 
             Image fill = CreateSliderImage(
                 "Fill",
@@ -2860,7 +3013,8 @@ namespace WitchTower.Home
             if (ApplyGeneratedUiSprite(handle, AudioSettingsSliderKnobPath, "SettingsSliderKnobImage2"))
             {
                 RectTransform handleRect = handle.transform as RectTransform;
-                handleRect.sizeDelta = new Vector2(42f, 68f);
+                // Slider stretches the handle across the 96-unit track height.
+                handleRect.sizeDelta = new Vector2(66f, 12f);
             }
             else
             {
@@ -2878,77 +3032,6 @@ namespace WitchTower.Home
             slider.direction = Slider.Direction.LeftToRight;
             slider.onValueChanged.AddListener(onValueChanged);
             return slider;
-        }
-
-        private static Toggle CreateAudioSettingsToggle(
-            string name,
-            Transform parent,
-            Vector2 anchoredPosition,
-            UnityEngine.Events.UnityAction<bool> onValueChanged)
-        {
-            GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Toggle));
-            root.transform.SetParent(parent, false);
-            RectTransform rootRect = root.GetComponent<RectTransform>();
-            rootRect.anchorMin = new Vector2(0f, 1f);
-            rootRect.anchorMax = new Vector2(0f, 1f);
-            rootRect.pivot = new Vector2(0.5f, 0.5f);
-            rootRect.anchoredPosition = anchoredPosition;
-            rootRect.sizeDelta = new Vector2(152f, 54f);
-
-            Image background = root.GetComponent<Image>();
-            background.color = new Color(0.09f, 0.11f, 0.15f, 1f);
-            background.raycastTarget = true;
-            if (!ApplyGeneratedUiSprite(background, AudioSettingsToggleFramePath, "SettingsToggleFrameImage2"))
-            {
-                AddUiOutline(root, new Color(0.64f, 0.86f, 1f, 0.36f), new Vector2(1f, -1f));
-            }
-
-            Image checkmark = CreateSliderImage(
-                "Checkmark",
-                root.transform,
-                new Vector2(0f, 0.5f),
-                new Vector2(0f, 0.5f),
-                new Vector2(38f, 0f),
-                new Vector2(58f, 34f),
-                new Color(0.38f, 0.78f, 1f, 1f));
-            checkmark.raycastTarget = false;
-            if (ApplyGeneratedUiSprite(checkmark, AudioSettingsSliderKnobPath, "SettingsSliderKnobImage2"))
-            {
-                RectTransform checkmarkRect = checkmark.transform as RectTransform;
-                checkmarkRect.anchoredPosition = new Vector2(40f, 0f);
-                checkmarkRect.sizeDelta = new Vector2(30f, 46f);
-            }
-
-            Text label = CreateUiText(
-                "ToggleLabel",
-                root.transform,
-                "ON",
-                20,
-                FontStyle.Bold,
-                new Vector2(0f, 0.5f),
-                new Vector2(1f, 0.5f),
-                new Vector2(36f, 0f),
-                new Vector2(92f, 34f),
-                Color.white,
-                TextAnchor.MiddleCenter);
-            label.raycastTarget = false;
-
-            Toggle toggle = root.GetComponent<Toggle>();
-            toggle.targetGraphic = background;
-            toggle.graphic = checkmark;
-            toggle.isOn = true;
-            toggle.onValueChanged.AddListener(delegate(bool isOn)
-            {
-                label.text = isOn ? "ON" : "OFF";
-                label.color = isOn ? Color.white : new Color(0.66f, 0.70f, 0.76f, 1f);
-                background.color = background.sprite != null
-                    ? (isOn ? Color.white : new Color(0.58f, 0.64f, 0.70f, 1f))
-                    : (isOn
-                        ? new Color(0.09f, 0.11f, 0.15f, 1f)
-                        : new Color(0.08f, 0.08f, 0.09f, 1f));
-            });
-            toggle.onValueChanged.AddListener(onValueChanged);
-            return toggle;
         }
 
         private static Image CreateSliderImage(
@@ -2975,7 +3058,7 @@ namespace WitchTower.Home
             return image;
         }
 
-        private void CreateAudioSettingsActionButton(
+        private Button CreateAudioSettingsActionButton(
             Transform parent,
             string name,
             string label,
@@ -2988,7 +3071,7 @@ namespace WitchTower.Home
                 new Vector2(0.5f, 0f),
                 new Vector2(0.5f, 0f),
                 anchoredPosition,
-                new Vector2(188f, 64f),
+                new Vector2(740f, 112f),
                 new Color(0.12f, 0.19f, 0.24f, 0.96f),
                 action);
             if (!ApplyGeneratedUiSprite(button.GetComponent<Image>(), AudioSettingsActionButtonPath, "SettingsActionButtonImage2"))
@@ -2999,17 +3082,24 @@ namespace WitchTower.Home
                 name + "Label",
                 button.transform,
                 label,
-                22,
+                36,
                 FontStyle.Bold,
                 new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f),
                 Vector2.zero,
-                new Vector2(166f, 38f),
+                new Vector2(620f, 76f),
                 Color.white,
                 TextAnchor.MiddleCenter);
             text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 15;
-            text.resizeTextMaxSize = 22;
+            text.resizeTextMinSize = 30;
+            text.resizeTextMaxSize = 36;
+            text.rectTransform.anchorMin = new Vector2(0.08f, 0.16f);
+            text.rectTransform.anchorMax = new Vector2(0.92f, 0.84f);
+            text.rectTransform.offsetMin = Vector2.zero;
+            text.rectTransform.offsetMax = Vector2.zero;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            return button;
         }
 
         private void SetAudioSettingsVolumes(float bgm, float se, bool playPreview)
@@ -3034,7 +3124,6 @@ namespace WitchTower.Home
             AudioManager audioManager = AudioManager.Instance;
             float bgm = audioManager != null ? audioManager.BgmVolume : 0.58f;
             float se = audioManager != null ? audioManager.SeVolume : 0.76f;
-            bool haptics = audioManager == null || audioManager.HapticsEnabled;
             if (audioSettingsBgmSlider != null)
             {
                 audioSettingsBgmSlider.SetValueWithoutNotify(bgm);
@@ -3045,13 +3134,37 @@ namespace WitchTower.Home
                 audioSettingsSeSlider.SetValueWithoutNotify(se);
             }
 
-            if (audioSettingsHapticsToggle != null)
-            {
-                audioSettingsHapticsToggle.SetIsOnWithoutNotify(haptics);
-                RefreshAudioSettingsToggleVisual(audioSettingsHapticsToggle, haptics);
-            }
-
             RefreshAudioSettingsValueTexts();
+            RefreshAudioSettingsPrivacyButton();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RefreshGameSpeedLabel();
+#endif
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private void RefreshGameSpeedLabel()
+        {
+            var label = audioSettingsRoot?.transform.Find("AudioSettingsPanel/DevelopmentGameSpeedButton")
+                ?.GetComponentInChildren<Text>(true);
+            if (label != null) label.text = BattlePlaybackSpeed.Label;
+        }
+#endif
+
+        private void RefreshAudioSettingsPrivacyButton()
+        {
+            if (audioSettingsPrivacyButton == null) return;
+            bool adsEnabled = MonetizationFeatureFlags.AdsEnabled;
+            SetAudioSettingsPrivacyOptionsVisibility(adsEnabled,
+                adsEnabled && AdMobBannerService.IsPrivacyOptionsRequired);
+        }
+
+        private void SetAudioSettingsPrivacyOptionsVisibility(bool adsEnabled, bool privacyOptionsRequired)
+        {
+            if (audioSettingsPrivacyButton != null)
+            {
+                audioSettingsPrivacyButton.gameObject.SetActive(
+                    adsEnabled && privacyOptionsRequired);
+            }
         }
 
         private void RefreshAudioSettingsValueTexts()
@@ -3059,7 +3172,6 @@ namespace WitchTower.Home
             AudioManager audioManager = AudioManager.Instance;
             float bgm = audioManager != null ? audioManager.BgmVolume : 0.58f;
             float se = audioManager != null ? audioManager.SeVolume : 0.76f;
-            bool haptics = audioManager == null || audioManager.HapticsEnabled;
             if (audioSettingsBgmValueText != null)
             {
                 audioSettingsBgmValueText.text = Mathf.RoundToInt(bgm * 100f) + "%";
@@ -3070,36 +3182,6 @@ namespace WitchTower.Home
                 audioSettingsSeValueText.text = Mathf.RoundToInt(se * 100f) + "%";
             }
 
-            if (audioSettingsHapticsValueText != null)
-            {
-                audioSettingsHapticsValueText.text = haptics ? "ON" : "OFF";
-            }
-        }
-
-        private static void RefreshAudioSettingsToggleVisual(Toggle toggle, bool isOn)
-        {
-            if (toggle == null)
-            {
-                return;
-            }
-
-            Image background = toggle.GetComponent<Image>();
-            if (background != null)
-            {
-                background.color = background.sprite != null
-                    ? (isOn ? Color.white : new Color(0.58f, 0.64f, 0.70f, 1f))
-                    : (isOn
-                        ? new Color(0.09f, 0.11f, 0.15f, 1f)
-                        : new Color(0.08f, 0.08f, 0.09f, 1f));
-            }
-
-            Transform labelTransform = toggle.transform.Find("ToggleLabel");
-            Text label = labelTransform != null ? labelTransform.GetComponent<Text>() : null;
-            if (label != null)
-            {
-                label.text = isOn ? "ON" : "OFF";
-                label.color = isOn ? Color.white : new Color(0.66f, 0.70f, 0.76f, 1f);
-            }
         }
 
         private static Text CreateHomeResourcePill(
@@ -3290,6 +3372,14 @@ namespace WitchTower.Home
             Transform existingBar = menuRoot.Find("HomeStoneBalanceBar");
             if (existingBar != null)
             {
+                // The individual HUD frames supply their own artwork. Keep the
+                // shared container transparent, including when reusing a legacy bar.
+                Image existingBarImage = existingBar.GetComponent<Image>();
+                if (existingBarImage != null)
+                {
+                    existingBarImage.color = Color.clear;
+                    existingBarImage.raycastTarget = false;
+                }
                 bool isModernLayout = existingBar.Find("HomeHudLayoutMarker") != null &&
                     existingBar.Find("HomeHudSplitLayoutMarker") != null;
                 homeFreeStoneText = existingBar.Find("FreeStoneCounter/FreeStoneAmount")?.GetComponent<Text>();
@@ -3331,7 +3421,7 @@ namespace WitchTower.Home
                 ConfigureHomeResourceAmountText(homeFreeStoneText);
                 ConfigureHomeResourceAmountText(homePaidStoneText);
                 ConfigureHomeResourceAmountText(homeGoldText);
-                AlignHomeResourceAmountYToPaidStone();
+                AlignHomeResourceAmountYToGold();
                 RectTransform questButtonRect = homeQuestButton != null ? homeQuestButton.GetComponent<RectTransform>() : null;
                 Image questButtonImage = homeQuestButton != null ? homeQuestButton.GetComponent<Image>() : null;
                 bool hasRoundQuestButton = questButtonRect != null &&
@@ -3351,8 +3441,6 @@ namespace WitchTower.Home
                     permanentUpgradeButtonText != null &&
                     permanentUpgradeStatusText != null &&
                     permanentUpgradeButton != null &&
-                    skillTreeButtonText != null &&
-                    skillTreeButton != null &&
                     homeTeamCombatPowerText != null &&
                     isModernLayout &&
                     hasRoundQuestButton)
@@ -3374,7 +3462,7 @@ namespace WitchTower.Home
             barRect.sizeDelta = HomeStoneBarSize;
 
             Image barImage = bar.GetComponent<Image>();
-            barImage.color = new Color(0.012f, 0.012f, 0.022f, 0.10f);
+            barImage.color = Color.clear;
             barImage.raycastTarget = false;
 
             Sprite profileHudFrameSprite = LoadSpriteResource(HomeTopHudProfileFramePath, "HomeTopHudProfile");
@@ -3445,7 +3533,7 @@ namespace WitchTower.Home
                 new Color(1f, 0.54f, 1f, 1f),
                 !useGeneratedHudFrame,
                 useSplitHudFrame ? paidStoneHudFrameSprite : null);
-            AlignHomeResourceAmountYToPaidStone();
+            AlignHomeResourceAmountYToGold();
             homeShopButton = CreateGoldShopButton(bar.transform, HomeShopButtonPosition, HomeShopButtonSize);
             permanentUpgradeButton = CreatePermanentUpgradeShortcutButton(bar.transform, PermanentUpgradeButtonPosition, PermanentUpgradeButtonSize);
             homeQuestButton = CreateQuestButton(bar.transform, HomeQuestButtonPosition, HomeQuestButtonSize);
@@ -3455,17 +3543,30 @@ namespace WitchTower.Home
             EnsureDailyQuestList(menuRoot);
         }
 
-        private void AlignHomeResourceAmountYToPaidStone()
+        private void AlignHomeResourceAmountYToGold()
         {
-            RectTransform paidRect = homePaidStoneText != null ? homePaidStoneText.transform as RectTransform : null;
-            if (paidRect == null)
+            RectTransform goldRect = homeGoldText != null ? homeGoldText.transform as RectTransform : null;
+            if (goldRect == null)
             {
                 return;
             }
 
-            float targetY = paidRect.anchoredPosition.y;
-            AlignHomeResourceAmountY(homeGoldText, targetY + HomeYellowResourceAmountVerticalOffset);
-            AlignHomeResourceAmountY(homeFreeStoneText, targetY);
+            // Preserve the gold baseline; both stone amounts use that same Y,
+            // including reused HUDs whose counter parents have different offsets.
+            AlignHomeResourceAmountY(homeGoldText, HomeResourceAmountVerticalOffset + HomeYellowResourceAmountVerticalOffset);
+            AlignHomeResourceAmountWorldY(homeFreeStoneText, goldRect.position.y);
+            AlignHomeResourceAmountWorldY(homePaidStoneText, goldRect.position.y);
+        }
+
+        private static void AlignHomeResourceAmountWorldY(Text amountText, float targetY)
+        {
+            RectTransform amountRect = amountText != null ? amountText.transform as RectTransform : null;
+            if (amountRect != null)
+            {
+                Vector3 position = amountRect.position;
+                position.y = targetY;
+                amountRect.position = position;
+            }
         }
 
         private static void AlignHomeResourceAmountY(Text amountText, float targetY)
@@ -3785,7 +3886,7 @@ namespace WitchTower.Home
             if (homePlayerLevelText != null)
             {
                 homePlayerLevelText.text = profile != null
-                    ? $"Lv.{Mathf.Max(1, profile.Level)} 魂{Mathf.Max(0, profile.RebirthPoints)}"
+                    ? $"Lv.{Mathf.Max(1, profile.Level)}"
                     : "Lv.-";
                 homePlayerLevelText.gameObject.SetActive(!homePlayerExpDetailsVisible);
             }
@@ -3794,11 +3895,7 @@ namespace WitchTower.Home
             {
                 if (profile != null)
                 {
-                    int reward = profile.GetPendingRebirthPointReward();
-                    string rebirthRead = reward > 0
-                        ? $" / 転生 +{reward}魂片"
-                        : string.Empty;
-                    homeExpText.text = $"経験値 {Mathf.Max(0, profile.Exp):N0}/{Mathf.Max(1, profile.GetRequiredExpForNextLevel()):N0}{rebirthRead}";
+                    homeExpText.text = $"経験値 {Mathf.Max(0, profile.Exp):N0}/{Mathf.Max(1, profile.GetRequiredExpForNextLevel()):N0}";
                 }
                 else
                 {
@@ -3811,18 +3908,31 @@ namespace WitchTower.Home
 
         private void ApplyHomeGuideDisplay(PlayerProfile profile)
         {
+            // Settings owns input until dismissed. Do not let the per-frame home
+            // refresh raise a quest/tutorial overlay above this modal.
+            if (IsAudioSettingsOpen() || IsMonsterTrainingPageOpen || dailyChallengePanel?.IsVisible == true)
+            {
+                SetHomeGuidePanelVisible(false);
+                return;
+            }
             StoryTutorialEvent tutorialEvent = profile != null
                 ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
                 : null;
             bool shouldShowTutorialEvent = ShouldShowHomeGuideEvent(profile, tutorialEvent);
             bool hasClaimableQuestReward = profile != null &&
                 DailyRewardService.GetClaimableQuestCount(profile, DateTime.Now) > 0;
-            bool shouldShowGuidePanel = !IsDailyQuestListOpen() && (shouldShowTutorialEvent || hasClaimableQuestReward);
+            bool shouldShowGuidePanel = !StoryDialogueController.IsShowing &&
+                StoryDialogueProgress.GetPendingHomeDialogue(profile) == null &&
+                !IsDailyQuestListOpen() && (shouldShowTutorialEvent || hasClaimableQuestReward);
             SetHomeGuidePanelVisible(shouldShowGuidePanel);
             if (!shouldShowGuidePanel)
             {
+                SetHomeGuideAdvanceOverlayVisible(false);
                 return;
             }
+
+            SetHomeGuideAdvanceOverlayVisible(
+                shouldShowTutorialEvent && CanAdvanceHomeGuidePanel(profile, tutorialEvent));
 
             string title;
             string body;
@@ -3888,6 +3998,33 @@ namespace WitchTower.Home
             {
                 homeGuideButton.interactable = false;
             }
+
+            if (!visible)
+            {
+                SetHomeGuideAdvanceOverlayVisible(false);
+            }
+        }
+
+        private void SetHomeGuideAdvanceOverlayVisible(bool visible)
+        {
+            if (homeGuideAdvanceOverlayButton == null)
+            {
+                return;
+            }
+
+            bool active = visible && homeGuideButton != null && homeGuideButton.gameObject.activeInHierarchy;
+            homeGuideAdvanceOverlayButton.interactable = active;
+            homeGuideAdvanceOverlayButton.gameObject.SetActive(active);
+            if (active)
+            {
+                // Keep the guide panel above the transparent hit surface so
+                // the framed panel remains visible and clickable as well.
+                homeGuideAdvanceOverlayButton.transform.SetAsLastSibling();
+                if (homeGuideButton != null)
+                {
+                    homeGuideButton.transform.SetAsLastSibling();
+                }
+            }
         }
 
         private GameObject ResolveHomeGuidePanelObject()
@@ -3927,22 +4064,22 @@ namespace WitchTower.Home
                 new Vector2(0f, 1f),
                 new Vector2(0f, 1f),
                 new Vector2(0.5f, 0.5f),
-                showCharacter ? new Vector2(615f, -48f) : new Vector2(585f, -48f),
-                showCharacter ? new Vector2(560f, 54f) : new Vector2(620f, 54f));
+                showCharacter ? new Vector2(630f, -58f) : new Vector2(585f, -58f),
+                showCharacter ? new Vector2(600f, 64f) : new Vector2(760f, 64f));
             ConfigureGuideRect(
                 homeGuideText != null ? homeGuideText.transform as RectTransform : null,
                 new Vector2(0f, 0.5f),
                 new Vector2(0f, 0.5f),
                 new Vector2(0.5f, 0.5f),
-                showCharacter ? new Vector2(615f, 18f) : new Vector2(585f, 18f),
-                showCharacter ? new Vector2(560f, 128f) : new Vector2(670f, 128f));
+                showCharacter ? new Vector2(630f, 12f) : new Vector2(585f, 12f),
+                showCharacter ? new Vector2(600f, 172f) : new Vector2(800f, 172f));
             ConfigureGuideRect(
                 homeNextFloorText != null ? homeNextFloorText.transform as RectTransform : null,
                 new Vector2(0f, 0f),
                 new Vector2(0f, 0f),
                 new Vector2(0.5f, 0.5f),
-                showCharacter ? new Vector2(615f, 42f) : new Vector2(585f, 42f),
-                showCharacter ? new Vector2(560f, 42f) : new Vector2(620f, 42f));
+                showCharacter ? new Vector2(630f, 45f) : new Vector2(585f, 45f),
+                showCharacter ? new Vector2(600f, 48f) : new Vector2(760f, 48f));
         }
 
         private static void SplitGuideText(string guideText, out string title, out string body)
@@ -3981,7 +4118,7 @@ namespace WitchTower.Home
 
             if (CanAdvanceHomeGuidePanel(profile, tutorialEvent))
             {
-                return "パネルをタップして続ける";
+                return "画面のどこかをタップして次へ";
             }
 
             string actionLabel = ResolveHomeTutorialActionLabel(tutorialEvent?.TargetKey ?? string.Empty);
@@ -4078,6 +4215,7 @@ namespace WitchTower.Home
 
         private bool TryAdvanceHomeTutorialForTarget(string targetKey)
         {
+            if (TryShowPendingStoryDialogue()) return false;
             PlayerProfile profile = GetRuntimeProfile();
             if (profile == null)
             {
@@ -4093,6 +4231,15 @@ namespace WitchTower.Home
 
             if (!profile.HasCompletedTutorial)
             {
+                // Each supported step has a home guide, including a route back
+                // to an interrupted lesson. Never bypass the guide via an
+                // unrelated shortcut or advance a lesson merely on returning.
+                if (activeEvent == null)
+                {
+                    RefreshHomeStoneBalanceBar();
+                    return false;
+                }
+
                 if (profile.TutorialStepId == StoryTutorialService.StepWakeup)
                 {
                     changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryPrologueWakeup);
@@ -4134,6 +4281,29 @@ namespace WitchTower.Home
                 {
                     changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepOpenBattle);
                 }
+                else if (targetKey == "home.equipment" &&
+                         (profile.TutorialStepId == StoryTutorialService.StepOpenEquipment ||
+                          (profile.TutorialStepId == StoryTutorialService.StepFirstResult && profile.HighestFloor >= 1)))
+                {
+                    // A restart can discard the result UI after rewards were
+                    // saved. Continue to equipment without replaying rewards.
+                    if (profile.TutorialStepId == StoryTutorialService.StepFirstResult)
+                    {
+                        changed |= StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstBattleWin);
+                        changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstResult);
+                    }
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepOpenEquipment);
+                }
+                else if (targetKey == "home.shop" &&
+                         profile.TutorialStepId == StoryTutorialService.StepOpenShop)
+                {
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepOpenShop);
+                }
+                else if (targetKey == "home.dex" &&
+                         profile.TutorialStepId == StoryTutorialService.StepOpenDex)
+                {
+                    changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepOpenDex);
+                }
 
                 if (profile.TutorialStepId == StoryTutorialService.StepWrapUp)
                 {
@@ -4166,6 +4336,8 @@ namespace WitchTower.Home
             {
                 return;
             }
+
+            if (TryShowPendingStoryDialogue()) return;
 
             PlayerProfile profile = GetRuntimeProfile();
             StoryTutorialEvent activeEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
@@ -4231,6 +4403,13 @@ namespace WitchTower.Home
 
         private void ApplyHomeTutorialFocus(PlayerProfile profile)
         {
+            if (IsAudioSettingsOpen() || (dailyChallengePanel != null && dailyChallengePanel.IsVisible) || IsMonsterTrainingPageOpen)
+            {
+                SetHomeGuidePanelVisible(false);
+                HideHomeTutorialFocus();
+                ResetHomeTutorialTargetVisual();
+                return;
+            }
             Transform menuRoot = ResolveUnifiedMenuRootTransform();
             StoryTutorialEvent activeEvent = profile != null
                 ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
@@ -4241,6 +4420,12 @@ namespace WitchTower.Home
             }
 
             bool guideCanAdvance = CanAdvanceHomeGuidePanel(profile, activeEvent);
+            if (guideCanAdvance && activeEvent != null && StoryTutorialService.IsChapterStoryEvent(activeEvent.EventId))
+            {
+                if (homeGuideButton != null) homeGuideButton.interactable = true;
+                HideHomeTutorialFocus();
+                return;
+            }
             bool shouldFocusQuestReward = profile != null &&
                 profile.HasCompletedTutorial &&
                 DailyRewardService.GetClaimableQuestCount(profile, DateTime.Now) > 0;
@@ -4375,7 +4560,7 @@ namespace WitchTower.Home
                 menuRoot,
                 "PermanentUpgradeButton",
                 visible && (MonetizationFeatureFlags.StorefrontEnabled || HasManageablePermanentUpgrade(profile)));
-            SetNamedChildVisible(menuRoot, "SkillTreeButton", visible);
+            SetNamedChildVisible(menuRoot, "SkillTreeButton", false);
             SetNamedChildVisible(menuRoot, "QuestButton", visible);
         }
 
@@ -4428,7 +4613,8 @@ namespace WitchTower.Home
             }
 
             return StoryTutorialService.IsChapterStoryEvent(tutorialEvent.EventId) ||
-                string.Equals(tutorialEvent.EventId, StoryTutorialService.HintFusionInheritance, StringComparison.Ordinal);
+                string.Equals(tutorialEvent.EventId, StoryTutorialService.HintFusionInheritance, StringComparison.Ordinal) ||
+                StoryTutorialService.IsEquipmentTutorialHint(tutorialEvent.EventId);
         }
 
         private static void SetHomeTutorialActionButtonsInteractable(Transform menuRoot, bool allInteractable, string targetButtonName)
@@ -4811,6 +4997,12 @@ namespace WitchTower.Home
 
         private void RefreshFirstSummonTutorialPulse(PlayerProfile profile, Transform menuRoot)
         {
+            if (IsAudioSettingsOpen())
+            {
+                if (homeFirstSummonPulseRoot != null) homeFirstSummonPulseRoot.SetActive(false);
+                ResetHomeTutorialTargetVisual();
+                return;
+            }
             StoryTutorialEvent activeEvent = profile != null
                 ? StoryTutorialService.GetNextEvent(profile, "HomeScene")
                 : null;
@@ -4825,18 +5017,17 @@ namespace WitchTower.Home
             bool canPulseEarlyOptionalTutorialHint = profile != null && !profile.HasCompletedTutorial;
             bool shouldPulseDex = canPulseEarlyOptionalTutorialHint &&
                 activeEvent != null &&
-                activeEvent.EventId == StoryTutorialService.HintDex &&
                 string.Equals(activeEvent.TargetKey, "home.dex", StringComparison.Ordinal);
-            bool shouldPulseEquipment = canPulseEarlyOptionalTutorialHint &&
+            bool shouldPulseEquipment =
                 activeEvent != null &&
+                (StoryTutorialService.IsEquipmentTutorialHint(activeEvent.EventId) ||
+                 string.Equals(activeEvent.TargetKey, "home.equipment", StringComparison.Ordinal)) &&
                 IsHomeEquipmentHintTarget(activeEvent.TargetKey);
             bool shouldPulseFusion = activeEvent != null &&
                 string.Equals(activeEvent.TargetKey, "home.fusion", StringComparison.Ordinal) &&
                 ((canPulseEarlyOptionalTutorialHint && activeEvent.EventId == StoryTutorialService.HintFusion) ||
                  activeEvent.EventId == StoryTutorialService.HintFusionInheritance);
-            bool shouldPulseShop = canPulseEarlyOptionalTutorialHint &&
-                activeEvent != null &&
-                activeEvent.EventId == StoryTutorialService.HintShop &&
+            bool shouldPulseShop = activeEvent != null &&
                 string.Equals(activeEvent.TargetKey, "home.shop", StringComparison.Ordinal);
             if ((!shouldPulseFirstSummon && !shouldPulseDex && !shouldPulseEquipment && !shouldPulseFusion && !shouldPulseShop) || menuRoot == null)
             {
@@ -5044,7 +5235,8 @@ namespace WitchTower.Home
 
         private static bool IsHomeEquipmentHintTarget(string targetKey)
         {
-            return targetKey == "equipment.first_item" ||
+            return targetKey == "home.equipment" ||
+                targetKey == "equipment.first_item" ||
                 targetKey == "equipment.auto_equip" ||
                 targetKey == "equipment.quality_label" ||
                 targetKey == "equipment.enhance_button";
@@ -5231,6 +5423,7 @@ namespace WitchTower.Home
                 TextAnchor.MiddleCenter);
 
             dailyQuestListRoot.SetActive(false);
+            AddDailyGiftShortcut(panel.transform);
         }
 
         private static void ConfigureDailyQuestInputBlocking(Transform dailyQuestPanelRoot)
@@ -5495,6 +5688,7 @@ namespace WitchTower.Home
 
         private static PlayerProfile GetRuntimeProfile()
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return null;
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             if (profile != null || !Application.isPlaying)
             {
@@ -5603,6 +5797,54 @@ namespace WitchTower.Home
             return image;
         }
 
+        private static RawImage CreatePortraitCoverBackground(string name, Transform parent, Sprite sprite)
+        {
+            RawImage image = CreateMenuRawImage(
+                name,
+                parent,
+                sprite != null ? sprite.texture : null,
+                new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(1080f, 1920f));
+            if (image == null || sprite == null || sprite.texture == null)
+            {
+                return image;
+            }
+
+            Rect sourceRect = sprite.rect;
+            float sourceWidth = Mathf.Max(1f, sourceRect.width);
+            float sourceHeight = Mathf.Max(1f, sourceRect.height);
+            float sourceAspect = sourceWidth / sourceHeight;
+            float targetAspect = 1080f / 1920f;
+            float cropWidth = 1f;
+            float cropHeight = 1f;
+            if (sourceAspect > targetAspect)
+            {
+                cropWidth = targetAspect / sourceAspect;
+            }
+            else if (sourceAspect < targetAspect)
+            {
+                cropHeight = sourceAspect / targetAspect;
+            }
+
+            float textureWidth = Mathf.Max(1f, sprite.texture.width);
+            float textureHeight = Mathf.Max(1f, sprite.texture.height);
+            Rect spriteUv = new Rect(
+                sourceRect.x / textureWidth,
+                sourceRect.y / textureHeight,
+                sourceRect.width / textureWidth,
+                sourceRect.height / textureHeight);
+            image.uvRect = new Rect(
+                spriteUv.x + spriteUv.width * (1f - cropWidth) * 0.5f,
+                spriteUv.y + spriteUv.height * (1f - cropHeight) * 0.5f,
+                spriteUv.width * cropWidth,
+                spriteUv.height * cropHeight);
+            image.color = Color.white;
+            image.raycastTarget = false;
+            return image;
+        }
+
         private static RawImage CreateMenuRawImage(string name, Transform parent, Texture texture, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 size)
         {
             GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
@@ -5702,72 +5944,13 @@ namespace WitchTower.Home
 
         private void EnsureSkillTreeShortcutButton(Transform parent)
         {
-            if (parent == null)
-            {
-                return;
-            }
-
-            Transform existing = parent.Find("SkillTreeButton");
-            if (existing == null)
-            {
-                skillTreeButton = CreateSkillTreeShortcutButton(parent, SkillTreeButtonPosition, SkillTreeButtonSize);
-                return;
-            }
-
-            skillTreeButton = existing.GetComponent<Button>();
-            skillTreeButtonText = existing.Find("SkillTreeButtonLabel")?.GetComponent<Text>();
-            if (skillTreeButton == null || skillTreeButtonText == null)
-            {
-                DestroySceneObject(existing.gameObject);
-                skillTreeButton = CreateSkillTreeShortcutButton(parent, SkillTreeButtonPosition, SkillTreeButtonSize);
-                return;
-            }
-
-            RectTransform rectTransform = existing as RectTransform;
-            if (rectTransform != null)
-            {
-                rectTransform.anchorMin = new Vector2(0.5f, 1f);
-                rectTransform.anchorMax = new Vector2(0.5f, 1f);
-                rectTransform.pivot = new Vector2(0.5f, 0.5f);
-                rectTransform.anchoredPosition = SkillTreeButtonPosition;
-                rectTransform.sizeDelta = SkillTreeButtonSize;
-            }
-
-            skillTreeButton.onClick.RemoveAllListeners();
-            skillTreeButton.onClick.AddListener(OpenSkillTreeScene);
-            ConfigureSkillTreeShortcutVisual(existing, skillTreeButtonText);
+            Transform existing = parent != null ? parent.Find("SkillTreeButton") : null;
+            if (existing != null) existing.gameObject.SetActive(false);
         }
 
         private Button CreateSkillTreeShortcutButton(Transform parent, Vector2 anchoredPosition, Vector2 size)
         {
-            GameObject root = new GameObject("SkillTreeButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            root.transform.SetParent(parent, false);
-            RectTransform rectTransform = root.GetComponent<RectTransform>();
-            rectTransform.anchorMin = new Vector2(0.5f, 1f);
-            rectTransform.anchorMax = new Vector2(0.5f, 1f);
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.anchoredPosition = anchoredPosition;
-            rectTransform.sizeDelta = size;
-
-            Button button = root.GetComponent<Button>();
-            button.onClick.AddListener(OpenSkillTreeScene);
-
-            skillTreeButtonText = CreateUiText(
-                "SkillTreeButtonLabel",
-                root.transform,
-                SkillTreeLabel,
-                17,
-                FontStyle.Bold,
-                new Vector2(0.5f, 0.5f),
-                new Vector2(0.5f, 0.5f),
-                new Vector2(0f, -62f),
-                new Vector2(116f, 34f),
-                Color.white,
-                TextAnchor.MiddleCenter);
-            AddTextShadow(skillTreeButtonText, new Color(0f, 0f, 0f, 0.85f), new Vector2(1.4f, -1.4f));
-
-            ConfigureSkillTreeShortcutVisual(root.transform, skillTreeButtonText);
-            return button;
+            return null;
         }
 
         private static void ConfigureSkillTreeShortcutVisual(Transform buttonTransform, Text labelText)
@@ -6185,18 +6368,7 @@ namespace WitchTower.Home
                 return;
             }
 
-            int rebirthReward = profile.GetPendingRebirthPointReward();
-            if (rebirthReward > 0)
-            {
-                permanentUpgradeStatusText.text = $"転生 +{rebirthReward}魂片";
-                permanentUpgradeStatusText.color = new Color(0.45f, 1f, 0.78f, 1f);
-            }
-            else if (profile.RebirthPoints > 0)
-            {
-                permanentUpgradeStatusText.text = $"魂片 {profile.RebirthPoints}";
-                permanentUpgradeStatusText.color = new Color(1f, 0.82f, 0.38f, 1f);
-            }
-            else if (profile.HasAutoRepeatFloorUpgrade && profile.IsAutoRepeatFloorUpgradeEnabled)
+            if (profile.HasAutoRepeatFloorUpgrade && profile.IsAutoRepeatFloorUpgradeEnabled)
             {
                 permanentUpgradeStatusText.text = "同階層再挑戦 有効";
                 permanentUpgradeStatusText.color = new Color(0.45f, 1f, 0.78f, 1f);

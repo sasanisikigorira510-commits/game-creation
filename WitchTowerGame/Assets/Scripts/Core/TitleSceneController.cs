@@ -14,7 +14,7 @@ using WitchTower.UI;
 namespace WitchTower.Core
 {
     [ExecuteAlways]
-    public sealed class TitleSceneController : MonoBehaviour
+    public sealed partial class TitleSceneController : MonoBehaviour
     {
         [Serializable]
         private sealed class FormationMonsterEntry
@@ -77,7 +77,7 @@ namespace WitchTower.Core
             Default,
             Rarity,
             Power,
-            Name
+            Quality
         }
 
         [SerializeField] private string homeSceneName = "HomeScene";
@@ -170,11 +170,11 @@ namespace WitchTower.Core
         private const int EquipmentEnhanceEffectFrameCount = 8;
         private const float EquipmentEnhanceEffectDuration = 1.35f;
         private const float EquipmentInventoryWidth = 872f;
-        private const float EquipmentInventoryPanelHeight = 960f;
-        private const float EquipmentInventoryControlsHeight = 104f;
+        private const float EquipmentInventoryPanelHeight = 880f;
+        private const float EquipmentInventoryControlsHeight = 328f;
         private const float EquipmentInventoryViewportHeight = EquipmentInventoryPanelHeight - EquipmentInventoryControlsHeight;
-        private const float EquipmentInventoryCardHeight = 156f;
-        private const float EquipmentInventoryRowSpacing = 170f;
+        private const float EquipmentInventoryCardHeight = 246f;
+        private const float EquipmentInventoryRowSpacing = 260f;
 
         private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
         private readonly Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
@@ -190,6 +190,7 @@ namespace WitchTower.Core
         private readonly List<Text> equipmentInventoryFilterButtonTexts = new List<Text>();
         private readonly List<EquipmentInventoryFilter> equipmentInventoryFilterValues = new List<EquipmentInventoryFilter>();
         private readonly List<Image> equipmentTutorialPulseImages = new List<Image>();
+        private readonly Dictionary<Image, Color> equipmentTutorialActionButtonColors = new Dictionary<Image, Color>();
 
         private GameObject formationPanelRoot;
         private GameObject equipmentSceneRoot;
@@ -206,6 +207,7 @@ namespace WitchTower.Core
         private Text equippedAccessoryText;
         private Text equipmentMonsterNameText;
         private Text equipmentMonsterMetaText;
+        private Text equipmentMonsterPartyText;
         private Image equipmentMonsterPortraitBackdropImage;
         private Image equipmentMonsterPortraitShadowImage;
         private Image equipmentMonsterPortraitImage;
@@ -217,18 +219,32 @@ namespace WitchTower.Core
         private Text equipmentInventorySummaryText;
         private Text equipmentInventorySortButtonText;
         private RectTransform equipmentInventoryContentRect;
+        private GameObject equipmentBulkSaleRoot;
+        private RectTransform equipmentBulkSaleList;
+        private Text equipmentBulkSaleSummary;
+        private Text equipmentBulkSaleMessage;
+        private Button equipmentBulkSaleConfirmButton;
+        private Text equipmentBulkSaleConfirmLabel;
+        private Button equipmentBulkSaleSelectVisibleButton;
+        private readonly HashSet<string> equipmentBulkSaleSelection = new HashSet<string>(StringComparer.Ordinal);
+        private List<string> equipmentBulkSaleVisibleIds = new List<string>();
+        private EquipmentBulkSalePreview equipmentBulkSalePreview;
         private Button equipmentHomeReturnButton;
         private Button equipmentAutoEquipButton;
         private Text equipmentAutoEquipButtonText;
         private GameObject equipmentTutorialReturnFocusRoot;
         private Text equipmentTutorialReturnPromptText;
         private GameObject equipmentTutorialGuideRoot;
+        private Transform equipmentTutorialGuideOriginalParent;
+        private bool equipmentTutorialGuideLiftedForDetail;
         private Text equipmentTutorialGuideTitleText;
         private Text equipmentTutorialGuideBodyText;
         private Text equipmentTutorialGuideFooterText;
+        private Button equipmentQualityAcknowledgeButton;
         private Image equipmentTutorialGuideCharacterImage;
         private GameObject equipmentEnhanceOverlayRoot;
         private RectTransform equipmentEnhanceOverlayListRect;
+        private RectTransform equipmentEnhanceOverlayViewportRect;
         private Text equipmentEnhanceOverlayTitleText;
         private Text equipmentEnhanceOverlayInfoText;
         private Text equipmentEnhanceOverlayResultText;
@@ -249,8 +265,10 @@ namespace WitchTower.Core
         private Button equipmentDetailEquipButton;
         private Button equipmentDetailUnequipButton;
         private Button equipmentDetailLockButton;
+        private Button equipmentDetailFavoriteButton;
         private Button equipmentDetailDiscardButton;
         private Button equipmentDetailEnhanceButton;
+        private GameObject equipmentDetailEnhanceFocusRoot;
         private GameObject equipmentEnhanceTutorialCloseFocusRoot;
         private Text equipmentEnhanceTutorialClosePromptText;
         private Image equipmentEnhanceDarkOverlayImage;
@@ -285,12 +303,14 @@ namespace WitchTower.Core
 
         private void Start()
         {
+            if (Application.isPlaying && SaveManager.Instance?.StorageAccessAvailable == false) return;
             NormalizeCanvasScales();
             SimplifyTitlePresentation();
 
             if (Application.isPlaying)
             {
                 EnsureRuntimeState();
+                if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             }
 
             if (IsEquipmentScene())
@@ -325,6 +345,7 @@ namespace WitchTower.Core
 
         private void Update()
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             if (equipmentEnhanceOverlayRoot != null)
             {
                 AnimateEquipmentEnhancementEffect();
@@ -337,45 +358,47 @@ namespace WitchTower.Core
         public void StartNewGame()
         {
             EnsureRuntimeState();
-            var defaultSave = Save.PlayerSaveData.CreateDefault();
-            SaveManager.Instance.Save(defaultSave);
-            GameManager.Instance.InitializeFromSave(defaultSave);
-            SceneManager.LoadScene(homeSceneName);
+            if (SaveManager.Instance == null || !SaveManager.Instance.StorageAccessAvailable || SaveManager.Instance.RecoveryRequired) return;
+            // Never use the title action to erase an existing account or purchases.
+            ContinueGame();
+
         }
 
         public void ContinueGame()
         {
             EnsureRuntimeState();
+            if (SaveManager.Instance == null || !SaveManager.Instance.StorageAccessAvailable) return;
             SaveManager.Instance.LoadOrCreate();
+            if (SaveManager.Instance.RecoveryRequired) return;
             GameManager.Instance.InitializeFromSave(SaveManager.Instance.CurrentSaveData);
-            SceneManager.LoadScene(homeSceneName);
+            SceneTransitionGuard.LoadScene(homeSceneName);
         }
 
         public void OpenBattle()
         {
-            SceneManager.LoadScene(battleSceneName);
+            SceneTransitionGuard.LoadScene(battleSceneName);
         }
 
         public void OpenFormation()
         {
-            SceneManager.LoadScene(formationSceneName);
+            SceneTransitionGuard.LoadScene(formationSceneName);
         }
 
         public void OpenEquipment()
         {
-            SceneManager.LoadScene(equipmentSceneName);
+            SceneTransitionGuard.LoadScene(equipmentSceneName);
         }
 
         public void OpenFusion()
         {
             EnsureRuntimeState();
-            SceneManager.LoadScene(fusionSceneName);
+            SceneTransitionGuard.LoadScene(fusionSceneName);
         }
 
         public void OpenGacha()
         {
             EnsureRuntimeState();
-            SceneManager.LoadScene(gachaSceneName);
+            SceneTransitionGuard.LoadScene(gachaSceneName);
         }
 
         public void CloseFormation()
@@ -388,6 +411,8 @@ namespace WitchTower.Core
 
         public void ReturnHomeFromEquipment()
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
+            CancelEquipmentBulkSale();
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
             bool tutorialChanged = false;
@@ -397,9 +422,17 @@ namespace WitchTower.Core
                 tutorialChanged = string.Equals(tutorialEvent.EventId, StoryTutorialService.HintEquipmentEnhanceReturnHome, StringComparison.Ordinal)
                     ? StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipmentEnhanceReturnHome)
                     : StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
+                if (profile != null &&
+                    !profile.HasCompletedTutorial &&
+                    profile.TutorialStepId == StoryTutorialService.StepFirstEquipment &&
+                    string.Equals(tutorialEvent.EventId, StoryTutorialService.HintEquipmentEnhanceReturnHome, StringComparison.Ordinal))
+                {
+                    tutorialChanged |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstEquipment);
+                }
             }
             else if (tutorialEvent != null &&
-                string.Equals(tutorialEvent.TargetKey, "equipment.quality_label", StringComparison.Ordinal))
+                string.Equals(tutorialEvent.TargetKey, "equipment.quality_label", StringComparison.Ordinal) &&
+                !StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipmentQualityPairReceived))
             {
                 tutorialChanged = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipmentQuality);
             }
@@ -408,14 +441,16 @@ namespace WitchTower.Core
                 SaveManager.Instance.SaveCurrentGame();
             }
 
-            SceneManager.LoadScene(homeSceneName);
+            SceneTransitionGuard.LoadScene(homeSceneName);
         }
 
         private static void EnsureRuntimeState()
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             Application.runInBackground = true;
             ManagerFactory.EnsureGameManager();
             ManagerFactory.EnsureSaveManager();
+            if (SaveManager.Instance == null || !SaveManager.Instance.StorageAccessAvailable) return;
             ManagerFactory.EnsureMasterDataManager();
             ManagerFactory.EnsureAudioManager();
             ManagerFactory.EnsureUiPresentationCamera();
@@ -492,7 +527,7 @@ namespace WitchTower.Core
                 return;
             }
 
-            Canvas canvas = FindObjectOfType<Canvas>();
+            Canvas canvas = GetComponentInParent<Canvas>(true) ?? FindObjectOfType<Canvas>();
             if (canvas == null)
             {
                 return;
@@ -562,7 +597,7 @@ namespace WitchTower.Core
             equippedPanelRect.anchorMin = new Vector2(0.5f, 1f);
             equippedPanelRect.anchorMax = new Vector2(0.5f, 1f);
             equippedPanelRect.pivot = new Vector2(0.5f, 1f);
-            equippedPanelRect.sizeDelta = new Vector2(1020f, 318f);
+            equippedPanelRect.sizeDelta = new Vector2(1020f, 398f);
             equippedPanelRect.anchoredPosition = new Vector2(0f, -136f);
             Image equippedPanelImage = equippedPanel.AddComponent<Image>();
             equippedPanelImage.color = new Color(0.10f, 0.13f, 0.17f, 0.92f);
@@ -572,7 +607,7 @@ namespace WitchTower.Core
             portraitBackdropRect.anchorMin = new Vector2(0.5f, 1f);
             portraitBackdropRect.anchorMax = new Vector2(0.5f, 1f);
             portraitBackdropRect.pivot = new Vector2(0.5f, 0.5f);
-            portraitBackdropRect.anchoredPosition = new Vector2(230f, -154f);
+            portraitBackdropRect.anchoredPosition = new Vector2(230f, -250f);
             portraitBackdropRect.sizeDelta = new Vector2(178f, 178f);
             equipmentMonsterPortraitBackdropImage = portraitBackdropObject.AddComponent<Image>();
             equipmentMonsterPortraitBackdropImage.color = new Color(0.62f, 0.68f, 0.70f, 0.52f);
@@ -583,7 +618,7 @@ namespace WitchTower.Core
             portraitShadowRect.anchorMin = new Vector2(0.5f, 1f);
             portraitShadowRect.anchorMax = new Vector2(0.5f, 1f);
             portraitShadowRect.pivot = new Vector2(0.5f, 0.5f);
-            portraitShadowRect.anchoredPosition = new Vector2(234f, -153f);
+            portraitShadowRect.anchoredPosition = new Vector2(234f, -249f);
             portraitShadowRect.sizeDelta = new Vector2(156f, 156f);
             equipmentMonsterPortraitShadowImage = portraitShadowObject.AddComponent<Image>();
             equipmentMonsterPortraitShadowImage.preserveAspect = true;
@@ -594,7 +629,7 @@ namespace WitchTower.Core
             portraitRect.anchorMin = new Vector2(0.5f, 1f);
             portraitRect.anchorMax = new Vector2(0.5f, 1f);
             portraitRect.pivot = new Vector2(0.5f, 0.5f);
-            portraitRect.anchoredPosition = new Vector2(230f, -156f);
+            portraitRect.anchoredPosition = new Vector2(230f, -252f);
             portraitRect.sizeDelta = new Vector2(166f, 166f);
             equipmentMonsterPortraitImage = portraitObject.AddComponent<Image>();
             equipmentMonsterPortraitImage.preserveAspect = true;
@@ -606,19 +641,24 @@ namespace WitchTower.Core
             equippedHeaderText.horizontalOverflow = HorizontalWrapMode.Overflow;
 
             CreateActionButton(equippedPanel.transform, font, "←", new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(1f, 1f), new Vector2(-176f, -22f), new Vector2(40f, 36f),
-                new Color(0.24f, 0.20f, 0.16f, 0.96f), () => ChangeEquipmentMonster(-1), 18);
+                new Vector2(1f, 1f), new Vector2(-330f, -22f), new Vector2(124f, 124f),
+                new Color(0.24f, 0.20f, 0.16f, 0.96f), () => ChangeEquipmentMonster(-1), 36);
             CreateActionButton(equippedPanel.transform, font, "→", new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(1f, 1f), new Vector2(-124f, -22f), new Vector2(40f, 36f),
-                new Color(0.24f, 0.20f, 0.16f, 0.96f), () => ChangeEquipmentMonster(1), 18);
+                new Vector2(1f, 1f), new Vector2(-190f, -22f), new Vector2(124f, 124f),
+                new Color(0.24f, 0.20f, 0.16f, 0.96f), () => ChangeEquipmentMonster(1), 36);
             CreateActionButton(equippedPanel.transform, font, "選ぶ", new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(1f, 1f), new Vector2(-26f, -22f), new Vector2(86f, 36f),
-                new Color(0.20f, 0.32f, 0.46f, 0.96f), OpenEquipmentMonsterPicker, 14);
+                new Vector2(1f, 1f), new Vector2(-26f, -22f), new Vector2(148f, 124f),
+                new Color(0.20f, 0.32f, 0.46f, 0.96f), OpenEquipmentMonsterPicker, 32);
             equipmentAutoEquipButton = CreateActionButton(equippedPanel.transform, font, "自動装備", new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(1f, 1f), new Vector2(-240f, -22f), new Vector2(134f, 36f),
-                new Color(0.30f, 0.31f, 0.18f, 0.96f), AutoEquipSelectedMonster, 14);
+                new Vector2(1f, 1f), new Vector2(-470f, -22f), new Vector2(200f, 124f),
+                new Color(0.30f, 0.31f, 0.18f, 0.96f), AutoEquipSelectedMonster, 32);
             equipmentAutoEquipButtonText = equipmentAutoEquipButton.GetComponentInChildren<Text>();
             ApplyEquipmentActionButtonFrame(equipmentAutoEquipButton, new Color(1f, 0.82f, 0.34f, 0.88f), new Color(0.16f, 0.16f, 0.12f, 0.82f));
+
+            Button unequipAllButton = CreateActionButton(equippedPanel.transform, font, "全装備解除", new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0f, 0f), new Vector2(26f, 20f), new Vector2(230f, 100f),
+                new Color(0.30f, 0.16f, 0.13f, 0.96f), UnequipAllEquipment, 30);
+            unequipAllButton.gameObject.name = "UnequipAllButton";
 
             equipmentMonsterNameText = CreateText("EquipmentMonsterName", equippedPanel.transform, font, string.Empty, 28, FontStyle.Bold,
                 TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(0f, 1f),
@@ -629,30 +669,33 @@ namespace WitchTower.Core
             equipmentMonsterNameText.verticalOverflow = VerticalWrapMode.Truncate;
 
             equipmentMonsterMetaText = CreateText("EquipmentMonsterMeta", equippedPanel.transform, font, string.Empty, 16, FontStyle.Normal,
-                TextAnchor.MiddleLeft, new Color(0.78f, 0.84f, 0.9f), new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0f, 1f), new Vector2(26f, -98f), new Vector2(500f, 24f));
+                TextAnchor.MiddleLeft, new Color(0.78f, 0.84f, 0.9f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(26f, -98f), new Vector2(300f, 24f));
+            equipmentMonsterPartyText = CreateText("EquipmentMonsterParty", equippedPanel.transform, font, string.Empty, 24, FontStyle.Bold,
+                TextAnchor.MiddleLeft, new Color(0.58f, 1f, 0.74f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(26f, -126f), new Vector2(300f, 32f));
 
             equippedWeaponText = CreateText("EquippedWeaponText", equippedPanel.transform, font, string.Empty, 20, FontStyle.Bold,
                 TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(26f, -138f), new Vector2(604f, 28f));
+                new Vector2(0f, 1f), new Vector2(26f, -170f), new Vector2(604f, 28f));
             ConfigureEquippedLineText(equippedWeaponText);
             equippedArmorText = CreateText("EquippedArmorText", equippedPanel.transform, font, string.Empty, 20, FontStyle.Bold,
                 TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(26f, -174f), new Vector2(604f, 28f));
+                new Vector2(0f, 1f), new Vector2(26f, -206f), new Vector2(604f, 28f));
             ConfigureEquippedLineText(equippedArmorText);
             equippedAccessoryText = CreateText("EquippedAccessoryText", equippedPanel.transform, font, string.Empty, 20, FontStyle.Bold,
                 TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(26f, -210f), new Vector2(604f, 28f));
+                new Vector2(0f, 1f), new Vector2(26f, -242f), new Vector2(604f, 28f));
             ConfigureEquippedLineText(equippedAccessoryText);
 
             equipmentBonusSummaryText = CreateText("EquipmentBonusSummaryText", equippedPanel.transform, font, string.Empty, 20, FontStyle.Bold,
                 TextAnchor.UpperLeft, Color.white, new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(26f, -246f), new Vector2(604f, 58f));
+                new Vector2(0f, 1f), new Vector2(280f, -290f), new Vector2(350f, 86f));
             ConfigureEquipmentBonusSummaryText(equipmentBonusSummaryText);
 
             equipmentSummaryText = CreateText("EquipmentSummaryText", equippedPanel.transform, font, string.Empty, 20, FontStyle.Bold,
                 TextAnchor.UpperRight, Color.white, new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(1f, 1f), new Vector2(-28f, -78f), new Vector2(166f, 226f));
+                new Vector2(1f, 1f), new Vector2(-28f, -158f), new Vector2(166f, 226f));
             ConfigureEquipmentSummaryText(equipmentSummaryText);
 
             GameObject optionGrid = CreateUiObject("EquipmentOptionGrid", panel.transform);
@@ -660,7 +703,7 @@ namespace WitchTower.Core
             optionGridRect.anchorMin = new Vector2(0.5f, 0f);
             optionGridRect.anchorMax = new Vector2(0.5f, 0f);
             optionGridRect.pivot = new Vector2(0.5f, 0f);
-            optionGridRect.sizeDelta = new Vector2(872f, 1040f);
+            optionGridRect.sizeDelta = new Vector2(872f, 960f);
             optionGridRect.anchoredPosition = new Vector2(0f, -20f);
 
             CreateText("EquipmentListHeader", optionGrid.transform, font, "所持装備", 24, FontStyle.Bold,
@@ -688,17 +731,23 @@ namespace WitchTower.Core
             equipmentInventoryFilterButtonImages.Clear();
             equipmentInventoryFilterButtonTexts.Clear();
             equipmentInventoryFilterValues.Clear();
-            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.All, "全て", new Vector2(18f, -56f), new Vector2(92f, 36f));
-            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Weapon, "武器", new Vector2(122f, -56f), new Vector2(92f, 36f));
-            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Armor, "防具", new Vector2(226f, -56f), new Vector2(92f, 36f));
-            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Accessory, "装飾品", new Vector2(330f, -56f), new Vector2(112f, 36f));
-            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Physical, "物理", new Vector2(454f, -56f), new Vector2(92f, 36f));
-            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Magic, "魔法", new Vector2(558f, -56f), new Vector2(92f, 36f));
+            // Two rows with 124-unit tap targets (about 45 pt on a 393-pt phone).
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.All, "全て", new Vector2(18f, -44f), new Vector2(188f, 124f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Weapon, "武器", new Vector2(224f, -44f), new Vector2(188f, 124f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Armor, "防具", new Vector2(430f, -44f), new Vector2(188f, 124f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Accessory, "装飾品", new Vector2(636f, -44f), new Vector2(188f, 124f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Physical, "物理", new Vector2(18f, -188f), new Vector2(188f, 124f));
+            CreateEquipmentInventoryFilterButton(inventoryListPanel.transform, font, EquipmentInventoryFilter.Magic, "魔法", new Vector2(224f, -188f), new Vector2(188f, 124f));
 
-            Button inventorySortButton = CreateActionButton(inventoryListPanel.transform, font, "並び: 通常", new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(1f, 1f), new Vector2(-18f, -56f), new Vector2(190f, 36f),
-                new Color(0.18f, 0.28f, 0.38f, 0.96f), CycleEquipmentInventorySort, 14);
+            Button inventorySortButton = CreateActionButton(inventoryListPanel.transform, font, "通常", new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(430f, -188f), new Vector2(188f, 124f),
+                new Color(0.18f, 0.28f, 0.38f, 0.96f), CycleEquipmentInventorySort, 28);
             equipmentInventorySortButtonText = inventorySortButton.GetComponentInChildren<Text>();
+            Button bulkSellButton = CreateActionButton(inventoryListPanel.transform, font, "一括売却", new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(636f, -188f), new Vector2(188f, 124f),
+                new Color(0.34f, 0.20f, 0.16f, 0.96f), OpenEquipmentBulkSale, 28);
+            bulkSellButton.gameObject.name = "EquipmentBulkSaleLauncher";
+            ApplyEquipmentActionButtonFrame(bulkSellButton, new Color(1f, 0.82f, 0.34f, 0.88f), new Color(0.16f, 0.16f, 0.12f, 0.82f));
 
             GameObject inventoryViewport = CreateUiObject("EquipmentInventoryViewport", inventoryListPanel.transform);
             RectTransform inventoryViewportRect = inventoryViewport.AddComponent<RectTransform>();
@@ -756,21 +805,21 @@ namespace WitchTower.Core
                 TextAnchor.MiddleCenter, new Color(0.98f, 0.95f, 0.86f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0.5f, 1f), new Vector2(0f, -34f), new Vector2(220f, 40f));
 
-            equipmentEnhanceOverlayTitleText = CreateText("EquipmentEnhanceOverlayTitle", overlayPanel.transform, font, string.Empty, 22, FontStyle.Bold,
-                TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0f, 1f), new Vector2(28f, -92f), new Vector2(540f, 28f));
+            equipmentEnhanceOverlayTitleText = CreateText("EquipmentEnhanceOverlayTitle", overlayPanel.transform, font, string.Empty, 26, FontStyle.Bold,
+                TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(28f, -132f), new Vector2(804f, 60f));
 
-            equipmentEnhanceOverlayInfoText = CreateText("EquipmentEnhanceOverlayInfo", overlayPanel.transform, font, string.Empty, 16, FontStyle.Normal,
-                TextAnchor.UpperLeft, new Color(0.80f, 0.86f, 0.92f), new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0f, 1f), new Vector2(28f, -126f), new Vector2(804f, 60f));
+            equipmentEnhanceOverlayInfoText = CreateText("EquipmentEnhanceOverlayInfo", overlayPanel.transform, font, string.Empty, 28, FontStyle.Bold,
+                TextAnchor.UpperLeft, new Color(0.80f, 0.86f, 0.92f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(28f, -200f), new Vector2(804f, 134f));
 
             GameObject ritualArea = CreateUiObject("EquipmentEnhanceRitualArea", overlayPanel.transform);
             RectTransform ritualRect = ritualArea.AddComponent<RectTransform>();
             ritualRect.anchorMin = new Vector2(0.5f, 1f);
             ritualRect.anchorMax = new Vector2(0.5f, 1f);
             ritualRect.pivot = new Vector2(0.5f, 0.5f);
-            ritualRect.anchoredPosition = new Vector2(0f, -292f);
-            ritualRect.sizeDelta = new Vector2(600f, 260f);
+            ritualRect.anchoredPosition = new Vector2(0f, -460f);
+            ritualRect.sizeDelta = new Vector2(600f, 220f);
 
             Image ritualImage = ritualArea.AddComponent<Image>();
             ritualImage.color = new Color(0.015f, 0.02f, 0.035f, 0.86f);
@@ -812,20 +861,33 @@ namespace WitchTower.Core
             equipmentEnhanceItemImage.raycastTarget = false;
             equipmentEnhanceItemRect = equipmentEnhanceItemImage.GetComponent<RectTransform>();
 
-            equipmentEnhanceOverlayResultText = CreateText("EquipmentEnhanceOverlayResult", overlayPanel.transform, font, string.Empty, 18, FontStyle.Bold,
-                TextAnchor.MiddleCenter, new Color(1f, 0.86f, 0.52f), new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -438f), new Vector2(804f, 30f));
+            equipmentEnhanceOverlayResultText = CreateText("EquipmentEnhanceOverlayResult", overlayPanel.transform, font, string.Empty, 26, FontStyle.Bold,
+                TextAnchor.MiddleCenter, new Color(1f, 0.86f, 0.52f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f), new Vector2(0f, -586f), new Vector2(804f, 40f));
 
-            equipmentEnhanceOverlayListRect = CreateUiObject("EquipmentEnhanceOverlayList", overlayPanel.transform).AddComponent<RectTransform>();
+            equipmentEnhanceOverlayViewportRect = CreateUiObject("EquipmentEnhanceRelicViewport", overlayPanel.transform).AddComponent<RectTransform>();
+            equipmentEnhanceOverlayViewportRect.anchorMin = equipmentEnhanceOverlayViewportRect.anchorMax = new Vector2(0f, 1f);
+            equipmentEnhanceOverlayViewportRect.pivot = new Vector2(0f, 1f);
+            equipmentEnhanceOverlayViewportRect.anchoredPosition = new Vector2(20f, -638f);
+            equipmentEnhanceOverlayViewportRect.sizeDelta = new Vector2(820f, 280f);
+            equipmentEnhanceOverlayViewportRect.gameObject.AddComponent<RectMask2D>();
+            Image relicScrollHitArea = equipmentEnhanceOverlayViewportRect.gameObject.AddComponent<Image>();
+            relicScrollHitArea.color = Color.clear;
+            ScrollRect relicScroll = equipmentEnhanceOverlayViewportRect.gameObject.AddComponent<ScrollRect>();
+            relicScroll.horizontal = false;
+            relicScroll.movementType = ScrollRect.MovementType.Clamped;
+            relicScroll.viewport = equipmentEnhanceOverlayViewportRect;
+            equipmentEnhanceOverlayListRect = CreateUiObject("EquipmentEnhanceOverlayList", equipmentEnhanceOverlayViewportRect).AddComponent<RectTransform>();
             equipmentEnhanceOverlayListRect.anchorMin = new Vector2(0f, 1f);
             equipmentEnhanceOverlayListRect.anchorMax = new Vector2(0f, 1f);
             equipmentEnhanceOverlayListRect.pivot = new Vector2(0f, 1f);
-            equipmentEnhanceOverlayListRect.anchoredPosition = new Vector2(28f, -490f);
+            equipmentEnhanceOverlayListRect.anchoredPosition = new Vector2(8f, -8f);
             equipmentEnhanceOverlayListRect.sizeDelta = new Vector2(804f, 436f);
+            relicScroll.content = equipmentEnhanceOverlayListRect;
 
             equipmentEnhanceCloseButton = CreateActionButton(overlayPanel.transform, font, "閉じる", new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(1f, 1f), new Vector2(-28f, -28f), new Vector2(96f, 40f),
-                new Color(0.34f, 0.20f, 0.16f, 0.96f), CloseEquipmentEnhancementOverlay, 16);
+                new Vector2(1f, 1f), new Vector2(-28f, -24f), new Vector2(172f, 72f),
+                new Color(0.34f, 0.20f, 0.16f, 0.96f), CloseEquipmentEnhancementOverlay, 28);
 
             BuildEquipmentEnhanceTutorialGuidePanel(overlayPanel.transform, font);
 
@@ -854,7 +916,7 @@ namespace WitchTower.Core
             panelRect.anchorMax = new Vector2(0.5f, 0.5f);
             panelRect.pivot = new Vector2(0.5f, 0.5f);
             panelRect.anchoredPosition = Vector2.zero;
-            panelRect.sizeDelta = new Vector2(860f, 1040f);
+            panelRect.sizeDelta = new Vector2(1020f, 1640f);
 
             Image panelImage = panel.AddComponent<Image>();
             panelImage.color = new Color(0.07f, 0.09f, 0.12f, 0.99f);
@@ -871,16 +933,16 @@ namespace WitchTower.Core
                 new Vector2(0.5f, 1f), new Vector2(0f, -84f), new Vector2(640f, 30f));
 
             CreateActionButton(panel.transform, font, "閉じる", new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(1f, 1f), new Vector2(-28f, -28f), new Vector2(96f, 40f),
-                new Color(0.34f, 0.20f, 0.16f, 0.96f), CloseEquipmentMonsterPicker, 16);
+                new Vector2(1f, 1f), new Vector2(-28f, -22f), new Vector2(156f, 92f),
+                new Color(0.34f, 0.20f, 0.16f, 0.96f), CloseEquipmentMonsterPicker, 30);
 
             GameObject searchBox = CreateUiObject("EquipmentMonsterSearchBox", panel.transform);
             RectTransform searchRect = searchBox.AddComponent<RectTransform>();
             searchRect.anchorMin = new Vector2(0.5f, 1f);
             searchRect.anchorMax = new Vector2(0.5f, 1f);
             searchRect.pivot = new Vector2(0.5f, 1f);
-            searchRect.anchoredPosition = new Vector2(-188f, -128f);
-            searchRect.sizeDelta = new Vector2(436f, 48f);
+            searchRect.anchoredPosition = new Vector2(-164f, -128f);
+            searchRect.sizeDelta = new Vector2(612f, 124f);
 
             Image searchImage = searchBox.AddComponent<Image>();
             searchImage.color = new Color(0.02f, 0.04f, 0.07f, 0.96f);
@@ -905,9 +967,9 @@ namespace WitchTower.Core
             equipmentMonsterSearchInput.text = equipmentMonsterSearchQuery;
             equipmentMonsterSearchInput.onValueChanged.AddListener(OnEquipmentMonsterSearchChanged);
 
-            Button sortButton = CreateActionButton(panel.transform, font, "並び: 通常", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(284f, -128f), new Vector2(196f, 48f),
-                new Color(0.20f, 0.28f, 0.40f, 0.96f), CycleEquipmentMonsterPickerSort, 16);
+            Button sortButton = CreateActionButton(panel.transform, font, "通常", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f), new Vector2(320f, -128f), new Vector2(300f, 124f),
+                new Color(0.20f, 0.28f, 0.40f, 0.96f), CycleEquipmentMonsterPickerSort, 30);
             equipmentMonsterPickerSortButtonText = sortButton.GetComponentInChildren<Text>();
 
             equipmentMonsterClassFilterButtonImages.Clear();
@@ -917,8 +979,8 @@ namespace WitchTower.Core
                 int capturedClassRank = classRank;
                 string label = classRank == 0 ? "全" : $"C{classRank}";
                 Button filterButton = CreateActionButton(panel.transform, font, label, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(0.5f, 1f), new Vector2(-354f + (classRank * 118f), -196f), new Vector2(92f, 38f),
-                    new Color(0.14f, 0.18f, 0.24f, 0.96f), () => SetEquipmentMonsterClassFilter(capturedClassRank), 15);
+                    new Vector2(0.5f, 1f), new Vector2(-408f + (classRank * 136f), -280f), new Vector2(124f, 124f),
+                    new Color(0.14f, 0.18f, 0.24f, 0.96f), () => SetEquipmentMonsterClassFilter(capturedClassRank), 32);
                 equipmentMonsterClassFilterButtonImages.Add(filterButton.GetComponent<Image>());
                 equipmentMonsterClassFilterButtonTexts.Add(filterButton.GetComponentInChildren<Text>());
             }
@@ -932,8 +994,8 @@ namespace WitchTower.Core
                 int capturedElementValue = elementFilterValues[i];
                 string label = capturedElementValue < 0 ? "全" : ResolveMonsterElementLabel((MonsterElement)capturedElementValue);
                 Button filterButton = CreateActionButton(panel.transform, font, label, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(0.5f, 1f), new Vector2(-354f + (i * 118f), -240f), new Vector2(92f, 34f),
-                    new Color(0.11f, 0.17f, 0.22f, 0.96f), () => SetEquipmentMonsterElementFilter(capturedElementValue), 14);
+                    new Vector2(0.5f, 1f), new Vector2(-395f + (i * 158f), -428f), new Vector2(146f, 124f),
+                    new Color(0.11f, 0.17f, 0.22f, 0.96f), () => SetEquipmentMonsterElementFilter(capturedElementValue), 32);
                 equipmentMonsterElementFilterButtonImages.Add(filterButton.GetComponent<Image>());
                 equipmentMonsterElementFilterButtonTexts.Add(filterButton.GetComponentInChildren<Text>());
                 equipmentMonsterElementFilterValues.Add(capturedElementValue);
@@ -944,8 +1006,8 @@ namespace WitchTower.Core
             listPanelRect.anchorMin = new Vector2(0.5f, 1f);
             listPanelRect.anchorMax = new Vector2(0.5f, 1f);
             listPanelRect.pivot = new Vector2(0.5f, 1f);
-            listPanelRect.anchoredPosition = new Vector2(0f, -296f);
-            listPanelRect.sizeDelta = new Vector2(804f, 700f);
+            listPanelRect.anchoredPosition = new Vector2(0f, -580f);
+            listPanelRect.sizeDelta = new Vector2(964f, 1016f);
 
             Image listPanelImage = listPanel.AddComponent<Image>();
             listPanelImage.color = new Color(0.02f, 0.04f, 0.07f, 0.66f);
@@ -967,7 +1029,7 @@ namespace WitchTower.Core
             equipmentMonsterPickerListRect.anchorMax = new Vector2(0f, 1f);
             equipmentMonsterPickerListRect.pivot = new Vector2(0f, 1f);
             equipmentMonsterPickerListRect.anchoredPosition = Vector2.zero;
-            equipmentMonsterPickerListRect.sizeDelta = new Vector2(776f, 0f);
+            equipmentMonsterPickerListRect.sizeDelta = new Vector2(936f, 0f);
 
             ScrollRect scrollRect = listPanel.AddComponent<ScrollRect>();
             scrollRect.viewport = viewportRect;
@@ -988,12 +1050,13 @@ namespace WitchTower.Core
             }
 
             equipmentTutorialGuideRoot = CreateUiObject("EquipmentTutorialGuideRoot", panelTransform);
+            equipmentTutorialGuideOriginalParent = panelTransform;
             RectTransform rootRect = equipmentTutorialGuideRoot.AddComponent<RectTransform>();
             rootRect.anchorMin = new Vector2(0.5f, 0f);
             rootRect.anchorMax = new Vector2(0.5f, 0f);
             rootRect.pivot = new Vector2(0.5f, 0f);
-            rootRect.anchoredPosition = new Vector2(0f, 56f);
-            rootRect.sizeDelta = new Vector2(946f, 228f);
+            rootRect.anchoredPosition = new Vector2(0f, -112f);
+            rootRect.sizeDelta = new Vector2(946f, 400f);
 
             Image panelImage = equipmentTutorialGuideRoot.AddComponent<Image>();
             panelImage.color = new Color(0.025f, 0.035f, 0.055f, 0.98f);
@@ -1006,35 +1069,89 @@ namespace WitchTower.Core
 
             equipmentTutorialGuideCharacterImage = CreateImage("EquipmentTutorialGuideLuse", equipmentTutorialGuideRoot.transform,
                 LoadMonsterSprite(TutorialGuideSpritePath), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-                new Vector2(120f, -8f), new Vector2(218f, 218f));
+                new Vector2(142f, -8f), new Vector2(272f, 272f));
             equipmentTutorialGuideCharacterImage.preserveAspect = true;
             equipmentTutorialGuideCharacterImage.raycastTarget = false;
 
-            Text badgeText = CreateText("EquipmentTutorialGuideBadge", equipmentTutorialGuideRoot.transform, font, "TUTORIAL", 18, FontStyle.Bold,
+            Text badgeText = CreateText("EquipmentTutorialGuideBadge", equipmentTutorialGuideRoot.transform, font, "TUTORIAL", 20, FontStyle.Bold,
                 TextAnchor.MiddleCenter, new Color(1f, 0.82f, 0.32f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(242f, -22f), new Vector2(128f, 30f));
+                new Vector2(0f, 1f), new Vector2(330f, -25f), new Vector2(150f, 32f));
             badgeText.raycastTarget = false;
 
-            equipmentTutorialGuideTitleText = CreateText("EquipmentTutorialGuideTitle", equipmentTutorialGuideRoot.transform, font, string.Empty, 30, FontStyle.Bold,
+            equipmentTutorialGuideTitleText = CreateText("EquipmentTutorialGuideTitle", equipmentTutorialGuideRoot.transform, font, string.Empty, 40, FontStyle.Bold,
                 TextAnchor.MiddleLeft, new Color(1f, 0.96f, 0.78f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(242f, -56f), new Vector2(642f, 38f));
+                new Vector2(0f, 1f), new Vector2(290f, -68f), new Vector2(620f, 50f));
             equipmentTutorialGuideTitleText.raycastTarget = false;
 
-            equipmentTutorialGuideBodyText = CreateText("EquipmentTutorialGuideBody", equipmentTutorialGuideRoot.transform, font, string.Empty, 23, FontStyle.Bold,
+            equipmentTutorialGuideBodyText = CreateText("EquipmentTutorialGuideBody", equipmentTutorialGuideRoot.transform, font, string.Empty, 31, FontStyle.Bold,
                 TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(242f, -100f), new Vector2(660f, 76f));
+                new Vector2(0f, 1f), new Vector2(290f, -126f), new Vector2(620f, 150f));
             equipmentTutorialGuideBodyText.resizeTextForBestFit = true;
-            equipmentTutorialGuideBodyText.resizeTextMinSize = 18;
-            equipmentTutorialGuideBodyText.resizeTextMaxSize = 23;
+            equipmentTutorialGuideBodyText.resizeTextMinSize = 26;
+            equipmentTutorialGuideBodyText.resizeTextMaxSize = 31;
             equipmentTutorialGuideBodyText.verticalOverflow = VerticalWrapMode.Truncate;
             equipmentTutorialGuideBodyText.raycastTarget = false;
 
-            equipmentTutorialGuideFooterText = CreateText("EquipmentTutorialGuideFooter", equipmentTutorialGuideRoot.transform, font, string.Empty, 20, FontStyle.Bold,
+            equipmentTutorialGuideFooterText = CreateText("EquipmentTutorialGuideFooter", equipmentTutorialGuideRoot.transform, font, string.Empty, 25, FontStyle.Bold,
                 TextAnchor.MiddleLeft, new Color(0.78f, 0.92f, 1f, 1f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(0f, 0f), new Vector2(242f, 26f), new Vector2(660f, 32f));
+                new Vector2(0f, 0f), new Vector2(290f, 28f), new Vector2(620f, 64f));
             equipmentTutorialGuideFooterText.raycastTarget = false;
 
+            equipmentQualityAcknowledgeButton = CreateActionButton(equipmentTutorialGuideRoot.transform, font, "品質を確認した", new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0f, 0f), new Vector2(290f, 12f), new Vector2(620f, 104f),
+                new Color(0.18f, 0.28f, 0.38f, 0.96f), AcknowledgeEquipmentQuality, 28);
+            ApplyEquipmentActionButtonFrame(equipmentQualityAcknowledgeButton, new Color(1f, 0.82f, 0.34f, 0.88f), new Color(0.16f, 0.16f, 0.12f, 0.82f));
+            equipmentQualityAcknowledgeButton.gameObject.SetActive(false);
+
             equipmentTutorialGuideRoot.SetActive(false);
+        }
+
+        private void SetEquipmentTutorialGuideLayer(bool liftAboveDetailSheet)
+        {
+            if (equipmentTutorialGuideRoot == null || equipmentTutorialGuideOriginalParent == null)
+            {
+                return;
+            }
+
+            if (liftAboveDetailSheet)
+            {
+                if (!equipmentTutorialGuideLiftedForDetail)
+                {
+                    equipmentTutorialGuideRoot.transform.SetParent(equipmentDetailSheetRoot != null
+                        ? equipmentDetailSheetRoot.transform
+                        : equipmentTutorialGuideOriginalParent, false);
+                    RectTransform rect = equipmentTutorialGuideRoot.transform as RectTransform;
+                    if (rect != null && equipmentDetailSheetRoot != null)
+                    {
+                        rect.anchorMin = new Vector2(0.5f, 0f);
+                        rect.anchorMax = new Vector2(0.5f, 0f);
+                        rect.pivot = new Vector2(0.5f, 0f);
+                        rect.anchoredPosition = new Vector2(0f, 360f);
+                        rect.sizeDelta = new Vector2(946f, 400f);
+                    }
+
+                    equipmentTutorialGuideLiftedForDetail = true;
+                }
+
+                equipmentTutorialGuideRoot.transform.SetAsLastSibling();
+                return;
+            }
+
+            if (equipmentTutorialGuideLiftedForDetail)
+            {
+                equipmentTutorialGuideRoot.transform.SetParent(equipmentTutorialGuideOriginalParent, false);
+                RectTransform rect = equipmentTutorialGuideRoot.transform as RectTransform;
+                if (rect != null)
+                {
+                    rect.anchorMin = new Vector2(0.5f, 0f);
+                    rect.anchorMax = new Vector2(0.5f, 0f);
+                    rect.pivot = new Vector2(0.5f, 0f);
+                    rect.anchoredPosition = new Vector2(0f, -112f);
+                    rect.sizeDelta = new Vector2(946f, 400f);
+                }
+
+                equipmentTutorialGuideLiftedForDetail = false;
+            }
         }
 
         private void BuildEquipmentEnhanceTutorialGuidePanel(Transform panelTransform, Font font)
@@ -1049,8 +1166,13 @@ namespace WitchTower.Core
             rootRect.anchorMin = new Vector2(0.5f, 0f);
             rootRect.anchorMax = new Vector2(0.5f, 0f);
             rootRect.pivot = new Vector2(0.5f, 0f);
-            rootRect.anchoredPosition = new Vector2(0f, 22f);
-            rootRect.sizeDelta = new Vector2(804f, 168f);
+            // Give the enhancement lesson a real reading area on phones.  The
+            // previous 804x168 card squeezed the character and forced the
+            // Japanese body text down to an unreadable size.
+            // The visible position is resolved below the relic rows on refresh;
+            // increasing this panel's height must not cover its action target.
+            rootRect.anchoredPosition = Vector2.zero;
+            rootRect.sizeDelta = new Vector2(1020f, 380f);
 
             Image panelImage = equipmentEnhanceTutorialGuideRoot.AddComponent<Image>();
             panelImage.color = new Color(0.025f, 0.035f, 0.055f, 0.98f);
@@ -1063,32 +1185,39 @@ namespace WitchTower.Core
 
             equipmentEnhanceTutorialGuideCharacterImage = CreateImage("EquipmentEnhanceTutorialGuideLuse", equipmentEnhanceTutorialGuideRoot.transform,
                 LoadMonsterSprite(TutorialGuideSpritePath), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-                new Vector2(88f, -4f), new Vector2(156f, 156f));
+                new Vector2(154f, -6f), new Vector2(320f, 320f));
             equipmentEnhanceTutorialGuideCharacterImage.preserveAspect = true;
             equipmentEnhanceTutorialGuideCharacterImage.raycastTarget = false;
 
-            Text badgeText = CreateText("EquipmentEnhanceTutorialGuideBadge", equipmentEnhanceTutorialGuideRoot.transform, font, "TUTORIAL", 15, FontStyle.Bold,
+            Text badgeText = CreateText("EquipmentEnhanceTutorialGuideBadge", equipmentEnhanceTutorialGuideRoot.transform, font, "TUTORIAL", 20, FontStyle.Bold,
                 TextAnchor.MiddleCenter, new Color(1f, 0.82f, 0.32f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(178f, -14f), new Vector2(110f, 24f));
+                new Vector2(0f, 1f), new Vector2(290f, -25f), new Vector2(136f, 32f));
             badgeText.raycastTarget = false;
 
-            equipmentEnhanceTutorialGuideTitleText = CreateText("EquipmentEnhanceTutorialGuideTitle", equipmentEnhanceTutorialGuideRoot.transform, font, string.Empty, 24, FontStyle.Bold,
+            equipmentEnhanceTutorialGuideTitleText = CreateText("EquipmentEnhanceTutorialGuideTitle", equipmentEnhanceTutorialGuideRoot.transform, font, string.Empty, 44, FontStyle.Bold,
                 TextAnchor.MiddleLeft, new Color(1f, 0.96f, 0.78f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(178f, -42f), new Vector2(560f, 32f));
+                new Vector2(0f, 1f), new Vector2(330f, -70f), new Vector2(660f, 56f));
+            equipmentEnhanceTutorialGuideTitleText.fontSize = 44;
+            equipmentEnhanceTutorialGuideTitleText.resizeTextMinSize = 36;
+            equipmentEnhanceTutorialGuideTitleText.resizeTextMaxSize = 44;
             equipmentEnhanceTutorialGuideTitleText.raycastTarget = false;
 
-            equipmentEnhanceTutorialGuideBodyText = CreateText("EquipmentEnhanceTutorialGuideBody", equipmentEnhanceTutorialGuideRoot.transform, font, string.Empty, 18, FontStyle.Bold,
+            equipmentEnhanceTutorialGuideBodyText = CreateText("EquipmentEnhanceTutorialGuideBody", equipmentEnhanceTutorialGuideRoot.transform, font, string.Empty, 34, FontStyle.Bold,
                 TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(178f, -76f), new Vector2(590f, 52f));
+                new Vector2(0f, 1f), new Vector2(330f, -136f), new Vector2(660f, 168f));
+            equipmentEnhanceTutorialGuideBodyText.fontSize = 34;
             equipmentEnhanceTutorialGuideBodyText.resizeTextForBestFit = true;
-            equipmentEnhanceTutorialGuideBodyText.resizeTextMinSize = 15;
-            equipmentEnhanceTutorialGuideBodyText.resizeTextMaxSize = 18;
+            equipmentEnhanceTutorialGuideBodyText.resizeTextMinSize = 28;
+            equipmentEnhanceTutorialGuideBodyText.resizeTextMaxSize = 34;
             equipmentEnhanceTutorialGuideBodyText.verticalOverflow = VerticalWrapMode.Truncate;
             equipmentEnhanceTutorialGuideBodyText.raycastTarget = false;
 
-            equipmentEnhanceTutorialGuideFooterText = CreateText("EquipmentEnhanceTutorialGuideFooter", equipmentEnhanceTutorialGuideRoot.transform, font, string.Empty, 16, FontStyle.Bold,
+            equipmentEnhanceTutorialGuideFooterText = CreateText("EquipmentEnhanceTutorialGuideFooter", equipmentEnhanceTutorialGuideRoot.transform, font, string.Empty, 28, FontStyle.Bold,
                 TextAnchor.MiddleLeft, new Color(0.78f, 0.92f, 1f, 1f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(0f, 0f), new Vector2(178f, 18f), new Vector2(590f, 24f));
+                new Vector2(0f, 0f), new Vector2(330f, 34f), new Vector2(660f, 44f));
+            equipmentEnhanceTutorialGuideFooterText.fontSize = 28;
+            equipmentEnhanceTutorialGuideFooterText.resizeTextMinSize = 24;
+            equipmentEnhanceTutorialGuideFooterText.resizeTextMaxSize = 28;
             equipmentEnhanceTutorialGuideFooterText.raycastTarget = false;
 
             equipmentEnhanceTutorialGuideRoot.SetActive(false);
@@ -1096,12 +1225,23 @@ namespace WitchTower.Core
 
         private void RefreshEquipmentScene()
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             if (equipmentSceneRoot == null)
             {
                 return;
             }
 
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            // Persist inferred progress on resuming an older equipment lesson.
+            // Never downgrade/replace the player's gear to re-equip a gift.
+            if (profile != null && !profile.HasCompletedTutorial &&
+                profile.TutorialStepId == StoryTutorialService.StepFirstEquipment &&
+                StoryTutorialService.HasCompletedEquipmentEquipLesson(profile))
+            {
+                bool changed = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
+                if (changed && Application.isPlaying && SaveManager.Instance != null)
+                    SaveManager.Instance.SaveCurrentGame();
+            }
             ApplyEquipmentTutorialGiftIfNeeded(profile);
             if (equipmentGoldText != null)
             {
@@ -1133,6 +1273,12 @@ namespace WitchTower.Core
                 equipmentMonsterMetaText.text = selectedMonster != null
                     ? $"Lv.{selectedMonster.Level}  +{selectedMonster.TotalPlusValue}  {GetMonsterDamageTypeLabel(selectedMonster)}  個別装備"
                     : "所持モンスターがいないため装備変更できません";
+            }
+            if (equipmentMonsterPartyText != null)
+            {
+                equipmentMonsterPartyText.text = selectedMonster != null ? BuildEquipmentPartyLabel(profile, selectedMonster) : string.Empty;
+                equipmentMonsterPartyText.color = GetPartySlotNumber(profile, selectedMonster?.InstanceId) > 0
+                    ? new Color(0.58f, 1f, 0.74f) : new Color(0.78f, 0.84f, 0.9f);
             }
 
             RefreshEquipmentMonsterPortrait(selectedMonster);
@@ -1173,14 +1319,21 @@ namespace WitchTower.Core
 
         private void ApplyEquipmentTutorialGiftIfNeeded(PlayerProfile profile)
         {
-            if (profile == null || StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipment))
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
+            bool openingEquipmentTutorial = profile != null &&
+                !profile.HasCompletedTutorial &&
+                profile.TutorialStepId == StoryTutorialService.StepFirstEquipment;
+            if (profile == null ||
+                (StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipment) && !openingEquipmentTutorial))
             {
                 return;
             }
 
             StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "EquipmentScene");
-            if (tutorialEvent == null ||
-                !string.Equals(tutorialEvent.TargetKey, "equipment.auto_equip", StringComparison.Ordinal))
+            bool needsManualGift = tutorialEvent?.TargetKey == "equipment.first_item";
+            bool needsAutoEquipReplacement = tutorialEvent?.TargetKey == "equipment.auto_equip" &&
+                profile.OwnedEquipments.Count == 0;
+            if (!needsManualGift && !needsAutoEquipReplacement)
             {
                 return;
             }
@@ -1195,7 +1348,7 @@ namespace WitchTower.Core
             equipmentInventorySortMode = EquipmentInventorySortMode.Default;
             if (string.IsNullOrEmpty(equipmentLastActionMessage))
             {
-                equipmentLastActionMessage = "ルシェから見習いの護符を受け取りました。「自動装備」で選択中モンスターに持たせましょう。";
+                equipmentLastActionMessage = "見習いの護符を受け取りました。所持装備のカードをタップし、詳細画面の「装備」で持たせましょう。";
             }
 
             if (Application.isPlaying && SaveManager.Instance != null)
@@ -1214,20 +1367,33 @@ namespace WitchTower.Core
             StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
             bool shouldShow = tutorialEvent != null &&
                 (string.Equals(tutorialEvent.TargetKey, "equipment.auto_equip", StringComparison.Ordinal) ||
+                 string.Equals(tutorialEvent.TargetKey, "equipment.first_item", StringComparison.Ordinal) ||
                  string.Equals(tutorialEvent.TargetKey, "equipment.quality_label", StringComparison.Ordinal) ||
                  string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal) ||
                  string.Equals(tutorialEvent.TargetKey, "equipment.return_home", StringComparison.Ordinal));
+            bool enhancementOverlayVisible = equipmentEnhanceOverlayRoot != null &&
+                equipmentEnhanceOverlayRoot.activeSelf;
+            shouldShow &= !enhancementOverlayVisible;
+            bool guideEnhance = tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+            bool guideManualEquip = tutorialEvent != null && tutorialEvent.TargetKey == "equipment.first_item";
+            bool manualDetailVisible = guideManualEquip && equipmentDetailSheetRoot != null && equipmentDetailSheetRoot.activeSelf;
+            SetEquipmentTutorialGuideLayer(shouldShow && (guideEnhance || guideManualEquip || tutorialEvent.TargetKey == "equipment.quality_label") &&
+                equipmentDetailSheetRoot != null && equipmentDetailSheetRoot.activeSelf);
             equipmentTutorialGuideRoot.SetActive(shouldShow);
             if (!shouldShow)
             {
                 SetEquipmentTutorialReturnFocusVisible(false);
+                LayoutEquipmentInventoryViewportForGuide();
                 return;
             }
 
             equipmentTutorialGuideRoot.transform.SetAsLastSibling();
             bool guideReturnHome = string.Equals(tutorialEvent.TargetKey, "equipment.return_home", StringComparison.Ordinal);
             bool guideQuality = string.Equals(tutorialEvent.TargetKey, "equipment.quality_label", StringComparison.Ordinal);
-            bool guideEnhance = string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+            bool acknowledgeQuality = guideQuality && StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipmentQualityPairReceived);
+            if (equipmentQualityAcknowledgeButton != null) equipmentQualityAcknowledgeButton.gameObject.SetActive(acknowledgeQuality);
+            if (equipmentTutorialGuideFooterText != null) equipmentTutorialGuideFooterText.gameObject.SetActive(!acknowledgeQuality);
             bool guideAutoEquip = string.Equals(tutorialEvent.TargetKey, "equipment.auto_equip", StringComparison.Ordinal);
             bool guideEnhanceReturnHome = guideReturnHome &&
                 string.Equals(tutorialEvent.EventId, StoryTutorialService.HintEquipmentEnhanceReturnHome, StringComparison.Ordinal);
@@ -1236,11 +1402,11 @@ namespace WitchTower.Core
                 equipmentTutorialGuideTitleText.text = guideReturnHome
                     ? (guideEnhanceReturnHome ? "強化完了" : "装備できました")
                     : guideQuality
-                        ? "遺物の品質"
+                        ? "装備の品質を比べよう"
                         : guideEnhance
                             ? "ルシェの強化レッスン"
                             : guideAutoEquip
-                                ? "ルシェの自動装備レッスン"
+                                ? "便利な自動装備"
                                 : "ルシェの装備レッスン";
             }
 
@@ -1252,28 +1418,65 @@ namespace WitchTower.Core
                         ? "装備強化まで確認できました。\n左上の「ホームへ戻る」から拠点へ戻りましょう。"
                         : $"{monsterName} に見習いの護符を持たせられました。\n左上の「ホームへ戻る」から拠点へ戻りましょう。")
                     : guideQuality
-                        ? "金色の枠で囲った「品質:」が遺物の品質です。\n品質が高いほど効果が伸び、鍛えられる回数も多くなります。"
+                        ? (acknowledgeQuality
+                            ? "同じ「見習いの護符」のコモンとアンコモンを獲得しました。\n「品質:」と装備効果を見比べましょう。品質が高いほど効果と強化回数が増えます。"
+                            : "点滅する黄色い枠の「品質:」が装備の品質です。\n品質が高いほど効果が伸び、鍛えられる回数も多くなります。")
                         : guideEnhance
-                            ? "次は装備を鍛えてみましょう。\n光っているカードの「強化」を押すと、強化画面で通常遺物を1つ渡します。"
+                            ? "次は装備を鍛えてみましょう。\n金色の枠が付いた装備をタップすると詳細が開きます。"
                             : guideAutoEquip
-                                ? $"今渡した「見習いの護符」を含めて、適性の高い装備をまとめて選べます。\n光っている「自動装備」を押して、{monsterName} に持たせましょう。"
-                                : $"今渡した「見習いの護符」を所持装備の先頭に置きました。\n光っているカードの「装備」を押すと、{monsterName} に持たせられます。";
+                                ? "手動で装備できました！\n「自動装備」なら、適性の高い装備をまとめて選べます。試してみましょう。\n後から手動で付け替えることもできます。"
+                                : (manualDetailVisible
+                                    ? $"点滅する黄色い枠の「装備」を押すと、\n選択中の {monsterName} に\nこの装備を持たせられます。"
+                                    : "「見習いの護符」のカードをタップして\n詳細を開き、「装備」を押しましょう。\n選択中のモンスターに持たせられます。");
             }
 
+            bool guideEnhanceDetail = guideEnhance && equipmentDetailSheetRoot != null && equipmentDetailSheetRoot.activeSelf;
             if (equipmentTutorialGuideFooterText != null)
             {
                 equipmentTutorialGuideFooterText.text = guideReturnHome
                     ? "次の操作: 左上の「ホームへ戻る」をタップ"
                     : guideQuality
-                        ? "次の操作: 品質表示を確認したら左上の「ホームへ戻る」をタップ"
+                        ? "次の操作: 左上の「ホームへ戻る」をタップ"
                         : guideEnhance
-                            ? "次の操作: 金色の枠が付いたカードの「強化」をタップ"
+                            ? (guideEnhanceDetail
+                                ? "次の操作: 詳細画面の金色の枠が付いた「強化」をタップ"
+                                : "次の操作: 金色の枠が付いた装備をタップ")
                             : guideAutoEquip
                                 ? "次の操作: 光っている「自動装備」をタップ"
-                                : "次の操作: 金色の枠が付いたカードの「装備」をタップ";
+                                : (manualDetailVisible ? "次の操作: 詳細画面の「装備」をタップ" : "次の操作: 「見習いの護符」のカードをタップ");
             }
 
-            SetEquipmentTutorialReturnFocusVisible(guideReturnHome || guideQuality);
+            SetEquipmentTutorialReturnFocusVisible(guideReturnHome || (guideQuality && !acknowledgeQuality));
+            LayoutEquipmentInventoryViewportForGuide();
+        }
+
+        private void AcknowledgeEquipmentQuality()
+        {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
+            PlayerProfile profile = GameManager.Instance?.PlayerProfile;
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            if (tutorialEvent == null || tutorialEvent.TargetKey != "equipment.quality_label" ||
+                !StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipmentQualityPairReceived)) return;
+            StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipmentQuality);
+            StoryTutorialService.MarkStorySeen(profile, StoryTutorialService.StoryFirstEquipmentQuality);
+            if (Application.isPlaying) SaveManager.Instance?.SaveCurrentGame();
+            RefreshEquipmentScene();
+        }
+
+        private void LayoutEquipmentInventoryViewportForGuide()
+        {
+            RectTransform viewport = equipmentInventoryContentRect != null
+                ? equipmentInventoryContentRect.parent as RectTransform : null;
+            if (viewport == null || !(viewport.parent is RectTransform listPanel)) return;
+            float bottomInset = 0f;
+            if (equipmentTutorialGuideRoot != null && equipmentTutorialGuideRoot.activeSelf &&
+                !equipmentTutorialGuideLiftedForDetail)
+            {
+                var guide = (RectTransform)equipmentTutorialGuideRoot.transform;
+                float guideTop = listPanel.InverseTransformPoint(guide.TransformPoint(new Vector3(0f, guide.rect.yMax, 0f))).y;
+                bottomInset = Mathf.Max(0f, guideTop - listPanel.rect.yMin + 16f);
+            }
+            viewport.offsetMin = new Vector2(0f, bottomInset);
         }
 
         private void RefreshEquipmentMonsterPortrait(OwnedMonsterData selectedMonster)
@@ -1327,6 +1530,8 @@ namespace WitchTower.Core
 
             int nextIndex = (currentIndex + delta + monsters.Count) % monsters.Count;
             selectedEquipmentMonsterInstanceId = monsters[nextIndex].InstanceId;
+            equipmentInventoryFilter = EquipmentInventoryFilter.All;
+            if (equipmentInventoryContentRect != null) equipmentInventoryContentRect.anchoredPosition = Vector2.zero;
             equipmentLastActionMessage = string.Empty;
             RefreshEquipmentScene();
         }
@@ -1423,7 +1628,7 @@ namespace WitchTower.Core
 
             if (displayMonsters.Count <= 0)
             {
-                equipmentMonsterPickerListRect.sizeDelta = new Vector2(776f, 672f);
+                equipmentMonsterPickerListRect.sizeDelta = new Vector2(936f, 988f);
                 CreateText("EquipmentMonsterPickerEmpty", equipmentMonsterPickerListRect, ResolveRuntimeFont(), "該当するモンスターがいません", 22, FontStyle.Bold,
                     TextAnchor.MiddleCenter, new Color(0.84f, 0.88f, 0.92f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(0.5f, 1f), new Vector2(0f, -250f), new Vector2(680f, 40f));
@@ -1431,7 +1636,7 @@ namespace WitchTower.Core
             }
 
             int rowCount = Mathf.CeilToInt(displayMonsters.Count / 3f);
-            equipmentMonsterPickerListRect.sizeDelta = new Vector2(776f, Mathf.Max(672f, rowCount * 236f));
+            equipmentMonsterPickerListRect.sizeDelta = new Vector2(936f, Mathf.Max(988f, rowCount * 310f));
             Font font = ResolveRuntimeFont();
             for (int i = 0; i < displayMonsters.Count; i += 1)
             {
@@ -1535,8 +1740,8 @@ namespace WitchTower.Core
             cardRect.anchorMin = new Vector2(0f, 1f);
             cardRect.anchorMax = new Vector2(0f, 1f);
             cardRect.pivot = new Vector2(0f, 1f);
-            cardRect.anchoredPosition = new Vector2(column * 266f, -(row * 236f));
-            cardRect.sizeDelta = new Vector2(244f, 222f);
+            cardRect.anchoredPosition = new Vector2(column * 318f, -(row * 310f));
+            cardRect.sizeDelta = new Vector2(300f, 294f);
 
             Image cardImage = card.AddComponent<Image>();
             cardImage.color = isSelected
@@ -1549,7 +1754,7 @@ namespace WitchTower.Core
             cardButton.onClick.AddListener(() => SelectEquipmentMonsterFromPicker(capturedInstanceId));
 
             RawImage frameImage = CreateRawPortrait("MonsterCardFrame", card.transform,
-                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), Vector2.zero, new Vector2(244f, 222f));
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), Vector2.zero, new Vector2(300f, 294f));
             frameImage.texture = LoadMonsterTexture(ResolveMonsterCardFrameTexturePath(classRank));
             frameImage.color = frameImage.texture != null ? Color.white : new Color(1f, 1f, 1f, 0f);
             frameImage.raycastTarget = false;
@@ -1560,7 +1765,7 @@ namespace WitchTower.Core
             portraitRect.anchorMax = new Vector2(0.5f, 1f);
             portraitRect.pivot = new Vector2(0.5f, 1f);
             portraitRect.anchoredPosition = new Vector2(0f, -22f);
-            portraitRect.sizeDelta = new Vector2(128f, 128f);
+            portraitRect.sizeDelta = GetPartySlotNumber(profile, monster.InstanceId) > 0 ? new Vector2(124f, 124f) : new Vector2(160f, 160f);
 
             Image portraitImage = portraitObject.AddComponent<Image>();
             portraitImage.sprite = LoadMonsterSprite(GetMonsterPortraitResourcePath(monsterData));
@@ -1568,26 +1773,33 @@ namespace WitchTower.Core
             portraitImage.color = portraitImage.sprite != null ? Color.white : new Color(1f, 1f, 1f, 0f);
             portraitImage.raycastTarget = false;
 
-            Text nameText = CreateText("MonsterName", card.transform, font, GetMonsterDisplayName(monster), 16, FontStyle.Bold,
+            Text nameText = CreateText("MonsterName", card.transform, font, GetMonsterDisplayName(monster), 24, FontStyle.Bold,
                 TextAnchor.MiddleCenter, Color.white, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -151f), new Vector2(210f, 28f));
+                new Vector2(0.5f, 1f), new Vector2(0f, -180f), new Vector2(270f, 36f));
             nameText.resizeTextForBestFit = true;
-            nameText.resizeTextMinSize = 11;
-            nameText.resizeTextMaxSize = 16;
+            nameText.resizeTextMinSize = 20;
+            nameText.resizeTextMaxSize = 24;
 
             GameObject infoPanel = CreateEquipmentMonsterPickerInfoPanel(card.transform, isSelected);
-            Text metaText = CreateText("MonsterMeta", infoPanel.transform, font, $"Lv.{monster.Level} / C{classRank} / {GetMonsterDamageTypeLabel(monster)} / +{monster.TotalPlusValue}", 13, FontStyle.Bold,
+            Text metaText = CreateText("MonsterMeta", infoPanel.transform, font, $"Lv.{monster.Level} / C{classRank} / {GetMonsterDamageTypeLabel(monster)} / +{monster.TotalPlusValue}", 20, FontStyle.Bold,
                 TextAnchor.MiddleCenter, new Color(1f, 0.88f, 0.56f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, -3f), new Vector2(196f, 16f));
+                new Vector2(0.5f, 1f), new Vector2(0f, -3f), new Vector2(274f, 26f));
             metaText.resizeTextForBestFit = true;
-            metaText.resizeTextMinSize = 10;
-            metaText.resizeTextMaxSize = 13;
+            metaText.resizeTextMinSize = 18;
+            metaText.resizeTextMaxSize = 20;
 
-            CreateText("MonsterState", infoPanel.transform, font, BuildEquipmentMonsterPickerStatus(profile, monster, isSelected), 12, FontStyle.Bold,
+            CreateText("MonsterState", infoPanel.transform, font, BuildEquipmentMonsterPickerStatus(profile, monster, isSelected), 20, FontStyle.Bold,
                 TextAnchor.MiddleCenter, isSelected ? new Color(0.58f, 1f, 0.74f) : new Color(0.82f, 0.90f, 0.98f),
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(196f, 16f));
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -32f), new Vector2(274f, 26f));
 
             CreateEquipmentMonsterPickerFavoriteBadge(card.transform, monster);
+            if (GetPartySlotNumber(profile, monster.InstanceId) > 0)
+            {
+                Text partyBadge = CreateText("PartyBadge", card.transform, font, BuildEquipmentPartyLabel(profile, monster), 24, FontStyle.Bold,
+                    TextAnchor.MiddleCenter, new Color(0.58f, 1f, 0.74f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(0.5f, 1f), new Vector2(0f, -146f), new Vector2(274f, 32f));
+                partyBadge.raycastTarget = false;
+            }
         }
 
         private GameObject CreateEquipmentMonsterPickerInfoPanel(Transform parent, bool isSelected)
@@ -1597,8 +1809,8 @@ namespace WitchTower.Core
             rect.anchorMin = new Vector2(0.5f, 1f);
             rect.anchorMax = new Vector2(0.5f, 1f);
             rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -184f);
-            rect.sizeDelta = new Vector2(208f, 36f);
+            rect.anchoredPosition = new Vector2(0f, -224f);
+            rect.sizeDelta = new Vector2(284f, 64f);
 
             Image image = panel.AddComponent<Image>();
             image.color = isSelected
@@ -1645,6 +1857,8 @@ namespace WitchTower.Core
             }
 
             selectedEquipmentMonsterInstanceId = instanceId;
+            equipmentInventoryFilter = EquipmentInventoryFilter.All;
+            if (equipmentInventoryContentRect != null) equipmentInventoryContentRect.anchoredPosition = Vector2.zero;
             equipmentLastActionMessage = string.Empty;
             CloseEquipmentMonsterPicker();
             RefreshEquipmentScene();
@@ -1691,7 +1905,7 @@ namespace WitchTower.Core
 
             if (equipmentMonsterPickerSortButtonText != null)
             {
-                equipmentMonsterPickerSortButtonText.text = "並び: " + GetEquipmentMonsterPickerSortLabel();
+                equipmentMonsterPickerSortButtonText.text = GetEquipmentMonsterPickerSortLabel();
             }
         }
 
@@ -1719,7 +1933,7 @@ namespace WitchTower.Core
             int partySlot = GetPartySlotNumber(profile, monster != null ? monster.InstanceId : string.Empty);
             if (partySlot > 0)
             {
-                labels.Add($"編成{partySlot}");
+                labels.Add(BuildEquipmentPartyLabel(profile, monster));
             }
 
             if (monster != null && monster.IsLocked)
@@ -1728,6 +1942,14 @@ namespace WitchTower.Core
             }
 
             return labels.Count > 0 ? string.Join(" / ", labels) : "所持";
+        }
+
+        private static string BuildEquipmentPartyLabel(PlayerProfile profile, OwnedMonsterData monster)
+        {
+            int slot = GetPartySlotNumber(profile, monster?.InstanceId);
+            if (slot <= 0) return "編成外";
+            string role = slot <= 2 ? "前衛 " + slot : slot == 3 ? "中衛" : "後衛 " + (slot - 3);
+            return "編成中：" + role;
         }
 
         private static int GetPartySlotNumber(PlayerProfile profile, string instanceId)
@@ -1789,14 +2011,23 @@ namespace WitchTower.Core
                 }
             }
 
+            var remaining = new List<OwnedMonsterData>();
             foreach (OwnedMonsterData ownedMonster in profile.OwnedMonsters)
             {
                 if (ownedMonster != null && result.FindIndex(x => x.InstanceId == ownedMonster.InstanceId) < 0)
                 {
-                    result.Add(ownedMonster);
+                    remaining.Add(ownedMonster);
                 }
             }
-
+            remaining.Sort((left, right) =>
+            {
+                int order = right.IsFavorite.CompareTo(left.IsFavorite);
+                if (order == 0) order = right.IsLocked.CompareTo(left.IsLocked);
+                if (order == 0) order = right.Level.CompareTo(left.Level);
+                if (order == 0) order = right.AcquiredOrder.CompareTo(left.AcquiredOrder);
+                return order != 0 ? order : string.CompareOrdinal(left.InstanceId, right.InstanceId);
+            });
+            result.AddRange(remaining);
             return result;
         }
 
@@ -1825,7 +2056,7 @@ namespace WitchTower.Core
         {
             Button button = CreateActionButton(parent, font, label, new Vector2(0f, 1f), new Vector2(0f, 1f),
                 new Vector2(0f, 1f), anchoredPosition, size,
-                new Color(0.12f, 0.18f, 0.24f, 0.96f), () => SetEquipmentInventoryFilter(filter), 14);
+                new Color(0.12f, 0.18f, 0.24f, 0.96f), () => SetEquipmentInventoryFilter(filter), 30);
             equipmentInventoryFilterButtonImages.Add(button.GetComponent<Image>());
             equipmentInventoryFilterButtonTexts.Add(button.GetComponentInChildren<Text>());
             equipmentInventoryFilterValues.Add(filter);
@@ -1849,7 +2080,7 @@ namespace WitchTower.Core
                     equipmentInventorySortMode = EquipmentInventorySortMode.Power;
                     break;
                 case EquipmentInventorySortMode.Power:
-                    equipmentInventorySortMode = EquipmentInventorySortMode.Name;
+                    equipmentInventorySortMode = EquipmentInventorySortMode.Quality;
                     break;
                 default:
                     equipmentInventorySortMode = EquipmentInventorySortMode.Default;
@@ -1890,7 +2121,11 @@ namespace WitchTower.Core
                 }
 
                 int enhanceCompare = prioritizeEnhanceTutorial ? CompareEnhanceableEquipmentFirst(left, right) : 0;
-                return enhanceCompare != 0 ? enhanceCompare : CompareEquipmentInventoryEntries(left, right);
+                if (enhanceCompare != 0) return enhanceCompare;
+                bool leftSelected = !string.IsNullOrEmpty(selectedEquipmentMonsterInstanceId) && left.EquippedMonsterInstanceId == selectedEquipmentMonsterInstanceId;
+                bool rightSelected = !string.IsNullOrEmpty(selectedEquipmentMonsterInstanceId) && right.EquippedMonsterInstanceId == selectedEquipmentMonsterInstanceId;
+                if (leftSelected != rightSelected) return leftSelected ? -1 : 1;
+                return CompareEquipmentInventoryEntries(left, right);
             });
             return result;
         }
@@ -1926,8 +2161,9 @@ namespace WitchTower.Core
 
         private static bool ShouldPrioritizeEquipmentTutorialGift(PlayerProfile profile)
         {
+            string target = GetEquipmentTutorialEvent(profile)?.TargetKey;
             return profile != null &&
-                !StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipment) &&
+                (target == "equipment.first_item" || target == "equipment.quality_label") &&
                 StoryTutorialService.FindEquipmentTutorialGift(profile) != null;
         }
 
@@ -1937,6 +2173,11 @@ namespace WitchTower.Core
             bool rightGift = StoryTutorialService.IsEquipmentTutorialGift(right);
             if (leftGift == rightGift)
             {
+                if (leftGift)
+                {
+                    int qualityCompare = left.QualityRank.CompareTo(right.QualityRank);
+                    if (qualityCompare != 0) return qualityCompare;
+                }
                 return 0;
             }
 
@@ -2025,14 +2266,10 @@ namespace WitchTower.Core
 
                     break;
                 }
-                case EquipmentInventorySortMode.Name:
+                case EquipmentInventorySortMode.Quality:
                 {
-                    int nameCompare = string.Compare(ResolveEquipmentInventoryName(leftData, left), ResolveEquipmentInventoryName(rightData, right), StringComparison.CurrentCulture);
-                    if (nameCompare != 0)
-                    {
-                        return nameCompare;
-                    }
-
+                    int qualityCompare = EquipmentEnhancementCatalog.ResolveQualityRank(rightData, right).CompareTo(EquipmentEnhancementCatalog.ResolveQualityRank(leftData, left));
+                    if (qualityCompare != 0) return qualityCompare;
                     break;
                 }
                 default:
@@ -2099,7 +2336,7 @@ namespace WitchTower.Core
 
             if (equipmentInventorySortButtonText != null)
             {
-                equipmentInventorySortButtonText.text = "並び: " + GetEquipmentInventorySortLabel();
+                equipmentInventorySortButtonText.text = GetEquipmentInventorySortLabel();
             }
         }
 
@@ -2162,11 +2399,11 @@ namespace WitchTower.Core
             switch (equipmentInventorySortMode)
             {
                 case EquipmentInventorySortMode.Rarity:
-                    return "レア度";
+                    return "クラス";
                 case EquipmentInventorySortMode.Power:
                     return "能力値";
-                case EquipmentInventorySortMode.Name:
-                    return "名前";
+                case EquipmentInventorySortMode.Quality:
+                    return "品質";
                 default:
                     return "通常";
             }
@@ -2205,7 +2442,9 @@ namespace WitchTower.Core
                 return;
             }
 
-            int rowCount = (sortedEquipments.Count + 1) / 2;
+            // Equipment cards are deliberately full-width. Two narrow cards
+            // make the name, quality and current owner hard to scan on phones.
+            int rowCount = sortedEquipments.Count;
             equipmentInventoryContentRect.sizeDelta = new Vector2(EquipmentInventoryWidth, Mathf.Max(EquipmentInventoryViewportHeight, rowCount * EquipmentInventoryRowSpacing));
 
             for (int i = 0; i < sortedEquipments.Count; i += 1)
@@ -2217,16 +2456,15 @@ namespace WitchTower.Core
         private void CreateEquipmentInventoryCard(Transform parent, Font font, PlayerProfile profile, OwnedMonsterData selectedMonster, OwnedEquipmentData equipment, int index)
         {
             EquipmentDataSO equipmentData = MasterDataManager.Instance?.GetEquipmentData(equipment.EquipmentId);
-            int row = index / 2;
-            int column = index % 2;
+            int row = index;
 
             GameObject card = CreateUiObject("EquipmentCard_" + index, parent);
             RectTransform rect = card.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(column * 442f, -(row * EquipmentInventoryRowSpacing));
-            rect.sizeDelta = new Vector2(420f, EquipmentInventoryCardHeight);
+            rect.anchoredPosition = new Vector2(12f, -(row * EquipmentInventoryRowSpacing));
+            rect.sizeDelta = new Vector2(EquipmentInventoryWidth - 24f, EquipmentInventoryCardHeight);
 
             Image frame = card.AddComponent<Image>();
             bool equippedToSelectedMonster = selectedMonster != null && equipment.EquippedMonsterInstanceId == selectedMonster.InstanceId;
@@ -2250,8 +2488,10 @@ namespace WitchTower.Core
             equipmentFrame.color = equipmentFrame.texture != null ? Color.white : new Color(1f, 1f, 1f, 0f);
             equipmentFrame.raycastTarget = false;
 
+            // Compensate for the transparent top margin in the charm artwork
+            // so the visible icon is centered inside the frame.
             RawImage equipmentIcon = CreateRawPortrait($"EquipmentIcon{index}", card.transform,
-                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -40f), new Vector2(68f, 68f));
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -44f), new Vector2(68f, 68f));
             equipmentIcon.texture = LoadMonsterTexture(ResolveEquipmentIconTexturePath(equipment.EquipmentId));
             equipmentIcon.color = equipmentIcon.texture != null ? Color.white : new Color(1f, 1f, 1f, 0f);
             equipmentIcon.raycastTarget = false;
@@ -2259,37 +2499,38 @@ namespace WitchTower.Core
             CreateText("SlotLabel", card.transform, font, BuildSlotLabel(equipmentData != null ? equipmentData.slotType : EquipmentSlotType.Weapon), 16, FontStyle.Bold,
                 TextAnchor.MiddleLeft, new Color(0.92f, 0.76f, 0.42f), new Vector2(0f, 1f), new Vector2(0f, 1f),
                 new Vector2(0f, 1f), new Vector2(112f, -14f), new Vector2(96f, 22f));
-            Text nameText = CreateText("Name", card.transform, font, equipmentData != null ? equipmentData.equipmentName : equipment.EquipmentId, 24, FontStyle.Bold,
+            Text nameText = CreateText("Name", card.transform, font, equipmentData != null ? equipmentData.equipmentName : equipment.EquipmentId, 26, FontStyle.Bold,
                 TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(112f, -44f), new Vector2(246f, 30f));
+                new Vector2(0f, 1f), new Vector2(112f, -44f), new Vector2(380f, 32f));
             nameText.resizeTextForBestFit = true;
             nameText.resizeTextMinSize = 16;
-            nameText.resizeTextMaxSize = 24;
+            nameText.resizeTextMaxSize = 26;
             nameText.verticalOverflow = VerticalWrapMode.Truncate;
 
-            Text qualityText = CreateText("Quality", card.transform, font, EquipmentEnhancementCatalog.ResolveQualityName(equipmentData, equipment), 17, FontStyle.Bold,
+            Text qualityText = CreateText("Quality", card.transform, font, "品質: " + EquipmentEnhancementCatalog.ResolveQualityName(equipmentData, equipment), 26, FontStyle.Bold,
                 TextAnchor.MiddleRight, new Color(1f, 0.86f, 0.52f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(1f, 1f), new Vector2(-18f, -16f), new Vector2(132f, 24f));
+                new Vector2(1f, 1f), new Vector2(-18f, -16f), new Vector2(300f, 40f));
             qualityText.resizeTextForBestFit = true;
             qualityText.resizeTextMinSize = 12;
-            qualityText.resizeTextMaxSize = 17;
+            qualityText.resizeTextMaxSize = 26;
             qualityText.verticalOverflow = VerticalWrapMode.Truncate;
 
-            Text statsText = CreateText("Stats", card.transform, font, BuildEquipmentInventoryStatSummary(equipmentData, equipment), 15, FontStyle.Normal,
+            Text statsText = CreateText("Stats", card.transform, font, BuildEquipmentInventoryStatSummary(equipmentData, equipment), 28, FontStyle.Bold,
                 TextAnchor.UpperLeft, new Color(0.82f, 0.88f, 0.94f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(112f, -80f), new Vector2(278f, 42f));
-            statsText.resizeTextForBestFit = true;
-            statsText.resizeTextMinSize = 11;
-            statsText.resizeTextMaxSize = 15;
+                new Vector2(0f, 1f), new Vector2(112f, -80f), new Vector2(700f, 76f));
+            statsText.resizeTextForBestFit = false;
             statsText.verticalOverflow = VerticalWrapMode.Truncate;
 
-            Text ownerText = CreateText("Owner", card.transform, font, BuildEquipmentListStateText(profile, equipment), 15, FontStyle.Bold,
+            Text ownerText = CreateText("Owner", card.transform, font, BuildEquipmentListStateText(profile, equipment, selectedMonster), 16, FontStyle.Bold,
                 TextAnchor.MiddleLeft, ResolveEquipmentListStateColor(equipment, equippedToSelectedMonster, equippedToOtherMonster, isTutorialGift), new Vector2(0f, 0f), new Vector2(1f, 0f),
                 new Vector2(0f, 0f), new Vector2(112f, 18f), new Vector2(-132f, 26f));
             ownerText.resizeTextForBestFit = true;
             ownerText.resizeTextMinSize = 11;
-            ownerText.resizeTextMaxSize = 15;
+            ownerText.resizeTextMaxSize = 16;
             ownerText.verticalOverflow = VerticalWrapMode.Truncate;
+            CreateText("EnhanceAttempts", card.transform, font, $"強化可能 あと{equipment.RemainingEnhanceAttempts}回", 24, FontStyle.Bold,
+                TextAnchor.MiddleLeft, new Color(1f, 0.86f, 0.52f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0f, 0f), new Vector2(112f, 52f), new Vector2(700f, 30f));
             if (ShouldHighlightEquipmentQualityLabel(profile))
             {
                 AddEquipmentTutorialQualityLabelFocus(qualityText.transform);
@@ -2342,7 +2583,7 @@ namespace WitchTower.Core
             panelRect.anchorMax = new Vector2(0.5f, 0.5f);
             panelRect.pivot = new Vector2(0.5f, 0.5f);
             panelRect.anchoredPosition = Vector2.zero;
-            panelRect.sizeDelta = new Vector2(1040f, 500f);
+            panelRect.sizeDelta = new Vector2(1040f, 620f);
 
             Image panelImage = panel.AddComponent<Image>();
             panelImage.color = new Color(0.07f, 0.09f, 0.12f, 0.98f);
@@ -2357,77 +2598,84 @@ namespace WitchTower.Core
 
             CreateActionButton(panel.transform, font, "閉じる", new Vector2(1f, 1f), new Vector2(1f, 1f),
                 new Vector2(1f, 1f), new Vector2(-24f, -18f), new Vector2(118f, 40f),
-                new Color(0.34f, 0.20f, 0.16f, 0.96f), CloseEquipmentDetailSheet, 15);
+                new Color(0.34f, 0.20f, 0.16f, 0.96f), CloseEquipmentDetailSheet, 24);
 
-            equipmentDetailTitleText = CreateText("EquipmentDetailTitle", panel.transform, font, string.Empty, 30, FontStyle.Bold,
+            equipmentDetailTitleText = CreateText("EquipmentDetailTitle", panel.transform, font, string.Empty, 36, FontStyle.Bold,
                 TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(1f, 1f),
                 new Vector2(0f, 1f), new Vector2(32f, -24f), new Vector2(-178f, 40f));
             equipmentDetailTitleText.resizeTextForBestFit = true;
-            equipmentDetailTitleText.resizeTextMinSize = 18;
-            equipmentDetailTitleText.resizeTextMaxSize = 30;
+            equipmentDetailTitleText.resizeTextMinSize = 28;
+            equipmentDetailTitleText.resizeTextMaxSize = 36;
             equipmentDetailTitleText.verticalOverflow = VerticalWrapMode.Truncate;
 
-            equipmentDetailMetaText = CreateText("EquipmentDetailMeta", panel.transform, font, string.Empty, 18, FontStyle.Bold,
+            equipmentDetailMetaText = CreateText("EquipmentDetailMeta", panel.transform, font, string.Empty, 26, FontStyle.Bold,
                 TextAnchor.MiddleLeft, new Color(1f, 0.86f, 0.52f), new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0f, 1f), new Vector2(32f, -70f), new Vector2(-64f, 28f));
+                new Vector2(0f, 1f), new Vector2(32f, -70f), new Vector2(-64f, 62f));
             equipmentDetailMetaText.resizeTextForBestFit = true;
-            equipmentDetailMetaText.resizeTextMinSize = 13;
-            equipmentDetailMetaText.resizeTextMaxSize = 18;
+            equipmentDetailMetaText.resizeTextMinSize = 26;
+            equipmentDetailMetaText.resizeTextMaxSize = 26;
 
             equipmentDetailFrameImage = CreateRawPortrait("EquipmentDetailFrame", panel.transform,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(44f, -130f), new Vector2(150f, 150f));
             equipmentDetailFrameImage.raycastTarget = false;
 
             equipmentDetailIconImage = CreateRawPortrait("EquipmentDetailIcon", panel.transform,
-                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(67f, -153f), new Vector2(104f, 104f));
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(67f, -158f), new Vector2(104f, 104f));
             equipmentDetailIconImage.raycastTarget = false;
 
-            equipmentDetailStatsText = CreateText("EquipmentDetailStats", panel.transform, font, string.Empty, 18, FontStyle.Bold,
+            equipmentDetailFavoriteButton = CreateActionButton(panel.transform, font, "お気に入り\n登録", new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(24f, -300f), new Vector2(180f, 80f),
+                new Color(0.28f, 0.24f, 0.15f, 0.96f), ToggleSelectedEquipmentFavorite, 24);
+            equipmentDetailFavoriteButton.gameObject.name = "EquipmentFavoriteButton";
+            ApplyEquipmentActionButtonFrame(equipmentDetailFavoriteButton, new Color(1f, 0.86f, 0.44f, 0.92f), new Color(0.20f, 0.18f, 0.12f, 0.84f));
+
+            equipmentDetailStatsText = CreateText("EquipmentDetailStats", panel.transform, font, string.Empty, 28, FontStyle.Bold,
                 TextAnchor.UpperLeft, new Color(0.86f, 0.91f, 0.96f), new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0f, 1f), new Vector2(220f, -124f), new Vector2(-56f, 184f));
+                new Vector2(0f, 1f), new Vector2(220f, -150f), new Vector2(-252f, 230f));
             equipmentDetailStatsText.resizeTextForBestFit = true;
-            equipmentDetailStatsText.resizeTextMinSize = 13;
-            equipmentDetailStatsText.resizeTextMaxSize = 18;
+            equipmentDetailStatsText.resizeTextMinSize = 28;
+            equipmentDetailStatsText.resizeTextMaxSize = 28;
             equipmentDetailStatsText.verticalOverflow = VerticalWrapMode.Truncate;
 
-            equipmentDetailOwnerText = CreateText("EquipmentDetailOwner", panel.transform, font, string.Empty, 18, FontStyle.Bold,
+            equipmentDetailOwnerText = CreateText("EquipmentDetailOwner", panel.transform, font, string.Empty, 26, FontStyle.Bold,
                 TextAnchor.MiddleLeft, new Color(0.80f, 0.92f, 1f), new Vector2(0f, 0f), new Vector2(1f, 0f),
-                new Vector2(0f, 0f), new Vector2(32f, 142f), new Vector2(-64f, 34f));
+                new Vector2(0f, 0f), new Vector2(32f, 164f), new Vector2(-64f, 42f));
             equipmentDetailOwnerText.resizeTextForBestFit = true;
-            equipmentDetailOwnerText.resizeTextMinSize = 12;
-            equipmentDetailOwnerText.resizeTextMaxSize = 18;
+            equipmentDetailOwnerText.resizeTextMinSize = 26;
+            equipmentDetailOwnerText.resizeTextMaxSize = 26;
 
-            equipmentDetailMessageText = CreateText("EquipmentDetailMessage", panel.transform, font, string.Empty, 16, FontStyle.Normal,
+            equipmentDetailMessageText = CreateText("EquipmentDetailMessage", panel.transform, font, string.Empty, 24, FontStyle.Normal,
                 TextAnchor.UpperLeft, new Color(0.76f, 0.82f, 0.88f), new Vector2(0f, 0f), new Vector2(1f, 0f),
-                new Vector2(0f, 0f), new Vector2(32f, 86f), new Vector2(-64f, 46f));
+                new Vector2(0f, 0f), new Vector2(32f, 88f), new Vector2(-64f, 64f));
             equipmentDetailMessageText.resizeTextForBestFit = true;
-            equipmentDetailMessageText.resizeTextMinSize = 12;
-            equipmentDetailMessageText.resizeTextMaxSize = 16;
+            equipmentDetailMessageText.resizeTextMinSize = 24;
+            equipmentDetailMessageText.resizeTextMaxSize = 24;
             equipmentDetailMessageText.verticalOverflow = VerticalWrapMode.Truncate;
 
             equipmentDetailEquipButton = CreateActionButton(panel.transform, font, "装備", new Vector2(0f, 0f), new Vector2(0f, 0f),
                 new Vector2(0f, 0f), new Vector2(32f, 24f), new Vector2(168f, 50f),
-                new Color(0.24f, 0.34f, 0.44f, 0.96f), EquipSelectedEquipmentDetail, 16);
+                new Color(0.24f, 0.34f, 0.44f, 0.96f), EquipSelectedEquipmentDetail, 24);
             ApplyEquipmentActionButtonFrame(equipmentDetailEquipButton, new Color(0.86f, 0.94f, 1f, 0.96f), new Color(0.16f, 0.19f, 0.24f, 0.84f));
 
             equipmentDetailUnequipButton = CreateActionButton(panel.transform, font, "外す", new Vector2(0f, 0f), new Vector2(0f, 0f),
                 new Vector2(0f, 0f), new Vector2(218f, 24f), new Vector2(148f, 50f),
-                new Color(0.22f, 0.28f, 0.34f, 0.96f), UnequipSelectedEquipmentDetail, 16);
+                new Color(0.22f, 0.28f, 0.34f, 0.96f), UnequipSelectedEquipmentDetail, 24);
             ApplyEquipmentActionButtonFrame(equipmentDetailUnequipButton, new Color(0.70f, 0.80f, 0.90f, 0.84f), new Color(0.15f, 0.17f, 0.20f, 0.84f));
 
             equipmentDetailEnhanceButton = CreateActionButton(panel.transform, font, "強化", new Vector2(0f, 0f), new Vector2(0f, 0f),
                 new Vector2(0f, 0f), new Vector2(384f, 24f), new Vector2(168f, 50f),
-                new Color(0.44f, 0.30f, 0.16f, 0.96f), OpenSelectedEquipmentEnhancement, 16);
+                new Color(0.44f, 0.30f, 0.16f, 0.96f), OpenSelectedEquipmentEnhancement, 24);
             ApplyEquipmentActionButtonFrame(equipmentDetailEnhanceButton, new Color(1f, 0.82f, 0.36f, 0.96f), new Color(0.20f, 0.16f, 0.12f, 0.84f));
+            BuildEquipmentDetailEnhanceFocus(font);
 
             equipmentDetailLockButton = CreateActionButton(panel.transform, font, "ロック", new Vector2(0f, 0f), new Vector2(0f, 0f),
                 new Vector2(0f, 0f), new Vector2(570f, 24f), new Vector2(178f, 50f),
-                new Color(0.28f, 0.24f, 0.15f, 0.96f), ToggleSelectedEquipmentDetailLock, 16);
+                new Color(0.28f, 0.24f, 0.15f, 0.96f), ToggleSelectedEquipmentDetailLock, 24);
             ApplyEquipmentActionButtonFrame(equipmentDetailLockButton, new Color(1f, 0.86f, 0.44f, 0.92f), new Color(0.20f, 0.18f, 0.12f, 0.84f));
 
             equipmentDetailDiscardButton = CreateActionButton(panel.transform, font, "捨てる", new Vector2(0f, 0f), new Vector2(0f, 0f),
                 new Vector2(0f, 0f), new Vector2(766f, 24f), new Vector2(178f, 50f),
-                new Color(0.46f, 0.20f, 0.18f, 0.96f), DiscardSelectedEquipmentDetail, 16);
+                new Color(0.46f, 0.20f, 0.18f, 0.96f), DiscardSelectedEquipmentDetail, 24);
             ApplyEquipmentActionButtonFrame(equipmentDetailDiscardButton, new Color(0.96f, 0.68f, 0.58f, 0.94f), new Color(0.24f, 0.16f, 0.16f, 0.84f));
 
             equipmentDetailSheetRoot.SetActive(false);
@@ -2449,15 +2697,23 @@ namespace WitchTower.Core
             equipmentDetailSheetRoot.SetActive(true);
             equipmentDetailSheetRoot.transform.SetAsLastSibling();
             RefreshEquipmentDetailSheet();
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            OwnedMonsterData selectedMonster = profile != null
+                ? profile.GetOwnedMonster(selectedEquipmentMonsterInstanceId)
+                : null;
+            RefreshEquipmentTutorialGuide(profile, selectedMonster);
         }
 
         private void CloseEquipmentDetailSheet()
         {
             selectedEquipmentDetailInstanceId = string.Empty;
+            SetEquipmentTutorialGuideLayer(false);
             if (equipmentDetailSheetRoot != null)
             {
                 equipmentDetailSheetRoot.SetActive(false);
             }
+            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            RefreshEquipmentTutorialGuide(profile, profile?.GetOwnedMonster(selectedEquipmentMonsterInstanceId));
         }
 
         private void RefreshEquipmentDetailSheet()
@@ -2500,7 +2756,7 @@ namespace WitchTower.Core
 
             if (equipmentDetailOwnerText != null)
             {
-                equipmentDetailOwnerText.text = BuildEquipmentListStateText(profile, equipment);
+                equipmentDetailOwnerText.text = BuildEquipmentListStateText(profile, equipment, selectedMonster);
                 equipmentDetailOwnerText.color = ResolveEquipmentListStateColor(
                     equipment,
                     equippedToSelectedMonster,
@@ -2539,7 +2795,89 @@ namespace WitchTower.Core
             SetEquipmentDetailButtonState(equipmentDetailUnequipButton, "外す", canUnequip);
             SetEquipmentDetailButtonState(equipmentDetailEnhanceButton, "強化", canEnhance);
             SetEquipmentDetailButtonState(equipmentDetailLockButton, equipment.IsLocked ? "ロック解除" : "ロック", true);
+            SetEquipmentDetailButtonState(equipmentDetailFavoriteButton, equipment.IsFavorite ? "お気に入り\n解除" : "お気に入り\n登録", true);
             SetEquipmentDetailButtonState(equipmentDetailDiscardButton, "捨てる", canDiscard);
+
+            StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
+            bool qualityLesson = tutorialEvent?.TargetKey == "equipment.quality_label" &&
+                StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipmentQualityPairReceived);
+            bool highlightEnhance = canEnhance && tutorialEvent != null &&
+                string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
+            SetEquipmentDetailEnhanceFocusVisible(highlightEnhance);
+            bool manualLesson = tutorialEvent?.TargetKey == "equipment.first_item";
+            if (equipmentDetailEnhanceButton != null &&
+                (qualityLesson || manualLesson || tutorialEvent?.EventId == StoryTutorialService.HintEquipmentAutoEquip))
+                equipmentDetailEnhanceButton.interactable = false;
+            if (qualityLesson)
+            {
+                if (equipmentDetailEquipButton != null) equipmentDetailEquipButton.interactable = false;
+                if (equipmentDetailUnequipButton != null) equipmentDetailUnequipButton.interactable = false;
+            }
+            if (!profile.HasCompletedTutorial && StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipmentQualityPairReceived) &&
+                StoryTutorialService.IsEquipmentTutorialGift(equipment) && equipmentDetailDiscardButton != null)
+                equipmentDetailDiscardButton.interactable = false;
+            if (equipmentDetailEquipButton != null)
+            {
+                // Any valid manual equip demonstrates the same operation,
+                // including a higher-quality drop with the gift's display name.
+                bool highlightEquip = manualLesson && canEquip;
+                Transform buttonTransform = equipmentDetailEquipButton.transform;
+                TutorialTargetFrame.SetVisible(buttonTransform, highlightEquip, "ここをタップ");
+            }
+        }
+
+        private void BuildEquipmentDetailEnhanceFocus(Font font)
+        {
+            if (equipmentDetailEnhanceButton == null || equipmentDetailEnhanceFocusRoot != null)
+            {
+                return;
+            }
+
+            equipmentDetailEnhanceFocusRoot = CreateUiObject(
+                "EquipmentDetailEnhanceTutorialFocus",
+                equipmentDetailEnhanceButton.transform);
+            RectTransform focusRect = equipmentDetailEnhanceFocusRoot.AddComponent<RectTransform>();
+            focusRect.anchorMin = Vector2.zero;
+            focusRect.anchorMax = Vector2.one;
+            focusRect.offsetMin = Vector2.zero;
+            focusRect.offsetMax = Vector2.zero;
+
+            AddEquipmentTutorialFocusBar(equipmentDetailEnhanceFocusRoot.transform, "DetailEnhanceTop",
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, 7f), new Vector2(26f, 9f));
+            AddEquipmentTutorialFocusBar(equipmentDetailEnhanceFocusRoot.transform, "DetailEnhanceBottom",
+                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, -7f), new Vector2(26f, 9f));
+            AddEquipmentTutorialFocusBar(equipmentDetailEnhanceFocusRoot.transform, "DetailEnhanceLeft",
+                new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-7f, 0f), new Vector2(9f, 20f));
+            AddEquipmentTutorialFocusBar(equipmentDetailEnhanceFocusRoot.transform, "DetailEnhanceRight",
+                new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(7f, 0f), new Vector2(9f, 20f));
+
+            Text promptText = CreateText("EquipmentDetailEnhanceTutorialPrompt", equipmentDetailEnhanceFocusRoot.transform, font,
+                "ここを押す", 16, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(1f, 0.94f, 0.58f, 1f),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 11f), new Vector2(164f, 26f));
+            promptText.resizeTextForBestFit = true;
+            promptText.resizeTextMinSize = 12;
+            promptText.resizeTextMaxSize = 16;
+            promptText.raycastTarget = false;
+
+            equipmentDetailEnhanceFocusRoot.SetActive(false);
+        }
+
+        private void SetEquipmentDetailEnhanceFocusVisible(bool visible)
+        {
+            if (equipmentDetailEnhanceFocusRoot == null)
+            {
+                return;
+            }
+
+            equipmentDetailEnhanceFocusRoot.SetActive(visible);
+            if (!visible)
+            {
+                return;
+            }
+
+            equipmentDetailEnhanceFocusRoot.transform.SetAsLastSibling();
+            RegisterEquipmentTutorialPulseImages(equipmentDetailEnhanceFocusRoot);
         }
 
         private static string BuildEquipmentDetailStatsText(EquipmentDataSO equipmentData, OwnedEquipmentData equipment)
@@ -2549,8 +2887,7 @@ namespace WitchTower.Core
                 return "装備データなし";
             }
 
-            return $"{EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)}\n" +
-                   $"{BuildEquipmentBonusSummary(equipmentData)}\n" +
+            return $"現在の装備効果（品質・強化込み）\n{EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)}\n\n" +
                    $"強化Lv {equipment.UpgradeLevel} / {(equipment.IsLocked ? "ロック中" : "未ロック")}";
         }
 
@@ -2608,7 +2945,7 @@ namespace WitchTower.Core
 
         private static bool ShouldHighlightEquipmentTutorialGift(PlayerProfile profile)
         {
-            if (profile == null || StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipment))
+            if (profile == null)
             {
                 return false;
             }
@@ -2625,12 +2962,6 @@ namespace WitchTower.Core
                 return;
             }
 
-            Image buttonImage = equipButtonTransform.GetComponent<Image>();
-            if (buttonImage != null && !equipmentTutorialPulseImages.Contains(buttonImage))
-            {
-                equipmentTutorialPulseImages.Add(buttonImage);
-            }
-
             if (equipButtonTransform.Find("EquipmentTutorialFocusActionGlow") != null)
             {
                 RegisterEquipmentTutorialPulseImages(equipButtonTransform.gameObject);
@@ -2639,6 +2970,15 @@ namespace WitchTower.Core
             }
 
             RemoveEquipmentTutorialActionButtonFocus(equipButtonTransform);
+
+            Image buttonImage = equipButtonTransform.GetComponent<Image>();
+            if (buttonImage != null)
+            {
+                // This button survives inventory rebuilds. Keep its original
+                // tint independently of the temporary list of pulsing images.
+                equipmentTutorialActionButtonColors[buttonImage] = buttonImage.color;
+                equipmentTutorialPulseImages.Add(buttonImage);
+            }
 
             GameObject glowObject = CreateUiObject("EquipmentTutorialFocusActionGlow", equipButtonTransform);
             RectTransform glowRect = glowObject.AddComponent<RectTransform>();
@@ -2673,6 +3013,7 @@ namespace WitchTower.Core
             StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
             if (tutorialEvent == null || !string.Equals(tutorialEvent.TargetKey, "equipment.auto_equip", StringComparison.Ordinal))
             {
+                RemoveEquipmentTutorialActionButtonFocus(equipmentAutoEquipButton != null ? equipmentAutoEquipButton.transform : null);
                 return;
             }
 
@@ -2731,11 +3072,20 @@ namespace WitchTower.Core
                 return;
             }
 
+            Image buttonImage = buttonTransform.GetComponent<Image>();
+            if (buttonImage != null && equipmentTutorialActionButtonColors.TryGetValue(buttonImage, out Color normalColor))
+            {
+                buttonImage.color = normalColor;
+                equipmentTutorialActionButtonColors.Remove(buttonImage);
+            }
+            equipmentTutorialPulseImages.RemoveAll(image => image == null || image.transform == buttonTransform || image.transform.IsChildOf(buttonTransform));
+
             for (int i = buttonTransform.childCount - 1; i >= 0; i -= 1)
             {
                 Transform child = buttonTransform.GetChild(i);
                 if (child != null && child.name.StartsWith("EquipmentTutorialFocus", StringComparison.Ordinal))
                 {
+                    child.gameObject.SetActive(false);
                     if (Application.isPlaying)
                     {
                         Destroy(child.gameObject);
@@ -2746,14 +3096,23 @@ namespace WitchTower.Core
                     }
                 }
             }
+            Transform prompt = buttonTransform.parent != null
+                ? buttonTransform.parent.Find("EquipmentTutorialEquipPrompt") : null;
+            if (prompt != null)
+            {
+                prompt.gameObject.SetActive(false);
+                if (Application.isPlaying) Destroy(prompt.gameObject);
+                else DestroyImmediate(prompt.gameObject);
+            }
         }
 
         private void AddEquipmentTutorialCardFocusFrame(Transform cardTransform)
         {
-            AddEquipmentTutorialFocusBar(cardTransform, "CardTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(-8f, 6f));
-            AddEquipmentTutorialFocusBar(cardTransform, "CardBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 4f), new Vector2(-8f, 6f));
-            AddEquipmentTutorialFocusBar(cardTransform, "CardLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(4f, 0f), new Vector2(6f, -8f));
-            AddEquipmentTutorialFocusBar(cardTransform, "CardRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-4f, 0f), new Vector2(6f, -8f));
+            // Make the card target clearly visible on a phone.
+            AddEquipmentTutorialFocusBar(cardTransform, "CardTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -5f), new Vector2(-8f, 12f));
+            AddEquipmentTutorialFocusBar(cardTransform, "CardBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 5f), new Vector2(-8f, 12f));
+            AddEquipmentTutorialFocusBar(cardTransform, "CardLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(5f, 0f), new Vector2(12f, -8f));
+            AddEquipmentTutorialFocusBar(cardTransform, "CardRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-5f, 0f), new Vector2(12f, -8f));
         }
 
         private static bool ShouldHighlightEquipmentQualityLabel(PlayerProfile profile)
@@ -2774,10 +3133,7 @@ namespace WitchTower.Core
 
         private void AddEquipmentTutorialQualityLabelFocus(Transform qualityLabelTransform)
         {
-            AddEquipmentTutorialFocusBar(qualityLabelTransform, "QualityTop", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -1f), new Vector2(-2f, 3f));
-            AddEquipmentTutorialFocusBar(qualityLabelTransform, "QualityBottom", new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 1f), new Vector2(-2f, 3f));
-            AddEquipmentTutorialFocusBar(qualityLabelTransform, "QualityLeft", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(1f, 0f), new Vector2(3f, -2f));
-            AddEquipmentTutorialFocusBar(qualityLabelTransform, "QualityRight", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), new Vector2(-1f, 0f), new Vector2(3f, -2f));
+            TutorialTargetFrame.SetVisible(qualityLabelTransform, true);
         }
 
         private void SetEquipmentTutorialReturnFocusVisible(bool visible)
@@ -2908,7 +3264,10 @@ namespace WitchTower.Core
 
         private void EquipEquipmentInstance(string equipmentInstanceId)
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            if (GetEquipmentTutorialEvent(profile)?.TargetKey == "equipment.quality_label" &&
+                StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipmentQualityPairReceived)) return;
             OwnedMonsterData selectedMonster = profile != null ? profile.GetOwnedMonster(selectedEquipmentMonsterInstanceId) : null;
             if (profile == null || selectedMonster == null)
             {
@@ -2918,20 +3277,16 @@ namespace WitchTower.Core
             }
 
             bool tutorialWasActive = !StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipment);
-            bool isTutorialGift = StoryTutorialService.IsEquipmentTutorialGift(profile.GetOwnedEquipmentByInstanceId(equipmentInstanceId));
             if (profile.EquipEquipmentToMonster(selectedMonster.InstanceId, equipmentInstanceId))
             {
-                if (tutorialWasActive && isTutorialGift)
+                if (tutorialWasActive)
                 {
-                    equipmentLastActionMessage = $"{GetMonsterDisplayName(selectedMonster)} に装備できました。次は同じ装備カードの「強化」で鍛えてみましょう。";
+                    equipmentLastActionMessage = $"{GetMonsterDisplayName(selectedMonster)} に装備できました。便利な「自動装備」も試してみましょう。";
                     StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
                 }
                 else
                 {
-                    equipmentLastActionMessage = tutorialWasActive
-                        ? $"{GetMonsterDisplayName(selectedMonster)} に装備できました。装備カードからいつでも付け替えられます。"
-                        : $"{GetMonsterDisplayName(selectedMonster)} に装備しました。";
-                    StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipment);
+                    equipmentLastActionMessage = $"{GetMonsterDisplayName(selectedMonster)} に装備しました。";
                 }
 
                 if (Application.isPlaying && SaveManager.Instance != null)
@@ -2943,8 +3298,23 @@ namespace WitchTower.Core
             RefreshEquipmentScene();
         }
 
+        private void UnequipAllEquipment()
+        {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
+            var profile = GameManager.Instance?.PlayerProfile;
+            if (profile == null) return;
+            int count = 0;
+            // Whole inventory: release assignments, never discard equipment.
+            foreach (var equipment in new List<OwnedEquipmentData>(profile.OwnedEquipments))
+                if (!string.IsNullOrEmpty(equipment.EquippedMonsterInstanceId) && profile.TryUnequipEquipment(equipment.InstanceId, out _)) count++;
+            equipmentLastActionMessage = $"全モンスターの装備を解除しました（{count}個）。";
+            if (count > 0 && Application.isPlaying) SaveManager.Instance?.SaveCurrentGame();
+            RefreshEquipmentScene();
+        }
+
         private void UnequipEquipmentInstance(string equipmentInstanceId)
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             if (profile == null)
             {
@@ -2963,6 +3333,7 @@ namespace WitchTower.Core
 
         private void ToggleEquipmentLockState(string equipmentInstanceId)
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             if (profile == null)
             {
@@ -2987,7 +3358,9 @@ namespace WitchTower.Core
             }
 
             bool hasCandidate = HasAnyAutoEquipCandidate(profile, selectedMonster);
-            equipmentAutoEquipButton.interactable = selectedMonster != null && hasCandidate;
+            string lessonTarget = GetEquipmentTutorialEvent(profile)?.TargetKey;
+            bool learningManualEquip = lessonTarget == "equipment.first_item" || lessonTarget == "equipment.quality_label";
+            equipmentAutoEquipButton.interactable = selectedMonster != null && hasCandidate && !learningManualEquip;
             if (equipmentAutoEquipButtonText != null)
             {
                 equipmentAutoEquipButtonText.text = "自動装備";
@@ -2999,7 +3372,18 @@ namespace WitchTower.Core
 
         private void AutoEquipSelectedMonster()
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
+            string lessonTarget = GetEquipmentTutorialEvent(profile)?.TargetKey;
+            if (lessonTarget == "equipment.first_item" || lessonTarget == "equipment.quality_label")
+            {
+                equipmentLastActionMessage = lessonTarget == "equipment.quality_label"
+                    ? "先にコモンとアンコモンの品質を比べ、「品質を確認した」を押しましょう。"
+                    : "まずは「見習いの護符」のカードを開き、詳細画面の「装備」を押してみましょう。";
+                RefreshEquipmentScene();
+                return;
+            }
+            bool learningAutoEquip = GetEquipmentTutorialEvent(profile)?.EventId == StoryTutorialService.HintEquipmentAutoEquip;
             OwnedMonsterData selectedMonster = profile != null ? profile.GetOwnedMonster(selectedEquipmentMonsterInstanceId) : null;
             if (profile == null || selectedMonster == null)
             {
@@ -3066,6 +3450,15 @@ namespace WitchTower.Core
                     : "自動装備できる装備がありません。";
             }
 
+            // The lesson also succeeds when the manual choice is already optimal.
+            if (learningAutoEquip)
+            {
+                StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintEquipmentAutoEquip);
+                equipmentLastActionMessage += " 次は装備の強化を覚えましょう。";
+                if (Application.isPlaying && SaveManager.Instance != null)
+                    SaveManager.Instance.SaveCurrentGame();
+            }
+            RemoveEquipmentTutorialActionButtonFocus(equipmentAutoEquipButton != null ? equipmentAutoEquipButton.transform : null);
             RefreshEquipmentScene();
         }
 
@@ -3276,9 +3669,18 @@ namespace WitchTower.Core
 
         private void DiscardEquipmentInstance(string equipmentInstanceId)
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             if (profile == null)
             {
+                return;
+            }
+
+            if (!profile.HasCompletedTutorial && StoryTutorialService.HasSeenHint(profile, StoryTutorialService.HintEquipmentQualityPairReceived) &&
+                StoryTutorialService.IsEquipmentTutorialGift(profile.GetOwnedEquipmentByInstanceId(equipmentInstanceId)))
+            {
+                equipmentLastActionMessage = "チュートリアル用の装備は、レッスンが終わるまで捨てられません。";
+                RefreshEquipmentScene();
                 return;
             }
 
@@ -3299,6 +3701,7 @@ namespace WitchTower.Core
 
         private void EnhanceEquipmentInstance(string equipmentInstanceId, string relicId)
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             if (profile == null)
             {
@@ -3345,6 +3748,7 @@ namespace WitchTower.Core
 
         private void OpenEquipmentEnhancementOverlay(string equipmentInstanceId)
         {
+            if (SaveManager.Instance?.StorageAccessAvailable == false) return;
             selectedEquipmentEnhanceInstanceId = equipmentInstanceId;
             ResetEquipmentEnhancementFeedback();
 
@@ -3386,6 +3790,13 @@ namespace WitchTower.Core
             if (equipmentEnhanceOverlayRoot != null)
             {
                 equipmentEnhanceOverlayRoot.SetActive(true);
+            }
+
+            // The enhancement overlay has its own Luse guide. Hide the guide
+            // from the equipment scene so two tutorial cards cannot stack.
+            if (equipmentTutorialGuideRoot != null)
+            {
+                equipmentTutorialGuideRoot.SetActive(false);
             }
 
             RefreshEquipmentEnhancementOverlay(profile);
@@ -3465,6 +3876,11 @@ namespace WitchTower.Core
                 return;
             }
 
+            // Start from the centered modal on every refresh; short screens can move
+            // the full panel and guide up together without shrinking readable text.
+            if (equipmentEnhanceOverlayInfoText != null)
+                ((RectTransform)equipmentEnhanceOverlayInfoText.transform.parent).anchoredPosition = Vector2.zero;
+
             bool hasSelection = profile != null && !string.IsNullOrEmpty(selectedEquipmentEnhanceInstanceId);
             OwnedEquipmentData equipment = hasSelection ? profile.GetOwnedEquipmentByInstanceId(selectedEquipmentEnhanceInstanceId) : null;
             EquipmentDataSO equipmentData = equipment != null ? MasterDataManager.Instance?.GetEquipmentData(equipment.EquipmentId) : null;
@@ -3487,13 +3903,8 @@ namespace WitchTower.Core
 
             if (equipmentEnhanceOverlayInfoText != null)
             {
-                StoryTutorialEvent tutorialEvent = GetEquipmentTutorialEvent(profile);
-                bool enhanceTutorialActive = tutorialEvent != null &&
-                    string.Equals(tutorialEvent.TargetKey, "equipment.enhance_button", StringComparison.Ordinal);
-                equipmentEnhanceOverlayInfoText.text = enhanceTutorialActive
-                    ? $"【{tutorialEvent.Title}】{tutorialEvent.Body}"
-                    : equipment != null
-                    ? $"現在 {EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / {EquipmentEnhancementCatalog.BuildEnhanceAttemptsLabel(equipmentData, equipment)} / {(equipment.IsLocked ? "ロック中" : "未ロック")}\n現在所持している強化遺物だけを表示しています。"
+                equipmentEnhanceOverlayInfoText.text = equipment != null
+                    ? BuildReadableEquipmentEnhancementInfo(equipmentData, equipment)
                     : (!string.IsNullOrEmpty(equipmentEnhanceTargetInfo) ? equipmentEnhanceTargetInfo : "装備カードの「強化」から対象装備を選ぶと、ここに使用可能な強化遺物が表示されます。");
             }
 
@@ -3528,6 +3939,10 @@ namespace WitchTower.Core
                     new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(360f, 36f));
             }
 
+            float relicContentHeight = Mathf.Max(270f, visibleRelicIndex * 288f - 18f);
+            equipmentEnhanceOverlayListRect.sizeDelta = new Vector2(804f, relicContentHeight);
+            equipmentEnhanceOverlayListRect.anchoredPosition = new Vector2(8f, -8f);
+            equipmentEnhanceOverlayViewportRect.sizeDelta = new Vector2(820f, Mathf.Min(280f, relicContentHeight + 16f));
             RefreshEquipmentEnhanceTutorialGuide(profile, equipment);
         }
 
@@ -3542,8 +3957,8 @@ namespace WitchTower.Core
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -(index * 146f));
-            rect.sizeDelta = new Vector2(804f, 128f);
+            rect.anchoredPosition = new Vector2(0f, -(index * 288f));
+            rect.sizeDelta = new Vector2(804f, 270f);
 
             Image frame = card.AddComponent<Image>();
             frame.color = new Color(0.14f, 0.17f, 0.22f, 0.96f);
@@ -3553,20 +3968,20 @@ namespace WitchTower.Core
             icon.texture = LoadMonsterTexture(ResolveEnhancementRelicTexturePath(relic.RelicId));
             icon.color = Color.white;
 
-            CreateText($"EnhancementRelicCardName{index + 1}", card.transform, font, relic.RelicName, 24, FontStyle.Bold,
+            CreateText($"EnhancementRelicCardName{index + 1}", card.transform, font, relic.RelicName, 30, FontStyle.Bold,
                 TextAnchor.MiddleLeft, Color.white, new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(0f, 1f), new Vector2(120f, -18f), new Vector2(220f, 28f));
+                new Vector2(0f, 1f), new Vector2(120f, -16f), new Vector2(520f, 38f));
             CreateText($"EnhancementRelicCardMeta{index + 1}", card.transform, font,
-                $"成功率 {(relic.SuccessRate * 100f):0.#}% / {EquipmentEnhancementCatalog.BuildRelicEffectSummary(equipmentData, equipment, relic)} / 所持 x{profile.GetEnhancementRelicAmount(relic.RelicId)}",
-                15, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.92f, 0.78f, 0.54f),
-                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(120f, -50f), new Vector2(480f, 22f));
-            CreateText($"EnhancementRelicCardDesc{index + 1}", card.transform, font, relic.Description, 15, FontStyle.Normal,
-                TextAnchor.UpperLeft, new Color(0.80f, 0.86f, 0.92f), new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0f, 1f), new Vector2(120f, -78f), new Vector2(-230f, 42f));
+                $"成功率 {(relic.SuccessRate * 100f):0.#}% / 所持 x{profile.GetEnhancementRelicAmount(relic.RelicId)}\n{EquipmentEnhancementCatalog.BuildRelicEffectSummary(equipmentData, equipment, relic)}",
+                26, FontStyle.Bold, TextAnchor.UpperLeft, new Color(0.92f, 0.78f, 0.54f),
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -60f), new Vector2(526f, 96f));
+            CreateText($"EnhancementRelicCardDesc{index + 1}", card.transform, font, relic.Description, 26, FontStyle.Normal,
+                TextAnchor.UpperLeft, new Color(0.80f, 0.86f, 0.92f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, 1f), new Vector2(120f, -162f), new Vector2(526f, 100f));
 
             Button useButton = CreateActionButton(card.transform, font, "使用", new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-                new Vector2(1f, 0.5f), new Vector2(-20f, 0f), new Vector2(118f, 40f), new Color(0.28f, 0.34f, 0.52f, 0.96f),
-                () => EnhanceEquipmentInstance(equipment != null ? equipment.InstanceId : string.Empty, relic.RelicId), 16);
+                new Vector2(1f, 0.5f), new Vector2(-20f, 0f), new Vector2(118f, 52f), new Color(0.28f, 0.34f, 0.52f, 0.96f),
+                () => EnhanceEquipmentInstance(equipment != null ? equipment.InstanceId : string.Empty, relic.RelicId), 24);
 
             bool canUse = equipment != null
                 && equipment.RemainingEnhanceAttempts > 0
@@ -3606,6 +4021,7 @@ namespace WitchTower.Core
             }
 
             equipmentEnhanceTutorialGuideRoot.transform.SetAsLastSibling();
+            LayoutEquipmentEnhanceTutorialGuide();
             if (equipmentEnhanceTutorialGuideTitleText != null)
             {
                 equipmentEnhanceTutorialGuideTitleText.text = successGuide
@@ -3628,6 +4044,58 @@ namespace WitchTower.Core
             }
 
             SetEquipmentEnhanceTutorialCloseFocusVisible(successGuide);
+        }
+
+        private void LayoutEquipmentEnhanceTutorialGuide()
+        {
+            RectTransform guide = equipmentEnhanceTutorialGuideRoot != null
+                ? equipmentEnhanceTutorialGuideRoot.transform as RectTransform
+                : null;
+            RectTransform panel = guide != null ? guide.parent as RectTransform : null;
+            if (panel == null || equipmentEnhanceOverlayListRect == null)
+            {
+                return;
+            }
+
+            // Use actual visible rows, not the list's fixed 436-unit container
+            // or the modal's bottom edge. The guide retains its readable size
+            // and clears the entire row (including text, button and gold frame).
+            float contentBottom = float.PositiveInfinity;
+            foreach (Transform child in equipmentEnhanceOverlayListRect)
+            {
+                if (!(child is RectTransform row) || !child.gameObject.activeSelf)
+                {
+                    continue;
+                }
+
+                float bottom = panel.InverseTransformPoint(row.TransformPoint(new Vector3(0f, row.rect.yMin, 0f))).y;
+                contentBottom = Mathf.Min(contentBottom, bottom);
+            }
+
+            if (float.IsPositiveInfinity(contentBottom))
+            {
+                contentBottom = panel.InverseTransformPoint(equipmentEnhanceOverlayListRect.TransformPoint(new Vector3(0f, -128f, 0f))).y;
+            }
+
+            if (equipmentEnhanceOverlayViewportRect != null)
+            {
+                contentBottom = panel.InverseTransformPoint(equipmentEnhanceOverlayViewportRect.TransformPoint(
+                    new Vector3(0f, equipmentEnhanceOverlayViewportRect.rect.yMin, 0f))).y;
+            }
+
+            guide.anchorMin = new Vector2(0.5f, 0.5f);
+            guide.anchorMax = new Vector2(0.5f, 0.5f);
+            guide.pivot = new Vector2(0.5f, 1f);
+            guide.anchoredPosition = new Vector2(0f, contentBottom - panel.rect.center.y - 40f);
+
+            if (panel.parent is RectTransform container)
+            {
+                float guideBottom = container.InverseTransformPoint(guide.TransformPoint(new Vector3(0f, guide.rect.yMin, 0f))).y;
+                float panelTop = container.InverseTransformPoint(panel.TransformPoint(new Vector3(0f, panel.rect.yMax, 0f))).y;
+                float neededLift = Mathf.Max(0f, container.rect.yMin + 24f - guideBottom);
+                float availableLift = Mathf.Max(0f, container.rect.yMax - 24f - panelTop);
+                panel.anchoredPosition += Vector2.up * Mathf.Min(neededLift, availableLift);
+            }
         }
 
         private static bool ShouldHighlightEquipmentEnhanceRelicUseButton(PlayerProfile profile, EnhancementRelicDefinition relic)
@@ -3940,7 +4408,17 @@ namespace WitchTower.Core
 
             string equipmentName = equipmentData != null ? equipmentData.equipmentName : equipment.EquipmentId;
             equipmentEnhanceTargetTitle = $"{equipmentName}  {EquipmentEnhancementCatalog.BuildQualityLabel(equipmentData, equipment)} の強化";
-            equipmentEnhanceTargetInfo = $"現在 {EquipmentEnhancementCatalog.BuildEnhancementSummary(equipmentData, equipment)} / {EquipmentEnhancementCatalog.BuildEnhanceAttemptsLabel(equipmentData, equipment)} / {(equipment.IsLocked ? "ロック中" : "未ロック")}\n現在所持している強化遺物だけを表示しています。";
+            equipmentEnhanceTargetInfo = BuildReadableEquipmentEnhancementInfo(equipmentData, equipment);
+        }
+
+        private static string BuildReadableEquipmentEnhancementInfo(EquipmentDataSO data, OwnedEquipmentData equipment)
+        {
+            string[] bonuses = EquipmentEnhancementCatalog.BuildEnhancementSummary(data, equipment)
+                .Split(new[] { " / " }, StringSplitOptions.None);
+            string stats = bonuses.Length > 3
+                ? string.Join(" / ", bonuses, 0, 3) + "\n" + string.Join(" / ", bonuses, 3, bonuses.Length - 3)
+                : string.Join(" / ", bonuses);
+            return $"現在  {stats}\n{EquipmentEnhancementCatalog.BuildEnhanceAttemptsLabel(data, equipment)} / {(equipment.IsLocked ? "ロック中" : "未ロック")}\n所持している強化遺物を表示しています。";
         }
 
         private void AnimateEquipmentTutorialGuide()
@@ -3963,7 +4441,14 @@ namespace WitchTower.Core
                     continue;
                 }
 
-                image.color = pulseColor;
+                if (image.sprite != null && image.name == "EquipmentTutorialFocusFrame")
+                {
+                    image.color = new Color(1f, 0.82f, 0.18f, Mathf.Lerp(0.82f, 1f, pulse));
+                    float frameScale = Mathf.Lerp(1.01f, 1.025f, pulse);
+                    image.rectTransform.localScale = new Vector3(frameScale, frameScale, 1f);
+                }
+                else
+                    image.color = pulseColor;
             }
 
             if (equipmentTutorialGuideCharacterImage != null && equipmentTutorialGuideCharacterImage.gameObject.activeInHierarchy)
@@ -4443,8 +4928,15 @@ namespace WitchTower.Core
             return owner != null ? $"{GetMonsterDisplayName(owner)} 装備中" : "装備中";
         }
 
-        private static string BuildEquipmentListStateText(PlayerProfile profile, OwnedEquipmentData equipment)
+        private static string BuildEquipmentListStateText(PlayerProfile profile, OwnedEquipmentData equipment, OwnedMonsterData selectedMonster = null)
         {
+            if (equipment != null && selectedMonster != null &&
+                equipment.EquippedMonsterInstanceId == selectedMonster.InstanceId)
+            {
+                string selectedName = GetMonsterDisplayName(selectedMonster);
+                return $"{selectedName}（選択中）が装備中" + (equipment.IsLocked ? " / ロック" : string.Empty);
+            }
+
             string owner = BuildEquipmentOwnerText(profile, equipment);
             if (equipment != null && equipment.IsLocked)
             {
@@ -5171,6 +5663,7 @@ namespace WitchTower.Core
             rect.sizeDelta = sizeDelta;
 
             Text text = textObject.AddComponent<Text>();
+            text.raycastTarget = false;
             text.font = font;
             text.text = textValue;
             text.fontSize = fontSize;

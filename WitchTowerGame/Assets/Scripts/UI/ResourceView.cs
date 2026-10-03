@@ -23,7 +23,7 @@ namespace WitchTower.UI
 
             if (rebirthPointText != null)
             {
-                rebirthPointText.text = $"魂片 {profile.RebirthPoints}";
+                rebirthPointText.gameObject.SetActive(false);
             }
         }
     }

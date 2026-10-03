@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using WitchTower.Core;
 using WitchTower.Managers;
 using WitchTower.Save;
+using WitchTower.UI;
 
 namespace WitchTower.Home
 {
@@ -34,12 +35,27 @@ namespace WitchTower.Home
                 return;
             }
 
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             EnsureRuntimeState();
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             ShowGachaPanel(ReturnHome);
         }
 
         private void Update()
         {
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             if (Application.isPlaying && Input.GetKeyDown(KeyCode.Escape))
             {
                 ReturnHome();
@@ -48,8 +64,13 @@ namespace WitchTower.Home
 
         public void ReturnHome()
         {
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             SaveManager.Instance?.SaveCurrentGame();
-            SceneManager.LoadScene(homeSceneName);
+            SceneTransitionGuard.LoadScene(homeSceneName);
         }
 
         private void ApplyEditorPreview()
@@ -93,9 +114,19 @@ namespace WitchTower.Home
 
         private static void EnsureRuntimeState()
         {
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             Application.runInBackground = true;
             ManagerFactory.EnsureGameManager();
             ManagerFactory.EnsureSaveManager();
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             ManagerFactory.EnsureMasterDataManager();
             ManagerFactory.EnsureAudioManager();
             ManagerFactory.EnsureUiPresentationCamera();
@@ -113,12 +144,24 @@ namespace WitchTower.Home
             }
         }
 
-        private static Canvas EnsureCanvas()
+        private Canvas EnsureCanvas()
         {
-            Canvas canvas = FindObjectOfType<Canvas>(true);
+            // OnlineInputBlocker is persistent and can be inactive. A global
+            // first-Canvas lookup can parent the live panel under that blocker,
+            // leaving only the serialized editor preview visible in this scene.
+            Canvas canvas = null;
+            foreach (Canvas candidate in FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (candidate.gameObject.scene == gameObject.scene && candidate.name == "GachaCanvas")
+                {
+                    canvas = candidate;
+                    break;
+                }
+            }
             if (canvas == null)
             {
                 GameObject canvasObject = new GameObject("GachaCanvas", typeof(RectTransform));
+                SceneManager.MoveGameObjectToScene(canvasObject, gameObject.scene);
                 RectTransform canvasRect = canvasObject.GetComponent<RectTransform>();
                 canvasRect.localScale = Vector3.one;
                 canvasRect.sizeDelta = new Vector2(1080f, 1920f);
@@ -127,6 +170,8 @@ namespace WitchTower.Home
                 canvasObject.AddComponent<GraphicRaycaster>();
             }
 
+            canvas.gameObject.SetActive(true);
+            canvas.enabled = true;
             canvas.transform.localScale = Vector3.one;
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.worldCamera = null;
@@ -171,12 +216,12 @@ namespace WitchTower.Home
             rectTransform.localScale = Vector3.one;
         }
 
-        private static void NormalizeCanvasScales()
+        private void NormalizeCanvasScales()
         {
             Canvas[] canvases = FindObjectsOfType<Canvas>(true);
             foreach (Canvas canvas in canvases)
             {
-                if (canvas != null)
+                if (canvas != null && canvas.gameObject.scene == gameObject.scene && canvas.name == "GachaCanvas")
                 {
                     canvas.transform.localScale = Vector3.one;
                 }

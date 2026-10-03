@@ -23,15 +23,16 @@ namespace WitchTower.Home
         public void ClaimDailyReward()
         {
             var profile = GameManager.Instance.PlayerProfile;
-            var claimedStones = DailyRewardService.ClaimAll(profile, DateTime.Now);
-            if (claimedStones > 0)
+            foreach (var definition in DailyRewardService.GetDefinitions())
             {
-                AudioManager.Instance?.PlaySe(AudioCue.DailyReward);
-                SaveManager.Instance.SaveCurrentGame();
+                if (!DailyRewardService.IsClaimable(profile, DateTime.Now, definition.Id)) continue;
+                WitchTower.Save.OnlinePlayerData.ClaimReward(definition.Id, ok => {
+                    if (this == null) return;
+                    Refresh();
+                    if (ok) ClaimDailyReward();
+                });
+                return;
             }
-
-            Refresh();
-            UnityEngine.Object.FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
         }
 
         public void ClaimMissionClear1()
@@ -84,16 +85,7 @@ namespace WitchTower.Home
 
         private void ClaimMission(string missionId)
         {
-            var profile = GameManager.Instance.PlayerProfile;
-            var claimedGold = MissionService.ClaimMission(profile, missionId);
-            if (claimedGold > 0)
-            {
-                AudioManager.Instance?.PlaySe(AudioCue.MissionComplete);
-                SaveManager.Instance.SaveCurrentGame();
-            }
-
-            Refresh();
-            UnityEngine.Object.FindObjectOfType<HomeSceneController>()?.RefreshAllPanels();
+            WitchTower.Save.OnlinePlayerData.ClaimReward(missionId, _ => { if (this != null) Refresh(); });
         }
 
         private static void BindMission(MissionItemView itemView, Data.PlayerProfile profile, string missionId)

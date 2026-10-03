@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -25,12 +26,13 @@ namespace WitchTower.Formation
             public int ClassRank;
             public int PlusValue;
             public int IndividualAverage;
+            public int IndividualTotal;
             public int AcquiredOrder;
             public bool IsFavorite;
             public bool IsLocked;
             public MonsterDamageType DamageType;
 
-            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int maxLevel, int classRank, int plusValue, int individualAverage, int acquiredOrder, bool isFavorite, bool isLocked, MonsterDamageType damageType = MonsterDamageType.Physical)
+            public MonsterEntry(string instanceId, string name, string resourcePath, int level, int maxLevel, int classRank, int plusValue, int individualAverage, int acquiredOrder, bool isFavorite, bool isLocked, MonsterDamageType damageType = MonsterDamageType.Physical, int individualTotal = -1)
             {
                 InstanceId = instanceId;
                 Name = name;
@@ -40,6 +42,7 @@ namespace WitchTower.Formation
                 ClassRank = classRank;
                 PlusValue = plusValue;
                 IndividualAverage = individualAverage;
+                IndividualTotal = individualTotal < 0 ? individualAverage * 6 : individualTotal;
                 AcquiredOrder = acquiredOrder;
                 IsFavorite = isFavorite;
                 IsLocked = isLocked;
@@ -74,7 +77,8 @@ namespace WitchTower.Formation
             Favorite,
             Level,
             Acquired,
-            Class
+            Class,
+            IndividualValue
         }
 
         private enum FilterMode
@@ -108,10 +112,10 @@ namespace WitchTower.Formation
         private const int DefaultStorageLimit = 100;
         private const int PlusPreviewTotalValue = 15;
         private const string TutorialGuideSpritePath = "UI/Tutorial/TutorialGuideAssistant";
-        private const int GridColumnCount = 4;
+        private const int GridColumnCount = 3;
         private const float RosterPanelWidth = 1000f;
         private const float RosterPanelTopInset = 870f;
-        private const float RosterPanelBottomInset = 56f;
+        private const float RosterPanelBottomInset = 240f; // Reserve the dedicated guardian slot above the safe area.
         private const float RosterViewportHorizontalInset = 26f;
         private const float RosterViewportTopInset = 44f;
         private const float RosterViewportBottomInset = 34f;
@@ -174,9 +178,9 @@ namespace WitchTower.Formation
         private const string LockedMonsterIconTexturePath = "EquipmentUi/ui_lock_locked_icon";
         private const string UnlockedMonsterIconTexturePath = "EquipmentUi/ui_lock_unlocked_icon";
         private const int FavoriteHeartPixelSize = 32;
-        private const float CardCornerActionInset = 4f;
-        private const float CardCornerActionButtonSize = 42f;
-        private const float CardCornerActionIconSize = 30f;
+        private const float CardCornerActionInset = -4f;
+        private const float CardCornerActionButtonSize = 84f;
+        private const float CardCornerActionIconSize = 48f;
 
         private static readonly int[] FavoriteHeartLeftEdges =
         {
@@ -237,6 +241,7 @@ namespace WitchTower.Formation
         private bool bulkReleaseModeActive;
         private bool bulkReleaseConfirmArmed;
         private int activeSlotIndex;
+        private string tutorialPendingMonsterId = string.Empty;
         private readonly List<Image> formationTutorialPulseImages = new List<Image>();
 
         private void OnEnable()
@@ -245,6 +250,14 @@ namespace WitchTower.Formation
             {
                 return;
             }
+#if UNITY_EDITOR
+            // ExecuteAlways also runs while Unity prepares scenes for a player
+            // build. Preview monsters are editor-only, not scene content.
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+            {
+                return;
+            }
+#endif
 
             ApplyEditorPreview();
         }
@@ -257,7 +270,17 @@ namespace WitchTower.Formation
                 return;
             }
 
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             EnsureRuntimeState();
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             HideSceneArtifacts();
             SeedRoster();
             EnsureScaffold();
@@ -267,6 +290,11 @@ namespace WitchTower.Formation
         private void Update()
         {
             if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
             {
                 return;
             }
@@ -293,15 +321,30 @@ namespace WitchTower.Formation
 
         public void ReturnHome()
         {
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             SaveManager.Instance?.SaveCurrentGame();
-            SceneManager.LoadScene(homeSceneName);
+            SceneTransitionGuard.LoadScene(homeSceneName);
         }
 
         private static void EnsureRuntimeState()
         {
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             Application.runInBackground = true;
             ManagerFactory.EnsureGameManager();
             ManagerFactory.EnsureSaveManager();
+            if (SaveManager.Instance != null && !SaveManager.Instance.StorageAccessAvailable)
+            {
+                return;
+            }
+
             ManagerFactory.EnsureMasterDataManager();
             ManagerFactory.EnsureAudioManager();
             ManagerFactory.EnsureUiPresentationCamera();
@@ -353,7 +396,7 @@ namespace WitchTower.Formation
                 return;
             }
 
-            if (Application.isPlaying && IsFirstFormationTutorial(GameManager.Instance?.PlayerProfile))
+            if (Application.isPlaying)
             {
                 EnsureSelectedSlotCapacity();
                 activeSlotIndex = 0;
@@ -404,7 +447,8 @@ namespace WitchTower.Formation
                     ownedMonster.AcquiredOrder,
                     ownedMonster.IsFavorite,
                     ownedMonster.IsLocked,
-                    monsterData.damageType);
+                    monsterData.damageType,
+                    GetIndividualValueTotal(ownedMonster));
 
                 roster.Add(entry);
                 entryLookup[entry.InstanceId] = entry;
@@ -435,7 +479,8 @@ namespace WitchTower.Formation
                 }
             }
 
-            activeSlotIndex = isFirstFormationTutorial ? 0 : ResolveDefaultActiveSlotIndex();
+            activeSlotIndex = isFirstFormationTutorial ? -1 : ResolveDefaultActiveSlotIndex();
+            tutorialPendingMonsterId = string.Empty;
             return roster.Count > 0;
         }
 
@@ -534,7 +579,7 @@ namespace WitchTower.Formation
                 return;
             }
 
-            Canvas canvas = FindFirstObjectByType<Canvas>();
+            Canvas canvas = SceneCanvasOwner.Find(this, "TitleCanvas");
             if (canvas == null)
             {
                 return;
@@ -1719,8 +1764,8 @@ namespace WitchTower.Formation
                     new Vector2(0.5f, 0f),
                     new Vector2(0.5f, 0f),
                     new Vector2(0.5f, 0f),
-                    new Vector2(0f, 190f),
-                    new Vector2(980f, 250f),
+                    new Vector2(0f, 100f),
+                    new Vector2(980f, 320f),
                     new Color(0.018f, 0.032f, 0.052f, 0.97f));
 
             Image panelImage = formationTutorialGuidePanel.GetComponent<Image>();
@@ -1731,6 +1776,17 @@ namespace WitchTower.Formation
             panelImage.color = new Color(0.018f, 0.032f, 0.052f, 0.97f);
             panelImage.raycastTarget = false;
             AddUiOutline(formationTutorialGuidePanel, new Color(1f, 0.72f, 0.20f, 0.90f), new Vector2(3f, -3f));
+            RectTransform guidePanelRect = formationTutorialGuidePanel.transform as RectTransform;
+            if (guidePanelRect != null)
+            {
+                guidePanelRect.anchorMin = new Vector2(0.5f, 0f);
+                guidePanelRect.anchorMax = new Vector2(0.5f, 0f);
+                guidePanelRect.pivot = new Vector2(0.5f, 0f);
+                // Leave room for the enlarged confirmation row on shorter
+                // portrait screens while keeping the guide inside the safe area.
+                guidePanelRect.anchoredPosition = new Vector2(0f, 100f);
+                guidePanelRect.sizeDelta = new Vector2(980f, 320f);
+            }
 
             formationTutorialGuideCharacter = FindImage(formationTutorialGuidePanel.transform, "GuideCharacter");
             if (formationTutorialGuideCharacter == null)
@@ -1740,8 +1796,8 @@ namespace WitchTower.Formation
                 characterRect.anchorMin = new Vector2(0f, 0.5f);
                 characterRect.anchorMax = new Vector2(0f, 0.5f);
                 characterRect.pivot = new Vector2(0.5f, 0.5f);
-                characterRect.anchoredPosition = new Vector2(122f, -2f);
-                characterRect.sizeDelta = new Vector2(220f, 220f);
+                characterRect.anchoredPosition = new Vector2(142f, -2f);
+                characterRect.sizeDelta = new Vector2(276f, 276f);
                 formationTutorialGuideCharacter = characterObject.AddComponent<Image>();
             }
             formationTutorialGuideCharacter.sprite = LoadPortrait(TutorialGuideSpritePath);
@@ -1756,13 +1812,13 @@ namespace WitchTower.Formation
                     formationTutorialGuidePanel.transform,
                     runtimeFont,
                     string.Empty,
-                    28,
+                    42,
                     FontStyle.Bold,
                     new Vector2(0f, 0.5f),
                     new Vector2(0f, 0.5f),
                     new Vector2(0.5f, 0.5f),
-                    new Vector2(590f, 70f),
-                    new Vector2(690f, 46f),
+                    new Vector2(620f, 96f),
+                    new Vector2(640f, 58f),
                     TextAnchor.MiddleCenter,
                     new Color(1f, 0.90f, 0.56f, 1f));
             }
@@ -1775,19 +1831,42 @@ namespace WitchTower.Formation
                     formationTutorialGuidePanel.transform,
                     runtimeFont,
                     string.Empty,
-                    21,
+                    34,
                     FontStyle.Bold,
                     new Vector2(0f, 0.5f),
                     new Vector2(0f, 0.5f),
                     new Vector2(0.5f, 0.5f),
-                    new Vector2(590f, -30f),
-                    new Vector2(690f, 136f),
+                    new Vector2(620f, -40f),
+                    new Vector2(640f, 174f),
                     TextAnchor.MiddleCenter,
                     new Color(0.94f, 0.97f, 1f, 1f));
                 formationTutorialGuideBody.resizeTextForBestFit = true;
-                formationTutorialGuideBody.resizeTextMinSize = 16;
-                formationTutorialGuideBody.resizeTextMaxSize = 21;
+                formationTutorialGuideBody.resizeTextMinSize = 28;
+                formationTutorialGuideBody.resizeTextMaxSize = 34;
                 formationTutorialGuideBody.verticalOverflow = VerticalWrapMode.Truncate;
+            }
+
+            RectTransform guideCharacterRect = formationTutorialGuideCharacter.transform as RectTransform;
+            if (guideCharacterRect != null)
+            {
+                guideCharacterRect.anchoredPosition = new Vector2(142f, -2f);
+                guideCharacterRect.sizeDelta = new Vector2(276f, 276f);
+            }
+            formationTutorialGuideTitle.fontSize = 42;
+            RectTransform guideTitleRect = formationTutorialGuideTitle.transform as RectTransform;
+            if (guideTitleRect != null)
+            {
+                guideTitleRect.anchoredPosition = new Vector2(620f, 96f);
+                guideTitleRect.sizeDelta = new Vector2(640f, 58f);
+            }
+            formationTutorialGuideBody.fontSize = 34;
+            formationTutorialGuideBody.resizeTextMinSize = 28;
+            formationTutorialGuideBody.resizeTextMaxSize = 34;
+            RectTransform guideBodyRect = formationTutorialGuideBody.transform as RectTransform;
+            if (guideBodyRect != null)
+            {
+                guideBodyRect.anchoredPosition = new Vector2(620f, -40f);
+                guideBodyRect.sizeDelta = new Vector2(640f, 174f);
             }
 
             formationTutorialGuidePanel.SetActive(false);
@@ -1819,6 +1898,19 @@ namespace WitchTower.Formation
             if (formationTutorialGuideBody != null)
             {
                 formationTutorialGuideBody.text = tutorialEvent?.Body ?? string.Empty;
+            }
+            if (IsFirstFormationTutorial(GameManager.Instance?.PlayerProfile))
+            {
+                int count = CountSelectedSlots();
+                bool hasDestination = IsValidSlotIndex(activeSlotIndex);
+                bool hasMonster = !string.IsNullOrEmpty(tutorialPendingMonsterId);
+                formationTutorialGuideTitle.text = !hasDestination ? "① 配置先を選びましょう"
+                    : !hasMonster ? "② 仲間を選びましょう" : "③ 編成を確定しましょう";
+                formationTutorialGuideBody.text = !hasDestination
+                    ? $"{count}/3体 編成済み。\n上の点滅する黄色い枠が出撃場所です。好きな空き枠をタップしてください。"
+                    : !hasMonster
+                        ? $"配置先：{ResolveSlotRoleLabel(activeSlotIndex)}\n下の一覧で、配置したいモンスターの画像をタップしてください。"
+                        : $"配置先：{ResolveSlotRoleLabel(activeSlotIndex)}\n選んだモンスターの「編成」を押すと、この枠への配置が確定します。";
             }
 
             formationTutorialGuidePanel.transform.SetAsLastSibling();
@@ -2054,6 +2146,9 @@ namespace WitchTower.Formation
 
                 MonsterEntry entry = i < selectedMonsters.Count ? selectedMonsters[i] : null;
                 bool isActiveSlot = i == activeSlotIndex;
+                SetDestinationFrame(view, isActiveSlot);
+                bool chooseDestination = IsFirstFormationTutorial(profile) && !IsValidSlotIndex(activeSlotIndex) && entry == null;
+                TutorialTargetFrame.SetVisible(view.Background.transform, chooseDestination);
                 ApplySlotRoleStyle(view, i, entry != null || isActiveSlot);
                 if (view.RoleLabel != null)
                 {
@@ -2063,7 +2158,7 @@ namespace WitchTower.Formation
                 if (entry != null)
                 {
                     view.Background.color = isActiveSlot
-                        ? new Color(0.12f, 0.21f, 0.16f, 0.82f)
+                        ? new Color(0.40f, 0.29f, 0.06f, 0.98f)
                         : new Color(0.09f, 0.15f, 0.12f, 0.72f);
                     if (view.FrameArt != null)
                     {
@@ -2079,7 +2174,7 @@ namespace WitchTower.Formation
                 {
                     SetSelectedSlotStatusBadgesVisible(view, false);
                     view.Background.color = isActiveSlot
-                        ? new Color(0.10f, 0.16f, 0.21f, 0.78f)
+                        ? new Color(0.40f, 0.29f, 0.06f, 0.98f)
                         : new Color(0.06f, 0.09f, 0.13f, 0.66f);
                     if (view.FrameArt != null)
                     {
@@ -2090,11 +2185,38 @@ namespace WitchTower.Formation
                     }
                     view.Portrait.sprite = null;
                     view.Portrait.color = new Color(1f, 1f, 1f, 0f);
-                    ApplySelectedSlotNameLabel(view.NameLabel, isActiveSlot ? "配置先" : "空きスロット");
-                    view.StatusLabel.text = isActiveSlot ? "一覧から配置" : "一覧から選択";
+                    ApplySelectedSlotNameLabel(view.NameLabel, isActiveSlot ? "▼ 配置先\n選択中" : "出撃場所を選ぶ");
+                    view.StatusLabel.text = isActiveSlot ? "ここに編成" : "タップして選ぶ";
                     view.StatusLabel.color = new Color(0.82f, 0.89f, 0.95f, 0.78f);
                 }
             }
+        }
+
+        private void SetDestinationFrame(FormationSlotView view, bool visible)
+        {
+            Transform parent = view.Background.transform;
+            Transform existing = parent.Find("SelectionDestinationFrame");
+            if (existing == null)
+            {
+                GameObject root = CreateUiObject("SelectionDestinationFrame", parent);
+                var rect = (RectTransform)root.transform;
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = new Vector2(-8f, -8f);
+                rect.offsetMax = new Vector2(8f, 8f);
+                Image image = root.AddComponent<Image>();
+                var texture = Resources.Load<Texture2D>("UI/Tutorial/TutorialSummonHighlightFrameImage2");
+                if (texture != null)
+                    image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f,.5f), 100,
+                        0, SpriteMeshType.FullRect, new Vector4(texture.width*.1f,texture.height*.12f,texture.width*.1f,texture.height*.12f));
+                image.type = Image.Type.Sliced;
+                image.pixelsPerUnitMultiplier = 6f;
+                image.raycastTarget = false;
+                image.color = new Color(1f,.82f,.18f,1f);
+                existing = root.transform;
+            }
+            existing.gameObject.SetActive(visible);
+            existing.SetAsLastSibling();
         }
 
         private static void ApplySelectedSlotStatusBadges(FormationSlotView view, MonsterDamageType damageType, string actionLabel)
@@ -2235,24 +2357,35 @@ namespace WitchTower.Formation
 
         private void RefreshRosterCards()
         {
-            for (int i = 0; i < rosterViews.Count; i++)
+            // The hierarchy survives scene serialization but rosterViews does
+            // not. Clear the actual content, including any baked editor cards,
+            // before constructing views from the player's current roster.
+            for (int i = rosterContent.childCount - 1; i >= 0; i--)
             {
-                if (rosterViews[i].Root != null)
+                GameObject oldCard = rosterContent.GetChild(i).gameObject;
+                oldCard.SetActive(false);
+                oldCard.transform.SetParent(null, false);
+                if (Application.isPlaying)
                 {
-                    Destroy(rosterViews[i].Root);
+                    Destroy(oldCard);
+                }
+                else
+                {
+                    DestroyImmediate(oldCard);
                 }
             }
 
             rosterViews.Clear();
+            formationTutorialPulseImages.Clear();
 
             List<MonsterEntry> displayEntries = BuildDisplayEntries();
             emptyStateLabel.gameObject.SetActive(displayEntries.Count == 0);
 
-            const float cardWidth = 218f;
-            const float cardHeight = 300f;
+            const float cardWidth = 300f;
+            const float cardHeight = 500f;
             const float spacingX = 16f;
             const float spacingY = 24f;
-            const float paddingLeft = 18f;
+            const float paddingLeft = 8f;
             const float paddingTop = 24f;
 
             int rowCount = Mathf.Max(1, Mathf.CeilToInt(displayEntries.Count / (float)GridColumnCount));
@@ -2369,6 +2502,10 @@ namespace WitchTower.Formation
             GameObject card = CreatePanel("Card_" + entry.InstanceId, rosterContent,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
                 anchoredPosition, size, new Color(0f, 0f, 0f, 0f));
+            if (!Application.isPlaying)
+            {
+                card.hideFlags |= HideFlags.DontSaveInBuild;
+            }
 
             Image cardImage = card.GetComponent<Image>();
             cardImage.color = ResolveMonsterCardBackgroundColor(isSelected, isBulkSelected, bulkReleaseModeActive && !canBulkSelect);
@@ -2386,15 +2523,16 @@ namespace WitchTower.Formation
 
                 if (isFirstFormationTutorial)
                 {
-                    ToggleSelection(entry);
+                    SelectTutorialMonster(entry);
                     return;
                 }
 
                 ShowMonsterDetail(entry);
             });
-            cardButton.interactable = !isReturnHomeTutorial;
+            cardButton.interactable = !isReturnHomeTutorial && (!isFirstFormationTutorial ||
+                (IsValidSlotIndex(activeSlotIndex) && !isSelected));
 
-            if (isFirstFormationTutorial)
+            if (isFirstFormationTutorial && tutorialPendingMonsterId == entry.InstanceId)
             {
                 AddUiOutline(card, new Color(1f, 0.76f, 0.20f, 0.96f), new Vector2(4f, -4f));
             }
@@ -2432,7 +2570,7 @@ namespace WitchTower.Formation
             portraitShadowRect.anchorMax = new Vector2(0.5f, 1f);
             portraitShadowRect.pivot = new Vector2(0.5f, 1f);
             portraitShadowRect.anchoredPosition = new Vector2(2f, -18f);
-            portraitShadowRect.sizeDelta = new Vector2(160f, 160f);
+            portraitShadowRect.sizeDelta = new Vector2(174f, 174f);
             Image portraitShadowImage = portraitShadow.AddComponent<Image>();
             portraitShadowImage.sprite = portraitSprite;
             portraitShadowImage.preserveAspect = true;
@@ -2446,7 +2584,7 @@ namespace WitchTower.Formation
             portraitRect.anchorMax = new Vector2(0.5f, 1f);
             portraitRect.pivot = new Vector2(0.5f, 1f);
             portraitRect.anchoredPosition = new Vector2(0f, -20f);
-            portraitRect.sizeDelta = new Vector2(156f, 156f);
+            portraitRect.sizeDelta = new Vector2(170f, 170f);
             Image portraitImage = portrait.AddComponent<Image>();
             portraitImage.sprite = portraitSprite;
             portraitImage.preserveAspect = true;
@@ -2454,22 +2592,30 @@ namespace WitchTower.Formation
             portraitImage.color = Color.white;
             portraitImage.raycastTarget = false;
 
-            Text nameLabel = CreateText("NameLabel", body.transform, runtimeFont, BuildMonsterDisplayName(entry), 15, FontStyle.Bold,
+            string rosterName = BuildMonsterDisplayName(entry);
+            if (isSelected) rosterName += "\n編成中：" + ResolveSlotRoleLabel(selectedMonsters.IndexOf(entry));
+            else if (tutorialPendingMonsterId == entry.InstanceId) rosterName += "\n選択中";
+            Text nameLabel = CreateText("NameLabel", body.transform, runtimeFont, rosterName, 26, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -180f), new Vector2(174f, 34f), TextAnchor.MiddleCenter,
+                new Vector2(0f, -184f), new Vector2(236f, 64f), TextAnchor.MiddleCenter,
                 new Color(0.96f, 0.98f, 1f, 1f));
             nameLabel.resizeTextForBestFit = true;
-            nameLabel.resizeTextMinSize = 10;
-            nameLabel.resizeTextMaxSize = 15;
+            nameLabel.resizeTextMinSize = 24;
+            nameLabel.resizeTextMaxSize = 26;
 
-            CreateText("DamageTypeLabel", body.transform, runtimeFont, ResolveDamageTypeLabel(entry.DamageType), 13, FontStyle.Bold,
+            CreateText("DamageTypeLabel", body.transform, runtimeFont, ResolveDamageTypeLabel(entry.DamageType), 22, FontStyle.Bold,
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(12f, 22f), new Vector2(86f, 18f), TextAnchor.MiddleLeft,
+                new Vector2(12f, 174f), new Vector2(140f, 26f), TextAnchor.MiddleLeft,
                 ResolveDamageTypeColor(entry.DamageType, 1f));
 
-            CreateText("LevelLabel", body.transform, runtimeFont, $"Lv.{entry.Level}/{entry.MaxLevel}  IV{entry.IndividualAverage}", 13, FontStyle.Bold,
+            CreateText("LevelLabel", body.transform, runtimeFont, $"Lv.{entry.Level}/{entry.MaxLevel}", 22, FontStyle.Bold,
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(12f, 1f), new Vector2(130f, 18f), TextAnchor.MiddleLeft,
+                new Vector2(12f, 140f), new Vector2(112f, 28f), TextAnchor.MiddleLeft,
+                new Color(0.98f, 0.91f, 0.66f, 1f));
+
+            CreateText("IndividualValueLabel", body.transform, runtimeFont, $"個体値 {entry.IndividualAverage}", 22, FontStyle.Bold,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(134f, 140f), new Vector2(120f, 28f), TextAnchor.MiddleLeft,
                 new Color(0.98f, 0.91f, 0.66f, 1f));
 
             GameObject favoriteButton = CreateActionButton("FavoriteButton", body.transform, runtimeFont,
@@ -2486,7 +2632,7 @@ namespace WitchTower.Formation
             GameObject selectionButton = CreateActionButton("SelectionButton", body.transform, runtimeFont,
                 ResolveMonsterCardActionLabel(isSelected, isBulkSelected, canBulkSelect),
                 new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(-4f, 10f), new Vector2(74f, 28f),
+                new Vector2(-12f, 12f), new Vector2(size.x - 58f, 116f),
                 ResolveMonsterCardActionColor(isSelected, isBulkSelected, canBulkSelect),
                 () =>
                 {
@@ -2501,13 +2647,16 @@ namespace WitchTower.Formation
             Button actionButton = selectionButton.GetComponent<Button>();
             if (actionButton != null)
             {
-                actionButton.interactable = !bulkReleaseModeActive || canBulkSelect;
+                actionButton.interactable = !isReturnHomeTutorial && (!bulkReleaseModeActive || canBulkSelect) &&
+                    (!isFirstFormationTutorial || (!isSelected && tutorialPendingMonsterId == entry.InstanceId && IsValidSlotIndex(activeSlotIndex)));
             }
+            // Only the selected monster exposes confirmation during the three-step lesson.
+            selectionButton.SetActive(!isFirstFormationTutorial || tutorialPendingMonsterId == entry.InstanceId);
             AddUiOutline(
                 selectionButton,
                 ResolveMonsterCardActionOutlineColor(isSelected, isBulkSelected, canBulkSelect),
                 new Vector2(1f, -1f));
-            if (isFirstFormationTutorial && !isSelected && !isReturnHomeTutorial)
+            if (isFirstFormationTutorial && !isSelected && !isReturnHomeTutorial && tutorialPendingMonsterId == entry.InstanceId)
             {
                 AddFormationTutorialSelectionButtonFocus(selectionButton.transform);
             }
@@ -2515,10 +2664,9 @@ namespace WitchTower.Formation
             Text selectionText = FindChildText(selectionButton);
             if (selectionText != null)
             {
-                selectionText.fontSize = 12;
-                selectionText.resizeTextForBestFit = true;
-                selectionText.resizeTextMinSize = 10;
-                selectionText.resizeTextMaxSize = 12;
+                selectionText.fontSize = 28;
+                selectionText.resizeTextForBestFit = false;
+                selectionText.rectTransform.sizeDelta = new Vector2(size.x - 82f, 52f);
             }
 
             return new MonsterCardView
@@ -2541,7 +2689,9 @@ namespace WitchTower.Formation
                 return;
             }
 
-            GameObject selectionButton = GameObject.Find("SelectionButton");
+            Transform card = rosterContent != null ? rosterContent.Find("Card_" + tutorialPendingMonsterId) : null;
+            GameObject selectionButton = card != null ? card.GetComponentsInChildren<Button>()
+                .FirstOrDefault(b => b.name == "SelectionButton")?.gameObject : null;
             if (selectionButton == null || !selectionButton.activeInHierarchy)
             {
                 return;
@@ -2642,6 +2792,13 @@ namespace WitchTower.Formation
 
         private int CompareEntries(MonsterEntry left, MonsterEntry right)
         {
+            int leftSlot = selectedMonsters.IndexOf(left);
+            int rightSlot = selectedMonsters.IndexOf(right);
+            if (leftSlot >= 0 || rightSlot >= 0)
+            {
+                int partyOrder = (leftSlot < 0 ? MaxPartySize : leftSlot).CompareTo(rightSlot < 0 ? MaxPartySize : rightSlot);
+                if (partyOrder != 0) return partyOrder;
+            }
             switch (currentSortMode)
             {
                 case SortMode.Level:
@@ -2650,6 +2807,8 @@ namespace WitchTower.Formation
                     return CompareByAcquired(left, right);
                 case SortMode.Class:
                     return CompareByClassRank(left, right);
+                case SortMode.IndividualValue:
+                    return CompareByIndividualValue(left, right);
                 default:
                     return CompareByFavorite(left, right);
             }
@@ -2664,6 +2823,26 @@ namespace WitchTower.Formation
             }
 
             return CompareByAcquired(left, right);
+        }
+
+        private static int GetIndividualValueTotal(OwnedMonsterData monster)
+        {
+            if (monster == null)
+            {
+                return MonsterIndividualValueService.DefaultValue * 6;
+            }
+
+            MonsterIndividualValueService.EnsureInitialized(monster);
+            return monster.IndividualHp + monster.IndividualAttack + monster.IndividualWisdom +
+                monster.IndividualDefense + monster.IndividualMagicDefense + monster.IndividualAttackSpeed;
+        }
+
+        private static int CompareByIndividualValue(MonsterEntry left, MonsterEntry right)
+        {
+            // The displayed average is rounded. Compare the six-stat sum so
+            // different true averages are not mistaken for ties.
+            int result = right.IndividualTotal.CompareTo(left.IndividualTotal);
+            return result != 0 ? result : CompareByAcquired(left, right);
         }
 
         private static int CompareByAcquired(MonsterEntry left, MonsterEntry right)
@@ -2699,6 +2878,13 @@ namespace WitchTower.Formation
             return CompareByLevel(left, right);
         }
 
+        private void SelectTutorialMonster(MonsterEntry entry)
+        {
+            if (!IsValidSlotIndex(activeSlotIndex) || entry == null || IsRosterEntrySelected(entry)) return;
+            tutorialPendingMonsterId = entry.InstanceId;
+            RefreshView();
+        }
+
         private void ToggleSelection(MonsterEntry entry)
         {
             if (entry == null)
@@ -2707,6 +2893,8 @@ namespace WitchTower.Formation
             }
 
             EnsureSelectedSlotCapacity();
+            bool tutorial = IsFirstFormationTutorial(GameManager.Instance?.PlayerProfile);
+            if (tutorial && (!IsValidSlotIndex(activeSlotIndex) || tutorialPendingMonsterId != entry.InstanceId || IsRosterEntrySelected(entry))) return;
             int index = selectedMonsters.IndexOf(entry);
             if (index >= 0)
             {
@@ -2722,10 +2910,8 @@ namespace WitchTower.Formation
                 }
 
                 selectedMonsters[targetSlot] = entry;
-                int nextEmptySlot = FindFirstEmptySlot();
-                activeSlotIndex = IsFirstFormationTutorial(GameManager.Instance?.PlayerProfile) && nextEmptySlot >= 0
-                    ? nextEmptySlot
-                    : targetSlot;
+                activeSlotIndex = tutorial ? -1 : targetSlot;
+                tutorialPendingMonsterId = string.Empty;
             }
 
             SyncProfileSelection();
@@ -2797,7 +2983,7 @@ namespace WitchTower.Formation
 
             if (canvas == null)
             {
-                canvas = FindFirstObjectByType<Canvas>();
+                canvas = SceneCanvasOwner.Find(this, "TitleCanvas");
             }
 
             return canvas != null ? canvas.transform : transform;
@@ -2814,6 +3000,12 @@ namespace WitchTower.Formation
             if (profile == null || profile.OwnedMonsters == null || ownedMonster == null || entry == null)
             {
                 message = "対象モンスターが見つかりません。";
+                return false;
+            }
+
+            if (profile.IsDailyChallengePartyMonster(ownedMonster.InstanceId))
+            {
+                message = "デイリー試練を終了するまで、このモンスターは逃がせません。";
                 return false;
             }
 
@@ -3360,12 +3552,19 @@ namespace WitchTower.Formation
                 return;
             }
 
+            if (IsFirstFormationTutorial(GameManager.Instance?.PlayerProfile) && selectedMonsters[slotIndex] != null) return;
             activeSlotIndex = slotIndex;
+            tutorialPendingMonsterId = string.Empty;
             RefreshView();
         }
 
         private void OnSlotActionPressed(int slotIndex)
         {
+            if (IsFirstFormationTutorial(GameManager.Instance?.PlayerProfile))
+            {
+                OnSlotPressed(slotIndex);
+                return;
+            }
             EnsureSelectedSlotCapacity();
             if (!IsValidSlotIndex(slotIndex))
             {
@@ -3456,6 +3655,8 @@ namespace WitchTower.Formation
                     return "入手順";
                 case SortMode.Class:
                     return "クラス順";
+                case SortMode.IndividualValue:
+                    return "個体値順";
                 default:
                     return "お気に入り優先";
             }
@@ -3574,10 +3775,11 @@ namespace WitchTower.Formation
         {
             GameObject iconObject = CreateUiObject("HeartIcon", parent);
             RectTransform rect = iconObject.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            // Keep the artwork beside the portrait while the transparent touch area extends inward.
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
+            rect.anchoredPosition = new Vector2(26f, -32f);
             rect.sizeDelta = new Vector2(CardCornerActionIconSize, CardCornerActionIconSize);
 
             Image image = iconObject.AddComponent<Image>();
@@ -3607,10 +3809,10 @@ namespace WitchTower.Formation
 
             GameObject iconObject = CreateUiObject("LockIcon", buttonObject.transform);
             RectTransform iconRect = iconObject.GetComponent<RectTransform>();
-            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
-            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMin = new Vector2(1f, 1f);
+            iconRect.anchorMax = new Vector2(1f, 1f);
             iconRect.pivot = new Vector2(0.5f, 0.5f);
-            iconRect.anchoredPosition = new Vector2(0f, 2f);
+            iconRect.anchoredPosition = new Vector2(-26f, -32f);
             iconRect.sizeDelta = new Vector2(CardCornerActionIconSize, CardCornerActionIconSize);
 
             RawImage icon = iconObject.AddComponent<RawImage>();

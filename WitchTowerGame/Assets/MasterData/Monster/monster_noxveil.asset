@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_noxveil
+  m_EditorClassIdentifier: 
+  monsterId: monster_noxveil
+  monsterName: "深淵魔導帝ノクスヴェイル"
+  encyclopediaNumber: 38
+  raceId: mage
+  classRank: 5
+  rarity: 5
+  element: 5
+  rangeType: 1
+  damageType: 1
+  baseStats:
+    maxHp: 400
+    attack: 45
+    magicAttack: 180
+    defense: 70
+    magicDefense: 155
+    attackSpeed: 0.82
+  attackRange: 4.6
+  normalAttackTargetCount: 4
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 2
+    magicAttackPerPlus: 4
+    defensePerPlus: 2
+    magicDefensePerPlus: 4
+    attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 0.8
+    attackCoefficient: 0.45
+    magicAttackCoefficient: 1.2
+    defenseCoefficient: 0.65
+    magicDefenseCoefficient: 1.3
+    attackSpeedCoefficient: 0.9
+  fusionExclusive: 1
+  fusionRecipes:
+  - parentMonsterIdA: monster_abyss_dragon_mage_valflare
+    parentMonsterIdB: monster_dark_magic_machine_god_merchion
+    ignoreOrder: 1
+    note: "両親クラス４・Lv80、子Lv1。"
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsters/Class5/noxveil
+  illustrationResourcePath: FamilyMonsters/Class5/noxveil
+  battleIdleResourcePath: MonsterBattle/mon_noxveil_idle
+  battleIdleFacing: 1
+  battleMoveResourcePath: MonsterBattle/mon_noxveil_move
+  battleMoveFacing: 1
+  battleAttackResourcePath: MonsterBattle/mon_noxveil_attack
+  battleAttackFacing: 1
+  battleVisualScale: 1.25
+  description: "雪崩・範囲魔法。デイリー試練の星核で固有スキルを育成できるクラス５の配合個体。"

@@ -30,20 +30,8 @@ namespace WitchTower.Home
 
         public static int ClaimMission(PlayerProfile profile, string missionId)
         {
-            if (profile == null || !Definitions.TryGetValue(missionId, out var definition))
-            {
-                return 0;
-            }
-
-            var progress = profile.GetMissionProgress(missionId);
-            if (progress == null || progress.IsClaimed || progress.Progress < definition.TargetValue)
-            {
-                return 0;
-            }
-
-            progress.IsClaimed = true;
-            profile.AddGold(definition.RewardGold);
-            return definition.RewardGold;
+            if (UnityEngine.Application.isPlaying) WitchTower.Save.OnlinePlayerData.ClaimReward(missionId);
+            return 0;
         }
 
         public static MissionDefinition? GetDefinition(string missionId)

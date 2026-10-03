@@ -73,7 +73,9 @@ namespace WitchTower.Data
         public int EnemyCount { get; }
         public bool IsBossEncounter { get; }
         public string BossMonsterId { get; }
+        // Candidates, not simultaneous spawns. One is rolled when a battle starts.
         public IReadOnlyList<string> BossMonsterIds { get; }
+        public int BossEnemyCount => BossMonsterIds.Count > 0 ? 1 : 0;
 
         private static IReadOnlyList<string> BuildEnemyMonsterIdList(IReadOnlyList<string> enemyMonsterIds)
         {
@@ -157,6 +159,16 @@ namespace WitchTower.Data
         private const float CurseLibraryEnemyStatMultiplier = 0.65f;
         private const float EmberDrakePassEnemyStatMultiplier = 0.90f;
         private const float StarOreCitadelEnemyStatMultiplier = 0.77f;
+        // Fixed chapter difficulty: investment keeps its value; never scale enemies to the player's party.
+        // Chapter 1 is deliberately untouched. EXP is calculated before these combat-only modifiers.
+        private static readonly float[] ChapterHpMultipliers = { 1f, 2f, 2f, 1.8f, 1.65f, 1.5f };
+        private static readonly float[] ChapterAttackMultipliers = { 1f, 1.8f, 1.8f, 1.65f, 1.5f, 1.4f };
+        private static readonly float[] ChapterDefenseMultipliers = { 1f, 1.25f, 1.35f, 1.35f, 1.4f, 1.45f };
+        private static readonly float[] ChapterSpeedMultipliers = { 1f, 1.10f, 1.12f, 1.14f, 1.16f, 1.18f };
+        // A small, fixed increase from dungeon 2 onwards. Do not change the
+        // opening dungeon, enemy cadence, defenses or the reward baseline.
+        private const float LaterDungeonHpAdjustment = 1.10f;
+        private const float LaterDungeonAttackAdjustment = 1.05f;
         private const int RewardGoldBase = 8;
         private const int RewardGoldPerGlobalFloor = 3;
         private const int RewardGoldPerDungeon = 5;
@@ -174,6 +186,9 @@ namespace WitchTower.Data
         private const float RewardExpBossHpMultiplier = 5.0f;
         private const float RewardExpBossAttackMultiplier = 2.0f;
         private const int RewardExpBossDefenseBonus = 8;
+        // Later stages train higher-class monsters. Keep stages 1 and 2 unchanged,
+        // and apply this fixed EXP increase before spirit/rebirth reward modifiers.
+        private static readonly float[] ChapterExpRewardMultipliers = { 1f, 1f, 2f, 2.5f, 3f, 3.5f };
         private const float CurrentDungeonRecruitChance = 0.20f;
         private const float BossRecruitChance = 0.05f;
         private const float Class1RecruitChance = 0.05f;
@@ -206,6 +221,15 @@ namespace WitchTower.Data
             MonsterFusionCatalog.SwordSaintAlvarezId,
             MonsterFusionCatalog.AbyssGrandMageSeraphisId
         };
+        private static readonly string[] Class4MonsterIds =
+        {
+            MonsterFusionCatalog.MechaDragonValdrakeId, MonsterFusionCatalog.DragGaiaId,
+            MonsterFusionCatalog.DragonSwordSaintAgitoId, MonsterFusionCatalog.AbyssDragonMageValflareId,
+            MonsterFusionCatalog.FortressMachineGigafortId, MonsterFusionCatalog.MechaSwordSaintGransaberId,
+            MonsterFusionCatalog.DarkMagicMachineGodMerchionId, MonsterFusionCatalog.RockKnightGaiusId,
+            MonsterFusionCatalog.AstralEclipseGolemId, MonsterFusionCatalog.MagicSwordSaintLucielId,
+            MonsterFusionCatalog.SeraphMichaelId, MonsterFusionCatalog.SpiritQueenTitaniaId
+        };
 
         // Dungeon 1 introduces the loop: enough pressure to reward equipment and a little replay,
         // without creating a consecutive-loss wall before Dungeon 2.
@@ -217,11 +241,11 @@ namespace WitchTower.Data
             new BattleDungeonDefinition(
                 "blight_cavern",
                 "見習いの五門洞",
-                "十の小門が連なる浅層洞窟。各階層でクラス1の5種族を巡りながら捕獲できる。",
+                "通常の敵はクラス1。10階の最後に、クラス2からランダムに選ばれたボスが1体出現する。",
                 "UI/DungeonSelect/DungeonCard_BlightCavern",
                 "BattleBackgrounds/dungeon1_1170x2532",
                 1,
-                BuildDungeonFloorsWithEnemyCounts(
+                WithRandomFinalBoss(BuildDungeonFloorsWithEnemyCounts(
                     Class1MonsterIds,
                     CurrentDungeonRecruitChance,
                     DungeonOneEnemyCounts,
@@ -235,15 +259,15 @@ namespace WitchTower.Data
                     "歯車の回廊",
                     "岩根の回廊",
                     "白刃の回廊",
-                    "五契の奥門")),
+                    "五契の奥門"), Class2MonsterIds)),
             new BattleDungeonDefinition(
                 "gear_crypt",
                 "獣影の廃工廠",
-                "炉心と鉱石炉が残る廃工廠。クラス1の5種族が入り混じって出現し、捕獲できる。",
+                "通常の敵はクラス1。10階の最後に、クラス2からランダムに選ばれたボスが1体出現する。",
                 "UI/DungeonSelect/DungeonCard_GearCrypt",
                 "BattleBackgrounds/dungeon2_1170x2532",
                 11,
-                BuildMixedDungeonFloorsWithEnemyCounts(
+                WithRandomFinalBoss(BuildMixedDungeonFloorsWithEnemyCounts(
                     Class1MonsterIds,
                     CurrentDungeonRecruitChance,
                     DungeonTwoEnemyCounts,
@@ -257,11 +281,11 @@ namespace WitchTower.Data
                     "影獣の点検室",
                     "蒸気圧縮路",
                     "暴走生産炉",
-                    "獣影の中枢")),
+                    "獣影の中枢"), Class2MonsterIds)),
             new BattleDungeonDefinition(
                 "curse_library",
                 "古契約の地下書庫",
-                "古い契約書が封じられた地下書庫。クラス2の眷属が出現し、各階層の最後にクラス3ボスが出現する。",
+                "通常の敵はクラス2。10階の最後に、クラス3からランダムに選ばれたボスが1体出現する。",
                 "UI/DungeonSelect/DungeonCard_CurseLibrary",
                 "BattleBackgrounds/dungeon3_1170x2532",
                 21,
@@ -284,7 +308,7 @@ namespace WitchTower.Data
             new BattleDungeonDefinition(
                 "ember_drake_pass",
                 "紅蓮竜道",
-                "溶岩脈に沿って続く竜の通り道。クラス2の群れを突破すると、各階層の最後にクラス3ボスが出現する。",
+                "通常の敵はクラス2。10階の最後に、クラス3からランダムに選ばれたボスが1体出現する。",
                 "UI/DungeonSelect/DungeonCard_EmberDrakePass",
                 "BattleBackgrounds/dungeon4_1170x2532",
                 31,
@@ -307,17 +331,17 @@ namespace WitchTower.Data
             new BattleDungeonDefinition(
                 "star_ore_citadel",
                 "星鉱の巨殿",
-                "星を含んだ鉱石が鳴る巨大殿堂。全階層でクラス3の混合モンスターが出現し、各階層の最後にクラス3ボスが2体出現する。",
+                "通常の敵はクラス3。10階の最後に、クラス4からランダムに選ばれたボスが1体出現する。",
                 "UI/DungeonSelect/DungeonCard_StarOreCitadel",
                 "BattleBackgrounds/dungeon5_1170x2532",
                 41,
                 BuildDungeonFloorsWithFinalBosses(
                     Class3MonsterIds,
-                    Class3MonsterIds,
+                    Class4MonsterIds,
                     CurrentDungeonRecruitChance,
                     62,
                     8,
-                    2,
+                    1,
                     "星鉱の外郭",
                     "結晶橋の広間",
                     "巨殿の採掘路",
@@ -331,17 +355,17 @@ namespace WitchTower.Data
             new BattleDungeonDefinition(
                 "abyssal_grimoire_spire",
                 "深淵魔導回廊",
-                "深淵の術式が空間を歪める魔導回廊。クラス3の混合モンスターが出現し、各階層の最後にクラス3ボスが2体出現する。",
+                "通常の敵はクラス3。10階の最後に魔王ガルザが出現する。魔王は捕獲できない。",
                 "UI/DungeonSelect/DungeonCard_AbyssalGrimoireSpire",
                 "BattleBackgrounds/dungeon6_1170x2532",
                 51,
                 BuildDungeonFloorsWithFinalBosses(
                     Class3MonsterIds,
-                    Class3MonsterIds,
+                    new[] { GarzaBossPresentation.MonsterId },
                     CurrentDungeonRecruitChance,
                     74,
                     9,
-                    2,
+                    1,
                     "深淵回廊の入口",
                     "浮遊階段",
                     "紫光の魔導室",
@@ -556,9 +580,18 @@ namespace WitchTower.Data
                     ResolveRecruitChanceForTier(firstRecruitChance),
                     enemyCount,
                     false,
-                    ResolveFinalBossMonsterIds(finalBossMonsterIds, i, safeFinalBossCount));
+                    i == floors.Length - 1 ? finalBossMonsterIds : new string[0]);
             }
 
+            return floors;
+        }
+
+        private static BattleDungeonFloorDefinition[] WithRandomFinalBoss(BattleDungeonFloorDefinition[] floors, IReadOnlyList<string> candidates)
+        {
+            int last = floors.Length - 1;
+            BattleDungeonFloorDefinition floor = floors[last];
+            floors[last] = new BattleDungeonFloorDefinition(floor.LocalFloor, floor.FloorName, floor.EnemyMonsterIds,
+                floor.RecruitChance, Mathf.Max(2, floor.EnemyCount), false, candidates);
             return floors;
         }
 
@@ -690,6 +723,7 @@ namespace WitchTower.Data
 
         public static string ResolveEnemyIdFromMonsterId(string monsterId)
         {
+            if (monsterId == GarzaBossPresentation.MonsterId) return GarzaBossPresentation.EnemyId;
             return string.IsNullOrEmpty(monsterId)
                 ? string.Empty
                 : "enemy_class1_" + monsterId.Replace("monster_", string.Empty);
@@ -697,6 +731,7 @@ namespace WitchTower.Data
 
         public static string ResolveMonsterIdFromEnemyId(string enemyId)
         {
+            if (enemyId == GarzaBossPresentation.EnemyId) return GarzaBossPresentation.MonsterId;
             const string prefix = "enemy_class1_";
             if (string.IsNullOrEmpty(enemyId) || !enemyId.StartsWith(prefix))
             {
@@ -771,11 +806,13 @@ namespace WitchTower.Data
                 }
             }
 
+            monsterIds.Remove(GarzaBossPresentation.MonsterId);
             return monsterIds.ToArray();
         }
 
         public static bool IsRecruitableMonsterOnFloor(int globalFloor, string monsterId)
         {
+            if (monsterId == GarzaBossPresentation.MonsterId) return false;
             if (string.IsNullOrEmpty(monsterId))
             {
                 return false;
@@ -878,7 +915,7 @@ namespace WitchTower.Data
             int bossEnemyCount = ResolveBossEnemyCount(floor);
             int normalEnemyCount = bossEnemyCount > 0 ? Mathf.Max(0, enemyCount - bossEnemyCount) : enemyCount;
             int count = ContainsMonsterWithRecruitTier(floor.EnemyMonsterIds, recruitTier) ? normalEnemyCount : 0;
-            count += CountMonsterIdsWithRecruitTier(floor.BossMonsterIds, recruitTier);
+            if (CountMonsterIdsWithRecruitTier(floor.BossMonsterIds, recruitTier) > 0) count += floor.BossEnemyCount;
 
             return Mathf.Max(1, count);
         }
@@ -1024,6 +1061,12 @@ namespace WitchTower.Data
             return results;
         }
 
+        public static string[] RollBossMonsterIdsForBattle(int globalFloor)
+        {
+            var candidates = ResolveBossMonsterIds(globalFloor);
+            return candidates.Length == 0 ? candidates : new[] { candidates[Random.Range(0, candidates.Length)] };
+        }
+
         public static bool ResolveHasFinalBossEnemy(int globalFloor)
         {
             return ResolveBossMonsterIds(globalFloor).Length > 0;
@@ -1031,7 +1074,7 @@ namespace WitchTower.Data
 
         private static int ResolveBossEnemyCount(BattleDungeonFloorDefinition floor)
         {
-            return floor?.BossMonsterIds != null ? floor.BossMonsterIds.Count : 0;
+            return floor != null ? floor.BossEnemyCount : 0;
         }
 
         public static EnemyDataSO CreateEnemyDataForGlobalFloor(int globalFloor, MasterDataManager masterDataManager)
@@ -1064,6 +1107,19 @@ namespace WitchTower.Data
             MasterDataManager masterDataManager,
             string monsterId)
         {
+            if (monsterId == GarzaBossPresentation.MonsterId)
+            {
+                // Keep the established class-4 mage stat curve and boss modifiers.
+                // Only the enemy identity is replaced; no obtainable master entry is created.
+                var boss = CreateEnemyDataForMonsterAtGlobalFloor(globalFloor, masterDataManager,
+                    MonsterFusionCatalog.DarkMagicMachineGodMerchionId);
+                if (boss == null) return null;
+                boss.enemyId = GarzaBossPresentation.EnemyId;
+                boss.enemyName = GarzaBossPresentation.DisplayName;
+                boss.canBeRecruited = false;
+                boss.battleIdleFacing = boss.battleMoveFacing = boss.battleAttackFacing = BattleFacingDirection.Left;
+                return boss;
+            }
             BattleDungeonFloorDefinition floor = GetFloorForGlobalFloor(globalFloor);
             MonsterDataSO monsterData = !string.IsNullOrEmpty(monsterId) && masterDataManager != null
                 ? masterDataManager.GetMonsterData(monsterId)
@@ -1106,6 +1162,7 @@ namespace WitchTower.Data
                 Mathf.Max(1, globalFloor) * RewardGoldPerGlobalFloor +
                 dungeonIndex * RewardGoldPerDungeon;
             enemyData.rewardExp = ResolveRewardExpForFloor(globalFloor, dungeonIndex, floor, enemyData);
+            ApplyChapterCombatDifficulty(enemyData, dungeonIndex, floor.LocalFloor);
             enemyData.dropTableId = "drop_common_floor";
             enemyData.enemyTrait = ResolveTrait(monsterData);
             enemyData.battleIdleFacing = monsterData.battleIdleFacing;
@@ -1114,6 +1171,22 @@ namespace WitchTower.Data
             return enemyData;
         }
 
+        private static void ApplyChapterCombatDifficulty(EnemyDataSO enemy, int dungeonIndex, int localFloor)
+        {
+            int chapter = Mathf.Clamp(dungeonIndex, 0, ChapterHpMultipliers.Length - 1);
+            if (chapter == 0) return;
+            // Maintain a rising curve within chapter 2 despite its legacy reward-stat easing.
+            float floorPressure = 1f + .025f * Mathf.Clamp(localFloor - 1, 0, FloorsPerDungeon - 1);
+            enemy.maxHp = Mathf.RoundToInt(enemy.maxHp * ChapterHpMultipliers[chapter] * floorPressure * LaterDungeonHpAdjustment);
+            enemy.attack = Mathf.RoundToInt(enemy.attack * ChapterAttackMultipliers[chapter] * floorPressure * LaterDungeonAttackAdjustment);
+            enemy.magicAttack = Mathf.RoundToInt(enemy.magicAttack * ChapterAttackMultipliers[chapter] * floorPressure * LaterDungeonAttackAdjustment);
+            enemy.defense = Mathf.RoundToInt(enemy.defense * ChapterDefenseMultipliers[chapter]);
+            enemy.magicDefense = Mathf.RoundToInt(enemy.magicDefense * ChapterDefenseMultipliers[chapter]);
+            enemy.attackSpeed *= ChapterSpeedMultipliers[chapter];
+        }
+
+        // Legacy strength is retained as the reward baseline so harder enemies do not
+        // automatically accelerate leveling and erase the new progression curve.
         private static float ResolveEnemyStatMultiplier(BattleDungeonDefinition dungeon, int globalFloor)
         {
             if (dungeon == null || dungeon.DungeonId != "gear_crypt")
@@ -1207,7 +1280,9 @@ namespace WitchTower.Data
                 Mathf.Max(1, globalFloor) * RewardExpPerGlobalFloor +
                 Mathf.Max(0, dungeonIndex) * RewardExpPerDungeon;
 
-            return Mathf.Max(1, Mathf.RoundToInt(floorComponent * enemyCountMultiplier));
+            int baseRewardExp = Mathf.Max(1, Mathf.RoundToInt(floorComponent * enemyCountMultiplier));
+            int chapter = Mathf.Clamp(dungeonIndex, 0, ChapterExpRewardMultipliers.Length - 1);
+            return Mathf.Max(1, Mathf.RoundToInt(baseRewardExp * ChapterExpRewardMultipliers[chapter]));
         }
 
         private static EnemyTrait ResolveTrait(MonsterDataSO monsterData)

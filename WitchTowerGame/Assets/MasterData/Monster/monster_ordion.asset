@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_ordion
+  m_EditorClassIdentifier: 
+  monsterId: monster_ordion
+  monsterName: "創世機神オルディオン"
+  encyclopediaNumber: 35
+  raceId: robot
+  classRank: 5
+  rarity: 5
+  element: 0
+  rangeType: 1
+  damageType: 0
+  baseStats:
+    maxHp: 520
+    attack: 155
+    magicAttack: 50
+    defense: 110
+    magicDefense: 100
+    attackSpeed: 0.84
+  attackRange: 4.6
+  normalAttackTargetCount: 4
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 3
+    attackPerPlus: 3
+    magicAttackPerPlus: 2
+    defensePerPlus: 3
+    magicDefensePerPlus: 3
+    attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1
+    attackCoefficient: 1.1
+    magicAttackCoefficient: 0.45
+    defenseCoefficient: 1
+    magicDefenseCoefficient: 0.9
+    attackSpeedCoefficient: 0.9
+  fusionExclusive: 1
+  fusionRecipes:
+  - parentMonsterIdA: monster_fortress_machine_gigafort
+    parentMonsterIdB: monster_mecha_sword_saint_gransaber
+    ignoreOrder: 1
+    note: "両親クラス４・Lv80、子Lv1。"
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsters/Class5/ordion
+  illustrationResourcePath: FamilyMonsters/Class5/ordion
+  battleIdleResourcePath: MonsterBattle/mon_ordion_idle
+  battleIdleFacing: 1
+  battleMoveResourcePath: MonsterBattle/mon_ordion_move
+  battleMoveFacing: 1
+  battleAttackResourcePath: MonsterBattle/mon_ordion_attack
+  battleAttackFacing: 1
+  battleVisualScale: 1.25
+  description: "雪崩・範囲物理。デイリー試練の星核で固有スキルを育成できるクラス５の配合個体。"

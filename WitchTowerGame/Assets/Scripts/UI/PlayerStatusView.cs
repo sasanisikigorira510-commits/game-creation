@@ -51,7 +51,7 @@ namespace WitchTower.UI
 
             if (levelText != null)
             {
-                levelText.text = $"Lv. {profile.Level}  魂片 {profile.RebirthPoints}";
+                levelText.text = $"Lv. {profile.Level}";
             }
 
             if (floorText != null)
@@ -66,10 +66,7 @@ namespace WitchTower.UI
 
             if (rebirthText != null)
             {
-                int reward = profile.GetPendingRebirthPointReward();
-                rebirthText.text = reward > 0
-                    ? $"転生可能 +{reward}魂片"
-                    : $"転生解放 Lv.{RebirthService.MinimumLevel}";
+                rebirthText.gameObject.SetActive(false);
             }
 
             if (progressText != null)

@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_astravarn
+  m_EditorClassIdentifier: 
+  monsterId: monster_astravarn
+  monsterName: "星甲竜帝アストラヴァーン"
+  encyclopediaNumber: 34
+  raceId: dragon
+  classRank: 5
+  rarity: 5
+  element: 0
+  rangeType: 0
+  damageType: 0
+  baseStats:
+    maxHp: 700
+    attack: 210
+    magicAttack: 70
+    defense: 140
+    magicDefense: 110
+    attackSpeed: 0.88
+  attackRange: 1.4
+  normalAttackTargetCount: 1
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 4
+    attackPerPlus: 5
+    magicAttackPerPlus: 2
+    defensePerPlus: 3
+    magicDefensePerPlus: 3
+    attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.2
+    attackCoefficient: 1.65
+    magicAttackCoefficient: 0.6
+    defenseCoefficient: 1.15
+    magicDefenseCoefficient: 1
+    attackSpeedCoefficient: 1
+  fusionExclusive: 1
+  fusionRecipes:
+  - parentMonsterIdA: monster_mecha_dragon_valdrake
+    parentMonsterIdB: monster_drag_gaia
+    ignoreOrder: 1
+    note: "両親クラス４・Lv80、子Lv1。"
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsters/Class5/astravarn
+  illustrationResourcePath: FamilyMonsters/Class5/astravarn
+  battleIdleResourcePath: MonsterBattle/mon_astravarn_idle
+  battleIdleFacing: 1
+  battleMoveResourcePath: MonsterBattle/mon_astravarn_move
+  battleMoveFacing: 1
+  battleAttackResourcePath: MonsterBattle/mon_astravarn_attack
+  battleAttackFacing: 1
+  battleVisualScale: 1.25
+  description: "強敵・重装単体物理。デイリー試練の星核で固有スキルを育成できるクラス５の配合個体。"

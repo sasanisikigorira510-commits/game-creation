@@ -1,0 +1,124 @@
+{
+  "opening": [
+    {
+      "name": "Background",
+      "resource": "UI/GachaPage/TenPull/Anime/Continuous/Background",
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 640,
+      "pivotX": 0.5,
+      "pivotY": 0.5,
+      "rotation": 0,
+      "enabled": true,
+      "motionScale": 1
+    },
+    {
+      "name": "OpeningHair",
+      "resource": "UI/GachaPage/TenPull/Anime/Continuous/OpeningHair",
+      "x": 28,
+      "y": 48,
+      "width": 390,
+      "height": 270,
+      "pivotX": 0.9,
+      "pivotY": 0.86,
+      "rotation": 0,
+      "enabled": true,
+      "motionScale": 1
+    },
+    {
+      "name": "OpeningBody",
+      "resource": "UI/GachaPage/TenPull/Anime/Continuous/OpeningBody",
+      "x": -15,
+      "y": -85,
+      "width": 433,
+      "height": 500,
+      "pivotX": 0.5,
+      "pivotY": 0.5,
+      "rotation": 0,
+      "enabled": true,
+      "motionScale": 1
+    },
+    {
+      "name": "OpeningStaffArm",
+      "resource": "UI/GachaPage/TenPull/Anime/Continuous/OpeningStaffArm",
+      "x": -18.615027829313533,
+      "y": -21.19582664526485,
+      "width": 264.42,
+      "height": 486,
+      "pivotX": 0.47928994082840237,
+      "pivotY": 0.5603864734299517,
+      "rotation": 0,
+      "enabled": true,
+      "motionScale": 1,
+      "attachTo": "OpeningBody",
+      "bodyAnchorX": 0.49165120593692024,
+      "bodyAnchorY": 0.6276083467094703
+    }
+  ],
+  "casting": [
+    {
+      "name": "Background",
+      "resource": "UI/GachaPage/TenPull/Anime/Continuous/Background",
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 640,
+      "pivotX": 0.5,
+      "pivotY": 0.5,
+      "rotation": 0,
+      "enabled": true,
+      "motionScale": 1
+    },
+    {
+      "name": "CastingHair",
+      "resource": "UI/GachaPage/TenPull/Anime/Continuous/CastingHair",
+      "x": 32,
+      "y": 53,
+      "width": 390,
+      "height": 231,
+      "pivotX": 0.9,
+      "pivotY": 0.84,
+      "rotation": 0,
+      "enabled": true,
+      "motionScale": 1
+    },
+    {
+      "name": "CastingBody",
+      "resource": "UI/GachaPage/TenPull/Anime/Continuous/CastingBody",
+      "x": -5,
+      "y": -65,
+      "width": 548,
+      "height": 510,
+      "pivotX": 0.5,
+      "pivotY": 0.5,
+      "rotation": 0,
+      "enabled": true,
+      "motionScale": 1
+    },
+    {
+      "name": "CastingArm",
+      "resource": "UI/GachaPage/TenPull/Anime/Continuous/CastingArm",
+      "x": -11.726677577741398,
+      "y": 10.422535211267615,
+      "width": 140.0,
+      "height": 152.98838947368424,
+      "pivotX": 0.875,
+      "pivotY": 0.86,
+      "rotation": 0,
+      "enabled": true,
+      "motionScale": 1,
+      "attachTo": "CastingBody",
+      "bodyAnchorX": 0.4877250409165303,
+      "bodyAnchorY": 0.647887323943662
+    }
+  ],
+  "openingStaffTip": {
+    "x": 101.03415384615386,
+    "y": 169.67217391304342
+  },
+  "castingPalm": {
+    "x": -79.72631578947369,
+    "y": -19.489473684210523
+  }
+}

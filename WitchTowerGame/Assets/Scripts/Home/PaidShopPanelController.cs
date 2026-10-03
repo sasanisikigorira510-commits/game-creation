@@ -23,6 +23,8 @@ namespace WitchTower.Home
         private const string EquipmentProtectionCharmIconPath = "UI/PaidShop/EquipmentProtectionCharmIcon";
         private const string PremiumItemIconPath = PremiumSupportPackIconPath;
         private const string PermanentUpgradeIconPath = "UI/EquipmentEnhance/EnhanceRuneCircle";
+        private const string HeadingFramePath = "UI/AudioSettings/SettingsPanelFrameImage2";
+        private const float PermanentUpgradeFrameTop = -164f;
         private const int AutoRepeatFloorUpgradeCost = 1200;
         private const int AutoSellEquipmentUpgradeCost = 1200;
         private const int AutoReleaseMonsterUpgradeCost = 1200;
@@ -39,6 +41,9 @@ namespace WitchTower.Home
         private static readonly Color AccentCrystal = new Color(0.72f, 0.50f, 1f, 1f);
         private static readonly Color TextMain = new Color(1f, 0.98f, 0.92f, 1f);
         private static readonly Color TextSub = new Color(0.78f, 0.82f, 0.94f, 1f);
+        private static readonly Color PurchaseButtonColor = new Color(0.62f, 0.30f, 0.035f, 1f);
+        private static readonly Color EnableButtonColor = new Color(0.025f, 0.39f, 0.57f, 1f);
+        private static readonly Color DisableButtonColor = new Color(0.61f, 0.20f, 0.08f, 1f);
 
         private Action onClosed;
         private Font runtimeFont;
@@ -47,6 +52,8 @@ namespace WitchTower.Home
         private Text paidStoneBalanceText;
         private Text categoryBalanceText;
         private Text messageText;
+        private Text crystalStoreStatusText;
+        private Button crystalRetryButton;
         private Text activePermanentUpgradeStatusText;
         private Button autoRepeatFloorUpgradeButton;
         private Text autoRepeatFloorUpgradeButtonText;
@@ -58,7 +65,37 @@ namespace WitchTower.Home
         private Text monsterStorageUpgradeButtonText;
         private Button equipmentStorageUpgradeButton;
         private Text equipmentStorageUpgradeButtonText;
+        private readonly Dictionary<string, Button> crystalPurchaseButtons =
+            new Dictionary<string, Button>(StringComparer.Ordinal);
+        private readonly Dictionary<string, Text> crystalPriceLabels =
+            new Dictionary<string, Text>(StringComparer.Ordinal);
         private bool isBuilt;
+        private GameObject purchaseConfirmationRoot;
+        private GameObject upgradeTutorialRoot;
+        private string pendingUpgradeTutorial;
+        private UnityEngine.Events.UnityAction pendingPermanentPurchase;
+
+        private void OnEnable()
+        {
+            InAppPurchaseService.ProductsUpdated += RefreshCrystalProductPrices;
+            InAppPurchaseService.PurchaseSucceeded += HandleStorePurchaseSucceeded;
+            InAppPurchaseService.PurchaseFailed += HandleStorePurchaseFailed;
+            RefreshCrystalProductPrices();
+        }
+
+        private void OnDisable()
+        {
+            if (upgradeTutorialRoot != null)
+            {
+                upgradeTutorialRoot.SetActive(false);
+                if (Application.isPlaying) Destroy(upgradeTutorialRoot); else DestroyImmediate(upgradeTutorialRoot);
+                upgradeTutorialRoot = null;
+            }
+            ClosePermanentPurchaseConfirmation();
+            InAppPurchaseService.ProductsUpdated -= RefreshCrystalProductPrices;
+            InAppPurchaseService.PurchaseSucceeded -= HandleStorePurchaseSucceeded;
+            InAppPurchaseService.PurchaseFailed -= HandleStorePurchaseFailed;
+        }
 
         public void Show(Action closeCallback)
         {
@@ -105,7 +142,9 @@ namespace WitchTower.Home
 
             if (activePermanentUpgradeStatusText != null)
             {
-                activePermanentUpgradeStatusText.text = BuildPermanentUpgradeStatusText(profile);
+                string paidUnavailable = WitchTower.Save.OnlinePlayerData.PaidSpendingUnavailableMessage;
+                activePermanentUpgradeStatusText.text = string.IsNullOrEmpty(paidUnavailable)
+                    ? BuildPermanentUpgradeStatusText(profile) : paidUnavailable;
             }
         }
 
@@ -150,10 +189,8 @@ namespace WitchTower.Home
 
             CreateCategoryButton(panel.transform, ShopCategory.Crystal, "宝晶購入", "有償宝晶を購入する",
                 PaidStoneIconPath, new Vector2(0f, -310f));
-            CreateCategoryButton(panel.transform, ShopCategory.PremiumItem, "高級アイテム", "冒険に役立つ特別な品",
-                PremiumItemIconPath, new Vector2(0f, -545f), -52f);
             CreateCategoryButton(panel.transform, ShopCategory.PermanentUpgrade, "永続強化", "冒険を恒久的に支援する効果",
-                PermanentUpgradeIconPath, new Vector2(0f, -780f));
+                PermanentUpgradeIconPath, new Vector2(0f, -545f));
 
             HomeReturnButtonStyle.Create(selectorRoot.transform, "PaidShopCloseButton", Hide);
         }
@@ -187,7 +224,14 @@ namespace WitchTower.Home
 
         private void OpenCategory(ShopCategory category)
         {
+            // Unreleased products must not be reachable through old callers either.
+            if (category == ShopCategory.PremiumItem) { ShowSelector(); return; }
+            ClosePermanentPurchaseConfirmation();
             ClearChildren(categoryRoot.transform);
+            crystalStoreStatusText = null;
+            crystalRetryButton = null;
+            crystalPurchaseButtons.Clear();
+            crystalPriceLabels.Clear();
             activePermanentUpgradeStatusText = null;
             autoRepeatFloorUpgradeButton = null;
             autoRepeatFloorUpgradeButtonText = null;
@@ -263,6 +307,7 @@ namespace WitchTower.Home
 
         public void OpenPurchasedPermanentUpgradeList()
         {
+            ClosePermanentPurchaseConfirmation();
             if (!isBuilt)
             {
                 Build();
@@ -292,18 +337,29 @@ namespace WitchTower.Home
 
         private void BuildCrystalShop()
         {
-            GameObject panel = BuildCategoryShell("宝晶購入", "有償宝晶を購入できます");
-            CreateCrystalProductCard(panel.transform, "月光の小箱", "有償宝晶 120個", "¥160", new Vector2(-220f, -370f));
-            CreateCrystalProductCard(panel.transform, "星導の宝箱", "有償宝晶 650個", "¥800", new Vector2(220f, -370f));
-            CreateCrystalProductCard(panel.transform, "契約炉の宝庫", "有償宝晶 2,000個", "¥2,400", new Vector2(-220f, -710f));
-            CreateCrystalProductCard(panel.transform, "深淵の宝庫", "有償宝晶 4,200個", "¥4,800", new Vector2(220f, -710f));
-            CreateCrystalProductCard(panel.transform, "星海の大宝庫", "有償宝晶 8,600個", "¥9,600", new Vector2(-220f, -1050f));
-            CreateCrystalProductCard(panel.transform, "天頂の大宝庫", "有償宝晶 15,000個", "¥16,000", new Vector2(220f, -1050f));
+            crystalPurchaseButtons.Clear();
+            crystalPriceLabels.Clear();
+            GameObject panel = BuildCategoryShell("宝晶購入", "初回購入でホーム下部のバナー広告を削除");
+            CreateCrystalProductCard(panel.transform, IapProductCatalog.Crystals120, "月光の小箱", "有償宝晶 120個", new Vector2(-225f, -310f));
+            CreateCrystalProductCard(panel.transform, IapProductCatalog.Crystals650, "星導の宝箱", "有償宝晶 650個", new Vector2(225f, -310f));
+            CreateCrystalProductCard(panel.transform, IapProductCatalog.Crystals2000, "契約炉の宝庫", "有償宝晶 2,000個", new Vector2(-225f, -660f));
+            CreateCrystalProductCard(panel.transform, IapProductCatalog.Crystals4200, "深淵の宝庫", "有償宝晶 4,200個", new Vector2(225f, -660f));
+            CreateCrystalProductCard(panel.transform, IapProductCatalog.Crystals8600, "星海の大宝庫", "有償宝晶 8,600個", new Vector2(-225f, -1010f));
+            CreateCrystalProductCard(panel.transform, IapProductCatalog.Crystals15000, "天頂の大宝庫", "有償宝晶 15,000個", new Vector2(225f, -1010f));
 
-            CreateText("Notice", panel.transform, "購入内容と価格を確認してからお進みください。", 18, FontStyle.Bold,
-                new Vector2(0f, -1395f), new Vector2(780f, 42f), TextSub, TextAnchor.MiddleCenter);
-            messageText = CreateText("Message", panel.transform, "商品を選んでください。", 21, FontStyle.Bold,
-                new Vector2(0f, -1470f), new Vector2(820f, 60f), TextMain, TextAnchor.MiddleCenter);
+            CreateText("Notice", panel.transform, "リワード広告は引き続き利用できます。価格はApp Storeから取得します。", 20, FontStyle.Bold,
+                new Vector2(0f, -1355f), new Vector2(850f, 40f), TextSub, TextAnchor.MiddleCenter);
+            crystalStoreStatusText = CreateText("StoreStatus", panel.transform, string.Empty, 25, FontStyle.Bold,
+                new Vector2(0f, -1400f), new Vector2(880f, 96f), TextMain, TextAnchor.MiddleCenter);
+            messageText = CreateText("Message", panel.transform, string.Empty, 24, FontStyle.Bold,
+                new Vector2(0f, -1498f), new Vector2(880f, 64f), TextMain, TextAnchor.MiddleCenter);
+            crystalRetryButton = CreateButton("RetryProductsButton", panel.transform, "商品情報を再取得",
+                new Vector2(0f, -1574f), new Vector2(520f, 128f), RetryCrystalProducts, 0f);
+            Text retryLabel = crystalRetryButton.GetComponentInChildren<Text>();
+            retryLabel.fontSize = retryLabel.resizeTextMaxSize = 28;
+            retryLabel.resizeTextMinSize = 26;
+            InAppPurchaseService.Instance?.RefreshLocalizedPrices();
+            RefreshCrystalProductPrices();
         }
 
         private void BuildStandardCategoryPage(
@@ -363,7 +419,7 @@ namespace WitchTower.Home
                 PermanentUpgradeIconPath,
                 new Vector2(0f, -320f),
                 compactProductSize,
-                PurchaseAutoRepeatFloorUpgrade);
+                () => ShowPermanentPurchaseConfirmation("同階層オート再挑戦", AutoRepeatFloorUpgradeCost, PurchaseAutoRepeatFloorUpgrade));
             autoRepeatFloorUpgradeButtonText = autoRepeatFloorUpgradeButton != null
                 ? autoRepeatFloorUpgradeButton.transform.Find("Label")?.GetComponent<Text>()
                 : null;
@@ -376,7 +432,7 @@ namespace WitchTower.Home
                 PermanentUpgradeIconPath,
                 new Vector2(0f, -575f),
                 compactProductSize,
-                PurchaseAutoSellEquipmentUpgrade);
+                () => ShowPermanentPurchaseConfirmation("装備自動売却", AutoSellEquipmentUpgradeCost, PurchaseAutoSellEquipmentUpgrade));
             autoSellEquipmentUpgradeButtonText = autoSellEquipmentUpgradeButton != null
                 ? autoSellEquipmentUpgradeButton.transform.Find("Label")?.GetComponent<Text>()
                 : null;
@@ -389,18 +445,20 @@ namespace WitchTower.Home
                 PermanentUpgradeIconPath,
                 new Vector2(0f, -830f),
                 compactProductSize,
-                PurchaseAutoReleaseMonsterUpgrade);
+                () => ShowPermanentPurchaseConfirmation("モンスター自動逃がし", AutoReleaseMonsterUpgradeCost, PurchaseAutoReleaseMonsterUpgrade));
             autoReleaseMonsterUpgradeButtonText = autoReleaseMonsterUpgradeButton != null
                 ? autoReleaseMonsterUpgradeButton.transform.Find("Label")?.GetComponent<Text>()
                 : null;
 
             monsterStorageUpgradeButton = CreateWideProductCard(panel.transform, $"モンスター枠 +{MonsterStorageUpgradeAmount}", "モンスター所持上限を恒久拡張",
-                FormatStonePrice(MonsterStorageUpgradeCost), PermanentUpgradeIconPath, new Vector2(0f, -1085f), compactProductSize, PurchaseMonsterStorageUpgrade);
+                FormatStonePrice(MonsterStorageUpgradeCost), PermanentUpgradeIconPath, new Vector2(0f, -1085f), compactProductSize,
+                () => ShowPermanentPurchaseConfirmation($"モンスター枠 +{MonsterStorageUpgradeAmount}", MonsterStorageUpgradeCost, PurchaseMonsterStorageUpgrade));
             monsterStorageUpgradeButtonText = monsterStorageUpgradeButton != null
                 ? monsterStorageUpgradeButton.transform.Find("Label")?.GetComponent<Text>()
                 : null;
             equipmentStorageUpgradeButton = CreateWideProductCard(panel.transform, $"装備枠 +{EquipmentStorageUpgradeAmount}", "装備所持上限を恒久拡張",
-                FormatStonePrice(EquipmentStorageUpgradeCost), PermanentUpgradeIconPath, new Vector2(0f, -1340f), compactProductSize, PurchaseEquipmentStorageUpgrade);
+                FormatStonePrice(EquipmentStorageUpgradeCost), PermanentUpgradeIconPath, new Vector2(0f, -1340f), compactProductSize,
+                () => ShowPermanentPurchaseConfirmation($"装備枠 +{EquipmentStorageUpgradeAmount}", EquipmentStorageUpgradeCost, PurchaseEquipmentStorageUpgrade));
             equipmentStorageUpgradeButtonText = equipmentStorageUpgradeButton != null
                 ? equipmentStorageUpgradeButton.transform.Find("Label")?.GetComponent<Text>()
                 : null;
@@ -430,12 +488,9 @@ namespace WitchTower.Home
 
             CreateFullScreenImage("PurchasedPermanentUpgradeBackground", categoryRoot.transform, "UI/FusionPage/FusionBackground");
             GameObject panel = CreatePanel("PurchasedPermanentUpgradePanel", categoryRoot.transform, "UI/FusionPage/FusionMainFrame",
-                Vector2.zero, new Vector2(1000f, 1710f), PanelColor);
+                new Vector2(0f, PermanentUpgradeFrameTop), new Vector2(1000f, 1710f), PanelColor);
 
-            CreateText("Title", panel.transform, "永続強化", 50, FontStyle.Bold,
-                new Vector2(0f, -78f), new Vector2(680f, 70f), AccentGold, TextAnchor.MiddleCenter);
-            CreateText("Subtitle", panel.transform, "購入済みの永続効果", 23, FontStyle.Bold,
-                new Vector2(0f, -142f), new Vector2(760f, 42f), TextSub, TextAnchor.MiddleCenter);
+            CreatePermanentUpgradeHeading(categoryRoot.transform, "購入済みの永続効果");
 
             GameObject summary = CreatePanel("PurchasedPermanentUpgradeSummary", panel.transform, null,
                 new Vector2(0f, -225f), new Vector2(720f, 90f), new Color(0.025f, 0.035f, 0.065f, 0.96f));
@@ -457,7 +512,7 @@ namespace WitchTower.Home
                         "勝利・敗北後に同じ階層へ自動で再挑戦",
                         autoRepeatEnabled ? "現在: 有効" : "現在: 無効",
                         autoRepeatEnabled ? "無効化する" : "有効化する",
-                        "同じ階層へ続けて挑戦します。",
+                        "バトル右上の「永続効果・設定」で周回をONにします。",
                         new Vector2(0f, cardY),
                         ToggleAutoRepeatFloorUpgradeEnabled);
                     cardY -= 380f;
@@ -522,16 +577,17 @@ namespace WitchTower.Home
 
             CreateText("StatusLabel", card.transform, status, 21, FontStyle.Bold,
                 new Vector2(-32f, -92f), new Vector2(520f, 36f), AccentCrystal, TextAnchor.MiddleLeft);
-            CreateButton("ToggleButton", card.transform, actionLabel,
-                new Vector2(250f, -198f), new Vector2(260f, 82f), toggleAction);
+            StyleActionButton(CreateButton("ToggleButton", card.transform, actionLabel,
+                new Vector2(225f, -200f), new Vector2(310f, 128f), toggleAction),
+                actionLabel == "有効化する" ? EnableButtonColor : DisableButtonColor);
 
             CreateText("UpgradeDescription", card.transform, shortDescription, 20, FontStyle.Bold,
                 new Vector2(-32f, -138f), new Vector2(560f, 50f), TextSub, TextAnchor.MiddleLeft);
 
             GameObject effectPanel = CreatePanel("EffectPanel", card.transform, null,
-                new Vector2(-112f, -238f), new Vector2(500f, 68f), new Color(0.018f, 0.024f, 0.044f, 0.92f));
+                new Vector2(-160f, -220f), new Vector2(440f, 96f), new Color(0.018f, 0.024f, 0.044f, 0.92f));
             CreateText("EffectText", effectPanel.transform, effectDescription, 19, FontStyle.Bold,
-                new Vector2(0f, -14f), new Vector2(450f, 40f), TextMain, TextAnchor.MiddleCenter);
+                new Vector2(0f, -14f), new Vector2(404f, 68f), TextMain, TextAnchor.MiddleCenter);
         }
 
         private void CreatePurchasedPermanentThresholdCard(
@@ -548,7 +604,7 @@ namespace WitchTower.Home
             UnityEngine.Events.UnityAction increaseAction)
         {
             GameObject card = CreatePanel("PurchasedPermanentUpgrade_" + upgradeName, parent, "UI/FusionPage/FusionRosterFrame",
-                position, new Vector2(820f, 400f), CardColor);
+                position, new Vector2(820f, 420f), CardColor);
             CreateIcon("UpgradeIcon", card.transform, PermanentUpgradeIconPath, new Vector2(-320f, -42f), new Vector2(86f, 86f));
             CreateText("UpgradeName", card.transform, upgradeName, 30, FontStyle.Bold,
                 new Vector2(-32f, -40f), new Vector2(520f, 50f), TextMain, TextAnchor.MiddleLeft);
@@ -558,19 +614,20 @@ namespace WitchTower.Home
                 new Vector2(-32f, -136f), new Vector2(560f, 48f), TextSub, TextAnchor.MiddleLeft);
 
             GameObject thresholdPanel = CreatePanel("ThresholdPanel", card.transform, null,
-                new Vector2(-120f, -204f), new Vector2(500f, 76f), new Color(0.018f, 0.024f, 0.044f, 0.92f));
-            CreateButton("DecreaseThreshold", thresholdPanel.transform, "-", new Vector2(-206f, -10f), new Vector2(74f, 56f), decreaseAction);
+                new Vector2(-155f, -198f), new Vector2(450f, 108f), new Color(0.018f, 0.024f, 0.044f, 0.92f));
+            StyleActionButton(CreateButton("DecreaseThreshold", thresholdPanel.transform, "−", new Vector2(-173f, -6f), new Vector2(96f, 96f), decreaseAction), EnableButtonColor);
             CreateText("ThresholdText", thresholdPanel.transform, thresholdText, 21, FontStyle.Bold,
-                new Vector2(0f, -16f), new Vector2(320f, 38f), TextMain, TextAnchor.MiddleCenter);
-            CreateButton("IncreaseThreshold", thresholdPanel.transform, "+", new Vector2(206f, -10f), new Vector2(74f, 56f), increaseAction);
+                new Vector2(0f, -12f), new Vector2(238f, 84f), TextMain, TextAnchor.MiddleCenter);
+            StyleActionButton(CreateButton("IncreaseThreshold", thresholdPanel.transform, "+", new Vector2(173f, -6f), new Vector2(96f, 96f), increaseAction), EnableButtonColor);
 
-            CreateButton("ToggleButton", card.transform, actionLabel,
-                new Vector2(250f, -244f), new Vector2(260f, 82f), toggleAction);
+            StyleActionButton(CreateButton("ToggleButton", card.transform, actionLabel,
+                new Vector2(225f, -198f), new Vector2(300f, 128f), toggleAction),
+                actionLabel == "有効化する" ? EnableButtonColor : DisableButtonColor);
 
             GameObject effectPanel = CreatePanel("EffectPanel", card.transform, null,
-                new Vector2(-112f, -314f), new Vector2(500f, 54f), new Color(0.018f, 0.024f, 0.044f, 0.92f));
+                new Vector2(0f, -340f), new Vector2(740f, 60f), new Color(0.018f, 0.024f, 0.044f, 0.92f));
             CreateText("EffectText", effectPanel.transform, effectDescription, 18, FontStyle.Bold,
-                new Vector2(0f, -10f), new Vector2(450f, 32f), TextSub, TextAnchor.MiddleCenter);
+                new Vector2(0f, -8f), new Vector2(700f, 44f), TextSub, TextAnchor.MiddleCenter);
         }
 
         private void ToggleAutoRepeatFloorUpgradeEnabled()
@@ -672,13 +729,18 @@ namespace WitchTower.Home
         private GameObject BuildCategoryShell(string title, string subtitle)
         {
             CreateFullScreenImage("CategoryBackground", categoryRoot.transform, "UI/FusionPage/FusionBackground");
+            bool permanentUpgrade = title == "永続強化";
             GameObject panel = CreatePanel("CategoryMainPanel", categoryRoot.transform, "UI/FusionPage/FusionMainFrame",
-                Vector2.zero, new Vector2(1000f, 1710f), PanelColor);
+                new Vector2(0f, permanentUpgrade ? PermanentUpgradeFrameTop : 0f), new Vector2(1000f, 1710f), PanelColor);
 
-            CreateText("Title", panel.transform, title, 50, FontStyle.Bold,
-                new Vector2(0f, -52f), new Vector2(680f, 70f), AccentGold, TextAnchor.MiddleCenter);
-            CreateText("Subtitle", panel.transform, subtitle, 21, FontStyle.Bold,
-                new Vector2(0f, -116f), new Vector2(760f, 42f), TextSub, TextAnchor.MiddleCenter);
+            if (permanentUpgrade) CreatePermanentUpgradeHeading(categoryRoot.transform, subtitle);
+            else
+            {
+                CreateText("Title", panel.transform, title, 50, FontStyle.Bold,
+                    new Vector2(0f, -52f), new Vector2(680f, 70f), AccentGold, TextAnchor.MiddleCenter);
+                CreateText("Subtitle", panel.transform, subtitle, 21, FontStyle.Bold,
+                    new Vector2(0f, -116f), new Vector2(760f, 42f), TextSub, TextAnchor.MiddleCenter);
+            }
 
             GameObject balance = CreatePanel("CategoryBalancePanel", panel.transform, null,
                 new Vector2(0f, -180f), new Vector2(720f, 88f), new Color(0.025f, 0.035f, 0.065f, 0.96f));
@@ -691,18 +753,157 @@ namespace WitchTower.Home
             return panel;
         }
 
-        private void CreateCrystalProductCard(Transform parent, string productName, string contents, string price, Vector2 position)
+        private void CreatePermanentUpgradeHeading(Transform parent, string subtitle)
+        {
+            // A separate opaque image2 heading plate keeps the lettering clear
+            // of the large frame's dragon ornament and the return button.
+            CreatePanel("PermanentUpgradeTitleFrame", parent, HeadingFramePath,
+                new Vector2(0f, -8f), new Vector2(480f, 104f), PanelColor);
+            CreateText("Title", parent, "永続強化", 50, FontStyle.Bold,
+                new Vector2(0f, -24f), new Vector2(400f, 70f), AccentGold, TextAnchor.MiddleCenter);
+            CreateText("Subtitle", parent, subtitle, 21, FontStyle.Bold,
+                new Vector2(0f, -122f), new Vector2(600f, 36f), TextMain, TextAnchor.MiddleCenter);
+        }
+
+        private void CreateCrystalProductCard(
+            Transform parent,
+            string productId,
+            string productName,
+            string contents,
+            Vector2 position)
         {
             GameObject card = CreatePanel("Product_" + productName, parent, "UI/FusionPage/FusionRosterFrame",
-                position, new Vector2(400f, 290f), CardColor);
-            CreateIcon("StoneIcon", card.transform, PaidStoneIconPath, new Vector2(0f, -42f), new Vector2(102f, 102f));
-            CreateText("ProductName", card.transform, productName, 23, FontStyle.Bold,
-                new Vector2(0f, -154f), new Vector2(340f, 40f), TextMain, TextAnchor.MiddleCenter);
-            CreateText("Contents", card.transform, contents, 19, FontStyle.Bold,
-                new Vector2(0f, -198f), new Vector2(340f, 36f), AccentCrystal, TextAnchor.MiddleCenter);
-            CreateButton("BuyButton", card.transform, price, new Vector2(0f, -238f), new Vector2(270f, 58f),
-                () => ShowPurchaseUnavailable(productName),
-                PriceButtonLabelYOffset);
+                position, new Vector2(420f, 330f), CardColor);
+            Image cardImage = card.GetComponent<Image>();
+            cardImage.raycastTarget = true;
+            Button cardButton = card.AddComponent<Button>();
+            cardButton.targetGraphic = cardImage;
+            // Disabling all cards guards against duplicate purchases, but the
+            // default disabled tint also halves their alpha and exposes the
+            // ornate background. Keep the storefront visually stable while
+            // StoreKit presents its confirmation sheet; status text gives feedback.
+            cardButton.transition = Selectable.Transition.None;
+            cardButton.onClick.AddListener(() => PurchaseCrystalProduct(productId, productName));
+            CreateIcon("StoneIcon", card.transform, PaidStoneIconPath, new Vector2(0f, -30f), new Vector2(88f, 88f));
+            CreateText("ProductName", card.transform, productName, 26, FontStyle.Bold,
+                new Vector2(0f, -124f), new Vector2(360f, 42f), TextMain, TextAnchor.MiddleCenter);
+            CreateText("Contents", card.transform, contents, 32, FontStyle.Bold,
+                new Vector2(0f, -174f), new Vector2(360f, 48f), AccentCrystal, TextAnchor.MiddleCenter);
+            // One click handler for the whole card, including icon, text and
+            // price. Decorative children must not swallow or duplicate taps.
+            GameObject price = CreatePanel("BuyButton", card.transform, "UI/FusionPage/FusionSmallButton",
+                new Vector2(0f, -204f), new Vector2(390f, 124f), CardColor);
+            Text label = CreateText("Label", price.transform, "商品情報を取得中", 34, FontStyle.Bold,
+                new Vector2(0f, -42f), new Vector2(350f, 44f), TextMain, TextAnchor.MiddleCenter);
+            crystalPurchaseButtons[productId] = cardButton;
+            crystalPriceLabels[productId] = label;
+        }
+
+        private void PurchaseCrystalProduct(string productId, string productName)
+        {
+            InAppPurchaseService service = InAppPurchaseService.Instance;
+            if (service == null)
+            {
+                ShowPurchaseMessage("購入機能を開始できていません。アプリを開き直してください。", false);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(service.NewPurchaseBlockedMessage))
+            {
+                RefreshCrystalProductPrices();
+                // The complete reason already occupies StoreStatus; do not
+                // repeat its multi-line text in the shorter result-message row.
+                ShowPurchaseMessage(string.Empty, true);
+                return;
+            }
+
+            if (!service.IsProductAvailable(productId))
+            {
+                service.EnsureProductsAvailable();
+                ShowPurchaseMessage($"{productName}の商品情報を確認中です。\n取得後、もう一度このカードをタップしてください。", false);
+                return;
+            }
+
+            // Reuse the fixed StoreStatus line instead of adding another wait
+            // message below it. Clear any error from a previous attempt.
+            ShowPurchaseMessage(string.Empty, true);
+            service.Purchase(productId);
+        }
+
+        private void RetryCrystalProducts()
+        {
+            InAppPurchaseService.Instance?.RefreshProducts();
+            ShowPurchaseMessage("商品情報だけを再取得します。購入は開始しません。", true);
+            RefreshCrystalProductPrices();
+        }
+
+        private void RefreshCrystalProductPrices()
+        {
+            InAppPurchaseService service = InAppPurchaseService.Instance;
+            bool busy = service != null && service.IsPurchaseInProgress;
+            string blockedMessage = service != null ? service.NewPurchaseBlockedMessage : string.Empty;
+            bool blocked = !string.IsNullOrEmpty(blockedMessage);
+            foreach (IapProductDefinition product in IapProductCatalog.Products)
+            {
+                if (crystalPriceLabels.TryGetValue(product.ProductId, out Text priceLabel) && priceLabel != null)
+                {
+                    bool available = service != null && service.IsProductAvailable(product.ProductId);
+                    priceLabel.text = available
+                        ? service.GetLocalizedPrice(product.ProductId, "価格を確認") + " で購入"
+                        : service != null && service.IsCatalogLoading ? "商品情報を取得中" : "未取得・再試行";
+                    if (blocked)
+                        priceLabel.text = (available ? service.GetLocalizedPrice(product.ProductId, "価格を確認") + "\n" : string.Empty)
+                            + (blockedMessage == IapPurchaseEnvironmentPolicy.DevelopmentProductionMessage
+                                ? "検証版では購入不可" : "現在は購入不可");
+                    // Retain fetched prices above the warning, inside the existing
+                    // price ornament, with a 4-point gap below Contents and at
+                    // least 20 points inside the card's bottom edge. Keep the
+                    // center fixed; the unblocked/release layout stays unchanged.
+                    priceLabel.rectTransform.sizeDelta = new Vector2(350f, blocked ? 84f : 44f);
+                    priceLabel.rectTransform.anchoredPosition = new Vector2(0f, blocked ? -22f : -42f);
+                    priceLabel.color = available && !blocked ? TextMain : AccentGold;
+                }
+
+                if (crystalPurchaseButtons.TryGetValue(product.ProductId, out Button button) && button != null)
+                {
+                    // Keep unavailable cards responsive so tapping explains
+                    // the loading/error state instead of silently doing nothing.
+                    button.interactable = !busy && !blocked;
+                }
+            }
+
+            if (crystalStoreStatusText != null)
+            {
+                crystalStoreStatusText.text = blocked ? blockedMessage
+                    : busy ? "App Storeの購入確認画面を開いています…"
+                    : service != null ? service.StoreStatusMessage
+                    : "購入機能を開始できていません。アプリを開き直してください。";
+                crystalStoreStatusText.color = blocked || service == null || service.HasStoreError ? AccentGold : TextSub;
+            }
+            if (crystalRetryButton != null)
+            {
+                crystalRetryButton.gameObject.SetActive(service == null || !service.AreAllProductsReady);
+                crystalRetryButton.interactable = service != null && service.CanRetryProducts;
+            }
+        }
+
+        private void HandleStorePurchaseSucceeded(string productId, int paidStoneAmount)
+        {
+            if (!IapProductCatalog.TryGet(productId, out IapProductDefinition definition))
+            {
+                return;
+            }
+
+            Refresh();
+            RefreshCrystalProductPrices();
+            ShowPurchaseMessage($"有償宝晶 {definition.PaidStoneAmount:N0}個を受け取りました。", true);
+        }
+
+        private void HandleStorePurchaseFailed(string message)
+        {
+            RefreshCrystalProductPrices();
+            string blockedMessage = InAppPurchaseService.Instance?.NewPurchaseBlockedMessage;
+            ShowPurchaseMessage(!string.IsNullOrEmpty(blockedMessage) && message == blockedMessage ? string.Empty : message, false);
         }
 
         private Button CreateWideProductCard(
@@ -741,165 +942,155 @@ namespace WitchTower.Home
         {
             GameObject card = CreatePanel("Product_" + productName, parent, "UI/FusionPage/FusionRosterFrame",
                 position, size, CardColor);
-            CreateIcon("ProductIcon", card.transform, iconPath, new Vector2(-300f, -70f), new Vector2(132f, 132f));
-            CreateText("ProductName", card.transform, productName, 29, FontStyle.Bold,
-                new Vector2(-25f, -70f), new Vector2(430f, 48f), TextMain, TextAnchor.MiddleLeft);
-            CreateText("Description", card.transform, description, 20, FontStyle.Bold,
-                new Vector2(-25f, -122f), new Vector2(430f, 62f), TextSub, TextAnchor.MiddleLeft);
+            CreateIcon("ProductIcon", card.transform, iconPath, new Vector2(-324f, -112f), new Vector2(88f, 88f));
+            CreateText("ProductName", card.transform, productName, 31, FontStyle.Bold,
+                new Vector2(0f, -32f), new Vector2(730f, 48f), TextMain, TextAnchor.MiddleLeft);
+            CreateText("Description", card.transform, description, 24, FontStyle.Bold,
+                new Vector2(-95f, -98f), new Vector2(340f, 118f), TextSub, TextAnchor.MiddleLeft);
             UnityEngine.Events.UnityAction buttonAction = action;
             if (buttonAction == null)
             {
                 buttonAction = () => ShowPurchaseUnavailable(productName);
             }
 
-            return CreateButton(
+            Button buy = CreateButton(
                 "BuyButton",
                 card.transform,
                 price,
-                new Vector2(266f, -104f),
-                new Vector2(230f, 78f),
-                buttonAction,
-                PriceButtonLabelYOffset);
+                new Vector2(235f, -94f),
+                new Vector2(280f, 132f),
+                buttonAction);
+            StyleActionButton(buy, PurchaseButtonColor);
+            return buy;
         }
 
-        private void PurchaseAutoRepeatFloorUpgrade()
+        private void ShowPermanentPurchaseConfirmation(string productName, int cost, UnityEngine.Events.UnityAction purchase)
         {
+            if (purchaseConfirmationRoot != null || purchase == null) return;
+            string paidUnavailable = WitchTower.Save.OnlinePlayerData.PaidSpendingUnavailableMessage;
+            if (!string.IsNullOrEmpty(paidUnavailable)) { ShowPurchaseMessage(paidUnavailable, false); return; }
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-            if (profile == null)
+            if (profile == null || profile.PaidGachaStones < cost)
             {
-                ShowPurchaseMessage("プレイヤーデータを読み込めませんでした。", false);
-                return;
-            }
-
-            if (profile.HasAutoRepeatFloorUpgrade)
-            {
-                ShowPurchaseMessage("同階層オート再挑戦は購入済みです。", true);
+                ShowPurchaseMessage(profile == null ? "プレイヤーデータを読み込めませんでした。" : "有償宝晶が不足しています。", false);
                 Refresh();
                 return;
             }
 
-            if (!profile.TrySpendPaidGachaStones(AutoRepeatFloorUpgradeCost))
-            {
-                ShowPurchaseMessage("有償宝晶が不足しています。", false);
-                Refresh();
-                return;
-            }
-
-            profile.HasAutoRepeatFloorUpgrade = true;
-            profile.IsAutoRepeatFloorUpgradeEnabled = true;
-            SaveManager.Instance?.SaveCurrentGame();
-            ShowPurchaseMessage("同階層オート再挑戦を購入しました。", true);
-            Refresh();
+            pendingPermanentPurchase = purchase;
+            purchaseConfirmationRoot = CreateStretchRoot("PermanentPurchaseConfirmation", transform);
+            Image dim = purchaseConfirmationRoot.AddComponent<Image>();
+            dim.color = new Color(0f, 0f, 0f, 0.82f);
+            dim.raycastTarget = true; // No taps can reach the shop behind the dialog.
+            GameObject panel = CreatePanel("ConfirmationPanel", purchaseConfirmationRoot.transform, null,
+                new Vector2(0f, 340f), new Vector2(900f, 680f), new Color(0.035f, 0.05f, 0.08f, 1f));
+            RectTransform rect = panel.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            Outline outline = panel.AddComponent<Outline>();
+            outline.effectColor = AccentGold;
+            outline.effectDistance = new Vector2(4f, -4f);
+            CreateText("Title", panel.transform, "永続強化の購入確認", 38, FontStyle.Bold,
+                new Vector2(0f, -42f), new Vector2(810f, 64f), AccentGold, TextAnchor.MiddleCenter);
+            CreateText("ProductName", panel.transform, productName, 34, FontStyle.Bold,
+                new Vector2(0f, -132f), new Vector2(810f, 78f), TextMain, TextAnchor.MiddleCenter);
+            CreateText("Cost", panel.transform, $"消費する有償宝晶：{cost:N0}個", 32, FontStyle.Bold,
+                new Vector2(0f, -236f), new Vector2(810f, 54f), AccentCrystal, TextAnchor.MiddleCenter);
+            CreateText("Balance", panel.transform,
+                $"所持 {profile.PaidGachaStones:N0}個 → 購入後 {profile.PaidGachaStones - cost:N0}個", 28, FontStyle.Bold,
+                new Vector2(0f, -308f), new Vector2(810f, 58f), TextMain, TextAnchor.MiddleCenter);
+            CreateText("Hint", panel.transform, "「購入する」を押すと、有償宝晶を消費します。", 26, FontStyle.Bold,
+                new Vector2(0f, -395f), new Vector2(810f, 68f), TextSub, TextAnchor.MiddleCenter);
+            StyleActionButton(CreateButton("CancelPurchase", panel.transform, "キャンセル",
+                new Vector2(-214f, -508f), new Vector2(368f, 132f), ClosePermanentPurchaseConfirmation), EnableButtonColor);
+            StyleActionButton(CreateButton("ConfirmPurchase", panel.transform, "購入する",
+                new Vector2(214f, -508f), new Vector2(368f, 132f), ConfirmPermanentPurchase, freshPress: true), PurchaseButtonColor);
         }
 
-        private void PurchaseAutoSellEquipmentUpgrade()
+        private void ConfirmPermanentPurchase()
         {
-            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-            if (profile == null)
-            {
-                ShowPurchaseMessage("プレイヤーデータを読み込めませんでした。", false);
-                return;
-            }
-
-            if (profile.HasAutoSellEquipmentUpgrade)
-            {
-                ShowPurchaseMessage("装備自動売却は購入済みです。", true);
-                Refresh();
-                return;
-            }
-
-            if (!profile.TrySpendPaidGachaStones(AutoSellEquipmentUpgradeCost))
-            {
-                ShowPurchaseMessage("有償宝晶が不足しています。", false);
-                Refresh();
-                return;
-            }
-
-            profile.HasAutoSellEquipmentUpgrade = true;
-            profile.IsAutoSellEquipmentUpgradeEnabled = true;
-            profile.SetAutoSellEquipmentQualityThreshold(3);
-            SaveManager.Instance?.SaveCurrentGame();
-            ShowPurchaseMessage("装備自動売却を購入しました。初期設定はレア未満を売却です。", true);
-            Refresh();
+            // Consume the pending action first: a repeated click cannot spend twice.
+            var purchase = pendingPermanentPurchase;
+            ClosePermanentPurchaseConfirmation();
+            // Each purchase rechecks the current balance and existing entitlement.
+            purchase?.Invoke();
         }
 
-        private void PurchaseAutoReleaseMonsterUpgrade()
+        private void ClosePermanentPurchaseConfirmation()
         {
-            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-            if (profile == null)
-            {
-                ShowPurchaseMessage("プレイヤーデータを読み込めませんでした。", false);
-                return;
-            }
-
-            if (profile.HasAutoReleaseMonsterUpgrade)
-            {
-                ShowPurchaseMessage("モンスター自動逃がしは購入済みです。", true);
-                Refresh();
-                return;
-            }
-
-            if (!profile.TrySpendPaidGachaStones(AutoReleaseMonsterUpgradeCost))
-            {
-                ShowPurchaseMessage("有償宝晶が不足しています。", false);
-                Refresh();
-                return;
-            }
-
-            profile.HasAutoReleaseMonsterUpgrade = true;
-            profile.IsAutoReleaseMonsterUpgradeEnabled = true;
-            profile.SetAutoReleaseMonsterIndividualValueThreshold(50);
-            SaveManager.Instance?.SaveCurrentGame();
-            ShowPurchaseMessage("モンスター自動逃がしを購入しました。初期設定はIV50未満です。", true);
-            Refresh();
+            pendingPermanentPurchase = null;
+            if (purchaseConfirmationRoot == null) return;
+            purchaseConfirmationRoot.SetActive(false);
+            if (Application.isPlaying) Destroy(purchaseConfirmationRoot);
+            else DestroyImmediate(purchaseConfirmationRoot);
+            purchaseConfirmationRoot = null;
         }
 
-        private void PurchaseMonsterStorageUpgrade()
+        private static void StyleActionButton(Button button, Color color)
         {
-            PurchaseStorageUpgrade(
-                $"モンスター枠 +{MonsterStorageUpgradeAmount}",
-                MonsterStorageUpgradeCost,
-                profile =>
+            Image image = button.GetComponent<Image>();
+            image.sprite = null;
+            image.color = color;
+            button.transition = Selectable.Transition.ColorTint;
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.18f, 1.18f, 1.18f, 1f);
+            colors.selectedColor = Color.white;
+            colors.pressedColor = new Color(0.72f, 0.72f, 0.72f, 1f);
+            colors.disabledColor = new Color(0.60f, 0.60f, 0.60f, 1f);
+            button.colors = colors;
+            Outline outline = button.gameObject.GetComponent<Outline>() ?? button.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(1f, 0.82f, 0.42f, 1f);
+            outline.effectDistance = new Vector2(3f, -3f);
+            Text label = button.transform.Find("Label").GetComponent<Text>();
+            label.rectTransform.anchorMin = Vector2.zero;
+            label.rectTransform.anchorMax = Vector2.one;
+            label.rectTransform.offsetMin = new Vector2(12f, 10f);
+            label.rectTransform.offsetMax = new Vector2(-12f, -10f);
+            label.fontSize = label.resizeTextMaxSize = 29;
+            label.resizeTextMinSize = 26;
+            label.color = Color.white;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
+        private void PurchaseAutoRepeatFloorUpgrade() => PurchaseOnlineUpgrade("auto_repeat");
+        private void PurchaseAutoSellEquipmentUpgrade() => PurchaseOnlineUpgrade("auto_sell");
+        private void PurchaseAutoReleaseMonsterUpgrade() => PurchaseOnlineUpgrade("auto_release");
+        private void PurchaseMonsterStorageUpgrade() => PurchaseOnlineUpgrade("monster_storage");
+        private void PurchaseEquipmentStorageUpgrade() => PurchaseOnlineUpgrade("equipment_storage");
+
+        private void PurchaseOnlineUpgrade(string target)
+        {
+            WitchTower.Save.OnlinePlayerData.Ensure().Execute(new WitchTower.Save.OnlineRequest { Kind = "upgrade", Target = target }, (op, error) => {
+                if (this == null) return;
+                ShowPurchaseMessage(error ?? "購入内容を反映しました。", op != null);
+                Refresh();
+                if (op != null && string.IsNullOrEmpty(error))
                 {
-                    profile.MonsterStorageLimit = Mathf.Max(profile.MonsterStorageLimit, profile.OwnedMonsters.Count) + MonsterStorageUpgradeAmount;
-                    return $"モンスター枠を {profile.MonsterStorageLimit:N0} まで拡張しました。";
-                });
+                    pendingUpgradeTutorial = target;
+                    ShowPendingUpgradeTutorial();
+                }
+            });
         }
 
-        private void PurchaseEquipmentStorageUpgrade()
+        private void Update() => ShowPendingUpgradeTutorial();
+
+        private void ShowPendingUpgradeTutorial()
         {
-            PurchaseStorageUpgrade(
-                $"装備枠 +{EquipmentStorageUpgradeAmount}",
-                EquipmentStorageUpgradeCost,
-                profile =>
-                {
-                    profile.EquipmentStorageLimit = Mathf.Max(profile.EquipmentStorageLimit, profile.OwnedEquipments.Count) + EquipmentStorageUpgradeAmount;
-                    return $"装備枠を {profile.EquipmentStorageLimit:N0} まで拡張しました。";
-                });
-        }
-
-        private void PurchaseStorageUpgrade(string productName, int cost, Func<PlayerProfile, string> applyUpgrade)
-        {
-            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-            if (profile == null)
+            if (string.IsNullOrEmpty(pendingUpgradeTutorial) || !gameObject.activeInHierarchy) return;
+            string target = pendingUpgradeTutorial;
+            pendingUpgradeTutorial = null;
+            if (upgradeTutorialRoot != null) Destroy(upgradeTutorialRoot);
+            bool configurable = target.StartsWith("auto_", StringComparison.Ordinal);
+            string body = target switch
             {
-                ShowPurchaseMessage("プレイヤーデータを読み込めませんでした。", false);
-                return;
-            }
-
-            if (!profile.TrySpendPaidGachaStones(cost))
-            {
-                ShowPurchaseMessage("有償宝晶が不足しています。", false);
-                Refresh();
-                return;
-            }
-
-            string resultMessage = applyUpgrade != null
-                ? applyUpgrade(profile)
-                : $"{productName}を購入しました。";
-            SaveManager.Instance?.SaveCurrentGame();
-            ShowPurchaseMessage(resultMessage, true);
-            Refresh();
+                "auto_repeat" => "同階層オート再挑戦を購入しました。\n\n勝利・敗北後に同じ階層へ再挑戦できるようになりました。\n\nホームの「永続強化」で有効／無効を切り替えられます。実際に周回するときは、バトル右上の「永続効果・設定」で周回をONにしてください。",
+                "auto_sell" => "装備自動売却を購入しました。\n\n設定した品質に満たない装備を、獲得時に自動で売却します。\n\nホームの「永続強化」で、有効／無効と売却する品質の基準を設定できます。初めに基準を確認しましょう。",
+                "auto_release" => "モンスター自動逃がしを購入しました。\n\n探索で仲間になるモンスターのうち、設定した平均個体値に満たない仲間を自動で逃がします。\n\nホームの「永続強化」で、有効／無効と平均個体値の基準を設定できます。初めに基準を確認しましょう。",
+                "monster_storage" => "モンスターの所持枠が20体分増えました。\n\n拡張はすぐに反映され、追加の設定は不要です。召喚や編成画面の所持数で、新しい上限を確認できます。\n\nこの効果は永続します。",
+                _ => "装備の所持枠が20個分増えました。\n\n拡張はすぐに反映され、追加の設定は不要です。装備画面の所持数で、新しい上限を確認できます。\n\nこの効果は永続します。"
+            };
+            upgradeTutorialRoot = HelpDialog.Show(transform, "PermanentUpgradeTutorial", "永続強化の使い方", body,
+                configurable ? "設定を確認" : null, configurable ? (Action)OpenPurchasedPermanentUpgradeList : null);
         }
 
         private void RefreshAutoRepeatFloorUpgradeButton(PlayerProfile profile)
@@ -912,7 +1103,8 @@ namespace WitchTower.Home
             bool purchased = profile != null && profile.HasAutoRepeatFloorUpgrade;
             bool canBuy = profile != null &&
                 !purchased &&
-                profile.PaidGachaStones >= AutoRepeatFloorUpgradeCost;
+                profile.PaidGachaStones >= AutoRepeatFloorUpgradeCost &&
+                string.IsNullOrEmpty(WitchTower.Save.OnlinePlayerData.PaidSpendingUnavailableMessage);
 
             autoRepeatFloorUpgradeButton.interactable = canBuy;
             if (autoRepeatFloorUpgradeButtonText != null)
@@ -928,7 +1120,7 @@ namespace WitchTower.Home
                 buttonImage.color = purchased
                     ? new Color(0.28f, 0.32f, 0.26f, 1f)
                     : canBuy
-                        ? Color.white
+                        ? PurchaseButtonColor
                     : new Color(0.34f, 0.30f, 0.38f, 0.86f);
             }
         }
@@ -962,7 +1154,8 @@ namespace WitchTower.Home
 
             bool canBuy = profile != null &&
                 !purchased &&
-                profile.PaidGachaStones >= cost;
+                profile.PaidGachaStones >= cost &&
+                string.IsNullOrEmpty(WitchTower.Save.OnlinePlayerData.PaidSpendingUnavailableMessage);
 
             button.interactable = canBuy;
             if (buttonText != null)
@@ -976,7 +1169,7 @@ namespace WitchTower.Home
                 buttonImage.color = purchased
                     ? new Color(0.28f, 0.32f, 0.26f, 1f)
                     : canBuy
-                        ? Color.white
+                        ? PurchaseButtonColor
                         : new Color(0.34f, 0.30f, 0.38f, 0.86f);
             }
         }
@@ -988,7 +1181,8 @@ namespace WitchTower.Home
                 return;
             }
 
-            bool canBuy = profile != null && profile.PaidGachaStones >= cost;
+            bool canBuy = profile != null && profile.PaidGachaStones >= cost &&
+                string.IsNullOrEmpty(WitchTower.Save.OnlinePlayerData.PaidSpendingUnavailableMessage);
             button.interactable = canBuy;
             if (buttonText != null)
             {
@@ -999,7 +1193,7 @@ namespace WitchTower.Home
             if (buttonImage != null)
             {
                 buttonImage.color = canBuy
-                    ? Color.white
+                    ? PurchaseButtonColor
                     : new Color(0.34f, 0.30f, 0.38f, 0.86f);
             }
         }
@@ -1015,7 +1209,7 @@ namespace WitchTower.Home
 
         private static string FormatStonePrice(int amount)
         {
-            return $"宝晶 {Mathf.Max(0, amount):N0}";
+            return $"有償宝晶 {Mathf.Max(0, amount):N0}\n購入確認へ";
         }
 
         private static string BuildPermanentUpgradeStatusText(PlayerProfile profile)
@@ -1100,6 +1294,7 @@ namespace WitchTower.Home
 
         private void ShowSelector()
         {
+            ClosePermanentPurchaseConfirmation();
             if (selectorRoot != null)
             {
                 selectorRoot.SetActive(true);
@@ -1218,9 +1413,12 @@ namespace WitchTower.Home
             Vector2 position,
             Vector2 size,
             UnityEngine.Events.UnityAction action,
-            float labelYOffset = DefaultButtonLabelYOffset)
+            float labelYOffset = DefaultButtonLabelYOffset,
+            bool freshPress = false)
         {
-            GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            GameObject root = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            if (freshPress) root.AddComponent<FreshPressButton>();
+            else root.AddComponent<Button>();
             root.transform.SetParent(parent, false);
             RectTransform rect = root.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(0.5f, 1f);

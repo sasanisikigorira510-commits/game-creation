@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_regnard
+  m_EditorClassIdentifier: 
+  monsterId: monster_regnard
+  monsterName: "覇天剣皇レグナード"
+  encyclopediaNumber: 37
+  raceId: swordsman
+  classRank: 5
+  rarity: 5
+  element: 3
+  rangeType: 0
+  damageType: 0
+  baseStats:
+    maxHp: 520
+    attack: 190
+    magicAttack: 75
+    defense: 105
+    magicDefense: 100
+    attackSpeed: 1.25
+  attackRange: 1.4
+  normalAttackTargetCount: 1
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 3
+    attackPerPlus: 4
+    magicAttackPerPlus: 2
+    defensePerPlus: 3
+    magicDefensePerPlus: 3
+    attackSpeedPerPlus: 0.004
+  levelGrowth:
+    maxHpCoefficient: 1.05
+    attackCoefficient: 1.35
+    magicAttackCoefficient: 0.65
+    defenseCoefficient: 0.95
+    magicDefenseCoefficient: 0.9
+    attackSpeedCoefficient: 1.55
+  fusionExclusive: 1
+  fusionRecipes:
+  - parentMonsterIdA: monster_dragon_sword_saint_agito
+    parentMonsterIdB: monster_magic_sword_saint_luciel
+    ignoreOrder: 1
+    note: "両親クラス４・Lv80、子Lv1。"
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsters/Class5/regnard
+  illustrationResourcePath: FamilyMonsters/Class5/regnard
+  battleIdleResourcePath: MonsterBattle/mon_regnard_idle
+  battleIdleFacing: 1
+  battleMoveResourcePath: MonsterBattle/mon_regnard_move
+  battleMoveFacing: 1
+  battleAttackResourcePath: MonsterBattle/mon_regnard_attack
+  battleAttackFacing: 1
+  battleVisualScale: 1.25
+  description: "強敵・高速単体物理。デイリー試練の星核で固有スキルを育成できるクラス５の配合個体。"

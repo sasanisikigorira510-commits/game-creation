@@ -10,7 +10,7 @@ using WitchTower.Save;
 
 namespace WitchTower.UI
 {
-    public static class MonsterStatusDetailPopup
+    public static partial class MonsterStatusDetailPopup
     {
         private const string PopupObjectName = "MonsterStatusDetailPopup";
         private const string PanelTexturePath = "UI/MonsterDetail/MonsterDetailPanel";
@@ -162,6 +162,20 @@ namespace WitchTower.UI
             close.targetGraphic = closeGraphic;
             close.onClick.AddListener(() => UnityEngine.Object.Destroy(overlay));
             CreateCloseButtonMark(closeButton.transform);
+            if (profile != null && profile.GetOwnedMonster(monster.InstanceId) != null)
+            {
+                var train = CreateActionButton("OpenTraining", panel.transform, font, "修練",
+                    new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(.5f, .5f),
+                    new Vector2(-408f, -116f), new Vector2(146f, 70f), new Color(.08f, .30f, .34f));
+                train.GetComponent<Button>().onClick.AddListener(() => ShowTraining(overlay.transform,
+                    monster.InstanceId, monsterData, () =>
+                    {
+                        var live = GameManager.Instance?.PlayerProfile ?? profile;
+                        var owned = live.GetOwnedMonster(monster.InstanceId);
+                        if (owned != null && parent != null) Show(parent, live, owned, monsterData,
+                            onReleaseConfirmed, canRelease, releaseMessage, portraitOffsetX);
+                    }));
+            }
 
             CreatePortrait(panel.transform, monsterData, new Vector2(-250f + portraitOffsetX, -360f), 270f);
             CreateIdentityBlock(panel.transform, font, monster, monsterData, profile);
@@ -183,6 +197,13 @@ namespace WitchTower.UI
             CreateStatRow(panel.transform, font, -1008f, "魔防", monster.IndividualMagicDefense.ToString(), "攻速", monster.IndividualAttackSpeed.ToString(), true);
 
             bool hasReleaseControls = onReleaseConfirmed != null;
+            var activeTrial = profile?.DailyChallenges?.ActiveRun;
+            if (activeTrial?.IsActive == true &&
+                Array.IndexOf(activeTrial.PartyInstanceIds ?? Array.Empty<string>(), monster.InstanceId) >= 0)
+            {
+                canRelease = false;
+                releaseMessage = "デイリー試練に参加中のモンスターは、試練を終了するまで逃がせません。";
+            }
             CreateBottomInfoFrame(panel.transform, hasReleaseControls);
             CreateText("BottomBonusEquipment", panel.transform, font, BuildBonusAndEquipmentText(profile, monster), 20, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -587,7 +608,7 @@ namespace WitchTower.UI
                 return default;
             }
 
-            BattleUnitStats statsWithoutEquipment = MonsterBattleStatsFactory.Create(null, monster, monsterData);
+            BattleUnitStats statsWithoutEquipment = MonsterBattleStatsFactory.CreateWithoutEquipment(profile, monster, monsterData);
             if (statsWithoutEquipment == null)
             {
                 return default;
@@ -631,6 +652,13 @@ namespace WitchTower.UI
                 IndividualDefense = monster.IndividualDefense,
                 IndividualMagicDefense = monster.IndividualMagicDefense,
                 IndividualAttackSpeed = monster.IndividualAttackSpeed,
+                TrainingHp = monster.TrainingHp,
+                TrainingAttack = monster.TrainingAttack,
+                TrainingWisdom = monster.TrainingWisdom,
+                TrainingDefense = monster.TrainingDefense,
+                TrainingMagicDefense = monster.TrainingMagicDefense,
+                TrainingAttackSpeed = monster.TrainingAttackSpeed,
+                MonsterSkillLevel = monster.MonsterSkillLevel,
                 IsFavorite = monster.IsFavorite,
                 IsLocked = monster.IsLocked,
                 AcquiredOrder = monster.AcquiredOrder,

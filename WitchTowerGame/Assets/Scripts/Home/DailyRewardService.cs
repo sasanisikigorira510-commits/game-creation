@@ -189,21 +189,8 @@ namespace WitchTower.Home
 
         public static int Claim(PlayerProfile profile, DateTime now, string questId)
         {
-            if (profile == null)
-            {
-                return 0;
-            }
-
-            DailyQuestDefinition definition = GetDefinition(questId);
-            if (definition == null || !IsClaimable(profile, now, questId))
-            {
-                return 0;
-            }
-
-            var dateKey = GetDateKey(now);
-            profile.AddFreeGachaStones(definition.RewardFreeGachaStones);
-            profile.MarkDailyQuestClaimed(dateKey, questId);
-            return definition.RewardFreeGachaStones;
+            if (UnityEngine.Application.isPlaying) WitchTower.Save.OnlinePlayerData.ClaimReward(questId);
+            return 0;
         }
 
         public static int ClaimAll(PlayerProfile profile, DateTime now)

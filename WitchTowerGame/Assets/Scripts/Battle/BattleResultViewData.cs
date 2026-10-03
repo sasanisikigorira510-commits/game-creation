@@ -49,6 +49,12 @@ namespace WitchTower.Battle
         {
         }
 
+        public BattleResultViewData(bool isWin, int gold, int exp, int partyMonsterExp, int partyMonsterCount,
+            int playerLevelBefore, int playerLevelAfter, int clearedFloor, int nextFloor,
+            string itemDropSummary, string monsterRecruitSummary, BattleResultRewardVisual[] rewardVisuals)
+            : this(isWin, gold, exp, partyMonsterExp, partyMonsterCount, playerLevelBefore, playerLevelAfter,
+                clearedFloor, nextFloor, itemDropSummary, monsterRecruitSummary, rewardVisuals, false) { }
+
         public BattleResultViewData(
             bool isWin,
             int gold,
@@ -61,8 +67,10 @@ namespace WitchTower.Battle
             int nextFloor,
             string itemDropSummary,
             string monsterRecruitSummary,
-            BattleResultRewardVisual[] rewardVisuals)
+            BattleResultRewardVisual[] rewardVisuals,
+            bool isFirstClear)
         {
+            IsFirstClear = isFirstClear;
             IsWin = isWin;
             Gold = gold;
             Exp = exp;
@@ -77,6 +85,7 @@ namespace WitchTower.Battle
             RewardVisuals = rewardVisuals ?? EmptyRewardVisuals;
         }
 
+        public bool IsFirstClear { get; }
         public bool IsWin { get; }
         public int Gold { get; }
         public int Exp { get; }

@@ -42,8 +42,9 @@ namespace WitchTower.Data
             }
 
             bool changed = RemoveOwnedMonstersMissingFromCurrentMaster(profile, masterDataManager);
+            bool usePreviewRoster = UnlockAllImplementedMonstersForPreview && profile.HasCompletedTutorial;
             List<string> validPartyIds = ResolveValidPartyIds(profile, targetCount);
-            if (UnlockAllImplementedMonstersForPreview)
+            if (usePreviewRoster)
             {
                 changed |= EnsureAllImplementedMonstersOwned(profile, masterDataManager);
                 validPartyIds = ResolveValidPartyIds(profile, targetCount);
@@ -64,7 +65,7 @@ namespace WitchTower.Data
                 validPartyIds = ResolveValidPartyIds(profile, targetCount);
             }
 
-            if (UnlockAllImplementedMonstersForPreview && profile.OwnedMonsters.Count < targetCount)
+            if (usePreviewRoster && profile.OwnedMonsters.Count < targetCount)
             {
                 MonsterDataSO[] allMonsterData = masterDataManager.GetAllMonsterData();
                 if (allMonsterData != null)
@@ -92,8 +93,8 @@ namespace WitchTower.Data
             }
 
             bool hasNoValidPartyMembers = CountValidPartySlots(validPartyIds) == 0;
-            bool shouldPrioritizePreviewParty = UnlockAllImplementedMonstersForPreview && hasNoValidPartyMembers;
-            bool shouldRecoverCompletedParty = !UnlockAllImplementedMonstersForPreview &&
+            bool shouldPrioritizePreviewParty = usePreviewRoster && hasNoValidPartyMembers;
+            bool shouldRecoverCompletedParty = !usePreviewRoster &&
                 profile.HasCompletedTutorial &&
                 hasNoValidPartyMembers &&
                 profile.OwnedMonsters.Count > 0;

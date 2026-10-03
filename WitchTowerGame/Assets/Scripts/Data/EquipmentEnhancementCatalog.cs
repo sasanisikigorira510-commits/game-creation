@@ -447,7 +447,9 @@ namespace WitchTower.Data
                 return;
             }
 
-            ownedEquipment.EnhancementBonusRate += relic.BonusPercent;
+            // Store the compounded multiplier minus one, preserving existing saved bonuses.
+            float currentMultiplier = 1f + Mathf.Max(0f, ownedEquipment.EnhancementBonusRate);
+            ownedEquipment.EnhancementBonusRate = currentMultiplier * (1f + relic.BonusPercent) - 1f;
             EquipmentRolledBaseBonus rolledBase = ResolveBaseBonus(equipmentData, ownedEquipment);
             if (rolledBase.CritRate > 0f)
             {
@@ -493,7 +495,7 @@ namespace WitchTower.Data
 
             var parts = new List<string>
             {
-                $"基礎効果 +{relic.BonusPercent * 100f:0.#}%"
+                $"基礎効果 ×{1f + relic.BonusPercent:0.##}（累積）"
             };
             EquipmentRolledBaseBonus rolledBase = ResolveBaseBonus(equipmentData, ownedEquipment);
             if (rolledBase.CritRate > 0f)

@@ -9,6 +9,17 @@ namespace WitchTower.Battle
     {
         public static BattleUnitStats Create(PlayerProfile profile, OwnedMonsterData ownedMonster, MonsterDataSO monsterData)
         {
+            return CreateInternal(profile, ownedMonster, monsterData, true);
+        }
+
+        // Keep account-level bonuses while excluding only this monster's equipment.
+        public static BattleUnitStats CreateWithoutEquipment(PlayerProfile profile, OwnedMonsterData ownedMonster, MonsterDataSO monsterData)
+        {
+            return CreateInternal(profile, ownedMonster, monsterData, false);
+        }
+
+        private static BattleUnitStats CreateInternal(PlayerProfile profile, OwnedMonsterData ownedMonster, MonsterDataSO monsterData, bool includeEquipment)
+        {
             if (monsterData == null)
             {
                 return null;
@@ -26,7 +37,7 @@ namespace WitchTower.Battle
             int fusionBonusDefense = Mathf.Max(0, ownedMonster != null ? ownedMonster.FusionBonusDefense : 0);
             int fusionBonusMagicDefense = Mathf.Max(0, ownedMonster != null ? ownedMonster.FusionBonusMagicDefense : 0);
             float fusionBonusAttackSpeed = Mathf.Max(0f, ownedMonster != null ? ownedMonster.FusionBonusAttackSpeed : 0f);
-            EquipmentResolvedBonus equipmentBonus = profile != null && ownedMonster != null
+            EquipmentResolvedBonus equipmentBonus = includeEquipment && profile != null && ownedMonster != null
                 ? profile.GetMonsterEquipmentBonus(ownedMonster.InstanceId)
                 : default;
             MonsterIndividualValueService.EnsureInitialized(ownedMonster);
@@ -51,27 +62,27 @@ namespace WitchTower.Battle
                 ResolveFloatLevelGrowth(levelOffset, classLevelGrowth.AttackSpeed, levelGrowth.attackSpeedCoefficient);
 
             int maxHpBase =
-                ResolveIndividualIntegerStat(intrinsicMaxHp, ownedMonster != null ? ownedMonster.IndividualHp : MonsterIndividualValueService.DefaultValue) +
+                ResolveIndividualIntegerStat(intrinsicMaxHp, ownedMonster != null ? ownedMonster.IndividualHp : MonsterIndividualValueService.DefaultValue, ownedMonster != null ? ownedMonster.TrainingHp : 0) +
                 Mathf.RoundToInt(plusGrowth.maxHpPerPlus * plusValue) +
                 fusionBonusHp +
                 GetPlayerLevelHpBonus(profile);
             int attackBase =
-                ResolveIndividualIntegerStat(intrinsicAttack, ownedMonster != null ? ownedMonster.IndividualAttack : MonsterIndividualValueService.DefaultValue) +
+                ResolveIndividualIntegerStat(intrinsicAttack, ownedMonster != null ? ownedMonster.IndividualAttack : MonsterIndividualValueService.DefaultValue, ownedMonster != null ? ownedMonster.TrainingAttack : 0) +
                 Mathf.RoundToInt(plusGrowth.attackPerPlus * plusValue) +
                 fusionBonusAttack +
                 GetPlayerLevelAttackBonus(profile);
             int wisdomBase =
-                ResolveIndividualIntegerStat(intrinsicWisdom, ownedMonster != null ? ownedMonster.IndividualWisdom : MonsterIndividualValueService.DefaultValue) +
+                ResolveIndividualIntegerStat(intrinsicWisdom, ownedMonster != null ? ownedMonster.IndividualWisdom : MonsterIndividualValueService.DefaultValue, ownedMonster != null ? ownedMonster.TrainingWisdom : 0) +
                 Mathf.RoundToInt(plusGrowth.magicAttackPerPlus * plusValue) +
                 fusionBonusWisdom +
                 GetPlayerLevelAttackBonus(profile);
             int defenseBase =
-                ResolveIndividualIntegerStat(intrinsicDefense, ownedMonster != null ? ownedMonster.IndividualDefense : MonsterIndividualValueService.DefaultValue) +
+                ResolveIndividualIntegerStat(intrinsicDefense, ownedMonster != null ? ownedMonster.IndividualDefense : MonsterIndividualValueService.DefaultValue, ownedMonster != null ? ownedMonster.TrainingDefense : 0) +
                 Mathf.RoundToInt(plusGrowth.defensePerPlus * plusValue) +
                 fusionBonusDefense +
                 GetPlayerLevelDefenseBonus(profile);
             int magicDefenseBase =
-                ResolveIndividualIntegerStat(intrinsicMagicDefense, ownedMonster != null ? ownedMonster.IndividualMagicDefense : MonsterIndividualValueService.DefaultValue) +
+                ResolveIndividualIntegerStat(intrinsicMagicDefense, ownedMonster != null ? ownedMonster.IndividualMagicDefense : MonsterIndividualValueService.DefaultValue, ownedMonster != null ? ownedMonster.TrainingMagicDefense : 0) +
                 Mathf.RoundToInt(plusGrowth.magicDefensePerPlus * plusValue) +
                 fusionBonusMagicDefense +
                 GetPlayerLevelDefenseBonus(profile);
@@ -81,7 +92,7 @@ namespace WitchTower.Battle
             int defense = Mathf.Max(1, Mathf.RoundToInt(defenseBase * (1f + Mathf.Max(0f, equipmentBonus.DefensePercent)) * GetDefenseMultiplier(profile)));
             int magicDefense = Mathf.Max(1, Mathf.RoundToInt(magicDefenseBase * (1f + Mathf.Max(0f, equipmentBonus.MagicDefensePercent)) * GetDefenseMultiplier(profile)));
             float attackSpeedBase = Mathf.Max(0.2f,
-                ResolveIndividualAttackSpeed(intrinsicAttackSpeed, ownedMonster != null ? ownedMonster.IndividualAttackSpeed : MonsterIndividualValueService.DefaultValue) +
+                ResolveIndividualAttackSpeed(intrinsicAttackSpeed, ownedMonster != null ? ownedMonster.IndividualAttackSpeed : MonsterIndividualValueService.DefaultValue, ownedMonster != null ? ownedMonster.TrainingAttackSpeed : 0) +
                 fusionBonusAttackSpeed +
                 equipmentBonus.AttackSpeed);
             float attackSpeed = Mathf.Max(0.2f, attackSpeedBase * GetAttackSpeedMultiplier(profile));
@@ -175,15 +186,15 @@ namespace WitchTower.Battle
             return levelOffset * classBaseGrowth * coefficient;
         }
 
-        private static int ResolveIndividualIntegerStat(int intrinsicValue, int individualValue)
+        private static int ResolveIndividualIntegerStat(int intrinsicValue, int individualValue, int trainingLevel)
         {
-            float multiplier = MonsterIndividualValueService.ResolveIntegerStatMultiplier(individualValue);
+            float multiplier = MonsterIndividualValueService.ResolveIntegerStatMultiplier(individualValue) + MonsterTrainingService.GetIntegerStatBonus(trainingLevel);
             return Mathf.Max(0, Mathf.RoundToInt(Mathf.Max(0, intrinsicValue) * multiplier));
         }
 
-        private static float ResolveIndividualAttackSpeed(float intrinsicValue, int individualValue)
+        private static float ResolveIndividualAttackSpeed(float intrinsicValue, int individualValue, int trainingLevel)
         {
-            float multiplier = MonsterIndividualValueService.ResolveAttackSpeedMultiplier(individualValue);
+            float multiplier = MonsterIndividualValueService.ResolveAttackSpeedMultiplier(individualValue) + MonsterTrainingService.GetAttackSpeedBonus(trainingLevel);
             return Mathf.Max(0f, intrinsicValue) * multiplier;
         }
     }

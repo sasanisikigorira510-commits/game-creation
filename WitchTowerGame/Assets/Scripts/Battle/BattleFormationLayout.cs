@@ -5,13 +5,15 @@ namespace WitchTower.Battle
 {
     public static class BattleFormationLayout
     {
+        public static readonly Vector2 GuardianRearAnchor = new Vector2(0.06f, 0.64f);
         public static readonly Vector2[] AllyHomeAnchors =
         {
             new Vector2(0.38f, 0.30f),
             new Vector2(0.38f, 0.44f),
             new Vector2(0.18f, 0.37f),
             new Vector2(0.07f, 0.24f),
-            new Vector2(0.07f, 0.50f)
+            new Vector2(0.07f, 0.50f),
+            GuardianRearAnchor // Dedicated guardian, behind all five ordinary slots.
         };
 
         public static readonly Vector2[] AllyAdvanceAnchors =
@@ -20,7 +22,8 @@ namespace WitchTower.Battle
             new Vector2(0.38f, 0.44f),
             new Vector2(0.18f, 0.37f),
             new Vector2(0.07f, 0.24f),
-            new Vector2(0.07f, 0.50f)
+            new Vector2(0.07f, 0.50f),
+            GuardianRearAnchor
         };
 
         public static readonly float[] EnemyLaneYAnchors =

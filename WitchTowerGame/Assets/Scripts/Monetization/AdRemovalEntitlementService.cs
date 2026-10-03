@@ -20,7 +20,8 @@ namespace WitchTower.Monetization
 
         public static bool TryGrantVerifiedPurchase(PlayerProfile profile, string productId)
         {
-            if (profile == null || !string.Equals(productId, RemoveAdsProductId, StringComparison.Ordinal))
+            if (profile == null || (!string.Equals(productId, RemoveAdsProductId, StringComparison.Ordinal) &&
+                !IapProductCatalog.TryGet(productId, out _)))
             {
                 return false;
             }

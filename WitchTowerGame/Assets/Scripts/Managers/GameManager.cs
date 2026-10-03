@@ -28,6 +28,8 @@ namespace WitchTower.Managers
 
         public void InitializeFromSave(PlayerSaveData saveData)
         {
+            if (saveData == null || SaveManager.Instance?.StorageAccessAvailable == false ||
+                SaveManager.Instance?.RecoveryRequired == true) return;
             PlayerProfile = new PlayerProfile(saveData);
             if (PlayerProfile != null &&
                 saveData.HighestFloor == 1 &&
@@ -45,6 +47,14 @@ namespace WitchTower.Managers
             {
                 SaveManager.Instance?.SaveCurrentGame();
             }
+        }
+
+        public void ForgetDeletedAccount()
+        {
+            PlayerProfile = null;
+            CurrentFloor = 0;
+            CurrentDungeonFloor = 1;
+            CurrentDungeonId = "blight_cavern";
         }
 
         public void SetCurrentFloor(int floor)

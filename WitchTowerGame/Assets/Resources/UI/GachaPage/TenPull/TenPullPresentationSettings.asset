@@ -1,0 +1,155 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28c4fa46da6054d2d983fa491cb946bb, type: 3}
+  m_Name: TenPullPresentationSettings
+  m_EditorClassIdentifier: Assembly-CSharp::WitchTower.Home.TenPullPresentationSettings
+  BackgroundResource: UI/GachaPage/GachaSummonChamberBackground
+  CutInResource: UI/GachaPage/TenPull/RiftCutIn
+  ButtonResource: UI/FusionPage/FusionSmallButton
+  SealResource: UI/GachaPage/TenPull/ConvergenceSeal
+  ParticleResource: UI/GachaPage/Effects/GachaSparkle_0
+  SingleIntroductionSeconds: 3.2
+  IntroductionSeconds: 3.2
+  VortexResourcePrefix: UI/GachaPage/TenPull/Vortex_
+  StreakResource: UI/GachaPage/TenPull/CometStreak
+  AnimeEnabled: 1
+  AnimeFilmLayoutResource: UI/GachaPage/TenPull/Anime/Continuous/Layout
+  AnimeOpeningPrefix: UI/GachaPage/TenPull/Anime/Opening_
+  AnimeNormalPrefix: UI/GachaPage/TenPull/Anime/Normal_
+  AnimeUpperPrefix: UI/GachaPage/TenPull/Anime/Upper_
+  AnimeOpeningFraction: 0.42
+  AnimeCameraPush: 0.045
+  AnimeExitFadeSeconds: 0.18
+  AnimeEyeInsertSeconds: 0.38
+  Music:
+    Enabled: 1
+    ResourcePrefix: Audio/Music/TenPull/
+    NormalIntro: intro_normal
+    Class4Intro: intro_class4
+    RevealLoop: reveal_loop
+    Class4Accent: class4_accent
+    StoneOpen: stone_open
+    ArrivalTick: arrival_tick
+    ResultCadence: result_cadence
+    IntroScoredSeconds: 3.2
+    MasterVolume: 1
+    IntroVolume: 1
+    RevealVolume: 0.72
+    Class4Volume: 0.9
+    StoneVolume: 0.55
+    ArrivalVolume: 0.28
+    ResultVolume: 0.8
+    RevealCrossfadeSeconds: 0.25
+  AnimeRadiance:
+    Enabled: 1
+    ResourcePrefix: UI/GachaPage/TenPull/Anime/Radiance/
+    Intensity: 1
+    BacklightOpacity: 0.72
+    ForegroundOpacity: 0.8
+    CoreScale: 1
+    GoldIgnitionAt: 0.42
+    ReleaseAt: 0.18
+    LightningTurns: 0.18
+  CameraPush: 0.12
+  PillarOpacity: 0.85
+  TrailOpacity: 0.85
+  ReleaseFlashOpacity: 0.42
+  StoneOrbitTurns: 0.65
+  Class4AnticipationSeconds: 0.16
+  RevealShockwaveOpacity: 0.85
+  Class4RevealPunch: 0.22
+  StoneArrivalInterval: 0.09
+  StoneArrivalSeconds: 0.4
+  StonesHoldSeconds: 0.48
+  ResonanceAt: 0.48
+  StartCue: 16
+  ArrivalCue: 17
+  Class4CutInEnabled: 1
+  Class4StoneEmphasis: 1.12
+  NormalIntroduction:
+    Color: {r: 0.42, g: 0.72, b: 1, a: 1}
+    GlowOpacity: 0.52
+    ParticleCount: 12
+    FlashOpacity: 0.08
+    ShakePixels: 1.5
+    ResonanceCue: 16
+    SoundVolume: 0.55
+  UpperIntroduction:
+    Color: {r: 1, g: 0.78, b: 0.32, a: 1}
+    GlowOpacity: 0.95
+    ParticleCount: 26
+    FlashOpacity: 0.22
+    ShakePixels: 6
+    ResonanceCue: 18
+    SoundVolume: 0.9
+  GridTransitionSeconds: 0.38
+  AutoPlay: 1
+  Normal:
+    StoneResourcePrefix: UI/GachaPage/TenPull/Normal
+    IntactCenter: {x: 0.5676795580110497, y: 0.5075966850828729}
+    CrackedCenter: {x: 0.5, y: 0.5075966850828729}
+    ShatteredCenter: {x: 0.47375690607734805, y: 0.5276243093922652}
+    Accent: {r: 0.55, g: 0.8, b: 1, a: 1}
+    FocusSeconds: 0.24
+    CrackSeconds: 0.22
+    BurstSeconds: 0.2
+    RevealSeconds: 0.65
+    CutInSeconds: 0
+    IdlePulse: 0.015
+    SparkCount: 3
+    FlashOpacity: 0.12
+    CrackCue: 16
+    RevealCue: 17
+    SoundVolume: 0.65
+    StoneTint: {r: 0.70, g: 0.78, b: 0.90, a: 1}
+    GlowOpacity: 0.18
+    ShakePixels: 0
+  Rare:
+    StoneResourcePrefix: UI/GachaPage/TenPull/Rare
+    IntactCenter: {x: 0.4620165745856354, y: 0.5200276243093923}
+    CrackedCenter: {x: 0.48066298342541436, y: 0.5200276243093923}
+    ShatteredCenter: {x: 0.5096685082872928, y: 0.5276243093922652}
+    Accent: {r: 1, g: 0.78, b: 0.28, a: 1}
+    FocusSeconds: 0.42
+    CrackSeconds: 0.32
+    BurstSeconds: 0.26
+    RevealSeconds: 0.85
+    CutInSeconds: 0
+    IdlePulse: 0.033
+    SparkCount: 9
+    FlashOpacity: 0.2
+    CrackCue: 16
+    RevealCue: 18
+    SoundVolume: 0.85
+    StoneTint: {r: 1, g: 1, b: 1, a: 1}
+    GlowOpacity: 0.18
+    ShakePixels: 0
+  Legendary:
+    StoneResourcePrefix: UI/GachaPage/TenPull/Legendary
+    IntactCenter: {x: 0.5220994475138122, y: 0.5359116022099447}
+    CrackedCenter: {x: 0.5165745856353591, y: 0.5359116022099447}
+    ShatteredCenter: {x: 0.4986187845303867, y: 0.569060773480663}
+    Accent: {r: 0.86, g: 0.62, b: 1, a: 1}
+    FocusSeconds: 0.72
+    CrackSeconds: 0.38
+    BurstSeconds: 0.28
+    RevealSeconds: 1.1
+    CutInSeconds: 0.8
+    IdlePulse: 0.048
+    SparkCount: 16
+    FlashOpacity: 0.27
+    CrackCue: 16
+    RevealCue: 19
+    SoundVolume: 1
+    StoneTint: {r: 1, g: 1, b: 1, a: 1}
+    GlowOpacity: 0.82
+    ShakePixels: 7

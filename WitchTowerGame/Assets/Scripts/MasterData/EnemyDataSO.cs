@@ -7,6 +7,7 @@ namespace WitchTower.MasterData
     {
         public string enemyId;
         public string enemyName;
+        public bool canBeRecruited = true;
         public int maxHp;
         public int attack;
         public int magicAttack;

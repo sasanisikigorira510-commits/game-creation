@@ -1,5 +1,8 @@
+using System.Collections;
+using WitchTower.Monetization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using WitchTower.UI;
 using WitchTower.Home;
 using WitchTower.Managers;
 
@@ -18,9 +21,23 @@ namespace WitchTower.Core
             InitializeGame();
         }
 
-        private void Start()
+        private IEnumerator Start()
         {
-            SceneManager.LoadScene(nextSceneName);
+            var saves = SaveManager.Instance;
+            if (saves != null && saves.AwaitingPurchaseEnvironment)
+            {
+                var probe = ApplePurchaseEnvironmentProbe.Ensure();
+                if (!probe.IsPending && probe.Environment == VerifiedApplePurchaseEnvironment.Unknown) probe.Refresh();
+                while (saves != null && saves.AwaitingPurchaseEnvironment)
+                {
+                    if (saves.TryBindReleaseEnvironment(probe.Environment)) break;
+                    yield return null;
+                }
+                if (saves == null) yield break;
+                InitializeGame();
+            }
+            if (saves != null && saves.StorageAccessAvailable && !saves.RecoveryRequired)
+                SceneTransitionGuard.LoadScene(nextSceneName);
         }
 
         private static void EnsureManagers()
@@ -34,7 +51,10 @@ namespace WitchTower.Core
         private static void InitializeGame()
         {
             var saveManager = SaveManager.Instance;
+            // Release startup selects its endpoint and root before loading saves.
+            if (saveManager == null || !saveManager.StorageAccessAvailable) return;
             saveManager.LoadOrCreate();
+            if (!saveManager.StorageAccessAvailable || saveManager.RecoveryRequired) return;
 
             MasterDataManager.Instance.Initialize();
 
@@ -45,7 +65,7 @@ namespace WitchTower.Core
 
         private void OnApplicationPause(bool pauseStatus)
         {
-            if (!pauseStatus)
+            if (!pauseStatus || SaveManager.Instance?.StorageAccessAvailable != true)
             {
                 return;
             }
@@ -55,6 +75,7 @@ namespace WitchTower.Core
 
         private void OnApplicationQuit()
         {
+            if (SaveManager.Instance?.StorageAccessAvailable != true) return;
             SaveManager.Instance?.SaveForSuspend();
         }
     }

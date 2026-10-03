@@ -15,7 +15,50 @@ namespace WitchTower.Battle
 
         public static bool CanAttemptRecruitThisBattle(PlayerProfile profile)
         {
-            return profile != null && (profile.HasMonsterStorageSpace() || profile.CanAutoReleaseNewMonsters());
+            return GetRecruitBlockReason(profile) == MonsterRecruitBlockReason.None;
+        }
+
+        public static MonsterRecruitBlockReason GetRecruitBlockReason(PlayerProfile profile)
+        {
+            if (profile == null)
+            {
+                return MonsterRecruitBlockReason.ProfileUnavailable;
+            }
+
+            // The opening lesson has no recruitment. Preserve this reason
+            // separately from capacity, including when the result advances
+            // the tutorial before its recruitment summary is displayed.
+            if (!profile.HasCompletedTutorial &&
+                (profile.TutorialStepId == StoryTutorialService.StepFirstBattle ||
+                 profile.TutorialStepId == StoryTutorialService.StepFirstResult))
+            {
+                return MonsterRecruitBlockReason.Tutorial;
+            }
+
+            return profile.HasMonsterStorageSpace() || profile.CanAutoReleaseNewMonsters()
+                ? MonsterRecruitBlockReason.None
+                : MonsterRecruitBlockReason.StorageFull;
+        }
+
+        public static string GetBlockedRecruitmentSummary(MonsterRecruitBlockReason reason)
+        {
+            switch (reason)
+            {
+                case MonsterRecruitBlockReason.Tutorial:
+                    return "チュートリアルの初回バトルでは捕獲は行いません。";
+                case MonsterRecruitBlockReason.StorageFull:
+                    return StorageFullSummary;
+                case MonsterRecruitBlockReason.ProfileUnavailable:
+                    return "プレイヤーデータを読み込めないため、捕獲できません。";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static MonsterRecruitResult BuildBlockedResult(MonsterRecruitBlockReason reason)
+        {
+            return new MonsterRecruitResult(false, false, false, string.Empty, string.Empty,
+                GetBlockedRecruitmentSummary(reason), blockReason: reason);
         }
 
         public static bool HasRecruitableMonsterCandidates(int floor)
@@ -27,30 +70,29 @@ namespace WitchTower.Battle
         public static MonsterRecruitResult ResolveAfterEnemyDefeat(
             int floor,
             PlayerProfile profile,
-            bool recruitWasEnabledAtBattleStart,
+            MonsterRecruitBlockReason blockReasonAtBattleStart,
             EnemyDataSO defeatedEnemyData,
             bool defeatedEnemyIsDungeonBoss)
         {
             if (profile == null)
             {
-                return MonsterRecruitResult.Empty;
+                return BuildBlockedResult(MonsterRecruitBlockReason.ProfileUnavailable);
             }
 
-            if (!recruitWasEnabledAtBattleStart)
+            if (blockReasonAtBattleStart != MonsterRecruitBlockReason.None)
             {
-                return new MonsterRecruitResult(
-                    wasEligible: false,
-                    attempted: false,
-                    succeeded: false,
-                    monsterId: string.Empty,
-                    monsterName: string.Empty,
-                    summary: "保有上限に達していたため、このバトルでは仲間化抽選は発生しません。");
+                return BuildBlockedResult(blockReasonAtBattleStart);
             }
 
             MonsterDataSO defeatedMonster = ResolveRecruitableDefeatedMonster(floor, defeatedEnemyData);
             if (defeatedMonster == null)
             {
                 return new MonsterRecruitResult(true, false, false, string.Empty, string.Empty, string.Empty);
+            }
+
+            if (!profile.HasMonsterStorageSpace() && !profile.CanAutoReleaseNewMonsters())
+            {
+                return BuildBlockedResult(MonsterRecruitBlockReason.StorageFull);
             }
 
             float recruitChance = BattleDungeonCatalog.ResolvePerDefeatRecruitChance(floor, defeatedMonster);
@@ -65,32 +107,30 @@ namespace WitchTower.Battle
                 return new MonsterRecruitResult(true, true, false, string.Empty, string.Empty, "仲間化抽選は発生しましたが、今回は仲間になりませんでした。");
             }
 
-            int recruitLevel = CalculateRecruitLevel(floor, defeatedMonster);
-            return GrantRecruitedMonster(profile, defeatedMonster, recruitLevel, defeatedEnemyIsDungeonBoss);
+            return GrantRecruitedMonster(profile, defeatedMonster, defeatedEnemyIsDungeonBoss);
         }
 
-        public static MonsterRecruitResult ResolveAfterBattleWin(int floor, PlayerProfile profile, bool recruitWasEnabledAtBattleStart)
+        public static MonsterRecruitResult ResolveAfterBattleWin(int floor, PlayerProfile profile, MonsterRecruitBlockReason blockReasonAtBattleStart)
         {
             if (profile == null)
             {
-                return MonsterRecruitResult.Empty;
+                return BuildBlockedResult(MonsterRecruitBlockReason.ProfileUnavailable);
             }
 
-            if (!recruitWasEnabledAtBattleStart)
+            if (blockReasonAtBattleStart != MonsterRecruitBlockReason.None)
             {
-                return new MonsterRecruitResult(
-                    wasEligible: false,
-                    attempted: false,
-                    succeeded: false,
-                    monsterId: string.Empty,
-                    monsterName: string.Empty,
-                    summary: "保有上限に達していたため、このバトルでは仲間化抽選は発生しません。");
+                return BuildBlockedResult(blockReasonAtBattleStart);
             }
 
             List<MonsterDataSO> recruitableMonsters = CollectRecruitableMonsters(floor);
             if (recruitableMonsters.Count == 0)
             {
                 return new MonsterRecruitResult(true, false, false, string.Empty, string.Empty, "この階には仲間化候補モンスターがいません。");
+            }
+
+            if (!profile.HasMonsterStorageSpace() && !profile.CanAutoReleaseNewMonsters())
+            {
+                return BuildBlockedResult(MonsterRecruitBlockReason.StorageFull);
             }
 
             float recruitChance = BattleDungeonCatalog.ResolveRecruitChance(floor);
@@ -111,9 +151,8 @@ namespace WitchTower.Battle
                 return new MonsterRecruitResult(true, true, false, string.Empty, string.Empty, "仲間化候補の読み込みに失敗しました。");
             }
 
-            int recruitLevel = CalculateRecruitLevel(floor, recruitedMonster);
             bool recruitedMonsterIsDungeonBoss = BattleDungeonCatalog.IsBossMonsterOnFloor(floor, recruitedMonster.monsterId);
-            return GrantRecruitedMonster(profile, recruitedMonster, recruitLevel, recruitedMonsterIsDungeonBoss);
+            return GrantRecruitedMonster(profile, recruitedMonster, recruitedMonsterIsDungeonBoss);
         }
 
         private static List<MonsterDataSO> CollectRecruitableMonsters(int floor)
@@ -144,7 +183,7 @@ namespace WitchTower.Battle
 
         private static MonsterDataSO ResolveRecruitableDefeatedMonster(int floor, EnemyDataSO defeatedEnemyData)
         {
-            if (defeatedEnemyData == null)
+            if (defeatedEnemyData == null || !defeatedEnemyData.canBeRecruited || GarzaBossPresentation.IsGarza(defeatedEnemyData))
             {
                 return null;
             }
@@ -159,13 +198,7 @@ namespace WitchTower.Battle
             return IsRegisteredCurrentMonster(monsterData) ? monsterData : null;
         }
 
-        private static int CalculateRecruitLevel(int floor, MonsterDataSO monsterData)
-        {
-            int rarityBonus = monsterData != null ? (int)monsterData.rarity - 1 : 0;
-            return MonsterLevelService.ClampLevelToMax(floor + rarityBonus, monsterData);
-        }
-
-        private static MonsterRecruitResult GrantRecruitedMonster(PlayerProfile profile, MonsterDataSO monsterData, int level, bool isDungeonBossMonster)
+        private static MonsterRecruitResult GrantRecruitedMonster(PlayerProfile profile, MonsterDataSO monsterData, bool isDungeonBossMonster)
         {
             if (profile == null || !IsRegisteredCurrentMonster(monsterData))
             {
@@ -178,7 +211,8 @@ namespace WitchTower.Battle
                 return BuildStorageFullResult(monsterData);
             }
 
-            OwnedMonsterData createdMonster = profile.AddOwnedMonster(monsterData.monsterId, level);
+            // Every capture starts at Lv1, including late-floor and boss recruits.
+            OwnedMonsterData createdMonster = profile.AddOwnedMonster(monsterData.monsterId, 1);
             if (createdMonster == null)
             {
                 return BuildStorageFullResult(monsterData);
@@ -192,6 +226,7 @@ namespace WitchTower.Battle
             }
 
             int individualAverage = MonsterIndividualValueService.GetAverage(createdMonster);
+            string individualSummary = MonsterIndividualValueService.BuildSummary(createdMonster);
             if (profile.ShouldAutoReleaseMonster(createdMonster))
             {
                 profile.TryReleaseMonster(createdMonster.InstanceId, true, out _);
@@ -204,6 +239,7 @@ namespace WitchTower.Battle
                     monsterName: monsterData.monsterName,
                     summary: $"{monsterData.monsterName} はIV{individualAverage}のため自動で逃しました。",
                     individualAverage: individualAverage,
+                    individualSummary: individualSummary,
                     autoReleased: true,
                     autoReleaseThreshold: threshold);
             }
@@ -221,7 +257,8 @@ namespace WitchTower.Battle
                 monsterId: monsterData.monsterId,
                 monsterName: monsterData.monsterName,
                 summary: $"{monsterData.monsterName} が仲間になりました。",
-                individualAverage: individualAverage);
+                individualAverage: individualAverage,
+                individualSummary: individualSummary);
         }
 
         private static bool IsRegisteredCurrentMonster(MonsterDataSO monsterData)
@@ -244,7 +281,8 @@ namespace WitchTower.Battle
                 monsterId: monsterData != null ? monsterData.monsterId : string.Empty,
                 monsterName: monsterData != null ? monsterData.monsterName : string.Empty,
                 summary: StorageFullSummary,
-                individualAverage: individualAverage);
+                individualAverage: individualAverage,
+                blockReason: MonsterRecruitBlockReason.StorageFull);
         }
     }
 }

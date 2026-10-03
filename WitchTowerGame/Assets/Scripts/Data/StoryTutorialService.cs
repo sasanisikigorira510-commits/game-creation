@@ -46,6 +46,14 @@ namespace WitchTower.Data
         public const string StepOpenBattle = "T05";
         public const string StepFirstBattle = "T06";
         public const string StepFirstResult = "T07";
+        public const string StepOpenEquipment = "T07A";
+        public const string StepFirstEquipment = "T07B";
+        // Keep the existing dex step ids save-compatible; the shop lessons
+        // are inserted with new ids immediately before them.
+        public const string StepOpenShop = "T07C_SHOP";
+        public const string StepFirstShop = "T07D_SHOP";
+        public const string StepOpenDex = "T07C";
+        public const string StepFirstDex = "T07D";
         public const string StepWrapUp = "T08";
 
         public const string StoryPrologueWakeup = "story_prologue_wakeup";
@@ -63,7 +71,9 @@ namespace WitchTower.Data
 
         public const string HintEquipment = "tutorial_equipment";
         public const string HintEquipmentGiftReceived = "tutorial_equipment_gift_received";
+        public const string HintEquipmentQualityPairReceived = "tutorial_equipment_quality_pair_received";
         public const string HintEquipmentQuality = "tutorial_equipment_quality";
+        public const string HintEquipmentAutoEquip = "tutorial_equipment_auto_equip";
         public const string HintEquipmentEnhance = "tutorial_equipment_enhance";
         public const string HintEquipmentEnhanceRelicReceived = "tutorial_equipment_enhance_relic_received";
         public const string HintEquipmentEnhanceReturnHome = "tutorial_equipment_enhance_return_home";
@@ -91,6 +101,8 @@ namespace WitchTower.Data
         public const string EquipmentEnhanceTutorialGiftRelicId = "relic_safe_ember";
         public const string FusionInheritanceTutorialGiftMonsterId = MonsterFusionCatalog.RockGolemId;
         private const string EquipmentTutorialGiftInstanceIdPrefix = "tutorial_gift_equipment_";
+        private const string EquipmentQualityCommonInstanceIdPrefix = EquipmentTutorialGiftInstanceIdPrefix + "quality_common_";
+        private const string EquipmentQualityUncommonInstanceIdPrefix = EquipmentTutorialGiftInstanceIdPrefix + "quality_uncommon_";
         private const string FusionInheritanceTutorialGiftInstanceIdPrefix = "tutorial_gift_fusion_rock_golem_";
         private const string FusionInheritanceTutorialGiftFirstInstanceIdPrefix = "tutorial_gift_fusion_rock_golem_a_";
         private const string FusionInheritanceTutorialGiftSecondInstanceIdPrefix = "tutorial_gift_fusion_rock_golem_b_";
@@ -105,8 +117,24 @@ namespace WitchTower.Data
             { StepFirstFormation, StepOpenBattle },
             { StepOpenBattle, StepFirstBattle },
             { StepFirstBattle, StepFirstResult },
-            { StepFirstResult, StepWrapUp },
+            { StepFirstResult, StepOpenEquipment },
+            { StepOpenEquipment, StepFirstEquipment },
+            { StepFirstEquipment, StepOpenShop },
+            { StepOpenShop, StepFirstShop },
+            { StepFirstShop, StepOpenDex },
+            { StepOpenDex, StepFirstDex },
+            { StepFirstDex, StepWrapUp },
             { StepWrapUp, CompleteStepId }
+        };
+
+        // These are the three deterministic contracts used by the opening tutorial.
+        // Keeping the list here lets the bootstrapper discard preview-only roster
+        // entries without coupling the gacha controller to save cleanup rules.
+        private static readonly HashSet<string> InitialTutorialMonsterIdSet = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "monster_dragon_whelp",
+            "monster_rock_golem",
+            "monster_apprentice_mage"
         };
 
         public static StoryTutorialEvent GetNextEvent(PlayerProfile profile, string sceneName)
@@ -130,6 +158,16 @@ namespace WitchTower.Data
             if (chapterEvent != null)
             {
                 return chapterEvent;
+            }
+
+            // The opening route owns the tutorial flow until it reaches the
+            // explicit completion step. Optional hints must not leak into a
+            // different scene while that route is in progress; otherwise a
+            // player can open the dex or equipment screen early and see a
+            // seemingly unrelated lesson.
+            if (!profile.HasCompletedTutorial)
+            {
+                return null;
             }
 
             return GetOptionalHint(profile, sceneName);
@@ -163,6 +201,11 @@ namespace WitchTower.Data
             return GetInitialSummonRemainingCount(profile) <= 0;
         }
 
+        public static bool IsInitialTutorialMonsterId(string monsterId)
+        {
+            return !string.IsNullOrEmpty(monsterId) && InitialTutorialMonsterIdSet.Contains(monsterId);
+        }
+
         public static bool EnsureInitialSummonResources(PlayerProfile profile)
         {
             if (profile == null || profile.HasCompletedTutorial ||
@@ -178,8 +221,8 @@ namespace WitchTower.Data
                 return false;
             }
 
-            profile.AddFreeGachaStones(missingStones);
-            return true;
+            // The server owns tutorial stones. Never recreate spent stones locally.
+            return false;
         }
 
         public static bool MarkStorySeen(PlayerProfile profile, string eventId)
@@ -200,7 +243,10 @@ namespace WitchTower.Data
 
         public static bool EnsureEquipmentTutorialGift(PlayerProfile profile)
         {
-            if (profile == null || HasSeenHint(profile, HintEquipment))
+            bool openingEquipmentTutorial = profile != null &&
+                !profile.HasCompletedTutorial &&
+                string.Equals(profile.TutorialStepId, StepFirstEquipment, StringComparison.Ordinal);
+            if (profile == null || (HasSeenHint(profile, HintEquipment) && !openingEquipmentTutorial))
             {
                 return false;
             }
@@ -233,6 +279,64 @@ namespace WitchTower.Data
             }
 
             return MarkHintSeen(profile, HintEquipmentGiftReceived);
+        }
+
+        public static IReadOnlyList<OwnedEquipmentData> GrantFirstFloorEquipmentQualityDrops(
+            PlayerProfile profile, int clearedFloor, bool fullClear)
+        {
+            var added = new List<OwnedEquipmentData>();
+            if (profile == null || !fullClear || clearedFloor != 1 || profile.HighestFloor != 0 ||
+                profile.HasCompletedTutorial || HasSeenHint(profile, HintEquipmentQualityPairReceived) ||
+                (profile.TutorialStepId != StepFirstBattle && profile.TutorialStepId != StepFirstResult))
+                return added;
+
+            MasterDataManager.Instance?.Initialize();
+            if (MasterDataManager.Instance?.GetEquipmentData(EquipmentTutorialGiftEquipmentId) == null)
+                return added;
+
+            // This belongs to the first clear reward, not scene initialization.
+            // SaveManager persists the pair and its marker together with the
+            // floor clear. Exact prefixes also avoid duplicates if a call is
+            // repeated before RecordFloorClear or after a partial preparation.
+            OwnedEquipmentData common = FindEquipmentQualityDrop(profile, EquipmentQualityCommonInstanceIdPrefix, 1);
+            OwnedEquipmentData uncommon = FindEquipmentQualityDrop(profile, EquipmentQualityUncommonInstanceIdPrefix, 2);
+            int missing = (common == null ? 1 : 0) + (uncommon == null ? 1 : 0);
+            // Opening lesson rewards must not disappear into auto-sell or a
+            // full inventory. Only reserve the exact number of missing slots.
+            if (missing > 0)
+                profile.EquipmentStorageLimit = Math.Max(profile.EquipmentStorageLimit, profile.OwnedEquipments.Count + missing);
+            if (common == null)
+            {
+                common = profile.AddOwnedEquipmentWithInstancePrefix(EquipmentTutorialGiftEquipmentId,
+                    EquipmentRarity.Common, EquipmentQualityCommonInstanceIdPrefix);
+                if (common != null) added.Add(common);
+            }
+            if (uncommon == null)
+            {
+                uncommon = profile.AddOwnedEquipmentWithInstancePrefix(EquipmentTutorialGiftEquipmentId,
+                    EquipmentRarity.Uncommon, EquipmentQualityUncommonInstanceIdPrefix);
+                if (uncommon != null) added.Add(uncommon);
+            }
+            if (common != null && uncommon != null)
+            {
+                MarkHintSeen(profile, HintEquipmentQualityPairReceived);
+                MarkHintSeen(profile, HintEquipmentGiftReceived);
+            }
+            return added;
+        }
+
+        public static bool HasEquipmentQualityTutorialPair(PlayerProfile profile)
+        {
+            return HasSeenHint(profile, HintEquipmentQualityPairReceived) &&
+                FindEquipmentQualityDrop(profile, EquipmentQualityCommonInstanceIdPrefix, 1) != null &&
+                FindEquipmentQualityDrop(profile, EquipmentQualityUncommonInstanceIdPrefix, 2) != null;
+        }
+
+        private static OwnedEquipmentData FindEquipmentQualityDrop(PlayerProfile profile, string prefix, int rank)
+        {
+            return profile?.OwnedEquipments?.FirstOrDefault(equipment => equipment != null &&
+                equipment.EquipmentId == EquipmentTutorialGiftEquipmentId && equipment.QualityRank == rank &&
+                !string.IsNullOrEmpty(equipment.InstanceId) && equipment.InstanceId.StartsWith(prefix, StringComparison.Ordinal));
         }
 
         public static bool EnsureEquipmentEnhanceTutorialGift(PlayerProfile profile)
@@ -317,7 +421,9 @@ namespace WitchTower.Data
         public static OwnedEquipmentData FindEquipmentTutorialGift(PlayerProfile profile)
         {
             return profile?.OwnedEquipments?
-                .FirstOrDefault(equipment => IsEquipmentTutorialGift(equipment));
+                .Where(equipment => IsEquipmentTutorialGift(equipment))
+                .OrderBy(equipment => equipment.QualityRank)
+                .FirstOrDefault();
         }
 
         public static bool IsEquipmentTutorialGift(OwnedEquipmentData equipment)
@@ -327,10 +433,26 @@ namespace WitchTower.Data
                 equipment.InstanceId.StartsWith(EquipmentTutorialGiftInstanceIdPrefix, StringComparison.Ordinal);
         }
 
-        private static bool HasEquippedEquipmentTutorialGift(PlayerProfile profile)
+        public static bool HasCompletedEquipmentEquipLesson(PlayerProfile profile)
         {
-            OwnedEquipmentData tutorialGift = FindEquipmentTutorialGift(profile);
-            return tutorialGift != null && !string.IsNullOrEmpty(tutorialGift.EquippedMonsterInstanceId);
+            if (profile == null) return false;
+            // Learning an action is persistent, unlike a loadout. Auto-equip
+            // can legitimately replace the common gift with a better drop.
+            if (HasSeenHint(profile, HintEquipment) || HasSeenHint(profile, HintEquipmentAutoEquip) ||
+                HasSeenHint(profile, HintEquipmentEnhance) || HasSeenHint(profile, HintEquipmentEnhanceReturnHome))
+                return true;
+
+            // Resume older saves that already have equipment but predate the
+            // completion marker. Verify both sides of the ownership link.
+            return profile.OwnedEquipments.Any(equipment =>
+            {
+                if (equipment == null || string.IsNullOrEmpty(equipment.InstanceId) ||
+                    string.IsNullOrEmpty(equipment.EquippedMonsterInstanceId)) return false;
+                OwnedMonsterData owner = profile.GetOwnedMonster(equipment.EquippedMonsterInstanceId);
+                return owner != null && (owner.EquippedWeaponInstanceId == equipment.InstanceId ||
+                    owner.EquippedArmorInstanceId == equipment.InstanceId ||
+                    owner.EquippedAccessoryInstanceId == equipment.InstanceId);
+            });
         }
 
         public static bool IsChapterStoryEvent(string eventId)
@@ -446,8 +568,8 @@ namespace WitchTower.Data
                         ? new StoryTutorialEvent(
                             StoryPrologueWakeup,
                             StepWakeup,
-                            "序章 最後の契約炉",
-                            "契約網は何者かに断ち切られ、仲間たちの記憶は各地のダンジョンへ散りました。\n最後の契約炉を目覚めさせ、失われた契約を取り戻しましょう。",
+                            "魔王を倒して帰ろう",
+                            "魔王ガルザの軍勢が次々と村や町を襲っていた。\n頼れる仲間を集めて育てよう。力を合わせれば強大な敵にも立ち向かえる。",
                             blocksInput: true)
                         : null;
                 case StepOpenGacha:
@@ -456,18 +578,46 @@ namespace WitchTower.Data
                             "tutorial_open_gacha",
                             StepOpenGacha,
                             "最初の召喚",
-                            "魔晶石で最初の仲間を呼び戻せます。\n下の召喚から仲間を迎えましょう。",
+                            "魔晶石を使うと、\n一緒に戦う仲間を召喚できます。\n下の「召喚」から仲間を迎えましょう。",
                             "home.gacha",
                             true)
                         : null;
                 case StepFirstSummon:
+                    if (IsScene(normalizedSceneName, "HomeScene"))
+                    {
+                        return new StoryTutorialEvent(
+                            "tutorial_continue_summon",
+                            StepFirstSummon,
+                            "召喚の続きを始めましょう",
+                            "ルシェとイオナが召喚の間で待っています。\n下の「召喚」から、途中の会話や召喚を続けましょう。",
+                            "home.gacha",
+                            true);
+                    }
+
                     int remainingSummons = GetInitialSummonRemainingCount(profile);
+                    // Explain individual values once, after the first summon.
+                    // The same event is refreshed when the player returns to
+                    // the summon chamber, so keeping the line in every branch
+                    // made it repeat after the second pull as well.
+                    string summonBody;
+                    if (remainingSummons == InitialSummonCount - 1)
+                    {
+                        summonBody = $"1体召喚できました。\nあと{remainingSummons}体、ルシェと一緒に召喚を続けましょう。\n召喚した仲間には、能力の伸びやすさを表す「個体値」があります。";
+                    }
+                    else if (remainingSummons < InitialSummonCount)
+                    {
+                        summonBody = $"1体召喚できました。\nあと{remainingSummons}体、ルシェと一緒に召喚を続けましょう。";
+                    }
+                    else
+                    {
+                        summonBody = $"今回の召喚用に、魔晶石を{InitialSummonStoneCost * InitialSummonCount}個用意しました。\n一緒に村を守る仲間を{InitialSummonCount}体召喚しましょう。";
+                    }
                     return IsScene(normalizedSceneName, "GachaScene")
                         ? new StoryTutorialEvent(
                             "tutorial_first_summon",
                             StepFirstSummon,
                             "最初の探索隊",
-                            $"今回の召喚用に、魔晶石を{InitialSummonStoneCost * InitialSummonCount}個用意しました。\n最初の探索隊として眷属を{InitialSummonCount}体呼び戻しましょう。（あと{remainingSummons}体）",
+                            summonBody,
                             "gacha.single_free",
                             true)
                         : null;
@@ -477,7 +627,7 @@ namespace WitchTower.Data
                             StoryFirstExplorationIntro,
                             StepFirstExplorationIntro,
                             "初回探索の目的",
-                            "呼び戻した眷属が、見習いの五門洞から契約片の反応を感じています。\n契約網を復旧するには、ダンジョンへ向かい散らばった記憶を回収しなければなりません。",
+                            "村を守るため、まずは近くにある「見習いの五門洞」へ向かいましょう。\n召喚した仲間を編成して、最初の探索に出発します。",
                             blocksInput: true)
                         : null;
                 case StepOpenFormation:
@@ -486,17 +636,28 @@ namespace WitchTower.Data
                             StoryFirstSummonDone,
                             StepOpenFormation,
                             "最初の探索隊",
-                            "呼び戻した3体を編成に入れて、探索隊として送り出しましょう。",
+                            "召喚した3体を編成に入れて、探索隊として送り出しましょう。",
                             "home.formation",
                             true)
                         : null;
                 case StepFirstFormation:
+                    if (IsScene(normalizedSceneName, "HomeScene"))
+                    {
+                        return new StoryTutorialEvent(
+                            "tutorial_continue_formation",
+                            StepFirstFormation,
+                            "編成の続きを始めましょう",
+                            "探索隊の編成途中です。\n「編成」から、召喚した3体の配置を続けましょう。",
+                            "home.formation",
+                            true);
+                    }
+
                     return IsScene(normalizedSceneName, "FormationScene")
                         ? new StoryTutorialEvent(
                             "tutorial_first_formation",
                             StepFirstFormation,
                             "探索隊編成",
-                            "モンスターカード右下の「編成」ボタンをタップして、最初の3枠を埋めましょう。",
+                            "まず上の配置先を選び、次に仲間の画像をタップしましょう。最後にその仲間の「編成」で確定します。3体を順番に配置しましょう。",
                             "formation.slot_1",
                             true)
                         : null;
@@ -522,9 +683,15 @@ namespace WitchTower.Data
                             true)
                         : null;
                 case StepFirstBattle:
-                    if (HasFinishedHomeGuide(profile))
+                    if (IsScene(normalizedSceneName, "HomeScene"))
                     {
-                        return null;
+                        return new StoryTutorialEvent(
+                            "tutorial_continue_first_battle",
+                            StepFirstBattle,
+                            "最初の探索へ向かいましょう",
+                            "「バトル」から、見習いの五門洞の第1階層へ向かいましょう。",
+                            "home.battle",
+                            true);
                     }
 
                     if (IsScene(normalizedSceneName, "DungeonSelectionPanel"))
@@ -547,9 +714,33 @@ namespace WitchTower.Data
                             "battle.skill_1")
                         : null;
                 case StepFirstResult:
-                    if (HasFinishedHomeGuide(profile))
+                    // T07 is also saved when a skill is used, before victory.
+                    // Only a persisted floor clear proves rewards were received.
+                    if (IsScene(normalizedSceneName, "HomeScene"))
                     {
-                        return null;
+                        bool hasWonFirstBattle = profile.HighestFloor >= 1;
+                        return new StoryTutorialEvent(
+                            "tutorial_continue_first_result",
+                            StepFirstResult,
+                            hasWonFirstBattle ? "探索の成果を装備しましょう" : "最初の探索を再開しましょう",
+                            hasWonFirstBattle
+                                ? (HasEquipmentQualityTutorialPair(profile)
+                                    ? "コモンとアンコモンの「見習いの護符」を手に入れました。\n下の「装備」から、品質を比べるレッスンへ進みましょう。"
+                                    : "初回探索の成果は保存されています。\n下の「装備」から、仲間を強化するレッスンへ進みましょう。")
+                                : "初回探索はまだクリアしていません。\n「バトル」から、第1階層にもう一度挑みましょう。",
+                            hasWonFirstBattle ? "home.equipment" : "home.battle",
+                            true);
+                    }
+
+                    if (profile.HighestFloor < 1 && IsScene(normalizedSceneName, "DungeonSelectionPanel"))
+                    {
+                        return new StoryTutorialEvent(
+                            "tutorial_retry_first_dungeon",
+                            StepFirstResult,
+                            "初回探索を再開",
+                            "見習いの五門洞 第1階層を選び、最初の探索を再開しましょう。",
+                            "dungeon.start",
+                            true);
                     }
 
                     return IsScene(normalizedSceneName, "BattleScene")
@@ -557,8 +748,131 @@ namespace WitchTower.Data
                             StoryFirstBattleWin,
                             StepFirstResult,
                             "探索報酬",
-                            "契約片を回収しました。ゴールド、経験値、装備、仲間化結果を確認してから拠点へ戻りましょう。",
+                            HasEquipmentQualityTutorialPair(profile)
+                                ? "同じ「見習いの護符」のコモンとアンコモンを手に入れました。\n報酬を確認したら拠点へ戻り、装備の品質を比べましょう。"
+                                : "契約片を回収しました。ゴールド、経験値、装備、仲間化結果を確認してから拠点へ戻りましょう。",
                             "result.return_home",
+                            true)
+                        : null;
+                case StepOpenEquipment:
+                    return IsScene(normalizedSceneName, "HomeScene")
+                        ? new StoryTutorialEvent(
+                            "tutorial_open_equipment",
+                            StepOpenEquipment,
+                            HasEquipmentQualityTutorialPair(profile) ? "装備の品質レッスン" : "装備レッスン",
+                            HasEquipmentQualityTutorialPair(profile)
+                                ? "同じ「見習いの護符」を2つ手に入れました。コモンとアンコモンの品質を比べてから、仲間に装備しましょう。ホーム下部の「装備」を開きます。"
+                                : "戦いで得た装備を使って、最初の仲間を強化しましょう。まずはホーム下部の「装備」を開きます。",
+                            "home.equipment",
+                            true)
+                        : null;
+                case StepFirstEquipment:
+                    if (IsScene(normalizedSceneName, "HomeScene"))
+                    {
+                        return new StoryTutorialEvent(
+                            "tutorial_continue_equipment",
+                            StepFirstEquipment,
+                            "装備レッスンを続ける",
+                            "装備レッスンの途中です。下部の「装備」から続きに戻りましょう。",
+                            "home.equipment",
+                            true);
+                    }
+
+                    if (!IsScene(normalizedSceneName, "EquipmentScene"))
+                    {
+                        return null;
+                    }
+
+                    // Existing saves without the guaranteed pair retain their
+                    // established lesson order. A missing/sold comparison item
+                    // must never strand a resumed player in this lesson.
+                    if (!HasSeenHint(profile, HintEquipmentQuality) && HasEquipmentQualityTutorialPair(profile))
+                    {
+                        return new StoryTutorialEvent(HintEquipmentQuality, StepFirstEquipment,
+                            "遺物の品質", "第1階層で、同じ「見習いの護符」のコモンとアンコモンを手に入れました。\n同じ名前でも、品質によって能力の範囲と鍛えられる回数が変わります。比べてみましょう。",
+                            "equipment.quality_label", true);
+                    }
+
+                    if (!HasCompletedEquipmentEquipLesson(profile))
+                    {
+                        return new StoryTutorialEvent(
+                            HintEquipment,
+                            StepFirstEquipment,
+                            "ルシェの装備レッスン",
+                            "まずは手動で装備してみましょう。所持装備の「見習いの護符」をタップし、詳細画面の「装備」を押すと、選択中のモンスターに持たせられます。",
+                            "equipment.first_item",
+                            true);
+                    }
+
+                    if (!HasSeenHint(profile, HintEquipmentAutoEquip) && !HasSeenHint(profile, HintEquipmentEnhance))
+                    {
+                        return new StoryTutorialEvent(HintEquipmentAutoEquip, StepFirstEquipment,
+                            "便利な自動装備", "手動で装備できました。「自動装備」なら、選択中のモンスターに適した装備をまとめて選べます。試してみましょう。",
+                            "equipment.auto_equip", true);
+                    }
+
+                    if (!HasSeenHint(profile, HintEquipmentEnhance) && HasEnhanceableEquipment(profile))
+                    {
+                        return new StoryTutorialEvent(
+                            HintEquipmentEnhance,
+                            StepFirstEquipment,
+                            "ルシェの強化レッスン",
+                            "装備できました。金色の枠が付いた装備をタップして、通常遺物で鍛えてみましょう。",
+                            "equipment.enhance_button",
+                            true);
+                    }
+
+                    if ((HasSeenHint(profile, HintEquipmentEnhance) || !HasEnhanceableEquipment(profile)) &&
+                        !HasSeenHint(profile, HintEquipmentEnhanceReturnHome))
+                    {
+                        return new StoryTutorialEvent(
+                            HintEquipmentEnhanceReturnHome,
+                            StepFirstEquipment,
+                            "装備レッスン完了",
+                            "強化まで確認できました。左上の「ホームへ戻る」から拠点へ戻りましょう。",
+                            "equipment.return_home",
+                            true);
+                    }
+
+                    return null;
+                case StepOpenShop:
+                    return IsScene(normalizedSceneName, "HomeScene")
+                        ? new StoryTutorialEvent(
+                            "tutorial_open_shop",
+                            StepOpenShop,
+                            "商店へ進む",
+                            "装備強化の次は商店を見てみましょう。探索で集めたゴールドを使って、育成素材や装備を購入できます。",
+                            "home.shop",
+                            true)
+                        : null;
+                case StepFirstShop:
+                    return IsScene(normalizedSceneName, "HomeScene")
+                        ? new StoryTutorialEvent(
+                            HintShop,
+                            StepFirstShop,
+                            "ルシェの商店案内",
+                            "ここでは探索で集めたゴールドで商品を購入できます。欲しい商品の「購入」を押して、次の探索の準備を整えましょう。",
+                            "home.shop",
+                            true)
+                        : null;
+                case StepOpenDex:
+                    return IsScene(normalizedSceneName, "HomeScene")
+                        ? new StoryTutorialEvent(
+                            "tutorial_open_dex",
+                            StepOpenDex,
+                            "図鑑レッスン",
+                            "仲間の能力を確認できる「図鑑」を見てみましょう。ホーム下部の「図鑑」を開きます。",
+                            "home.dex",
+                            true)
+                        : null;
+                case StepFirstDex:
+                    return IsScene(normalizedSceneName, "HomeScene")
+                        ? new StoryTutorialEvent(
+                            HintDex,
+                            StepFirstDex,
+                            "ルシェの図鑑レッスン",
+                            "図鑑では仲間の能力と成長傾向を確認できます。まずは金色の枠が付いたモンスターを1体選んでみましょう。",
+                            "home.dex",
                             true)
                         : null;
                 case StepWrapUp:
@@ -567,7 +881,7 @@ namespace WitchTower.Data
                             "tutorial_wrap_up",
                             StepWrapUp,
                             "ルシェからの贈り物",
-                            $"おつかれさまでした！これで基本は大丈夫です。\nチュートリアル完了報酬として、無料石{TutorialCompletionRewardFreeGachaStones}個をプレゼントします。召喚や育成の準備に使ってくださいね。",
+                            $"おつかれさまでした！これで基本は大丈夫です。\nチュートリアル完了報酬の無料石{TutorialCompletionRewardFreeGachaStones}個は、オンライン接続時に受け取れます。召喚や育成の準備に使ってくださいね。",
                             blocksInput: true)
                         : null;
                 default:
@@ -588,7 +902,7 @@ namespace WitchTower.Data
                     StoryChapter2Unlocked,
                     string.Empty,
                     "第2章 獣影の廃工廠",
-                    "十の小門が点灯し、廃工廠への転移門が開きました。次は編成と装備を整えて、暴走した生産炉を止めましょう。",
+                    "五門洞から得た記録に、獣影の廃工廠への道がありました。村へ兵器が運び出される前に、仲間と生産炉を止めに向かいましょう。",
                     "home.battle");
             }
 
@@ -598,7 +912,7 @@ namespace WitchTower.Data
                     StoryChapter3Unlocked,
                     string.Empty,
                     "第3章 古契約の地下書庫",
-                    "廃工廠の生産炉が静まり、古い契約記録への道が現れました。ルシェが配合炉の教材を用意しています。個体値とプラス値の継承を確認してから地下書庫へ進みましょう。",
+                    "廃工廠の生産炉が止まり、古契約の地下書庫への道が開きました。魔王の居場所を調べるため、まずは配合で仲間を強くする方法を確認しましょう。",
                     "home.fusion");
             }
 
@@ -608,7 +922,7 @@ namespace WitchTower.Data
                     StoryChapter4Unlocked,
                     string.Empty,
                     "第4章 紅蓮竜道",
-                    "書庫の記録が、灼熱の竜道を指し示しています。契約核の配合と遺物強化を使い、上位の眷属に備えましょう。",
+                    "書庫の地図から、魔王の居城へ向かう道が分かりました。村を守るルシェに後を任せ、仲間と紅蓮竜道を越えましょう。",
                     "home.battle");
             }
 
@@ -618,7 +932,7 @@ namespace WitchTower.Data
                     StoryChapter5Unlocked,
                     string.Empty,
                     "第5章 星鉱の巨殿",
-                    "紅蓮の奥で、星を含む鉱脈が脈動し始めました。高品質の装備を選び、探索隊全体の力を引き上げましょう。",
+                    "紅蓮竜道の鉱脈は星鉱の巨殿へ続いています。村を襲う敵を減らし、魔王への道を開くため、仲間と魔王軍の砦を目指しましょう。",
                     "home.battle");
             }
 
@@ -628,7 +942,7 @@ namespace WitchTower.Data
                     StoryChapter6Unlocked,
                     string.Empty,
                     "第6章 深淵魔導回廊",
-                    "星鉱の転移路が復旧し、契約網の深部へ続く回廊が現れました。この破損は事故ではない。答えを探しに行きましょう。",
+                    "星鉱の転移路が復旧し、魔王ガルザの居城である深淵魔導回廊への道が開きました。仲間と準備を整え、魔王を倒して村へ帰りましょう。",
                     "home.battle");
             }
 
@@ -637,8 +951,8 @@ namespace WitchTower.Data
                 return new StoryTutorialEvent(
                     StoryFirstArcComplete,
                     string.Empty,
-                    "契約網の残響",
-                    "全ての転移路がつながった瞬間、黒い契約炉があなたの名を呼びました。探索は終わりません。各ダンジョンを巡り、残された真相を追いましょう。",
+                    "魔王を倒して帰ろう",
+                    "みんなで魔王ガルザを倒し、村へ帰る約束を果たしました。これからも仲間と探索や召喚、育成を続けられます。",
                     "home.battle");
             }
 
@@ -666,18 +980,12 @@ namespace WitchTower.Data
 
             if (IsScene(normalizedSceneName, "EquipmentScene") || IsScene(normalizedSceneName, "HomeScene"))
             {
-                if (!HasSeenHint(profile, HintEquipment) && profile.OwnedMonsters.Count > 0)
+                if (!HasCompletedEquipmentEquipLesson(profile) && profile.OwnedMonsters.Count > 0)
                 {
-                    OwnedEquipmentData tutorialGift = FindEquipmentTutorialGift(profile);
-                    bool tutorialGiftEquipped = tutorialGift != null && !string.IsNullOrEmpty(tutorialGift.EquippedMonsterInstanceId);
-                    string targetKey = tutorialGiftEquipped && IsScene(normalizedSceneName, "EquipmentScene")
-                        ? "equipment.enhance_button"
-                        : "equipment.auto_equip";
+                    string targetKey = "equipment.first_item";
                     string body = IsScene(normalizedSceneName, "EquipmentScene")
-                        ? tutorialGiftEquipped
-                            ? "見習いの護符を装備できました。\nこのまま同じ装備カードの「強化」から、装備を鍛える流れも確認しましょう。"
-                            : "ルシェから練習用の「見習いの護符」を受け取りました。画面上部の「自動装備」を押すと、選択中のモンスターに適した装備をまとめて持たせられます。"
-                        : "ルシェが「見習いの護符」を用意しました。\n装備画面で「自動装備」を使って、モンスターに装備しましょう。";
+                        ? "所持装備の「見習いの護符」をタップし、詳細画面の「装備」を押しましょう。画面上部で選んだモンスターに持たせられます。"
+                        : "ルシェが「見習いの護符」を用意しました。\n装備画面でカードを選び、詳細画面の「装備」から持たせてみましょう。";
                     return new StoryTutorialEvent(
                         HintEquipment,
                         string.Empty,
@@ -687,15 +995,24 @@ namespace WitchTower.Data
                 }
 
                 if (IsScene(normalizedSceneName, "EquipmentScene") &&
+                    HasCompletedEquipmentEquipLesson(profile) &&
+                    !HasSeenHint(profile, HintEquipmentAutoEquip) && !HasSeenHint(profile, HintEquipmentEnhance))
+                {
+                    return new StoryTutorialEvent(HintEquipmentAutoEquip, string.Empty,
+                        "便利な自動装備", "手動で装備できました。「自動装備」なら、選択中のモンスターに適した装備をまとめて選べます。試してみましょう。",
+                        "equipment.auto_equip");
+                }
+
+                if (IsScene(normalizedSceneName, "EquipmentScene") &&
                     !HasSeenHint(profile, HintEquipmentEnhance) &&
-                    HasEquippedEquipmentTutorialGift(profile) &&
+                    HasCompletedEquipmentEquipLesson(profile) &&
                     HasEnhanceableEquipment(profile))
                 {
                     return new StoryTutorialEvent(
                         HintEquipmentEnhance,
                         string.Empty,
                         "装備強化",
-                        "装備を鍛える練習をしましょう。強化画面でルシェが通常遺物を1つ渡すので、装備カードの「強化」から使ってみましょう。",
+                        "装備を鍛える練習をしましょう。金色の枠が付いた装備をタップして強化画面へ進み、ルシェの通常遺物で鍛えてみましょう。",
                         "equipment.enhance_button");
                 }
 
@@ -729,7 +1046,7 @@ namespace WitchTower.Data
                         HintEquipmentEnhance,
                         string.Empty,
                         "装備強化",
-                        "装備を鍛える練習をしましょう。強化画面でルシェが通常遺物を1つ渡すので、装備カードの「強化」から使ってみましょう。",
+                        "装備を鍛える練習をしましょう。金色の枠が付いた装備をタップして強化画面へ進み、ルシェの通常遺物で鍛えてみましょう。",
                         "equipment.enhance_button");
                 }
             }
@@ -742,10 +1059,10 @@ namespace WitchTower.Data
                     return new StoryTutorialEvent(
                         HintFusion,
                         string.Empty,
-                        "契約核の配合",
+                        "モンスターの配合",
                         inFusionScene
-                            ? "配合は親2体とも最大レベルが必要です。個体値は能力ごとに親1/親2からランダム継承し、高い個体値の親ほど良い値を引き継ぐ機会が増えます。親のプラス値を含む能力は継承ボーナスに反映されます。"
-                            : "2体の契約核を統合すると、記憶と力を継いだ新しい眷属が生まれます。親は戻らないので、ロックを確認してから行いましょう。",
+                            ? "親2体とも最大レベルが必要です。個体値は能力ごとに親から受け継がれ、親のプラス値も一部が引き継がれます。親は戻らないので、ロックを確認してから配合しましょう。"
+                            : "2体のモンスターを組み合わせると、記憶と力を受け継いだ新しい仲間が生まれます。親は戻らないので、ロックを確認してから配合しましょう。",
                         inFusionScene ? "fusion.guide" : "home.fusion");
                 }
             }
@@ -762,7 +1079,7 @@ namespace WitchTower.Data
                         "home.dex");
                 }
 
-                if (!HasSeenHint(profile, HintShop))
+                if (profile.HasCompletedTutorial && !HasSeenHint(profile, HintShop))
                 {
                     return new StoryTutorialEvent(
                         HintShop,
@@ -789,6 +1106,15 @@ namespace WitchTower.Data
                 profile.TutorialStepId = profile.HasCompletedTutorial ? CompleteStepId : StepWakeup;
             }
 
+            // Older builds could set the completion flag from a home hint
+            // before the explicit opening route reached its final step.  Do
+            // not let that inconsistent state resurrect an equipment/dex
+            // lesson after the player was told the tutorial had ended.
+            if (profile.HasCompletedTutorial && profile.TutorialStepId != CompleteStepId)
+            {
+                profile.TutorialStepId = CompleteStepId;
+            }
+
             if (profile.TutorialStepId == CompleteStepId)
             {
                 profile.HasCompletedTutorial = true;
@@ -800,6 +1126,14 @@ namespace WitchTower.Data
         {
             bool changed = false;
             changed |= MarkHintSeen(profile, HintFusion);
+            // These lessons are now part of the opening route. Marking their
+            // hints as covered on legacy/completed saves prevents the old
+            // optional equipment or dex popups from appearing after the
+            // completion message.
+            changed |= MarkHintSeen(profile, HintEquipment);
+            changed |= MarkHintSeen(profile, HintEquipmentEnhance);
+            changed |= MarkHintSeen(profile, HintEquipmentEnhanceReturnHome);
+            changed |= MarkHintSeen(profile, HintDex);
             return changed;
         }
 
@@ -839,6 +1173,15 @@ namespace WitchTower.Data
                 profile.HasCompletedTutorial &&
                 profile.HighestFloor >= FusionInheritanceTutorialUnlockFloor &&
                 !HasSeenHint(profile, HintFusionInheritance);
+        }
+
+        public static bool IsEquipmentTutorialHint(string eventId)
+        {
+            return eventId == HintEquipment ||
+                eventId == HintEquipmentAutoEquip ||
+                eventId == HintEquipmentQuality ||
+                eventId == HintEquipmentEnhance ||
+                eventId == HintEquipmentEnhanceReturnHome;
         }
 
         private static OwnedMonsterData FindFusionInheritanceTutorialGift(PlayerProfile profile, bool firstGift)
@@ -913,8 +1256,8 @@ namespace WitchTower.Data
                 return false;
             }
 
-            profile.AddFreeGachaStones(TutorialCompletionRewardFreeGachaStones);
-            return MarkHintSeen(profile, HintTutorialCompletionReward);
+            // Completion can happen offline; delivery is retried on the next home sync.
+            return false;
         }
 
         private static void MarkClearedChapterStory(PlayerProfile profile, int requiredFloor, string eventId)

@@ -36,6 +36,7 @@ namespace WitchTower.Battle
 
         public void ShowHit(BattleHitInfo hitInfo)
         {
+            if (hitInfo.Damage <= 0) return;
             CacheTextDefaults();
 
             var targetText = hitInfo.TargetIsPlayer ? playerDamageText : enemyDamageText;
@@ -99,13 +100,13 @@ namespace WitchTower.Battle
             if (targetRect != null)
             {
                 targetRect.anchoredPosition = basePosition + Vector2.up * (textFloatDistance * normalized);
-                targetRect.localScale = Vector3.Lerp(targetRect.localScale, Vector3.one, Time.deltaTime * 12f);
+                targetRect.localScale = Vector3.Lerp(targetRect.localScale, Vector3.one, Time.deltaTime * BattlePlaybackSpeed.Multiplier * 12f);
             }
 
             var color = targetText.color;
             color.a = 1f - normalized;
             targetText.color = color;
-            remaining -= Time.deltaTime;
+            remaining -= Time.deltaTime * BattlePlaybackSpeed.Multiplier;
         }
 
         private void TickFlash(CanvasGroup flashGroup)
@@ -115,7 +116,7 @@ namespace WitchTower.Battle
                 return;
             }
 
-            flashGroup.alpha = Mathf.Max(0f, flashGroup.alpha - Time.deltaTime * flashFadeSpeed);
+            flashGroup.alpha = Mathf.Max(0f, flashGroup.alpha - Time.deltaTime * BattlePlaybackSpeed.Multiplier * flashFadeSpeed);
         }
 
         private void CacheTextDefaults()

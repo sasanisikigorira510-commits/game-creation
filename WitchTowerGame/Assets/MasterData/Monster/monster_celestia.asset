@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_celestia
+  m_EditorClassIdentifier: 
+  monsterId: monster_celestia
+  monsterName: "天界女王セレスティア"
+  encyclopediaNumber: 39
+  raceId: angel
+  classRank: 5
+  rarity: 5
+  element: 4
+  rangeType: 0
+  damageType: 1
+  baseStats:
+    maxHp: 550
+    attack: 80
+    magicAttack: 225
+    defense: 115
+    magicDefense: 165
+    attackSpeed: 0.95
+  attackRange: 1.4
+  normalAttackTargetCount: 1
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 3
+    attackPerPlus: 2
+    magicAttackPerPlus: 5
+    defensePerPlus: 3
+    magicDefensePerPlus: 4
+    attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.1
+    attackCoefficient: 0.6
+    magicAttackCoefficient: 1.65
+    defenseCoefficient: 1
+    magicDefenseCoefficient: 1.35
+    attackSpeedCoefficient: 1.1
+  fusionExclusive: 1
+  fusionRecipes:
+  - parentMonsterIdA: monster_seraph_michael
+    parentMonsterIdB: monster_spirit_queen_titania
+    ignoreOrder: 0
+    note: "両親クラス４・Lv80、子Lv1。親の順番で結果が変化。"
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsters/Class5/celestia
+  illustrationResourcePath: FamilyMonsters/Class5/celestia
+  battleIdleResourcePath: MonsterBattle/mon_celestia_idle
+  battleIdleFacing: 1
+  battleMoveResourcePath: MonsterBattle/mon_celestia_move
+  battleMoveFacing: 1
+  battleAttackResourcePath: MonsterBattle/mon_celestia_attack
+  battleAttackFacing: 1
+  battleVisualScale: 1.25
+  description: "強敵・単体魔法。デイリー試練の星核で固有スキルを育成できるクラス５の配合個体。"

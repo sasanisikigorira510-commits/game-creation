@@ -169,17 +169,37 @@ namespace WitchTower.Home
 
             CreateText("Title", panel.transform, "モンスター図鑑", 48, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -36f), new Vector2(520f, 62f), TextAnchor.MiddleCenter, AccentGold);
+                new Vector2(0f, 80f), new Vector2(620f, 62f), TextAnchor.MiddleCenter, AccentGold);
 
             CreateText("SortHint", panel.transform, "表示順: クラス昇順 / 種族順 / 図鑑番号", 21, FontStyle.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -96f), new Vector2(720f, 36f), TextAnchor.MiddleCenter, TextSub);
+                new Vector2(0f, 16f), new Vector2(720f, 36f), TextAnchor.MiddleCenter, TextSub);
 
-            HomeReturnButtonStyle.Create(transform, "CloseButton", Hide);
+            Button closeButton = HomeReturnButtonStyle.Create(transform, "CloseButton", Hide);
+            RectTransform closeRect = closeButton != null ? closeButton.GetComponent<RectTransform>() : null;
 
             BuildDetailPanel(panel.transform);
             BuildCardGrid(panel.transform);
             BuildDexTutorialGuide(panel.transform);
+            Canvas.ForceUpdateCanvases();
+            if (closeRect != null)
+            {
+                // Use the space above the original detail panel on tall phones,
+                // but keep the header below navigation on shorter displays.
+                RectTransform panelRect = (RectTransform)panel.transform;
+                float navigationBottom = RectTransformUtility.CalculateRelativeRectTransformBounds(panel.transform, closeRect).min.y;
+                float headerTop = Mathf.Min(80f, navigationBottom - panelRect.rect.yMax - 24f);
+                float offset = headerTop - 80f;
+                foreach (string name in new[] { "Title", "SortHint", "DexDetailPanel", "DexGridPanel" })
+                {
+                    RectTransform rect = (RectTransform)panel.transform.Find(name);
+                    rect.anchoredPosition += new Vector2(0f, offset);
+                }
+                RectTransform grid = (RectTransform)panel.transform.Find("DexGridPanel");
+                grid.sizeDelta += new Vector2(0f, offset);
+                RectTransform viewport = (RectTransform)grid.Find("Viewport");
+                viewport.sizeDelta += new Vector2(0f, offset);
+            }
             isBuilt = true;
         }
 
@@ -192,7 +212,7 @@ namespace WitchTower.Home
 
             dexTutorialGuideRoot = CreatePanel("DexTutorialGuideRoot", panelTransform, null,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -1350f), new Vector2(920f, 300f), new Color(0.025f, 0.035f, 0.055f, 0.98f));
+                new Vector2(0f, -1310f), new Vector2(920f, 380f), new Color(0.025f, 0.035f, 0.055f, 0.98f));
 
             Image guideBackground = dexTutorialGuideRoot.GetComponent<Image>();
             if (guideBackground != null)
@@ -207,33 +227,33 @@ namespace WitchTower.Home
 
             dexTutorialGuideCharacterImage = CreateImage("DexTutorialGuideLuse", dexTutorialGuideRoot.transform, TutorialGuideSpritePath,
                 new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-                new Vector2(28f, -4f), new Vector2(218f, 218f));
+                new Vector2(34f, -4f), new Vector2(286f, 286f));
 
-            Text badgeText = CreateText("DexTutorialGuideBadge", dexTutorialGuideRoot.transform, "TUTORIAL", 17, FontStyle.Bold,
+            Text badgeText = CreateText("DexTutorialGuideBadge", dexTutorialGuideRoot.transform, "TUTORIAL", 20, FontStyle.Bold,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
                 new Vector2(276f, -22f), new Vector2(136f, 28f), TextAnchor.MiddleCenter, AccentGold);
             AddTextContrast(badgeText);
 
-            Text titleText = CreateText("DexTutorialGuideTitle", dexTutorialGuideRoot.transform, "ルシェの図鑑レッスン", 29, FontStyle.Bold,
+            Text titleText = CreateText("DexTutorialGuideTitle", dexTutorialGuideRoot.transform, "ルシェの図鑑レッスン", 40, FontStyle.Bold,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(276f, -56f), new Vector2(560f, 36f), TextAnchor.MiddleLeft, new Color(1f, 0.96f, 0.78f, 1f));
+                new Vector2(310f, -66f), new Vector2(540f, 48f), TextAnchor.MiddleLeft, new Color(1f, 0.96f, 0.78f, 1f));
             AddTextContrast(titleText);
 
             dexTutorialGuideBodyText = CreateText("DexTutorialGuideBody", dexTutorialGuideRoot.transform,
                 "ここには仲間にしたモンスターの情報が記録されています。\n下のカードを選ぶと、能力・成長傾向を確認できます。\nまずは気になるモンスターを1体選んでみましょう。",
-                19, FontStyle.Bold,
+                30, FontStyle.Bold,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(276f, -102f), new Vector2(590f, 116f), TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f));
+                new Vector2(310f, -124f), new Vector2(540f, 178f), TextAnchor.UpperLeft, new Color(0.96f, 0.95f, 0.88f, 1f));
             dexTutorialGuideBodyText.resizeTextForBestFit = true;
-            dexTutorialGuideBodyText.resizeTextMinSize = 15;
-            dexTutorialGuideBodyText.resizeTextMaxSize = 19;
+            dexTutorialGuideBodyText.resizeTextMinSize = 25;
+            dexTutorialGuideBodyText.resizeTextMaxSize = 30;
             AddTextContrast(dexTutorialGuideBodyText);
 
             dexTutorialGuideFooterText = CreateText("DexTutorialGuideFooter", dexTutorialGuideRoot.transform,
                 "次の操作: 金色の枠が付いたモンスターカードをタップ",
-                18, FontStyle.Bold,
+                24, FontStyle.Bold,
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(276f, 24f), new Vector2(590f, 30f), TextAnchor.MiddleLeft, new Color(0.78f, 0.92f, 1f, 1f));
+                new Vector2(310f, 28f), new Vector2(540f, 40f), TextAnchor.MiddleLeft, new Color(0.78f, 0.92f, 1f, 1f));
             AddTextContrast(dexTutorialGuideFooterText);
 
             Transform closeButton = transform.Find("CloseButton");
@@ -299,7 +319,8 @@ namespace WitchTower.Home
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             StoryTutorialEvent tutorialEvent = StoryTutorialService.GetNextEvent(profile, "HomeScene");
             return tutorialEvent != null &&
-                tutorialEvent.EventId == StoryTutorialService.HintDex &&
+                (tutorialEvent.EventId == StoryTutorialService.HintDex ||
+                 tutorialEvent.StepId == StoryTutorialService.StepFirstDex) &&
                 string.Equals(tutorialEvent.TargetKey, "home.dex", StringComparison.Ordinal);
         }
 
@@ -307,6 +328,12 @@ namespace WitchTower.Home
         {
             PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
             bool changed = StoryTutorialService.MarkHintSeen(profile, StoryTutorialService.HintDex);
+            if (profile != null &&
+                !profile.HasCompletedTutorial &&
+                profile.TutorialStepId == StoryTutorialService.StepFirstDex)
+            {
+                changed |= StoryTutorialService.AdvanceTutorial(profile, StoryTutorialService.StepFirstDex);
+            }
             if (changed && Application.isPlaying && SaveManager.Instance != null)
             {
                 SaveManager.Instance.SaveCurrentGame();
@@ -346,11 +373,11 @@ namespace WitchTower.Home
         {
             GameObject detailPanel = CreatePanel("DexDetailPanel", parent, RosterFrameSpritePath,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -160f), new Vector2(920f, 340f), DetailColor);
+                new Vector2(0f, -50f), new Vector2(920f, 450f), DetailColor);
 
             selectedFrame = CreatePanel("SelectedFrame", detailPanel.transform, null,
-                new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(-145f, 0f), new Vector2(238f, 288f), CardFallbackColor).GetComponent<Image>();
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(-145f, -36f), new Vector2(238f, 260f), CardFallbackColor).GetComponent<Image>();
 
             selectedPortraitBackdrop = CreatePanel("SelectedPortraitBackdrop", selectedFrame.transform, null,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
@@ -366,21 +393,21 @@ namespace WitchTower.Home
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(0f, 14f), new Vector2(210f, 210f));
 
-            selectedNameLabel = CreateText("SelectedName", detailPanel.transform, "-", 30, FontStyle.Bold,
+            selectedNameLabel = CreateText("SelectedName", detailPanel.transform, "-", 34, FontStyle.Bold,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(46f, -38f), new Vector2(560f, 44f), TextAnchor.MiddleLeft, TextMain);
+                new Vector2(46f, -28f), new Vector2(560f, 48f), TextAnchor.MiddleLeft, TextMain);
 
-            selectedInfoLabel = CreateText("SelectedInfo", detailPanel.transform, "-", 21, FontStyle.Bold,
+            selectedInfoLabel = CreateText("SelectedInfo", detailPanel.transform, "-", 24, FontStyle.Bold,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(46f, -86f), new Vector2(560f, 40f), TextAnchor.MiddleLeft, AccentCyan);
+                new Vector2(46f, -82f), new Vector2(560f, 68f), TextAnchor.UpperLeft, AccentCyan);
 
-            selectedStatsLabel = CreateText("SelectedStats", detailPanel.transform, "-", 17, FontStyle.Bold,
+            selectedStatsLabel = CreateText("SelectedStats", detailPanel.transform, "-", 26, FontStyle.Bold,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(46f, -132f), new Vector2(560f, 116f), TextAnchor.UpperLeft, TextSub);
+                new Vector2(46f, -156f), new Vector2(560f, 168f), TextAnchor.UpperLeft, TextMain);
 
-            selectedDescriptionLabel = CreateText("SelectedDescription", detailPanel.transform, "-", 18, FontStyle.Bold,
+            selectedDescriptionLabel = CreateText("SelectedDescription", detailPanel.transform, "-", 25, FontStyle.Bold,
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(46f, 34f), new Vector2(560f, 74f), TextAnchor.UpperLeft, TextMain);
+                new Vector2(46f, 24f), new Vector2(828f, 96f), TextAnchor.UpperLeft, TextMain);
         }
 
         private void BuildCardGrid(Transform parent)
@@ -497,17 +524,17 @@ namespace WitchTower.Home
                 new Vector2(0f, 54f), new Vector2(214f, 22f), TextAnchor.MiddleCenter, TextMain);
             EnableBestFit(nameText, 11, 17);
 
-            Text classRaceText = CreateText("ClassRace", card.transform, monsterData != null ? $"{ResolveRaceName(monsterData.raceId)} / C{Mathf.Max(1, monsterData.classRank)} / {ResolveDamageTypeLabel(monsterData.damageType)}" : "-",
+            Text classRaceText = CreateText("ClassRace", card.transform, monsterData != null ? $"{ResolveRaceName(monsterData.raceId)} / {ResolveDamageTypeLabel(monsterData.damageType)}" : "-",
                 13, FontStyle.Bold,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 32f), new Vector2(214f, 20f), TextAnchor.MiddleCenter,
                 monsterData != null ? ResolveDamageTypeColor(monsterData.damageType, 0.98f) : TextSub);
             EnableBestFit(classRaceText, 10, 13);
 
-            Text ownedText = CreateText("OwnedState", card.transform, BuildOwnedText(monsterData), 14, FontStyle.Bold,
+            Text classText = CreateText("ClassRank", card.transform, $"クラス {Mathf.Max(1, monsterData.classRank)}", 14, FontStyle.Bold,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 12f), new Vector2(214f, 20f), TextAnchor.MiddleCenter, isSelected ? AccentGold : AccentCyan);
-            EnableBestFit(ownedText, 10, 14);
+            EnableBestFit(classText, 10, 14);
 
             if (isSelected)
             {
@@ -597,7 +624,7 @@ namespace WitchTower.Home
 
             if (selectedInfoLabel != null)
             {
-                selectedInfoLabel.text = $"{BuildNumberText(monsterData, fallbackIndex)} / {ResolveRaceName(monsterData.raceId)} / C{Mathf.Max(1, monsterData.classRank)} / 最大Lv.{MonsterLevelService.GetMaxLevel(monsterData)} / {ResolveElementName(monsterData.element)} / {ResolveRangeName(monsterData.rangeType)} / {ResolveDamageTypeLabel(monsterData.damageType)}";
+                selectedInfoLabel.text = $"{BuildNumberText(monsterData, fallbackIndex)} / {ResolveRaceName(monsterData.raceId)} / クラス{Mathf.Max(1, monsterData.classRank)} / 最大Lv.{MonsterLevelService.GetMaxLevel(monsterData)}\n{ResolveElementName(monsterData.element)} / {ResolveRangeName(monsterData.rangeType)} / {ResolveDamageTypeLabel(monsterData.damageType)}";
             }
 
             if (selectedStatsLabel != null)
@@ -607,7 +634,7 @@ namespace WitchTower.Home
                     $"基礎傾向 HP {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.maxHp)}    攻撃 {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.attack)}    魔力 {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.magicAttack)}\n" +
                     $"防御 {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.defense)}    魔防 {ResolveStatRank(monsterData, allMonsterData, x => x.baseStats.magicDefense)}    攻速 {stats.attackSpeed:0.##}\n" +
                     $"攻撃範囲 {monsterData.attackRange:0.##}    対象数 {Mathf.Max(1, monsterData.normalAttackTargetCount)}    {ResolveDamageName(monsterData.damageType)}\n" +
-                    $"成長しやすさ HP {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Hp, x => x.levelGrowth.maxHpCoefficient)}    攻 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Attack, x => x.levelGrowth.attackCoefficient)}    魔 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Wisdom, x => x.levelGrowth.magicAttackCoefficient)}    防 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Defense, x => x.levelGrowth.defenseCoefficient)}    魔防 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.MagicDefense, x => x.levelGrowth.magicDefenseCoefficient)}";
+                    $"成長傾向 HP {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Hp, x => x.levelGrowth.maxHpCoefficient)}    攻 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Attack, x => x.levelGrowth.attackCoefficient)}    魔 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Wisdom, x => x.levelGrowth.magicAttackCoefficient)}    防 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.Defense, x => x.levelGrowth.defenseCoefficient)}    魔防 {ResolveGrowthRank(monsterData, allMonsterData, growth => growth.MagicDefense, x => x.levelGrowth.magicDefenseCoefficient)}";
             }
 
             if (selectedDescriptionLabel != null)
@@ -615,26 +642,13 @@ namespace WitchTower.Home
                 string description = string.IsNullOrWhiteSpace(monsterData.description)
                     ? $"{ResolveRaceName(monsterData.raceId)}系のクラス{Mathf.Max(1, monsterData.classRank)}モンスター。"
                     : monsterData.description;
-                selectedDescriptionLabel.text = $"{BuildOwnedText(monsterData)}\n{description}";
+                selectedDescriptionLabel.text = description;
             }
         }
 
         private void UpdateCounter(List<MonsterDataSO> monsters)
         {
-            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-            int ownedKinds = 0;
-            foreach (MonsterDataSO monsterData in monsters)
-            {
-                if (profile != null && monsterData != null && profile.GetOwnedMonsterCount(monsterData.monsterId) > 0)
-                {
-                    ownedKinds += 1;
-                }
-            }
-
-            if (counterLabel != null)
-            {
-                counterLabel.text = $"図鑑登録 {monsters.Count}体 / 現在所持 {ownedKinds}種";
-            }
+            if (counterLabel != null) counterLabel.text = $"図鑑登録 {monsters.Count}体";
         }
 
         private static IEnumerable<MonsterDataSO> FilterUnlockedMonsters(MonsterDataSO[] monsters)
@@ -827,13 +841,6 @@ namespace WitchTower.Home
         {
             int number = monsterData != null && monsterData.encyclopediaNumber > 0 ? monsterData.encyclopediaNumber : fallbackIndex;
             return number > 0 ? $"No.{number:000}" : "No.---";
-        }
-
-        private static string BuildOwnedText(MonsterDataSO monsterData)
-        {
-            PlayerProfile profile = GameManager.Instance != null ? GameManager.Instance.PlayerProfile : null;
-            int ownedCount = profile != null && monsterData != null ? profile.GetOwnedMonsterCount(monsterData.monsterId) : 0;
-            return ownedCount > 0 ? $"所持 {ownedCount}体" : "登録済み / 現在未所持";
         }
 
         private static string GetPortraitResourcePath(MonsterDataSO monsterData)

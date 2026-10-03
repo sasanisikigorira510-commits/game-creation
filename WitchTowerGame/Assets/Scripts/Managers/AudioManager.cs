@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -48,7 +49,6 @@ namespace WitchTower.Managers
         private const string SeResourceRoot = "Audio/SE/";
         private const string BgmVolumePrefsKey = "witchtower_audio_bgm_volume";
         private const string SeVolumePrefsKey = "witchtower_audio_se_volume";
-        private const string HapticsEnabledPrefsKey = "witchtower_audio_haptics_enabled";
 
         private static readonly string[] StemSuffixes = { "base", "rhythm", "melody", "tension" };
         private static readonly float[] StemBaseVolumes = { 0.84f, 0.52f, 0.72f, 0.0f };
@@ -57,7 +57,6 @@ namespace WitchTower.Managers
 
         [SerializeField, Range(0f, 1f)] private float bgmVolume = 0.58f;
         [SerializeField, Range(0f, 1f)] private float seVolume = 0.76f;
-        [SerializeField] private bool hapticsEnabled = true;
 
         private readonly Dictionary<AudioCue, AudioClip> proceduralSeCache = new Dictionary<AudioCue, AudioClip>();
         private readonly Dictionary<AudioCue, AudioClip> resourceSeCache = new Dictionary<AudioCue, AudioClip>();
@@ -66,6 +65,22 @@ namespace WitchTower.Managers
         private readonly HashSet<string> missingBgmKeys = new HashSet<string>();
         private readonly HashSet<AudioCue> missingResourceSeCues = new HashSet<AudioCue>();
         private readonly List<AudioSource> stemSources = new List<AudioSource>();
+        private readonly HashSet<BgmSuppression> bgmSuppressions = new HashSet<BgmSuppression>();
+        private readonly Dictionary<AudioSource, bool> suppressedSourceMutes = new Dictionary<AudioSource, bool>();
+
+        private sealed class BgmSuppression : IDisposable
+        {
+            private AudioManager owner;
+            public BgmSuppression(AudioManager manager) { owner = manager; }
+            public void Dispose()
+            {
+                if (owner == null) return;
+                AudioManager manager = owner;
+                owner = null;
+                manager.bgmSuppressions.Remove(this);
+                manager.ApplyBgmSuppression();
+            }
+        }
 
         private AudioSource bgmSourceA;
         private AudioSource bgmSourceB;
@@ -78,12 +93,42 @@ namespace WitchTower.Managers
         private float bgmFadeElapsed;
         private float bgmFadeDuration;
         private float nextButtonScanTime;
-        private float lastHapticTime = -10f;
 
         public float BgmVolume => bgmVolume;
         public float SeVolume => seVolume;
-        public bool HapticsEnabled => hapticsEnabled;
         public string CurrentBgmKey => currentBgmKey;
+        public bool IsBgmSuppressed => bgmSuppressions.Count > 0;
+
+        // Scoped suppression leaves the user's volume, current track, fade, and stem mix intact.
+        public IDisposable SuppressBgm()
+        {
+            EnsureAudioSources();
+            var suppression = new BgmSuppression(this);
+            bgmSuppressions.Add(suppression);
+            ApplyBgmSuppression();
+            return suppression;
+        }
+
+        private void ApplyBgmSuppression()
+        {
+            if (bgmSuppressions.Count == 0)
+            {
+                foreach (var pair in suppressedSourceMutes)
+                    if (pair.Key != null) pair.Key.mute = pair.Value;
+                suppressedSourceMutes.Clear();
+                return;
+            }
+            SuppressSource(bgmSourceA);
+            SuppressSource(bgmSourceB);
+            foreach (AudioSource source in stemSources) SuppressSource(source);
+        }
+
+        private void SuppressSource(AudioSource source)
+        {
+            if (source == null) return;
+            if (!suppressedSourceMutes.ContainsKey(source)) suppressedSourceMutes.Add(source, source.mute);
+            source.mute = true;
+        }
 
         private void Awake()
         {
@@ -148,7 +193,15 @@ namespace WitchTower.Managers
             }
 
             PlaySe(GetSeClip(cue));
-            PlayHaptic(cue);
+        }
+
+        // A presentation owns this source so skip/interrupt can stop its sounds
+        // without stopping unrelated UI sounds or background music.
+        public void PlaySeOnSource(AudioSource source, AudioCue cue, float volume = 1f)
+        {
+            if (source == null) return;
+            var clip = GetSeClip(cue);
+            if (clip != null) source.PlayOneShot(clip, seVolume * Mathf.Clamp01(volume));
         }
 
         public void PlaySe(string cueId)
@@ -238,29 +291,6 @@ namespace WitchTower.Managers
             }
         }
 
-        public void SetHapticsEnabled(bool enabled)
-        {
-            hapticsEnabled = enabled;
-            PersistAudioSettings();
-        }
-
-        public void PlayHaptic(AudioCue cue)
-        {
-            if (!Application.isPlaying || !hapticsEnabled || !ShouldPlayHaptic(cue))
-            {
-                return;
-            }
-
-            float now = Time.unscaledTime;
-            if (now - lastHapticTime < ResolveHapticMinimumInterval(cue))
-            {
-                return;
-            }
-
-            lastHapticTime = now;
-            TriggerNativeHaptic();
-        }
-
         public void SetBgmIntensity(float intensity)
         {
             if (!playingStemBgm || stemSources.Count < StemSuffixes.Length)
@@ -318,6 +348,7 @@ namespace WitchTower.Managers
             {
                 stemSources.Add(CreateSource("BgmStem_" + StemSuffixes[i], true));
             }
+            ApplyBgmSuppression();
         }
 
         private AudioSource CreateSource(string objectName, bool loop)
@@ -358,14 +389,12 @@ namespace WitchTower.Managers
         {
             bgmVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(BgmVolumePrefsKey, bgmVolume));
             seVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(SeVolumePrefsKey, seVolume));
-            hapticsEnabled = PlayerPrefs.GetInt(HapticsEnabledPrefsKey, hapticsEnabled ? 1 : 0) != 0;
         }
 
         private void PersistAudioSettings()
         {
             PlayerPrefs.SetFloat(BgmVolumePrefsKey, bgmVolume);
             PlayerPrefs.SetFloat(SeVolumePrefsKey, seVolume);
-            PlayerPrefs.SetInt(HapticsEnabledPrefsKey, hapticsEnabled ? 1 : 0);
             PlayerPrefs.Save();
         }
 
@@ -698,68 +727,6 @@ namespace WitchTower.Managers
                 default:
                     return 0f;
             }
-        }
-
-        private static bool ShouldPlayHaptic(AudioCue cue)
-        {
-            switch (cue)
-            {
-                case AudioCue.UiConfirm:
-                case AudioCue.UiCancel:
-                case AudioCue.Error:
-                case AudioCue.Skill:
-                case AudioCue.CriticalHit:
-                case AudioCue.BattleStart:
-                case AudioCue.Victory:
-                case AudioCue.Defeat:
-                case AudioCue.LevelUp:
-                case AudioCue.MissionComplete:
-                case AudioCue.DailyReward:
-                case AudioCue.GachaStart:
-                case AudioCue.GachaRareReveal:
-                case AudioCue.GachaLegendaryReveal:
-                case AudioCue.FusionStart:
-                case AudioCue.FusionSuccess:
-                case AudioCue.UpgradeSuccess:
-                case AudioCue.UpgradeFail:
-                case AudioCue.UpgradeBreak:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        private static float ResolveHapticMinimumInterval(AudioCue cue)
-        {
-            switch (cue)
-            {
-                case AudioCue.Error:
-                    return 0.35f;
-                case AudioCue.Skill:
-                case AudioCue.CriticalHit:
-                case AudioCue.GachaStart:
-                case AudioCue.FusionStart:
-                    return 0.45f;
-                case AudioCue.GachaRareReveal:
-                case AudioCue.GachaLegendaryReveal:
-                case AudioCue.FusionSuccess:
-                case AudioCue.Victory:
-                case AudioCue.Defeat:
-                case AudioCue.LevelUp:
-                    return 0.65f;
-                default:
-                    return 0.25f;
-            }
-        }
-
-        private static void TriggerNativeHaptic()
-        {
-#if UNITY_ANDROID || UNITY_IOS
-            if (!Application.isEditor)
-            {
-                Handheld.Vibrate();
-            }
-#endif
         }
 
         private AudioClip GetOrCreateProceduralSe(AudioCue cue)

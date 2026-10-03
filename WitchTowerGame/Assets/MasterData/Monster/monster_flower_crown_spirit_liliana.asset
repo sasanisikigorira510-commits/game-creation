@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eec78acb125d463d8a56eb9594bb2330, type: 3}
+  m_Name: monster_flower_crown_spirit_liliana
+  m_EditorClassIdentifier: 
+  monsterId: monster_flower_crown_spirit_liliana
+  monsterName: "花冠の精霊リリアーナ"
+  encyclopediaNumber: 30
+  raceId: spirit
+  classRank: 3
+  rarity: 3
+  element: 1
+  rangeType: 1
+  damageType: 1
+  baseStats:
+    maxHp: 108
+    attack: 10
+    magicAttack: 47
+    defense: 18
+    magicDefense: 43
+    attackSpeed: 0.88
+  attackRange: 3.4
+  normalAttackTargetCount: 2
+  normalAttackAppliesKnockback: 0
+  normalAttackKnockbackDuration: 0.18
+  plusValueCap: 99
+  plusGrowth:
+    maxHpPerPlus: 2
+    attackPerPlus: 1
+    magicAttackPerPlus: 4
+    defensePerPlus: 2
+    magicDefensePerPlus: 4
+    attackSpeedPerPlus: 0.002
+  levelGrowth:
+    maxHpCoefficient: 1.06
+    attackCoefficient: 0.56
+    magicAttackCoefficient: 1.56
+    defenseCoefficient: 0.84
+    magicDefenseCoefficient: 1.72
+    attackSpeedCoefficient: 0.88
+  fusionExclusive: 0
+  fusionRecipes: []
+  portraitSprite: {fileID: 0}
+  illustrationSprite: {fileID: 0}
+  portraitResourcePath: FamilyMonsterCards/Spirit/liliana
+  illustrationResourcePath: FamilyMonsters/Spirit/liliana
+  battleIdleResourcePath: MonsterBattle/mon_liliana_idle
+  battleIdleFacing: 1
+  battleMoveResourcePath: MonsterBattle/mon_liliana_move
+  battleMoveFacing: 1
+  battleAttackResourcePath: MonsterBattle/mon_liliana_attack
+  battleAttackFacing: 1
+  battleVisualScale: 1.18
+  description: "花冠に自然の魔力を集める精霊。舞い散る花びらの魔法で、離れた敵を二体まで攻撃する。"
