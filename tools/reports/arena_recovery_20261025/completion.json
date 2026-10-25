@@ -1,0 +1,76 @@
+{
+  "Status": "RECOVERED_AND_VERIFIED",
+  "AvailabilityCause": "Eight retained failed synthetic canary inputs exhausted the fixed retention admission limit. Fresh native witnesses expired and the app hid Arena.",
+  "UnderlyingNativeExitCause": "Not determined from existing logs; prior failed inputs preserved.",
+  "ArchivedSyntheticInputs": 8,
+  "ArchivePath": "/opt/witch-player-arena/production/recovery-20261025-1792905259653627922",
+  "ArchiveSha256Verified": true,
+  "DeletedFiles": 0,
+  "NativeChecksPassed": 3,
+  "AutomaticNativeCheckAfterRecovery": {
+    "Healthy": true,
+    "CheckedUnix": 1792905382.2350605,
+    "Purpose": "ARENA_NATIVE_PROFILE_PROBE",
+    "Keys": [
+      "ApiConfigHash",
+      "ArtifactHash",
+      "CheckedUnix",
+      "Healthy",
+      "InputHash",
+      "InstanceId",
+      "Operation",
+      "OutputHash",
+      "ProbeJobId",
+      "Purpose",
+      "Realm",
+      "SocketDevice",
+      "SocketInode",
+      "Version"
+    ],
+    "AgeSeconds": 16.907849311828613
+  },
+  "AutomaticOperationsCheckAfterRecovery": {
+    "Healthy": true,
+    "NativeReady": true,
+    "SettlementCaughtUp": true,
+    "CheckedUnix": 1792905341.4430828,
+    "Purpose": "PRODUCTION_ARENA_OPERATIONS_OBSERVED",
+    "Keys": [
+      "ApiGateIntegrated",
+      "CheckedUnix",
+      "ConfigurationHash",
+      "DatabaseOpened",
+      "Healthy",
+      "InstanceId",
+      "NativeCalculated",
+      "NativeReady",
+      "ProviderConstructed",
+      "Purpose",
+      "Realm",
+      "ReleaseId",
+      "SettlementCaughtUp",
+      "Version"
+    ],
+    "AgeSeconds": 57.699875831604004
+  },
+  "AuthenticatedHeadChecks": [
+    {
+      "Profile": "Production",
+      "Http": 200,
+      "ArenaEnabled": true,
+      "CheckedUnix": 1792905399.389267
+    },
+    {
+      "Profile": "FreshStart",
+      "Http": 200,
+      "ArenaEnabled": true,
+      "CheckedUnix": 1792905399.563701
+    }
+  ],
+  "TimersRestored": true,
+  "SourceOrConfigurationChanged": false,
+  "DatabaseDirectlyOpened": false,
+  "DeviceDataChanged": false,
+  "NoInstallationRequired": true,
+  "EvidenceFolder": "/Volumes/GameCreationWork/Keep/game-creation/arena-recovery-20261025-0urp1cd1"
+}

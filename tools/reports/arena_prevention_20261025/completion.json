@@ -1,0 +1,121 @@
+{
+  "Status": "PREVENTION_INSTALLED_API_AND_ARENA_VERIFIED",
+  "CompletedJst": "2026-10-25T14:44:13.333505+09:00",
+  "PublicApiHttp": 200,
+  "AuthenticatedProfiles": [
+    {
+      "Profile": "Production",
+      "Http": 200,
+      "ArenaEnabled": true,
+      "Frozen": false,
+      "MigrationRequired": false
+    },
+    {
+      "Profile": "FreshStart",
+      "Http": 200,
+      "ArenaEnabled": true,
+      "Frozen": false,
+      "MigrationRequired": false
+    }
+  ],
+  "HistoricalFailedInputsReplayed": 8,
+  "HistoricalReplayResultsAllMatched": true,
+  "UnderlyingHistoricalFailureCause": "Not determinable from retained historical logs. Original bridge collapsed native execution and output failures into generic exit2 and discarded runtime logs. All eight inputs now match expected results using the same worker artifact.",
+  "Prevention": [
+    "Archive only exact fixed synthetic canary failures under existing host admission lock; preserve input bytes and hash; do not delete evidence",
+    "Keep real-player failures and eight-input fail-closed guard",
+    "Record fixed native error stage, exit code, managed exception, known log flags and per-job cgroup memory peak/OOM counters",
+    "Wait for actual broker socket at startup and resume original APIs even when publisher verification fails"
+  ],
+  "LocalTestsPassed": 22,
+  "ControlledNativeFailureDiagnostic": {
+    "ElapsedMs": 1234,
+    "Flags": [],
+    "ManagedError": "ArgumentException",
+    "MemoryPeakBytes": 63873024,
+    "NativeExit": 2,
+    "OomKills": 0,
+    "Stage": "NativeExit"
+  },
+  "AutomaticChecks": {
+    "/run/witch-player-arena/production-health.json": {
+      "Healthy": true,
+      "CheckedUnix": 1792906980.3860743,
+      "Purpose": "ARENA_NATIVE_PROFILE_PROBE",
+      "Keys": [
+        "ApiConfigHash",
+        "ArtifactHash",
+        "CheckedUnix",
+        "Healthy",
+        "InputHash",
+        "InstanceId",
+        "Operation",
+        "OutputHash",
+        "ProbeJobId",
+        "Purpose",
+        "Realm",
+        "SocketDevice",
+        "SocketInode",
+        "Version"
+      ],
+      "AgeSeconds": 50.39455556869507
+    },
+    "/run/witch-player-arena-production-operations/status.json": {
+      "Healthy": true,
+      "NativeReady": true,
+      "SettlementCaughtUp": true,
+      "CheckedUnix": 1792906990.4015229,
+      "Purpose": "PRODUCTION_ARENA_OPERATIONS_OBSERVED",
+      "Keys": [
+        "ApiGateIntegrated",
+        "CheckedUnix",
+        "ConfigurationHash",
+        "DatabaseOpened",
+        "Healthy",
+        "InstanceId",
+        "NativeCalculated",
+        "NativeReady",
+        "ProviderConstructed",
+        "Purpose",
+        "Realm",
+        "ReleaseId",
+        "SettlementCaughtUp",
+        "Version"
+      ],
+      "AgeSeconds": 40.37915349006653
+    },
+    "/run/witch-player-release-health/status.json": {
+      "Healthy": true,
+      "CheckedUnix": 1792906990.6906416,
+      "Status": "RELEASE_OPERATIONS_OBSERVED",
+      "Keys": [
+        "CheckedUnix",
+        "ConfigurationSha256",
+        "Environment",
+        "Healthy",
+        "InstanceId",
+        "RecoveryEvidenceFresh",
+        "RecoveryVerificationOverdue",
+        "ReleaseId",
+        "Status",
+        "Version"
+      ],
+      "AgeSeconds": 40.09006714820862
+    }
+  },
+  "ResourceLimitsChanged": false,
+  "WorkerArtifactChanged": false,
+  "DeviceDataChanged": false,
+  "DatabaseDirectlyOpened": false,
+  "InstallationRequired": false,
+  "MonitorSha256": "8649616243ae77f0f00aa3548050465f47f19e2b9a9dc9a0009f447d2c9d66f5",
+  "ManifestSha256": "7f04dd9bca22035c578f14d475bf8dc0c0cf1ccbf820e6fd70fb2c1f4aef0494",
+  "RuntimePrefix": "/opt/witch-player-release/arena-resilience/20261025-v2",
+  "ArchiveRoot": "/opt/witch-player-arena/production/canary-failures-20261025",
+  "ArchiveLimits": {
+    "MaximumDirectories": 4096,
+    "MinimumAvailableBytes": 134217728
+  },
+  "RolloutIncident": "First rollout did not wait for broker socket and rollback verification skipped resuming API. Original configuration restored; v2 resumed device API first and successfully installed the tested adapter.",
+  "RetainedEvidenceFolder": "/Volumes/GameCreationWork/Keep/game-creation/arena-prevention-20261025-5ls9qj9d"
+}

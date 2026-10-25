@@ -2,6 +2,14 @@
 
 ## 現在の段階
 
+2026-10-25再発防止：本番brokerの追加adapter `production_arena_resilient_broker.py` と、隔離job内の `arena_diagnostic_job_bridge.py` を `/opt/witch-player-release/arena-resilience/20261025-v2` に配置した。固定canaryとnonce以外で完全一致する失敗入力だけを、同じhost admission lockの内側でroot所有の専用archiveへ自動移動し、hash・永続化を確認する。実プレイヤーの入力は移動せず、従来の8件上限を維持する。証拠は削除しない。archiveは4,096件・空き容量128MiBの保護条件を持ち、この上限や不正なファイルが見つかった場合は安全側へ停止する。再計算・自動再試行で成功扱いにはしない。
+
+隔離jobのCPU25%・160/192MiB・swap禁止・120秒・DynamicUser・private network等は保持した。追加bridgeは、そのjobのmount namespaceで既存bridgeパスへ読み取り専用bindする。元のartifactとbridge本文は変更しない。診断には固定した段階名、native終了コード、管理例外の種類、既知ログ分類、経過時間、job自身のcgroup memory.peak/oom_killだけを含め、セーブ本文・トークン・生ログは記録しない。過去8件は同じ計算artifactで全件期待値に一致し、意図的な不正な合成profileで `NativeExit:2 / ArgumentException / OomKills:0` を記録できた。これは診断機能の試験であり、過去の失敗が引数エラーだった証明ではない。旧bridgeが理由を破棄していたため、過去の一時的な異常終了の詳細原因は未確定。
+
+導入v1はbrokerのsocket準備完了待ちが不足し、publisher検証・rollback後のAPI再開が止まった。設定は元へ復元された。v2はsocketの実在・所有権確認と、publisher失敗時にも元APIを再開する処理を追加し、先にdevice APIを復旧してから反映を完了した。本番の監視設定・bindingは新しい追加sourceと起動宣言を固定し直している。通常APIはHTTP200、既存2アカウントは `ArenaEnabled:true`。セーブ・購入履歴・DB・native artifactは直接変更していない。導入・試験記録は `tools/reports/arena_prevention_20261025/`。v1や使用済みlauncherを再実行しないこと。
+
+2026-10-25闘技場復旧：本番の失敗入力保管が8件に達し、`ArenaProfileExecutor192` の保管上限ガードが新規計算を拒否していた。8件すべてが固定canary入力とnonce以外で一致する合成チェックであると確認し、専用root所有退避先へ同一ファイルシステム内で移動した。各入力のSHA-256一致を確認し、削除はしていない。既存nativeチェック3回・運用チェックと、既存2アカウントの認証済みheadで `ArenaEnabled:true` を確認した。API・brokerの再起動、サーバーコード・設定・計算上限・DBの直接変更は行っていない。確認のため停止した本番の2チェックtimerは復元済み。元のnative異常終了の詳細原因は既存ログから未特定であり、保管ガードは維持している。記録は `tools/reports/arena_recovery_20261025/`。Review APIの別件起動失敗と、以前停止した株ゲームは今回変更していない。
+
 2026-09-25追記: VPS・DNS・TLS・外部バックアップ・監視は構築済み。healthのみ公開し、ゲーム/admin APIは閉鎖中です。
 削除workerの自動実行と実さくらを使う合成削除・隔離復元試験まで確認済み。実Apple/課金・実機・保持方針等は未完了です。
 最新の工程は[進捗表](deploy/RELEASE-PROGRESS.md)、復旧時の制約は[復旧・保持手順](deploy/RETENTION-AND-RECOVERY.md)を参照してください。
